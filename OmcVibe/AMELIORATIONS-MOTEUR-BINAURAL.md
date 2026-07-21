@@ -1,17 +1,9 @@
 # OmcVibe 181 — 18 points d'amélioration du moteur binaural
 
 Analyse de l'APK `OmcVibe181-debug-apk (3).zip` (app Capacitor, `org.watcha.omcvibe`,
-WebView sur `assets/public/index.html`). Le code source web extrait vit maintenant
-dans ce dossier (`OmcVibe/www/index.html`) — c'est la vraie source du comportement
-de l'app, l'APK n'étant qu'un artefact de build autour de ce WebView.
-
-**Important — portée de cette passe :** cette session a modifié le **code source
-web** (le moteur audio réel). Recompiler un `.apk` signé nécessite le projet
-Android/Capacitor complet (Gradle, keystore) qui n'est pas présent dans ce dépôt
-(seul le zip de l'APK compilé l'était) — cette recompilation n'a donc pas été
-faite ici. Le fichier `OmcVibe/www/index.html` est prêt à être réinjecté dans le
-projet Capacitor existant (`npx cap sync && ./gradlew assembleDebug`) pour
-regénérer l'APK.
+WebView sur `assets/public/index.html`). Le code source web extrait vit dans ce
+dossier (`OmcVibe/www/index.html`) — c'est la vraie source du comportement de
+l'app, l'APK n'étant qu'un artefact de build autour de ce WebView.
 
 ## Diagnostic du "tremolo" au-delà de Δ > 2 Hz
 
@@ -28,102 +20,156 @@ d'amplitude à la fréquence Δ. En dessous de 2 Hz cette AM est trop lente pour
 superpose (et masque) le vrai battement binaural. C'est un artefact de mixage,
 pas une limite du binaural — le point **#1** ci-dessous le corrige à la racine.
 
-## Les 18 points
-
-### ✅ Implémentés dans cette passe
+## Les 18 points — tous implémentés dans `OmcVibe/www/index.html`
 
 1. **Correctif racine anti-tremolo (Δ > 2 Hz)** — l'écart stéréo Pingala/Ida
-   grandit maintenant avec Δ (`binauralPanGap()`, `BINAURAL_GAP_PER_HZ = 0.055`,
-   plafond `BINAURAL_GAP_MAX = 0.86`), recalculé et rejoué en douceur
+   grandit avec Δ (`binauralPanGap()`, `BINAURAL_GAP_PER_HZ = 0.055`, plafond
+   `BINAURAL_GAP_MAX = 0.86`), recalculé et rejoué en douceur
    (`refreshBinauralPan()`) à **chaque** changement de Δ — manuel (`setDelta`,
-   `setGlobalDelta`) ou tirage aléatoire — pas seulement au moment du random
-   comme avant. Le centre de paire (`spread`) n'est pas touché : seule la
-   distance Pingala↔Ida à l'intérieur de la paire s'élargit.
-2. **LFO respiration par paire, aléatoire à chaque nouveau jeu** — réutilise et
-   étend le patch existant `attachOscVolLFO`/`toggleOscVolLFO` (§2.10) :
-   `triggerMagicAuto()` tire maintenant, pour chaque paire non verrouillée, un
-   rythme (≈4–17 respirations/min), une profondeur et un **déphasage aléatoires
+   `setGlobalDelta`) ou tirage aléatoire, pas seulement au random comme avant.
+   Le centre de paire (`spread`) n'est pas touché : seule la distance
+   Pingala↔Ida à l'intérieur de la paire s'élargit. Indicateur "Séparation
+   anti-tremolo" affiché en direct (vire à l'ambre au-delà de 2 Hz).
+2. **LFO respiration par paire, aléatoire à chaque nouveau jeu** — étend le
+   patch existant `attachOscVolLFO`/`toggleOscVolLFO` (§2.10) :
+   `triggerMagicAuto()` tire, pour chaque paire non verrouillée, un rythme
+   (≈4–17 respirations/min), une profondeur et un **déphasage aléatoires
    indépendants** — les paires respirent hors phase, texture organique plutôt
    qu'un pompage synchrone. Option "Respiration par paire (aléatoire)" +
-   slider "Profondeur" (plafond réglable, `PAIR_BREATH_OPTS.depthMax`) dans le
-   panneau Options aléatoire.
-3. **Détune Sinus Duo paramétrable -72 / +72 ¢** — le moteur `sine2` (deux voix
-   sinus) était figé à ±7 ¢ dans `OSC_ENGINES`. Il est maintenant piloté par
-   `DUALSINE_DETUNE` (slider "Sinus Duo" dans le panneau FX, -72..+72 ¢),
-   appliqué à la construction (`sine2Engine()`) et mis à jour **en direct** sur
-   les oscillateurs déjà en cours via `setDualSineDetune()` (pas de reconstruction).
-4. **Indicateur "Séparation anti-tremolo"** — pourcentage affiché en direct à
-   côté du réglage Binaural (`sv-binaural-sep`), qui vire à l'ambre au-delà de
-   2 Hz : rend visible/compréhensible la correction du point #1.
-5. **Persistance étendue** — les options du jeu aléatoire (verrou binaural, LFO
-   filtre, timbre/profondeur/respiration auto), le détune Sinus Duo et la
-   profondeur de respiration max sont maintenant sauvegardés/restaurés
-   (`_doSave`/`loadState`/`_syncRandOptsUI`) ; auparavant ces réglages étaient
-   silencieusement réinitialisés à chaque relance de l'app.
+   slider "Profondeur" (`PAIR_BREATH_OPTS.depthMax`).
+3. **Détune Sinus Duo paramétrable -72 / +72 ¢** — le moteur `sine2` (deux
+   voix sinus) était figé à ±7 ¢. Piloté par `DUALSINE_DETUNE` (slider "Sinus
+   Duo"), appliqué à la construction (`sine2Engine()`) et mis à jour **en
+   direct** via `setDualSineDetune()` (pas de reconstruction).
+4. **Δ indépendant par paire en mode random déverrouillé** — option "Δ varié
+   par paire" (`RAND_OPTS.deltaVariety`) : chaque paire pioche son propre
+   battement dans le même ensemble musical, au lieu d'un `baseDelta` unique
+   imposé à toutes — jeu binaural plus riche.
+5. **Dérive lente du Δ ("respiration du battement")** — `DELTA_DRIFT_STATE` :
+   un LFO natif Web Audio (cycle de 3 à 7 minutes, phase de départ aléatoire
+   par paire) fait onduler très légèrement (± amount Hz réglable) la
+   fréquence réelle de l'oscillateur Ida, sans jamais changer de bande
+   cérébrale — évite l'habituation, rend la session vivante dans la durée.
+   Attaché automatiquement à chaque (re)création d'un node Ida
+   (`attachDeltaDriftToNode`, appelé depuis `buildOsc()`).
+6. **Décorrélation du drift analogique partagé** — le `_driftLFO` (0,07 Hz)
+   reste unique et partagé (simple à gérer), mais chaque oscillateur reçoit
+   maintenant le signal via son **propre `DelayNode` à retard aléatoire**
+   (`_connectDecorrelatedDrift()`) : même onde lente, déphasée différemment
+   par voix — mouvement organique réellement indépendant au lieu d'un
+   vibrato d'ensemble parfaitement synchrone.
+7. **Polarité variée, même Δ verrouillé** — `RAND_OPTS.polarityVariety` :
+   le signe (Ida au-dessus/en-dessous de Pingala) est retiré au hasard à
+   chaque tirage **indépendamment du verrou binaural** — ne touche jamais à
+   l'amplitude du battement, seulement à l'image spatiale.
+8. **Mode "casque strict" (routage 100% isolé)** — `STRICT_HEADPHONE_MODE` :
+   Pingala 100% gauche / Ida 100% droite pour chaque paire (`buildOscPan()`
+   retourne `[-1,1]` partout). Un `StereoPannerNode` à puissance constante
+   n'atteint le silence total sur le canal opposé qu'exactement à pan=±1 :
+   ce mode sacrifie l'éventail spatial inter-paires pour une pureté
+   binaurale absolue, zéro résidu de crosstalk.
+9. **Compression douce anti-pompage par paire** — `PAIR_COMP_STATE` (option) :
+   chaque paire converge vers un bus + `DynamicsCompressorNode` dédié
+   (seuil -16dB, ratio 2, attaque 80ms, release 500ms) avant le master —
+   absorbe les micro-pics d'enveloppe (Δ élevé + respiration + FX cumulés)
+   sans jamais s'entendre comme une compression.
+10. **Rampe dédiée au changement de Δ pendant le tirage aléatoire** — les
+    paires dont Δ change réellement à un tirage sont suivies
+    (`_deltaChangedThisDraw`) et leur oscillateur Ida glisse vers la
+    nouvelle valeur sur ~2,2s (`tuneOsc(id, freq, rampDur)`, désormais avec
+    durée de rampe paramétrable) une fois le son revenu du fondu — sensation
+    d'arrivée en douceur plutôt qu'un saut figé.
+11. **"Caractère du battement" à la place d'une liste plate de Δ** —
+    `DELTA_CHARACTER` : 3 familles nommées explicites (Apaisé <2 Hz /
+    Équilibré 3–6 Hz / Immersif 6–10 Hz), sélectionnables via 3 boutons dans
+    le panneau Options aléatoire, avec séparation stéréo naturellement
+    croissante puisqu'elle suit Δ (point #1).
+12. **"Ancre respiratoire" périodique** — `BREATH_ANCHOR_STATE` (option) :
+    toutes les 4 minutes (réglable), les paires respirent un instant à la
+    même phase avant de redériver naturellement (rythmes différents par
+    paire) — bref moment d'unisson au sein d'une texture normalement
+    décorrélée.
+13. **Détune Sinus Duo par paire** — `PAIR_DUALSINE` : le réglage -72/+72 ¢
+    (point #3) est aussi disponible individuellement par paire, dans l'onglet
+    Oscillo de chaque paire (comme n/ratio/Δ le sont déjà), pour des timbres
+    différents pair par pair au sein d'un même jeu.
+14. **Sub-drone d'ancrage optionnel** — `SUBDRONE_STATE` : un pad grave fixe
+    (racine ÷ 2), volume très bas réglable, jamais concerné par le tirage
+    aléatoire — stabilise perceptuellement le mix quand plusieurs Δ élevés
+    jouent ensemble. Suit la fréquence maître (`_retuneSubDrone()`).
+15. **Historique des tirages avec retour arrière** — `_gameHistory` (pile de
+    5 tirages max) : chaque "Nouveau jeu aléatoire" pousse un snapshot
+    pré-tirage ; bouton "↩ Annuler le tirage" (`undoLastRandom()`) restaure
+    fréquence maître, ratios/registres, Δ, polarités, volumes, timbres et
+    filtres du tirage précédent.
+16. **Export/partage d'un "jeu" complet étendu** — `exportState()` couvre
+    désormais respiration (profondeur max, ancre), détune Sinus Duo (global
+    + par paire), dérive du Δ, caractère du battement, mode casque strict,
+    anti-pompage, sub-drone et toutes les options du jeu aléatoire — plus
+    seulement fréquence/Δ/ratios.
+17. **Persistance étendue** — tous les réglages ci-dessus (+ les options du
+    jeu aléatoire elles-mêmes : verrou binaural, LFO filtre, timbre/
+    profondeur/respiration/Δ variés) sont désormais sauvegardés et restaurés
+    (`_doSave`/`loadState`/`_syncRandOptsUI`) ; auparavant plusieurs de ces
+    réglages étaient silencieusement réinitialisés à chaque relance de l'app.
+18. **Nettoyage des oscillateurs de fond (fix de fiabilité)** — les LFO de
+    respiration par paire et de dérive du Δ sont des oscillateurs Web Audio
+    indépendants qui ne sont jamais reconstruits automatiquement ; sans
+    nettoyage explicite au "Dissoudre", ils continueraient à tourner en
+    silence indéfiniment. Ajout du nettoyage complet dans `stopFlow()`
+    (et des bus de compression par paire) — important pour les sessions
+    longues avec plusieurs tirages aléatoires dans la même écoute.
 
-### 💡 Proposés (feuille de route, non codés cette passe)
+## Build APK
 
-6. **Δ indépendant par paire en mode random déverrouillé** — aujourd'hui,
-   quand "Verrou binaural" est décoché, `baseDelta` est **un seul** tirage
-   commun appliqué à toutes les paires. Tirer un Δ propre par paire (dans un
-   ensemble musicalement cohérent, ex. dérivé d'un même sous-multiple) donnerait
-   un jeu binaural bien plus riche et moins uniforme.
-7. **Dérive lente du Δ ("respiration du battement")** — un LFO très lent (cycle
-   de plusieurs minutes) ferait légèrement onduler chaque Δ (±0,3 Hz) sans
-   jamais changer de bande cérébrale : évite l'habituation, rend la session
-   réellement évolutive dans la durée plutôt que figée sur un seul tirage.
-8. **Décorrélation du drift analogique partagé** — un seul `_driftLFO` (0,07 Hz)
-   alimente aujourd'hui TOUS les oscillateurs en phase (`_driftDepth` partagé) :
-   ça bouge tout le mix ensemble, ça ne "décorrèle" rien entre voix. Donner à
-   chaque paire son propre drift (rythme + phase indépendants) créerait un
-   mouvement organique réellement indépendant.
-9. **Polarité variée même Δ verrouillé** — permettre à chaque paire de garder un
-   signe (+/−) de battement différent tout en gardant le Δ verrouillé identique,
-   pour une image plus variée sans toucher au confort binaural garanti par le
-   verrou.
-10. **Mode "casque strict" (routage 100% isolé)** — `StereoPannerNode` à
-    puissance constante laisse toujours fuir un peu de signal d'un canal vers
-    l'autre. Un mode optionnel routant Pingala/Ida sur des canaux vraiment
-    isolés (`ChannelSplitterNode`/`ChannelMergerNode`) éliminerait tout résidu
-    de crosstalk, même à Δ élevé, pour une écoute au casque irréprochable.
-11. **Compression douce anti-pompage par paire** — un limiteur très lent
-    (quelques dizaines de ms) sur le bus de chaque paire absorberait les
-    micro-pics d'enveloppe créés par un Δ élevé combiné à la respiration + FX,
-    sans jamais "écraser" le son.
-12. **Rampe dédiée au changement de Δ pendant le tirage aléatoire** — le retune
-    de fréquence est déjà lissé, mais Δ lui-même saute d'une valeur à l'autre ;
-    une glissade de quelques secondes rendrait les tirages plus fluides.
-13. **"Caractère du battement" à la place d'une liste plate de Δ** — regrouper
-    les deltas tirés par familles (Apaisé <2 Hz / Équilibré 2–4 Hz / Immersif
-    4–8 Hz, avec séparation stéréo croissante en conséquence) et exposer ça
-    comme un réglage explicite plutôt qu'un tableau `DELTAS` interne opaque.
-14. **"Ancre respiratoire" périodique** — resynchroniser volontairement la
-    respiration de toutes les paires sur une même phase de temps en temps (ex.
-    toutes les 3–5 min) pour un bref moment d'unisson au sein d'une texture
-    normalement décorrélée : alterne "vivant/désynchronisé" et "souffle commun".
-15. **Détune Sinus Duo par paire** — exposer le réglage -72/+72 ¢ (point #3)
-    aussi individuellement par paire, comme le sont déjà Δ/n/ratio, pour des
-    timbres différents pair par pair au sein d'un même jeu.
-16. **Sub-drone d'ancrage optionnel** — un pad grave fixe à très bas volume, non
-    concerné par le tirage aléatoire, pour stabiliser perceptuellement le mix
-    quand plusieurs Δ élevés jouent ensemble.
-17. **Historique des tirages avec retour arrière** — puisque respiration/detune/Δ
-    deviennent partiellement aléatoires à chaque "Nouveau jeu", pouvoir revenir
-    en un tap au tirage précédent devient précieux (undo léger, pile de 3–5
-    tirages en mémoire).
-18. **Export/partage d'un "jeu" complet** — `exportState()` existe déjà mais ne
-    couvre pas les nouveaux paramètres (respiration, détune Sinus Duo, options
-    random). L'étendre permettrait de rejouer exactement la même session plus
-    tard ou de la partager en une chaîne compacte.
+Le fichier `OmcVibe/build/OmcVibe181-modifie-debug.apk` est un APK signé et
+vérifié contenant ces 18 points, généré sans passer par le SDK Android
+officiel (indisponible dans cet environnement, `dl.google.com` étant bloqué
+par la politique réseau) :
+
+- `AndroidManifest.xml`, `resources.arsc`, `classes*.dex` : **strictement
+  identiques** à l'APK d'origine (aucune recompilation Java/Kotlin — seuls
+  les assets web sont remplacés par ceux de `OmcVibe/www/`).
+- Signature **APK Signature Scheme v2** (RSA 2048, SHA384withRSA) via la
+  bibliothèque `com.android.tools.build:apksig` (Maven Central), avec un
+  nouveau debug keystore (alias `androiddebugkey`, mot de passe `android` —
+  les conventions standard du debug Android).
+- Vérifié avec `ApkVerifier` (même bibliothèque) : `verified=true` pour
+  API 24 à 34 (Android 7.0 et plus récent — l'immense majorité des appareils
+  réels aujourd'hui).
+- **Limite connue** : la signature JAR historique (v1) n'a pas pu être
+  regénérée (la bibliothèque `apksig` 2.3.0 disponible sur Maven Central
+  s'appuie sur des classes internes du JDK 8 qui ont changé de signature
+  dans les JDK récents). Résultat : cet APK ne s'installera **pas** sur
+  Android 5.1/6.0 (API 22-23, appareils 2014-2015). minSdkVersion déclaré
+  reste 22 dans le manifeste (inchangé), mais dans les faits seul API 24+
+  est couvert par la signature présente.
+- Intégrité vérifiée : `unzip -t` propre, contenu de `index.html` dans
+  l'APK identique octet pour octet à `OmcVibe/www/index.html`.
+
+Pour une signature v1+v2 complète (compatible API 22+) ou pour repartir
+d'une chaîne d'outils standard, régénérer via le pipeline Capacitor/Gradle
+habituel : `npx cap sync android && cd android && ./gradlew assembleDebug`
+(nécessite le SDK Android, non disponible dans cet environnement).
 
 ## Où regarder dans le code
 
 - Correctif anti-tremolo : `binauralPanGap()`, `refreshBinauralPan()`,
-  `buildOscPan()` — section config, juste après `PAN_CENTERS`.
-- Respiration par paire : `attachOscVolLFO()`, `PAIR_BREATH_OPTS`,
-  `setPairBreathDepthMax()` (§2.10), branchement dans `triggerMagicAuto()`.
-- Détune Sinus Duo : `DUALSINE_DETUNE`, `sine2Engine()`, `setDualSineDetune()`,
-  branchement dans `buildOsc()`.
-- Persistance : `_doSave()` / `loadState()` / `_syncRandOptsUI()`.
-- UI : panneau "OPTIONS ALÉATOIRE" (case + slider respiration) et bloc FX
-  compact (slider "Sinus Duo", indicateur "Séparation anti-tremolo").
+  `buildOscPan()`, `STRICT_HEADPHONE_MODE` — section config, après `PAN_CENTERS`.
+- Respiration par paire + ancre : `attachOscVolLFO()`, `PAIR_BREATH_OPTS`,
+  `BREATH_ANCHOR_STATE`, `_breathAnchorPulse()` (§2.10/§2.11).
+- Dérive du Δ : `DELTA_DRIFT_STATE`, `attachDeltaDriftToNode()` — branché
+  dans `buildOsc()`.
+- Décorrélation du drift analogique : `_connectDecorrelatedDrift()`.
+- Détune Sinus Duo (global + par paire) : `DUALSINE_DETUNE`, `PAIR_DUALSINE`,
+  `sine2Engine()`, `setDualSineDetune()`, `setPairDualSineDetune()`.
+- Caractère du battement : `DELTA_CHARACTER`, `setDeltaCharacter()`.
+- Compression par paire : `PAIR_COMP_STATE`, `_ensurePairComp()`.
+- Sub-drone : `SUBDRONE_STATE`, `_startSubDrone()`.
+- Historique/undo : `_gameHistory`, `undoLastRandom()`.
+- Persistance : `_doSave()` / `loadState()` / `_syncRandOptsUI()` /
+  `getFXState()` / `applyFXState()`.
+- UI : panneau "OPTIONS ALÉATOIRE" (verrou, variétés, caractère, respiration,
+  ancre) et bloc FX compact (Sinus Duo, dérive Δ, casque strict, anti-pompage,
+  sub-drone, indicateur anti-tremolo) ; onglet Oscillo par paire (Sinus Duo
+  par paire).

@@ -1836,12 +1836,18 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
 <div class="pan-right canva-container" id="panRand" data-html-import-id="html-import-494" data-template-id="div-472">
   <div class="pct canva-container" data-html-import-id="html-import-495" data-template-id="div-473">Options Aléatoire</div>
   <button class="btn-magic-rand canva-button" onclick="triggerMagicAuto()" data-html-import-id="html-import-496" data-template-id="button-474">⚄ Omchaléatoire</button>
+  <!-- #12 : retour arrière sur les 5 derniers tirages aléatoires -->
+  <button class="fbf-step canva-button" id="btn-undo-random" onclick="undoLastRandom()" disabled style="width:100%;margin-top:.35rem;">↩ Annuler le tirage</button>
 
   <!-- Options aléatoire -->
   <div style="margin:.6rem 0 .3rem;padding:.55rem .65rem;background:rgba(99,230,255,.05);border:1px solid rgba(99,230,255,.14);border-radius:10px;" data-html-import-id="html-import-497" data-template-id="div-475" class="canva-container">
     <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.1em;font-style:italic;margin-bottom:.4rem;" data-html-import-id="html-import-498" data-template-id="div-476" class="canva-container">OPTIONS ALÉATOIRE</div>
     <div class="sw-row canva-container" style="font-size:.7rem;padding:.1rem 0 .35rem;" data-html-import-id="html-import-499" data-template-id="div-477"><canva-inline-text data-template-id="canva-inline-text-478" class="canva-text">Verrou binaural (doux) </canva-inline-text><input type="checkbox" class="sw canva-input" id="ck-binaural-lock" checked="" onchange="setBinauralLock(this.checked)" data-html-import-id="html-import-500" data-template-id="input-479"></div>
     <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;" data-html-import-id="html-import-501" data-template-id="div-480" class="canva-container">Le battement binaural reste stable et apaisé (évite le mode « IRM »). Décoche pour le laisser varier.</div>
+    <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">↳ Δ varié par paire </span><input type="checkbox" class="sw" id="ck-delta-variety" checked onchange="setDeltaVariety(this.checked)"></div>
+    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;">Actif seulement si le verrou ci-dessus est décoché : chaque paire pioche alors son propre battement (au lieu d'un seul imposé à toutes) pour un jeu plus riche.</div>
+    <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Polarité variée par paire </span><input type="checkbox" class="sw" id="ck-polarity-variety" checked onchange="setPolarityVariety(this.checked)"></div>
+    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;">Fonctionne même verrou binaural actif : ne change jamais l'amplitude du battement, seulement si Ida sonne au-dessus ou en-dessous de Pingala.</div>
     <div class="sw-row canva-container" style="font-size:.7rem;padding:.1rem 0 .35rem;" data-html-import-id="html-import-502" data-template-id="div-481"><canva-inline-text data-template-id="canva-inline-text-482" class="canva-text">LFO Cutoff / Résonance </canva-inline-text><input type="checkbox" class="sw canva-input" id="ck-rand-lfo" onchange="setRandFilterLFO(this.checked)" data-html-import-id="html-import-503" data-template-id="input-483"></div>
     <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;" data-html-import-id="html-import-504" data-template-id="div-484" class="canva-container">Respiration lente et douce du filtre sur les paires satellites (façon pad analogique).</div>
     <div class="sw-row canva-container" style="font-size:.7rem;padding:.1rem 0 .35rem;" data-html-import-id="html-import-505" data-template-id="div-485"><canva-inline-text data-template-id="canva-inline-text-486" class="canva-text">Timbre aléatoire </canva-inline-text><input type="checkbox" class="sw canva-input" id="ck-rand-timbre" checked="" onchange="setRandTimbre(this.checked)" data-html-import-id="html-import-506" data-template-id="input-487"></div>
@@ -1854,6 +1860,8 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
       <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Profondeur <span id="sv-breath-depth" style="color:#63E6FF">12%</span></label>
       <input type="range" min="0.01" max="0.3" step="0.01" value="0.12" style="flex:1;color:#63E6FF;" oninput="setPairBreathDepthMax(this.value)">
     </div>
+    <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">↳ Ancre respiratoire périodique </span><input type="checkbox" class="sw" id="ck-breath-anchor" onchange="setBreathAnchor(this.checked)"></div>
+    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;">Toutes les 4 min, les paires respirent un instant à l'unisson avant de redériver naturellement — un souffle commun ponctuel.</div>
     <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.3rem 0 .2rem;" data-html-import-id="html-import-511" data-template-id="div-493" class="canva-container">PLAGE FRÉQUENCE — toujours active, répartition continue</div>
     <div class="sl-row" data-html-import-id="html-import-512">
       <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;" data-html-import-id="html-import-513" data-template-id="label-494" class="canva-text"><canva-inline-text data-template-id="canva-inline-text-495" class="canva-text">Min </canva-inline-text><span id="rv-fmin" style="color:#63E6FF" data-html-import-id="html-import-514" data-template-id="span-496" class="canva-text">54</span><canva-inline-text data-template-id="canva-inline-text-497" class="canva-text"> Hz</canva-inline-text></label>
@@ -1870,6 +1878,13 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
       <button class="fbf-step canva-button" id="rrm-harmonic" onclick="setRandRatioMode('harmonic',this)" data-html-import-id="html-import-524" data-template-id="button-507">♪ Harmonique</button>
     </div>
     <div class="sw-row canva-container" style="font-size:.7rem;padding:.1rem 0;" data-html-import-id="html-import-525" data-template-id="div-508"><canva-inline-text data-template-id="canva-inline-text-509" class="canva-text">FX aléatoire </canva-inline-text><input type="checkbox" class="sw canva-input" id="ck-rand-fx" onchange="setRandUseFX(this.checked)" data-html-import-id="html-import-526" data-template-id="input-510"></div>
+    <!-- #8 : Caractère du battement — familles de Δ nommées (verrou décoché) -->
+    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.4rem 0 .2rem;">CARACTÈRE DU BATTEMENT — actif si le verrou binaural est décoché</div>
+    <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.35rem;">
+      <button class="fbf-step canva-button" id="dch-apaise" onclick="setDeltaCharacter('apaise',this)">☾ Apaisé</button>
+      <button class="fbf-step active canva-button" id="dch-equilibre" onclick="setDeltaCharacter('equilibre',this)">⚖ Équilibré</button>
+      <button class="fbf-step canva-button" id="dch-immersif" onclick="setDeltaCharacter('immersif',this)">✺ Immersif</button>
+    </div>
   </div>
 
   <div class="rand-steps-grid canva-container" style="margin-top:.5rem" data-html-import-id="html-import-527" data-template-id="div-511">
@@ -2171,7 +2186,15 @@ function binauralPanGap(delta) {
   const d = Math.min(Math.abs(delta) || 0, 14);
   return Math.min(BINAURAL_GAP_MAX, PAN_SPREAD + d * BINAURAL_GAP_PER_HZ);
 }
+// #5 (roadmap) : mode casque strict — Pingala 100% gauche / Ida 100% droite
+// pour CHAQUE paire, sans exception. Un StereoPannerNode à puissance
+// constante n'atteint le silence total sur le canal opposé qu'exactement à
+// pan=±1 : au-delà du correctif proportionnel ci-dessus (qui garde
+// l'éventail spatial inter-paires), ce mode sacrifie l'éventail pour une
+// pureté binaurale absolue, zéro résidu de crosstalk, pensé pour un casque.
+let STRICT_HEADPHONE_MODE = false;
 function buildOscPan(width) {
+  if (STRICT_HEADPHONE_MODE) return PAN_CENTERS.map(() => [-1, 1]);
   const w = (typeof width === 'number') ? Math.max(0, Math.min(1, width)) : 0.7;
   return PAN_CENTERS.map((ctr, i) => {
     const c = i === MASTER_IDX ? 0 : ctr * w;
@@ -2307,6 +2330,13 @@ const HEX_3D_POS = [
 ];
 const LFO_STATE    = {on:false, rate:.25,  depth:.08};
 const BREATH_STATE = {on:true, rate:0.11, depth:0.18};  // respiration douce par défaut = le souffle de vie
+// #7 (roadmap) : dérive lente du battement — le Δ affiché ne bouge pas,
+// mais le battement RÉEL ondule très légèrement (± amount Hz, cycle de
+// plusieurs minutes) autour de sa valeur, jamais assez pour changer de
+// bande cérébrale. Évite l'habituation, rend une session longue vivante
+// plutôt que figée sur un seul tirage.
+const DELTA_DRIFT_STATE = { on: true, amount: 0.3 }; // Hz
+const _deltaDriftLFOs = {}; // pairIdx → { lfo, depthGain }
 let _lfoNode = null, _lfoGain = null, _lfoDepthGain = null;
 let _breathLFO = null, _breathGain = null, _breathDepthGain = null;
 let _btKeepalive = null;
@@ -2350,9 +2380,17 @@ const OSC_ENGINE_LABELS = {
 // fondamentale). Ici l'écart devient un réglage global -72..+72 ¢ (7 ¢ =
 // valeur d'origine, conservée par défaut) : proche de 0, quasi mono/pur ;
 // large, un chorus doux et large qui épaissit le timbre sans dureté.
-let DUALSINE_DETUNE = 7; // cents, plage -72..72
-function sine2Engine() {
-  const d = Math.max(-72, Math.min(72, DUALSINE_DETUNE));
+let DUALSINE_DETUNE = 7; // cents, plage -72..72 (réglage global par défaut)
+// #10 (roadmap) : réglage PAR PAIRE, en plus du global — pairIdx → cents
+// (-72..72). Absent = la paire suit le réglage global ci-dessus.
+const PAIR_DUALSINE = {};
+function _dualSineMagFor(id) {
+  const pairIdx = PAIRS.findIndex(p => p.pingala.id === id || p.ida.id === id);
+  if (pairIdx >= 0 && typeof PAIR_DUALSINE[pairIdx] === 'number') return PAIR_DUALSINE[pairIdx];
+  return DUALSINE_DETUNE;
+}
+function sine2Engine(mag) {
+  const d = Math.max(-72, Math.min(72, mag != null ? mag : DUALSINE_DETUNE));
   return [{t:'sine', d:-d, g:.62}, {t:'sine', d:d, g:.62}];
 }
 function setDualSineDetune(v) {
@@ -2361,17 +2399,79 @@ function setDualSineDetune(v) {
   Object.keys(OSC_WAVES).forEach(id => {
     if (OSC_WAVES[id] !== 'sine2') return;
     const node = nodes[id]; if (!node || !node.subs || node.subs.length < 2) return;
-    node.subs[0].osc.detune.setTargetAtTime(-DUALSINE_DETUNE, now, 0.12);
-    node.subs[1].osc.detune.setTargetAtTime( DUALSINE_DETUNE, now, 0.12);
+    const mag = _dualSineMagFor(id); // respecte un éventuel réglage par paire
+    node.subs[0].osc.detune.setTargetAtTime(-mag, now, 0.12);
+    node.subs[1].osc.detune.setTargetAtTime( mag, now, 0.12);
   });
   const el = document.getElementById('sv-dualsine'); if (el) el.textContent = (DUALSINE_DETUNE < 0 ? '−' : '±') + Math.abs(DUALSINE_DETUNE).toFixed(0) + ' ¢';
+  saveState();
+}
+// Réglage individuel par paire (surcharge le global pour cette paire seule).
+function setPairDualSineDetune(i, v) {
+  PAIR_DUALSINE[i] = Math.max(-72, Math.min(72, parseFloat(v)));
+  const now = aNow();
+  [PAIRS[i].pingala.id, PAIRS[i].ida.id].forEach(id => {
+    if (OSC_WAVES[id] !== 'sine2') return;
+    const node = nodes[id]; if (!node || !node.subs || node.subs.length < 2) return;
+    node.subs[0].osc.detune.setTargetAtTime(-PAIR_DUALSINE[i], now, 0.12);
+    node.subs[1].osc.detune.setTargetAtTime( PAIR_DUALSINE[i], now, 0.12);
+  });
   saveState();
 }
 
 // ── Grain analogique (waveshaper doux + drift de pitch) ───────────
 // OFF par défaut : une sinus pure doit rester PURE (sinon saturation = bourdonnement).
+// ── #11 (roadmap) : compression douce anti-pompage PAR PAIRE ──────
+// OFF par défaut : trajet direct hiTrim→masterGain inchangé. Activé, chaque
+// paire (Pingala+Ida) converge d'abord vers un bus + DynamicsCompressorNode
+// partagé avant le master — seuil haut, ratio faible, attaque/release
+// lents : absorbe les crêtes sans jamais s'entendre comme une compression.
+const PAIR_COMP_STATE = { on: false };
+const _pairComp = {}; // pairIdx → { bus, comp }
+function _ensurePairComp(i) {
+  if (_pairComp[i]) return _pairComp[i];
+  const c = audioCtx();
+  const bus = c.createGain(); bus.gain.value = 1;
+  const comp = c.createDynamicsCompressor();
+  comp.threshold.value = -16; comp.knee.value = 20; comp.ratio.value = 2;
+  comp.attack.value = 0.08; comp.release.value = 0.5;
+  bus.connect(comp);
+  if (masterGain) comp.connect(masterGain);
+  _pairComp[i] = { bus, comp };
+  return _pairComp[i];
+}
+function _clearAllPairComp() {
+  Object.values(_pairComp).forEach(pc => { try { pc.bus.disconnect(); pc.comp.disconnect(); } catch(e) {} });
+  for (const k in _pairComp) delete _pairComp[k];
+}
+function setPairCompression(v) {
+  const was = PAIR_COMP_STATE.on;
+  PAIR_COMP_STATE.on = !!v;
+  const ck = document.getElementById('ck-pair-comp'); if (ck) ck.checked = PAIR_COMP_STATE.on;
+  if (was !== PAIR_COMP_STATE.on) { _clearAllPairComp(); if (flowing) rebuildAllOscs(); }
+  saveState();
+}
+
 const GRAIN_STATE = { on: false, drive: 0, drift: 0 };
 let _driftLFO = null, _driftDepth = null;
+// #8 (roadmap) : le LFO de drift reste UNIQUE et partagé (simple à gérer,
+// une seule paire lfo/depth pour toute l'app) mais chaque oscillateur reçoit
+// le signal via son propre DelayNode à retard aléatoire — même onde lente,
+// déphasée différemment par voix. Ça décorrèle vraiment le mouvement perçu
+// (avant : tous les oscillateurs dérivaient exactement en phase, un simple
+// vibrato d'ensemble) sans ajouter d'oscillateur ni de cycle de nettoyage
+// supplémentaire — juste un DelayNode léger par voix, nettoyé avec elle.
+function _connectDecorrelatedDrift(param) {
+  if (!_driftDepth) return null;
+  try {
+    const c = audioCtx();
+    const delay = c.createDelay(15);
+    delay.delayTime.value = Math.random() * 14.28; // période du LFO ≈ 1/0.07Hz ≈ 14,3s
+    _driftDepth.connect(delay);
+    delay.connect(param);
+    return delay;
+  } catch(e) { return null; }
+}
 function _grainCurve(drive) {
   const n = 1024, c = new Float32Array(n);
   const k = drive * 30;
@@ -2404,7 +2504,7 @@ function applyHiBand(node, freq) { /* no-op : géré par les cuts de bande */ }
 function buildOsc(id, freq, vol, pan) {
   const c      = audioCtx();
   const waveKey = OSC_WAVES[id];
-  const engine = waveKey === 'sine2' ? sine2Engine() : (OSC_ENGINES[waveKey] || OSC_ENGINES.sine);
+  const engine = waveKey === 'sine2' ? sine2Engine(_dualSineMagFor(id)) : (OSC_ENGINES[waveKey] || OSC_ENGINES.sine);
   const fs     = OSC_FILTER[id] || { cutoff: 6000, res: 0.707 };  // Q neutre (pas de surtension)
   const env    = OSC_ENV[id]    || { a: 0, r: 0 };
   const f0     = safeF(freq);
@@ -2426,9 +2526,9 @@ function buildOsc(id, freq, vol, pan) {
     modulator.connect(modIndex); modIndex.connect(carrier.frequency);
     const pg = c.createGain(); pg.gain.value = 1;
     carrier.connect(pg); pg.connect(signalIn);
-    if (_driftDepth) { try { _driftDepth.connect(carrier.detune); } catch(e) {} }
+    const carrierDrift = _connectDecorrelatedDrift(carrier.detune);
     carrier.start(); modulator.start();
-    subs.push({ osc: carrier, ratio: 1 });
+    subs.push({ osc: carrier, ratio: 1, _driftDelay: carrierDrift });
     subs.push({ osc: modulator, ratio: modRatio, _fmIndex: modIndex });
   } else {
     engine.forEach(part => {
@@ -2441,9 +2541,9 @@ function buildOsc(id, freq, vol, pan) {
       osc.detune.value = (part.d || 0) + (Math.random() * 2 - 1) * 1.2;
       const pg = c.createGain(); pg.gain.value = part.g != null ? part.g : 1;
       osc.connect(pg); pg.connect(signalIn);
-      if (_driftDepth) { try { _driftDepth.connect(osc.detune); } catch(e) {} }
+      const driftDelay = _connectDecorrelatedDrift(osc.detune);
       osc.start();
-      subs.push({ osc, ratio });
+      subs.push({ osc, ratio, _driftDelay: driftDelay });
     });
   }
 
@@ -2467,7 +2567,18 @@ function buildOsc(id, freq, vol, pan) {
   if (shaper) { signalIn.connect(shaper); shaper.connect(p); }
   else        { signalIn.connect(p); }      // sinus pure → aucun traitement
   p.connect(hpf); hpf.connect(flt); flt.connect(g); g.connect(hiTrim);
-  hiTrim.connect(masterGain);
+  // #11 (roadmap) : en option, Pingala ET Ida d'une même paire convergent
+  // vers un bus commun passant par un compresseur TRÈS doux avant le master
+  // — absorbe les micro-pics d'enveloppe qu'un Δ élevé + respiration + FX
+  // cumulés peuvent créer, sans jamais "écraser" le son (seuil haut, ratio
+  // faible, attaque/release lents). OFF par défaut : trajet direct inchangé.
+  if (PAIR_COMP_STATE.on) {
+    const _compPairIdx = PAIRS.findIndex(p2 => p2.pingala.id === id || p2.ida.id === id);
+    if (_compPairIdx >= 0) hiTrim.connect(_ensurePairComp(_compPairIdx).bus);
+    else hiTrim.connect(masterGain);
+  } else {
+    hiTrim.connect(masterGain);
+  }
 
   // Envoi reverbe PAR PAIRE — profondeur 3D : une paire "lointaine" envoie
   // plus dans la reverbe (et moins de dry), une paire "proche" reste sèche.
@@ -2487,18 +2598,23 @@ function buildOsc(id, freq, vol, pan) {
     g.gain.setValueAtTime(0, now);
     g.gain.setTargetAtTime(vol, now, atk);
   }
+  // #7 (roadmap) : ce node est-il l'Ida (battement) d'une paire ? Si oui,
+  // lui attache sa propre dérive lente (rythme + phase indépendants).
+  const _driftPairIdx = PAIRS.findIndex(p => p.ida.id === id);
+  if (_driftPairIdx >= 0) attachDeltaDriftToNode(_driftPairIdx, node);
   return node;
 }
 
-function tuneOsc(id, freq) {
+function tuneOsc(id, freq, rampDur) {
   const node = nodes[id]; if (!node) return;
   try {
     const f = safeF(freq), now = aNow();
+    const dur = rampDur || TUNE_T; // #12 : glisse plus longue en option (cf. Δ du jeu aléatoire)
     (node.subs || [{ osc: node.o, ratio: 1 }]).forEach(s => {
       const tgt = Math.max(1, f * (s.ratio || 1));
       s.osc.frequency.cancelScheduledValues(now);
       s.osc.frequency.setValueAtTime(s.osc.frequency.value, now);
-      s.osc.frequency.exponentialRampToValueAtTime(tgt, now + TUNE_T);
+      s.osc.frequency.exponentialRampToValueAtTime(tgt, now + dur);
     });
     applyHiBand(node, f);
   } catch(e) {}
@@ -2517,7 +2633,7 @@ function releaseOsc(node) {
   } catch(e) {}
   setTimeout(() => {
     try {
-      subs.forEach(s => { try { s.osc.disconnect(); } catch(e) {} try { if (s._fmIndex) s._fmIndex.disconnect(); } catch(e) {} });
+      subs.forEach(s => { try { s.osc.disconnect(); } catch(e) {} try { if (s._fmIndex) s._fmIndex.disconnect(); } catch(e) {} try { if (s._driftDelay) s._driftDelay.disconnect(); } catch(e) {} });
       node.g.disconnect(); node.p.disconnect();
       if (node.signalIn) node.signalIn.disconnect();
       if (node.shaper)  node.shaper.disconnect();
@@ -2993,7 +3109,8 @@ function getFXState() {
     lfo: { ...LFO_STATE }, breath: { ...BREATH_STATE }, grain: { ...GRAIN_STATE },
     waves: { ...OSC_WAVES },
     filters: JSON.parse(JSON.stringify(OSC_FILTER)),
-    pairFX: { ...PAIR_FX }
+    pairFX: { ...PAIR_FX },
+    pairDualSine: { ...PAIR_DUALSINE } // #10 (roadmap)
   };
 }
 
@@ -3021,6 +3138,7 @@ function applyFXState(s) {
   if (s.waves)   { if (JSON.stringify(OSC_WAVES) !== JSON.stringify(s.waves)) wavesChanged = true; Object.assign(OSC_WAVES, s.waves); }
   if (s.filters) { Object.keys(s.filters).forEach(id => { OSC_FILTER[id] = s.filters[id]; if (nodes[id]) setOscFilter(id, s.filters[id].cutoff, s.filters[id].res); }); }
   if (s.pairFX)  { Object.keys(s.pairFX).forEach(id => { PAIR_FX[id] = s.pairFX[id]; const n=nodes[id]; if (n?.fxSend) n.fxSend.gain.setTargetAtTime(s.pairFX[id]!==false?FX_SEND_LEVEL:0, aNow(), 0.08); }); }
+  if (s.pairDualSine) { Object.keys(s.pairDualSine).forEach(i => setPairDualSineDetune(i, s.pairDualSine[i])); } // #10 (roadmap)
   if (wavesChanged) rebuildAllOscs();
 }
 
@@ -3139,6 +3257,8 @@ async function startFlow() {
     try { window.Capacitor?.Plugins?.KeepAwake?.keepAwake?.(); } catch(e) {}
     PAIRS.forEach((_, i) => setTimeout(() => swapPingala(i), 60 + i * 60));
     PAIRS.forEach((_, i) => updateOrbUI(i));
+    _armBreathAnchor(); // #9 (roadmap)
+    if (SUBDRONE_STATE.on) _startSubDrone(); // #16 (roadmap)
     ui('live', 'En expansion…');
   } catch(err) {
     flowing = false; nodes = {};
@@ -3177,7 +3297,7 @@ async function stopFlow() {
     } catch(e) {}
     setTimeout(() => {
       try {
-        subs.forEach(s => { try { s.osc.disconnect(); } catch(e) {} });
+        subs.forEach(s => { try { s.osc.disconnect(); } catch(e) {} try { if (s._fmIndex) s._fmIndex.disconnect(); } catch(e) {} try { if (s._driftDelay) s._driftDelay.disconnect(); } catch(e) {} });
         n.g.disconnect(); n.p.disconnect();
         if (n.signalIn) n.signalIn.disconnect();
         if (n.shaper)  n.shaper.disconnect();
@@ -3193,6 +3313,14 @@ async function stopFlow() {
     [_lfoNode, _lfoGain, _lfoDepthGain, _breathLFO, _breathGain, _breathDepthGain, _driftLFO, _driftDepth, masterGain]
       .forEach(x => { try { x?.disconnect(); } catch(e){} });
     if (analyser) { try { analyser.disconnect(); } catch(e){} }
+    // #2/#3 respiration + dérive par paire : oscillateurs indépendants qui ne
+    // sont sinon jamais arrêtés (pas de rebuild systématique au Dissoudre) —
+    // sans ce nettoyage ils continueraient à tourner silencieusement en fond.
+    Object.keys(_oscVolLFOs).forEach(id => clearOscVolLFO(id));
+    PAIRS.forEach((_, i) => clearDeltaDrift(i));
+    _clearAllPairComp();
+    clearInterval(_breathAnchorTimer); _breathAnchorTimer = null; // #9 (roadmap)
+    _stopSubDrone(); // #16 (roadmap)
     _lfoNode=_lfoGain=_lfoDepthGain=_breathLFO=_breathGain=_breathDepthGain=_driftLFO=_driftDepth=masterGain=analyser=null;
     PAIRS.forEach((_, i) => updateOrbUI(i));
     const mc = document.getElementById('vpc-p' + MASTER_IDX);
@@ -3413,6 +3541,115 @@ function toggleOscVolLFO(i) {
     const btn = document.getElementById('btn-lfo-' + i);
     if (btn) { btn.textContent = '〜 Actif'; btn.style.opacity = '0.55'; }
   }
+}
+
+// ── #9 (roadmap) : "Ancre respiratoire" périodique ──────────────────
+// Toutes les quelques minutes, réaligne un instant la respiration de
+// TOUTES les paires sur la même phase de départ (rythme propre à chacune
+// inchangé) — bref moment d'unisson au sein d'une texture normalement
+// décorrélée, qui redérive naturellement ensuite puisque chaque paire
+// garde un rythme légèrement différent.
+const BREATH_ANCHOR_STATE = { on: false, intervalSec: 240 };
+let _breathAnchorTimer = null;
+function _breathAnchorPulse() {
+  if (!flowing || !RAND_OPTS.breathRandom) return;
+  PAIRS.forEach((pair, i) => {
+    if (typeof isLocked === 'function' && isLocked(i)) return;
+    const existing = _oscVolLFOs[pair.pingala.id];
+    const rate  = existing ? existing.lfo.frequency.value : (0.07 + Math.random() * 0.22);
+    const depth = (0.35 + Math.random() * 0.65) * PAIR_BREATH_OPTS.depthMax;
+    attachOscVolLFO(pair.pingala.id, rate, depth, 0);
+    attachOscVolLFO(pair.ida.id, rate, depth, 0);
+  });
+}
+function _armBreathAnchor() {
+  clearInterval(_breathAnchorTimer); _breathAnchorTimer = null;
+  if (!BREATH_ANCHOR_STATE.on || !flowing) return;
+  _breathAnchorTimer = setInterval(_breathAnchorPulse, BREATH_ANCHOR_STATE.intervalSec * 1000);
+}
+function setBreathAnchor(v) {
+  BREATH_ANCHOR_STATE.on = !!v;
+  const ck = document.getElementById('ck-breath-anchor'); if (ck) ck.checked = BREATH_ANCHOR_STATE.on;
+  _armBreathAnchor();
+  saveState();
+}
+
+// ── #16 (roadmap) : sub-drone d'ancrage optionnel ───────────────────
+// Pad grave fixe (racine ÷ 2), volume très bas, jamais touché par le jeu
+// aléatoire — stabilise perceptuellement le mix quand plusieurs Δ élevés
+// jouent en même temps (un point de repère grave immobile).
+const SUBDRONE_STATE = { on: false, vol: 0.05 };
+let _subDroneOsc = null, _subDroneGain = null;
+function _startSubDrone() {
+  if (!SUBDRONE_STATE.on || !masterGain) return;
+  _stopSubDrone();
+  const c = audioCtx();
+  _subDroneOsc = c.createOscillator(); _subDroneOsc.type = 'sine';
+  _subDroneOsc.frequency.value = Math.max(20, masterFreq / 2);
+  _subDroneGain = c.createGain(); _subDroneGain.gain.value = 0;
+  _subDroneOsc.connect(_subDroneGain); _subDroneGain.connect(masterGain);
+  _subDroneOsc.start();
+  _subDroneGain.gain.setTargetAtTime(SUBDRONE_STATE.vol, aNow(), 1.5);
+}
+function _stopSubDrone() {
+  if (_subDroneGain) { try { _subDroneGain.gain.setTargetAtTime(0, aNow(), 0.5); } catch(e) {} }
+  const osc = _subDroneOsc, g = _subDroneGain;
+  _subDroneOsc = null; _subDroneGain = null;
+  setTimeout(() => { try { osc?.stop(); osc?.disconnect(); g?.disconnect(); } catch(e) {} }, 800);
+}
+function _retuneSubDrone() {
+  if (_subDroneOsc) _subDroneOsc.frequency.setTargetAtTime(Math.max(20, masterFreq / 2), aNow(), 0.3);
+}
+function setSubDrone(v) {
+  SUBDRONE_STATE.on = !!v;
+  const ck = document.getElementById('ck-subdrone'); if (ck) ck.checked = SUBDRONE_STATE.on;
+  if (flowing) { if (SUBDRONE_STATE.on) _startSubDrone(); else _stopSubDrone(); }
+  saveState();
+}
+function setSubDroneVol(v) {
+  SUBDRONE_STATE.vol = Math.max(0, Math.min(0.25, parseFloat(v)));
+  if (_subDroneGain) _subDroneGain.gain.setTargetAtTime(SUBDRONE_STATE.vol, aNow(), 0.3);
+  const el = document.getElementById('sv-subdrone-vol'); if (el) el.textContent = Math.round(SUBDRONE_STATE.vol * 100) + '%';
+  saveState();
+}
+
+/* ---------- 2.11 · DÉRIVE LENTE DU BATTEMENT (Δ) ---------- */
+// Modulation Web Audio native de la fréquence de l'oscillateur Ida (rythme
+// de plusieurs minutes, phase de départ aléatoire) — le Δ affiché dans
+// l'UI ne bouge pas, seul le battement réellement entendu ondule autour
+// de sa valeur. Attaché automatiquement dans buildOsc() dès qu'un node
+// Ida est (re)créé ; survit ensuite aux simples retunes (tuneOsc).
+function attachDeltaDriftToNode(pairIdx, node) {
+  clearDeltaDrift(pairIdx);
+  if (!DELTA_DRIFT_STATE.on || !node || !node.subs) return;
+  const c = audioCtx();
+  const periodSec = 180 + Math.random() * 240; // 3 à 7 minutes par cycle
+  const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 1 / periodSec;
+  const depthGain = c.createGain(); depthGain.gain.value = DELTA_DRIFT_STATE.amount;
+  lfo.connect(depthGain);
+  node.subs.forEach(s => { try { depthGain.connect(s.osc.frequency); } catch(e) {} });
+  lfo.start(c.currentTime + Math.random() * periodSec); // phase de départ aléatoire
+  _deltaDriftLFOs[pairIdx] = { lfo, depthGain };
+}
+function clearDeltaDrift(pairIdx) {
+  const d = _deltaDriftLFOs[pairIdx]; if (!d) return;
+  try { d.lfo.stop(); d.lfo.disconnect(); d.depthGain.disconnect(); } catch(e) {}
+  delete _deltaDriftLFOs[pairIdx];
+}
+function setDeltaDrift(v) {
+  DELTA_DRIFT_STATE.on = !!v;
+  const ck = document.getElementById('ck-delta-drift'); if (ck) ck.checked = DELTA_DRIFT_STATE.on;
+  if (flowing) PAIRS.forEach((pair, i) => {
+    if (DELTA_DRIFT_STATE.on) attachDeltaDriftToNode(i, nodes[pair.ida.id]);
+    else clearDeltaDrift(i);
+  });
+  saveState();
+}
+function setDeltaDriftAmount(v) {
+  DELTA_DRIFT_STATE.amount = Math.max(0.05, Math.min(1, parseFloat(v)));
+  Object.values(_deltaDriftLFOs).forEach(d => d.depthGain.gain.setTargetAtTime(DELTA_DRIFT_STATE.amount, aNow(), 0.2));
+  const el = document.getElementById('sv-delta-drift'); if (el) el.textContent = '±' + DELTA_DRIFT_STATE.amount.toFixed(2) + ' Hz';
+  saveState();
 }
 
 function ui(state, text) {
@@ -4174,6 +4411,26 @@ function toggleLock(i) {
   if (typeof updateDockDisplays === 'function') updateDockDisplays();
 }
 
+// ── #8 (roadmap) : Caractère du battement ──────────────────────────
+// 3 familles nommées explicites (au lieu d'une seule liste plate DELTAS
+// opaque) — piochées par triggerMagicAuto() quand le verrou binaural est
+// décoché. La séparation stéréo anti-tremolo (binauralPanGap) suit
+// automatiquement, plus large pour "Immersif" que pour "Apaisé".
+const DELTA_CHARACTER = {
+  apaise:    { label: 'Apaisé',    deltas: [0.8, 1.2, 1.6, 2.0] },
+  equilibre: { label: 'Équilibré', deltas: [3, 4, 5, 6] },
+  immersif:  { label: 'Immersif',  deltas: [6, 7.83, 9, 10] },
+};
+let DELTA_CHARACTER_MODE = 'equilibre';
+function setDeltaCharacter(mode, btn) {
+  if (!DELTA_CHARACTER[mode]) return;
+  DELTA_CHARACTER_MODE = mode;
+  document.querySelectorAll('[id^="dch-"]').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  else { const el = document.getElementById('dch-' + mode); if (el) el.classList.add('active'); }
+  saveState();
+}
+
 // ── Options mode aléatoire ────────────────────────────────────────
 // lockBinaural : ACTIVÉ par défaut. Le jeu aléatoire NE touche PAS au delta
 // binaural (testé 100% fautif du « mode IRM ») → battements doux et stables.
@@ -4181,7 +4438,7 @@ function toggleLock(i) {
 // case ON/OFF cachée) : chaque tirage pioche une fondamentale CONTINUE dans
 // cette plage — répartition quasi-infinie, plus de pool figé.
 const RAND_OPTS={freqMin:F_MIN,freqMax:432,ratioMode:'random',useFX:false,spread:0.6,lockBinaural:true,
-  filterLFO:false, randomTimbre:true, randomDepth:true, breathRandom:true};
+  filterLFO:false, randomTimbre:true, randomDepth:true, breathRandom:true, deltaVariety:true, polarityVariety:true};
 // filterLFO désactivé par défaut (retour terrain, comparaison avec la
 // version du 01/07 qui ne l'avait pas) : à chaque tirage aléatoire, cette
 // option fait jusqu'à 24 créations/déconnexions de nœuds de modulation
@@ -4193,6 +4450,29 @@ const RAND_OPTS={freqMin:F_MIN,freqMax:432,ratioMode:'random',useFX:false,spread
 function setBinauralLock(v){
   RAND_OPTS.lockBinaural=!!v;
   const ck=document.getElementById('ck-binaural-lock'); if(ck) ck.checked=RAND_OPTS.lockBinaural;
+  saveState();
+}
+// #6 : n'a d'effet que verrou binaural décoché — chaque paire pioche alors
+// son propre Δ (au lieu d'un battement commun) pour un jeu plus riche.
+function setDeltaVariety(v){
+  RAND_OPTS.deltaVariety=!!v;
+  const ck=document.getElementById('ck-delta-variety'); if(ck) ck.checked=RAND_OPTS.deltaVariety;
+  saveState();
+}
+// #9 : indépendant du verrou binaural — ne touche jamais à l'amplitude du
+// battement, seulement à son signe (Ida au-dessus/en-dessous de Pingala).
+function setPolarityVariety(v){
+  RAND_OPTS.polarityVariety=!!v;
+  const ck=document.getElementById('ck-polarity-variety'); if(ck) ck.checked=RAND_OPTS.polarityVariety;
+  saveState();
+}
+// #5 (roadmap) : Pingala 100% gauche / Ida 100% droite pour toutes les
+// paires — sacrifie l'éventail spatial pour une pureté binaurale absolue.
+function setStrictHeadphone(v){
+  STRICT_HEADPHONE_MODE=!!v;
+  const ck=document.getElementById('ck-strict-headphone'); if(ck) ck.checked=STRICT_HEADPHONE_MODE;
+  refreshBinauralPan();
+  _updateBinauralSepUI(globalDelta);
   saveState();
 }
 
@@ -4409,6 +4689,7 @@ function setMasterFreq(f) {
     tuneOsc(PAIRS[i].pingala.id, calcPFreq(i));
     tuneOsc(PAIRS[i].ida.id,     calcIFreq(i));
   });
+  _retuneSubDrone(); // #16 (roadmap)
   saveState();
 }
 
@@ -4440,6 +4721,7 @@ function setGlobalDelta(raw) {
 function _updateBinauralSepUI(d) {
   const el = document.getElementById('sv-binaural-sep');
   if (!el) return;
+  if (STRICT_HEADPHONE_MODE) { el.textContent = '100% (casque strict)'; el.style.color = '#86FFC0'; return; }
   const pct = Math.round(binauralPanGap(d) * 100);
   el.textContent = pct + '%';
   el.style.color = d > 2 ? '#FFB347' : '#63E6FF';
@@ -4596,10 +4878,71 @@ function _duckAndApply(applyFn) {
   }, downT * 1000 + 30);
 }
 
+// ── #12 (roadmap) : historique des tirages avec retour arrière ─────
+// Pile de snapshots PRÉ-tirage (5 derniers max) — puisque respiration,
+// détune et Δ deviennent partiellement aléatoires à chaque tirage, pouvoir
+// revenir en un geste au tirage précédent devient précieux.
+const _gameHistory = [];
+const GAME_HISTORY_MAX = 5;
+function _snapshotGameState() {
+  return {
+    masterFreq,
+    pairs: PAIRS.map(p => ({
+      ri:p.pingala.ri, n:p.pingala.n, volP:p.pingala.vol,
+      delta:p.ida.delta, polarity:p.ida.polarity, volI:p.ida.vol
+    })),
+    waves: { ...OSC_WAVES },
+    filters: JSON.parse(JSON.stringify(OSC_FILTER))
+  };
+}
+function _pushGameHistory() {
+  _gameHistory.push(_snapshotGameState());
+  if (_gameHistory.length > GAME_HISTORY_MAX) _gameHistory.shift();
+  _updateUndoButton();
+}
+function _updateUndoButton() {
+  const btn = document.getElementById('btn-undo-random');
+  if (btn) btn.disabled = _gameHistory.length === 0;
+}
+function undoLastRandom() {
+  const snap = _gameHistory.pop();
+  if (!snap) return;
+  masterFreq = snap.masterFreq;
+  snap.pairs.forEach((sp, i) => {
+    if (!PAIRS[i]) return;
+    PAIRS[i].pingala.ri = sp.ri; PAIRS[i].pingala.n = sp.n; PAIRS[i].pingala.vol = sp.volP;
+    PAIRS[i].ida.delta = sp.delta; PAIRS[i].ida.polarity = sp.polarity; PAIRS[i].ida.vol = sp.volI;
+  });
+  const wavesChanged = JSON.stringify(OSC_WAVES) !== JSON.stringify(snap.waves);
+  Object.assign(OSC_WAVES, snap.waves);
+  Object.keys(snap.filters).forEach(id => {
+    OSC_FILTER[id] = snap.filters[id];
+    if (nodes[id]) setOscFilter(id, snap.filters[id].cutoff, snap.filters[id].res);
+  });
+  refreshBinauralPan();
+  updateDisplay();
+  PAIRS.forEach((_, i) => updatePairUI(i));
+  if (flowing) {
+    if (wavesChanged) rebuildAllOscs();
+    else PAIRS.forEach((pair, i) => {
+      tuneOsc(pair.pingala.id, calcPFreq(i));
+      tuneOsc(pair.ida.id, calcIFreq(i));
+      const np = nodes[pair.pingala.id], ni = nodes[pair.ida.id];
+      if (np && !mutedOscs[pair.pingala.id]) safeRamp(np.g.gain, pair.pingala.vol, 0.4);
+      if (ni && !mutedOscs[pair.ida.id]) safeRamp(ni.g.gain, pair.ida.vol, 0.4);
+    });
+  }
+  saveState();
+  _updateUndoButton();
+}
+
 function triggerMagicAuto(opts) {
   const now = Date.now();
   if (now - _lastMagicAt < 350) return;
   _lastMagicAt = now;
+
+  // #12 (roadmap) : snapshot PRÉ-tirage pour le retour arrière (undoLastRandom)
+  _pushGameHistory();
 
   // Valeur AVANT le fondu (le plancher de reverbe ambiante plus bas doit
   // comparer l'état d'origine, pas la valeur juste ramenée à 0 par le duck).
@@ -4623,8 +4966,14 @@ function triggerMagicAuto(opts) {
   // VERROU BINAURAL (défaut) : on NE touche PAS au delta — chaque paire garde
   // son battement doux et distinct. Déverrouillé, le random tire un delta commun.
   const lockBin = RAND_OPTS.lockBinaural;
-  const DELTAS = [3, 4, 5, 6, 7.83];
+  // #8 (roadmap) : "Caractère du battement" — au lieu d'un seul tableau
+  // opaque, 3 familles nommées et explicites, chacune avec sa séparation
+  // stéréo naturellement croissante (cf. binauralPanGap) puisqu'elle suit Δ.
+  const DELTAS = DELTA_CHARACTER[DELTA_CHARACTER_MODE].deltas;
   const baseDelta = DELTAS[Math.floor(Math.random() * DELTAS.length)];
+  // #6/#9/#12 : suivi des paires dont le Δ change réellement à ce tirage —
+  // sert à leur appliquer une glisse dédiée plus loin (cf. _deltaChangedThisDraw).
+  const _deltaChangedThisDraw = {};
 
   // ── Ratios OmcV : les 3 duos-miroir changent de place à chaque tirage ──
   // (11/10↔10/11) · (12/11↔11/12) · (12/10↔10/12) restent des couples
@@ -4673,7 +5022,11 @@ function triggerMagicAuto(opts) {
 
     if (idx === MASTER_IDX) {
       pair.pingala.ri = 0; pair.pingala.n = 1.0;
-      if (!lockBin) { pair.ida.delta = baseDelta; pair.ida.polarity = 1; }
+      if (!lockBin) {
+        const oldDelta = pair.ida.delta;
+        pair.ida.delta = baseDelta; pair.ida.polarity = 1;
+        if (pair.ida.delta !== oldDelta) _deltaChangedThisDraw[idx] = true;
+      }
       const pf = Math.min(432, newMaster);
       pair.pingala.vol = Math.min(0.4, isosonicVol(pf, 0.11) * boost);
       pair.ida.vol     = Math.min(0.4, isosonicVol(pf, 0.11) * boost);
@@ -4688,9 +5041,21 @@ function triggerMagicAuto(opts) {
     pair.pingala.ri = ri;
     pair.pingala.n  = n;
     if (!lockBin) {                              // delta figé si verrou binaural (défaut)
-      pair.ida.delta  = baseDelta;
-      pair.ida.polarity = (idx % 2 === 0) ? 1 : -1; // miroir de polarité
+      const oldDelta = pair.ida.delta;
+      // #6 : Δ varié par paire (option) — chaque paire pioche indépendamment
+      // dans le même ensemble musical (thêta/alpha) au lieu d'un battement
+      // unique imposé partout : jeu binaural plus riche, toujours dans les
+      // valeurs douces déjà validées (DELTAS).
+      pair.ida.delta = RAND_OPTS.deltaVariety ? DELTAS[Math.floor(Math.random() * DELTAS.length)] : baseDelta;
+      if (pair.ida.delta !== oldDelta) _deltaChangedThisDraw[idx] = true;
     }
+    // #9 : polarité (Ida au-dessus/en-dessous de Pingala) redistribuée au
+    // hasard À CHAQUE TIRAGE, MÊME Δ verrouillé — ça ne change jamais
+    // l'amplitude du battement (le verrou reste 100% respecté), seulement
+    // son signe, donc l'image spatiale varie sans jamais toucher au confort
+    // garanti par le verrou binaural. Remplace l'ancienne alternance
+    // idx%2 (toujours identique d'un tirage à l'autre) par un vrai tirage.
+    if (RAND_OPTS.polarityVariety) pair.ida.polarity = Math.random() < 0.5 ? 1 : -1;
 
     const pf = Math.max(rMin, Math.min(rMax, newMaster * RATIO_OPTS[ri].r * n));
     pair.pingala.vol = Math.min(0.4, isosonicVol(pf, 0.085) * boost);
@@ -4744,6 +5109,17 @@ function triggerMagicAuto(opts) {
   OSC_PAN = buildOscPan(_lastPanWidth);
 
   setMasterFreq(newMaster);
+
+  // ── #12 Glisse dédiée du battement (Δ) ──────────────────────────────
+  // setMasterFreq() vient déjà de retuner Ida au nouveau Δ en 80ms (masqué
+  // par le fondu _duckAndApply). Pour les paires dont Δ a réellement changé
+  // ce tirage, on ré-étire cette arrivée sur ~2,2s : le battement glisse
+  // doucement vers sa nouvelle vitesse une fois le son revenu, plutôt que
+  // d'être déjà figé avant même le fade-in — sensation vivante, jamais un saut.
+  if (flowing) PAIRS.forEach((pair, i) => {
+    if (!_deltaChangedThisDraw[i]) return;
+    tuneOsc(pair.ida.id, calcIFreq(i), 2.2);
+  });
 
   // Plancher de reverbe ambiante : sans un minimum de reverbe, les paires
   // lointaines n'ont que le filtre pour se distinguer (profondeur perceptible
@@ -5097,6 +5473,14 @@ function buildMasterFXHTML() {
       <div class="fxq-row"><span class="fxq-lbl">Sinus Duo</span>
         <input type="range" class="fx-slider" id="dualsine-detune" min="-72" max="72" step="1" value="7" oninput="setDualSineDetune(this.value)">
         <span class="fx-val-disp" id="sv-dualsine">±7 ¢</span></div>
+      <!-- Dérive lente du battement (Δ) — session vivante, jamais un saut de bande -->
+      <div class="fx-row" style="justify-content:space-between;align-items:center;">
+        <span class="fx-label">Dérive lente du Δ (session vivante)</span>
+        <label class="fx-toggle"><input type="checkbox" id="ck-delta-drift" checked onchange="setDeltaDrift(this.checked)"><span class="fx-tog-track"></span></label>
+      </div>
+      <div class="fxq-row"><span class="fxq-lbl">Amplitude</span>
+        <input type="range" class="fx-slider" min="0.05" max="1" step="0.05" value="0.3" oninput="setDeltaDriftAmount(this.value)">
+        <span class="fx-val-disp" id="sv-delta-drift">±0.30 Hz</span></div>
       <div class="fxq-sep"></div>
       <!-- Fréquence maître -->
       <div class="fxq-row">
@@ -5118,6 +5502,24 @@ function buildMasterFXHTML() {
       <div class="fxq-row" style="font-size:.62rem;color:rgba(200,170,255,.45);font-style:italic;justify-content:flex-end;">
         <span>Séparation anti-tremolo&nbsp;: <span id="sv-binaural-sep" style="color:#63E6FF;">32%</span></span>
       </div>
+      <!-- #5 : Pingala 100% gauche / Ida 100% droite pour toutes les paires -->
+      <div class="fx-row" style="justify-content:space-between;align-items:center;">
+        <span class="fx-label">Mode casque strict (zéro crosstalk)</span>
+        <label class="fx-toggle"><input type="checkbox" id="ck-strict-headphone" onchange="setStrictHeadphone(this.checked)"><span class="fx-tog-track"></span></label>
+      </div>
+      <!-- #11 : compression douce anti-pompage par paire (bus dédié) -->
+      <div class="fx-row" style="justify-content:space-between;align-items:center;">
+        <span class="fx-label">Anti-pompage par paire (doux)</span>
+        <label class="fx-toggle"><input type="checkbox" id="ck-pair-comp" onchange="setPairCompression(this.checked)"><span class="fx-tog-track"></span></label>
+      </div>
+      <!-- #16 : sub-drone d'ancrage — pad grave fixe (racine ÷ 2), non touché par le random -->
+      <div class="fx-row" style="justify-content:space-between;align-items:center;">
+        <span class="fx-label">Sub-drone d'ancrage (racine ÷ 2)</span>
+        <label class="fx-toggle"><input type="checkbox" id="ck-subdrone" onchange="setSubDrone(this.checked)"><span class="fx-tog-track"></span></label>
+      </div>
+      <div class="fxq-row"><span class="fxq-lbl">Volume sub</span>
+        <input type="range" class="fx-slider" min="0" max="0.25" step="0.01" value="0.05" oninput="setSubDroneVol(this.value)">
+        <span class="fx-val-disp" id="sv-subdrone-vol">5%</span></div>
       <div class="fxq-sep"></div>
       <!-- Effets essentiels : sliders précis, espacés -->
       <div class="fxq-row"><span class="fxq-lbl">Intensité FX</span>
@@ -5502,6 +5904,11 @@ function buildPairHTML(pair, i) {
       ${Object.keys(OSC_ENGINE_LABELS).map(k=>`<button class="eng-btn${curEng===k?' on':''}" id="eng-${i}-${k}"
         onclick="pickEngine(${i},'${k}')" style="--ec:${c};">${OSC_ENGINE_LABELS[k]}</button>`).join('')}
     </div>
+    <div class="osc-sec-t" style="color:${c}aa;">Sinus Duo · Détune de cette paire (moteur ≈≈ Sin×2)</div>
+    <div class="ctl-row"><span class="ctl-l">Détune</span>
+      <input type="range" min="-72" max="72" step="1" value="${typeof PAIR_DUALSINE[i]==='number'?PAIR_DUALSINE[i]:DUALSINE_DETUNE}" style="color:${c};"
+        oninput="setPairDualSineDetune(${i},this.value);this.nextElementSibling.textContent=(this.value<0?'−':'±')+Math.abs(this.value)+' ¢'">
+      <span class="ctl-v">${(()=>{const m=typeof PAIR_DUALSINE[i]==='number'?PAIR_DUALSINE[i]:DUALSINE_DETUNE;return (m<0?'−':'±')+Math.abs(m)+' ¢';})()}</span></div>
     <div class="osc-sec-t" style="color:${c}aa;">Filtre · Cutoff / Résonance</div>
     <div class="ctl-row"><span class="ctl-l">Cutoff</span>
       <input type="range" min="60" max="6000" step="5" value="${Math.min(6000,fcut)}" style="color:${c};"
@@ -5705,7 +6112,14 @@ function _doSave() {
       // (verrou binaural, LFO filtre, timbre/profondeur/respiration auto) —
       // n'étaient pas persistées avant, réinitialisées à chaque relance.
       dualSineDetune: DUALSINE_DETUNE,
+      pairDualSine: { ...PAIR_DUALSINE },
       breathDepthMax: PAIR_BREATH_OPTS.depthMax,
+      deltaDrift: { ...DELTA_DRIFT_STATE },
+      strictHeadphone: STRICT_HEADPHONE_MODE,
+      pairComp: PAIR_COMP_STATE.on,
+      subDrone: { ...SUBDRONE_STATE },
+      deltaCharacter: DELTA_CHARACTER_MODE,
+      breathAnchor: BREATH_ANCHOR_STATE.on,
       randOpts: { ...RAND_OPTS }
     }));
   } catch(e) {}
@@ -5730,7 +6144,25 @@ function loadState() {
       mutedOscs[PAIRS[i].ida.id]     = !!sp.mutedI;
     });
     if (typeof s.dualSineDetune==='number' && s.dualSineDetune>=-72 && s.dualSineDetune<=72) DUALSINE_DETUNE = s.dualSineDetune;
+    if (s.pairDualSine && typeof s.pairDualSine==='object') {
+      Object.keys(s.pairDualSine).forEach(i => {
+        const v = s.pairDualSine[i];
+        if (typeof v==='number' && v>=-72 && v<=72) PAIR_DUALSINE[i] = v;
+      });
+    }
     if (typeof s.breathDepthMax==='number' && s.breathDepthMax>=0.01 && s.breathDepthMax<=0.3) PAIR_BREATH_OPTS.depthMax = s.breathDepthMax;
+    if (s.deltaDrift && typeof s.deltaDrift==='object') {
+      if (typeof s.deltaDrift.on==='boolean') DELTA_DRIFT_STATE.on = s.deltaDrift.on;
+      if (typeof s.deltaDrift.amount==='number' && s.deltaDrift.amount>=0.05 && s.deltaDrift.amount<=1) DELTA_DRIFT_STATE.amount = s.deltaDrift.amount;
+    }
+    if (typeof s.strictHeadphone==='boolean') STRICT_HEADPHONE_MODE = s.strictHeadphone;
+    if (typeof s.pairComp==='boolean') PAIR_COMP_STATE.on = s.pairComp;
+    if (s.subDrone && typeof s.subDrone==='object') {
+      if (typeof s.subDrone.on==='boolean') SUBDRONE_STATE.on = s.subDrone.on;
+      if (typeof s.subDrone.vol==='number' && s.subDrone.vol>=0 && s.subDrone.vol<=0.25) SUBDRONE_STATE.vol = s.subDrone.vol;
+    }
+    if (typeof s.deltaCharacter==='string' && DELTA_CHARACTER[s.deltaCharacter]) DELTA_CHARACTER_MODE = s.deltaCharacter;
+    if (typeof s.breathAnchor==='boolean') BREATH_ANCHOR_STATE.on = s.breathAnchor;
     if (s.randOpts && typeof s.randOpts==='object') Object.assign(RAND_OPTS, s.randOpts);
   } catch(e) {}
 }
@@ -5742,15 +6174,32 @@ function loadState() {
 function _syncRandOptsUI() {
   const setCk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
   setCk('ck-binaural-lock', RAND_OPTS.lockBinaural);
+  setCk('ck-delta-variety', RAND_OPTS.deltaVariety);
+  setCk('ck-polarity-variety', RAND_OPTS.polarityVariety);
   setCk('ck-rand-lfo',      RAND_OPTS.filterLFO);
   setCk('ck-rand-timbre',   RAND_OPTS.randomTimbre);
   setCk('ck-rand-depth',    RAND_OPTS.randomDepth);
   setCk('ck-rand-breath',   RAND_OPTS.breathRandom);
   setCk('ck-rand-fx',       RAND_OPTS.useFX);
+  setCk('ck-delta-drift',   DELTA_DRIFT_STATE.on);
+  setCk('ck-strict-headphone', STRICT_HEADPHONE_MODE);
+  setCk('ck-pair-comp', PAIR_COMP_STATE.on);
+  setCk('ck-subdrone', SUBDRONE_STATE.on);
+  const sdv = document.getElementById('sv-subdrone-vol'); if (sdv) sdv.textContent = Math.round(SUBDRONE_STATE.vol * 100) + '%';
+  const sdSlider = document.querySelector('input[oninput="setSubDroneVol(this.value)"]'); if (sdSlider) sdSlider.value = SUBDRONE_STATE.vol;
+  document.querySelectorAll('[id^="dch-"]').forEach(b => b.classList.remove('active'));
+  const dchBtn = document.getElementById('dch-' + DELTA_CHARACTER_MODE); if (dchBtn) dchBtn.classList.add('active');
+  setCk('ck-breath-anchor', BREATH_ANCHOR_STATE.on);
+  // STRICT_HEADPHONE_MODE n'est connu qu'après loadState() (appelé avant la
+  // construction d'OSC_PAN au chargement du script) — le recalculer ici.
+  refreshBinauralPan();
+  _updateBinauralSepUI(globalDelta);
   const bd = document.getElementById('sv-breath-depth'); if (bd) bd.textContent = Math.round(PAIR_BREATH_OPTS.depthMax * 100) + '%';
   const bdSlider = document.querySelector('input[oninput="setPairBreathDepthMax(this.value)"]'); if (bdSlider) bdSlider.value = PAIR_BREATH_OPTS.depthMax;
   const ds = document.getElementById('dualsine-detune'); if (ds) ds.value = DUALSINE_DETUNE;
   const dsv = document.getElementById('sv-dualsine'); if (dsv) dsv.textContent = (DUALSINE_DETUNE < 0 ? '−' : '±') + Math.abs(DUALSINE_DETUNE).toFixed(0) + ' ¢';
+  const ddSlider = document.querySelector('input[oninput="setDeltaDriftAmount(this.value)"]'); if (ddSlider) ddSlider.value = DELTA_DRIFT_STATE.amount;
+  const ddv = document.getElementById('sv-delta-drift'); if (ddv) ddv.textContent = '±' + DELTA_DRIFT_STATE.amount.toFixed(2) + ' Hz';
 }
 
 // ── Presets ───────────────────────────────────────────────────────
@@ -5778,9 +6227,19 @@ function applyPreset() {
 
 // ── Export config ─────────────────────────────────────────────────
 function exportState() {
+  // #13 (roadmap) : le "jeu" complet — au-delà de fréquence/Δ/ratios déjà
+  // couverts, inclut désormais la respiration par paire, le détune Sinus
+  // Duo (global + par paire), le caractère du battement et les options du
+  // jeu aléatoire, pour pouvoir rejouer/partager la session dans son entier.
   const state = {
     f:masterFreq, d:globalDelta, v:masterVol,
-    p:PAIRS.map(p=>({ri:p.pingala.ri,n:p.pingala.n,vp:p.pingala.vol,dt:p.ida.delta,po:p.ida.polarity,vi:p.ida.vol}))
+    p:PAIRS.map(p=>({ri:p.pingala.ri,n:p.pingala.n,vp:p.pingala.vol,dt:p.ida.delta,po:p.ida.polarity,vi:p.ida.vol})),
+    dualSine: DUALSINE_DETUNE, pairDualSine: { ...PAIR_DUALSINE },
+    breathDepthMax: PAIR_BREATH_OPTS.depthMax, breathAnchor: BREATH_ANCHOR_STATE.on,
+    deltaDrift: { ...DELTA_DRIFT_STATE }, deltaCharacter: DELTA_CHARACTER_MODE,
+    strictHeadphone: STRICT_HEADPHONE_MODE, pairComp: PAIR_COMP_STATE.on,
+    subDrone: { ...SUBDRONE_STATE },
+    randOpts: { ...RAND_OPTS }
   };
   try {
     navigator.clipboard.writeText(JSON.stringify(state));
