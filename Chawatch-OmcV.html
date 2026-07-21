@@ -2,7 +2,19 @@
 <html lang="fr" data-ambiance="cosmos">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="description" content="Chawatch · OmcV — cadran fractal 432 : un temps rigide bâti sur la Solônde (2,0212 s), visualisé en 3D avec observateur libre, densités saisonnières et thème personnel.">
+<meta property="og:title" content="Chawatch · OmcV — Centre fractal 432">
+<meta property="og:description" content="432 Omc par jour, 155 520 unités invariantes, une Solônde rigide de 2,0212 s. Un cadran temporel 3D à explorer.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#140f2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; manifest-src 'self'; worker-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'none'">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
 <title>Chawatch · OmcV — Centre fractal 432</title>
 <style>
   :root{
@@ -12,7 +24,7 @@
     --fond1:#140f2e; --fond2:#221a49; --fond3:#301f57;
     --texte:#f3e6d2; --texte-doux:#c9b8e8; --accent:#f6d68c;
     --verre:rgba(84,62,140,.34); --verre-bord:rgba(246,214,140,.36);
-    --glow:1;
+    --glow:1; --err:#e2799b;
   }
   [data-ambiance="nuit"]{ --fond1:#04030a;--fond2:#070613;--fond3:#0a0819;
     --texte:#e8e6f6;--texte-doux:#9a94c4;--verre:rgba(20,18,44,.5);--verre-bord:rgba(230,225,255,.24);}
@@ -23,8 +35,10 @@
   html,body{height:100%;overflow:hidden;}
   html{background:radial-gradient(120% 120% at 50% 12%,var(--fond3),var(--fond2) 45%,var(--fond1) 100%);
     transition:background .6s ease;}
-  #fond-perso{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;background-repeat:no-repeat;}
+  #fond-perso{position:fixed;inset:0;z-index:-2;background-size:cover;background-position:center;background-repeat:no-repeat;}
   #ciel{position:fixed;inset:0;z-index:-1;pointer-events:none;}
+  #vignette{position:fixed;inset:0;z-index:2;pointer-events:none;
+    background:radial-gradient(120% 120% at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.4) 100%);}
   body{
     font-family:"Nunito","Segoe UI",system-ui,sans-serif;
     color:var(--texte);
@@ -32,18 +46,25 @@
     display:flex;flex-direction:column;height:100dvh;position:relative;
     transition:color .6s ease;
   }
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 
   header{padding:10px 14px 4px;text-align:center;pointer-events:none;}
   header h1{font-size:clamp(15px,4.4vw,22px);letter-spacing:.42em;font-weight:700;
     background:linear-gradient(90deg,var(--d1),var(--d2),var(--accent),var(--d4));
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
   header p{font-size:10.5px;color:var(--texte-doux);letter-spacing:.04em;margin-top:2px;opacity:.85;}
-  #civil{font-size:10.5px;color:var(--texte-doux);opacity:.6;margin-top:2px;letter-spacing:.05em;}
+  #civil{font-size:10.5px;color:var(--texte-doux);opacity:.72;margin-top:2px;letter-spacing:.05em;}
 
   /* scène 3D */
   #scene{flex:1;position:relative;min-height:0;touch-action:none;cursor:grab;}
   #scene.grab{cursor:grabbing;}
+  #scene:focus-visible{outline:2px solid var(--accent);outline-offset:-3px;}
   #omcv{display:block;width:100%;height:100%;}
+
+  /* focus clavier visible partout où pointeur seul suffisait */
+  .rond:focus-visible,.pilule:focus-visible,.ong:focus-visible,.bmenu:focus-visible,
+  #fermer:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
   /* HUD lectures */
   #hud{position:absolute;top:70px;left:8px;display:flex;flex-direction:column;gap:5px;pointer-events:none;z-index:4;}
@@ -69,17 +90,26 @@
     letter-spacing:.04em;transition:transform .15s,background .2s;}
   .pilule:hover{transform:translateY(-2px);}
   .pilule.actif{background:rgba(246,214,140,.26);border-color:var(--accent);}
+  /* .toggle = pilule à état (on/off), distincte des pilules de navigation */
+  .pilule.toggle{border-style:dashed;}
+  .pilule.toggle::after{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;
+    background:currentColor;margin-left:6px;opacity:.5;vertical-align:middle;}
+  .pilule.toggle.actif::after{opacity:1;background:var(--accent);}
 
   footer{position:absolute;left:0;right:0;bottom:52px;text-align:center;font-size:10px;
-    color:var(--texte-doux);opacity:.6;letter-spacing:.06em;pointer-events:none;padding:0 10px;}
+    color:var(--texte-doux);opacity:.72;letter-spacing:.06em;pointer-events:none;padding:0 10px;}
   footer b{color:var(--accent);opacity:.9;}
 
   /* menu */
+  #menu-backdrop{position:fixed;inset:0;z-index:19;background:rgba(6,4,16,.45);opacity:0;
+    pointer-events:none;transition:opacity .3s ease;}
+  #menu-backdrop.ouvert{opacity:1;pointer-events:auto;}
   #menu{position:absolute;top:0;right:0;height:100%;width:min(92vw,380px);z-index:20;
     background:linear-gradient(160deg,rgba(30,22,60,.97),rgba(18,13,40,.98));
     border-left:1px solid var(--verre-bord);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     transform:translateX(101%);transition:transform .4s cubic-bezier(.4,0,.2,1);
     overflow-y:auto;padding:16px 16px 40px;box-shadow:-14px 0 40px rgba(0,0,0,.4);}
+  #menu:focus{outline:none;}
   #menu.ouvert{transform:translateX(0);}
   #menu h2{font-size:13px;letter-spacing:.28em;color:var(--accent);margin:2px 0 12px;}
   #menu h3{font-size:12.5px;letter-spacing:.14em;margin:16px 0 7px;color:var(--texte);
@@ -91,10 +121,13 @@
   .ong.actif{background:rgba(246,214,140,.24);border-color:var(--accent);}
   .pan{display:none;animation:fade .3s;} .pan.actif{display:block;}
   @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){ .pan{animation:none;} .rond,.pilule{transition:none;} }
   .petit{font-size:11.5px;line-height:1.5;color:var(--texte-doux);margin:6px 0;}
   label{display:block;font-size:11.5px;margin:9px 0 3px;color:var(--texte-doux);}
   label output{color:var(--accent);font-weight:700;}
   input[type=range]{width:100%;accent-color:var(--accent);}
+  .curseur-echelle{display:flex;justify-content:space-between;font-size:9px;color:var(--texte-doux);
+    opacity:.6;margin-top:2px;}
   .bmenu{width:100%;text-align:left;background:var(--verre);border:1px solid var(--verre-bord);color:var(--texte);
     padding:9px 12px;border-radius:10px;font-size:12.5px;cursor:pointer;margin:5px 0;}
   .bmenu:hover{background:rgba(246,214,140,.16);}
@@ -112,6 +145,7 @@
   .crea-line label{margin:0;flex:1;}
   .crea-line input[type=number]{width:74px;padding:5px;border-radius:7px;background:var(--fond2);color:var(--texte);border:1px solid var(--verre-bord);font-size:12px;text-align:center;}
   input[type=date],input[type=time]{width:100%;padding:7px;border-radius:8px;background:var(--fond2);color:var(--texte);border:1px solid var(--verre-bord);font-size:12px;}
+  input.invalide{border-color:var(--err) !important;box-shadow:0 0 0 1px rgba(226,121,155,.4);}
   .phase-row{display:flex;align-items:center;gap:8px;font-size:11.5px;padding:5px 6px;border-radius:8px;margin:3px 0;}
   .phase-row.actif{background:rgba(246,214,140,.14);border:1px solid var(--verre-bord);}
   .phase-row .pdate{margin-left:auto;color:var(--texte-doux);font-variant-numeric:tabular-nums;}
@@ -121,6 +155,8 @@
 
 <div id="fond-perso"></div>
 <canvas id="ciel"></canvas>
+<div id="vignette" aria-hidden="true"></div>
+<div id="sr-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
 <header>
   <h1>CHAWATCH · OMCV</h1>
@@ -137,37 +173,40 @@
 </div>
 
 <div id="obs">
-  <button class="rond" id="obs-reset" title="Observateur neutre">⊙</button>
-  <button class="rond" id="obs-haut" title="Vue zénithale">⌖</button>
-  <button class="rond" id="obs-rot" title="Rotation auto">↻</button>
-  <button class="rond" id="obs-menu" title="Interface">☰</button>
+  <button class="rond" id="obs-reset" title="Observateur neutre" aria-label="Revenir à l'observateur neutre">⊙</button>
+  <button class="rond" id="obs-haut" title="Vue zénithale" aria-label="Passer en vue zénithale">⌖</button>
+  <button class="rond" id="obs-rot" title="Rotation auto" aria-label="Activer la rotation automatique" aria-pressed="false">↻</button>
+  <button class="rond" id="obs-menu" title="Interface" aria-label="Ouvrir le menu de l'interface" aria-haspopup="dialog" aria-expanded="false">☰</button>
 </div>
 
-<div id="scene"><canvas id="omcv"></canvas></div>
+<div id="scene" tabindex="0" role="application" aria-label="Cadran 3D de l'OmcV. Glisse ou utilise les flèches du clavier pour tourner l'observateur, + et - pour zoomer.">
+  <canvas id="omcv"></canvas>
+</div>
 
 <footer>1 jour = <b>155 520 unités</b> = 38 880 Solondes = 432 Omc · rigide à toutes les échelles 🙏</footer>
 
 <div id="barre">
-  <button class="pilule" id="b-densites">✦ Densités</button>
-  <button class="pilule" id="b-j0">☉ J0</button>
-  <button class="pilule" id="b-phases">◔ Phases quartz</button>
-  <button class="pilule" id="b-vitesse">⏩ ×1</button>
+  <button class="pilule" id="b-densites" aria-label="Voir les 4 densités">✦ Densités</button>
+  <button class="pilule" id="b-j0" aria-label="Régler l'origine J0">☉ J0</button>
+  <button class="pilule toggle" id="b-phases" aria-pressed="false" aria-label="Afficher les phases du quartz">◔ Phases quartz</button>
+  <button class="pilule toggle" id="b-vitesse" aria-label="Changer la vitesse d'observation">⏩ ×1</button>
 </div>
 
-<aside id="menu">
-  <button id="fermer">✕</button>
-  <h2>INTERFACE</h2>
-  <div id="tabs">
-    <button class="ong actif" data-t="notice">❓ Notice</button>
-    <button class="ong" data-t="dens">✦ Densités</button>
-    <button class="ong" data-t="j0">☉ J0 · Position</button>
-    <button class="ong" data-t="obs">🛰 Observateur</button>
-    <button class="ong" data-t="aff">🎨 Affichage</button>
-    <button class="ong" data-t="theme">✿ Thème</button>
-    <button class="ong" data-t="crea">🛠 Créateur</button>
+<div id="menu-backdrop"></div>
+<aside id="menu" role="dialog" aria-modal="true" aria-labelledby="menu-titre" tabindex="-1">
+  <button id="fermer" aria-label="Fermer le menu">✕</button>
+  <h2 id="menu-titre">INTERFACE</h2>
+  <div id="tabs" role="tablist">
+    <button class="ong actif" data-t="notice" role="tab" aria-selected="true" id="tab-notice" aria-controls="panel-notice">❓ Notice</button>
+    <button class="ong" data-t="dens" role="tab" aria-selected="false" id="tab-dens" aria-controls="panel-dens">✦ Densités</button>
+    <button class="ong" data-t="j0" role="tab" aria-selected="false" id="tab-j0" aria-controls="panel-j0">☉ J0 · Position</button>
+    <button class="ong" data-t="obs" role="tab" aria-selected="false" id="tab-obs" aria-controls="panel-obs">🛰 Observateur</button>
+    <button class="ong" data-t="aff" role="tab" aria-selected="false" id="tab-aff" aria-controls="panel-aff">🎨 Affichage</button>
+    <button class="ong" data-t="theme" role="tab" aria-selected="false" id="tab-theme" aria-controls="panel-theme">✿ Thème</button>
+    <button class="ong" data-t="crea" role="tab" aria-selected="false" id="tab-crea" aria-controls="panel-crea">🛠 Créateur</button>
   </div>
 
-  <div class="pan actif" data-p="notice">
+  <div class="pan actif" data-p="notice" role="tabpanel" id="panel-notice" aria-labelledby="tab-notice">
     <h3>❓ Lire l'OmcV</h3>
     <p class="petit"><b>Ce n'est pas une horloge civile.</b> Pas d'heure, pas de base 60. L'OmcV
     ne connaît que son propre flux, bâti sur une brique <b>rigide</b> : la <b>Solônde</b> (2,0212 s).
@@ -186,11 +225,11 @@
     (11/10 × 10/11 = 1 · 6/5 × 5/6 = 1) — leur produit vaut 1, le noyau revient exactement au centre.
     Leur somme vaut 4,0424 : ce +1 % est <em>gelé</em> dans la Solônde (2,0212 = Σ × ½ s), il ne fuit
     jamais vers le compte. Le macro reste parfaitement <b>360 × 432</b> ; seule la seconde respire, en douce.</p>
-    <p class="petit"><b>Naviguer :</b> glisse pour tourner autour du cadran (observateur 360° neutre) ·
-    molette / pince pour le zoom fractal · ⊙ recentre.</p>
+    <p class="petit"><b>Naviguer :</b> glisse (ou flèches du clavier) pour tourner autour du cadran (observateur 360° neutre) ·
+    molette / pince / + et - pour le zoom fractal · ⊙ recentre · double-tap pour réinitialiser sur mobile.</p>
   </div>
 
-  <div class="pan" data-p="dens">
+  <div class="pan" data-p="dens" role="tabpanel" id="panel-dens" aria-labelledby="tab-dens">
     <h3>✦ Les 4 densités</h3>
     <table class="dens" id="table-dens"></table>
     <div class="veri" id="veri-dens"></div>
@@ -199,12 +238,12 @@
     règle la durée des 4 phases <em>dans</em> la Solônde — le quartz qui respire, jamais la Solônde.</p>
   </div>
 
-  <div class="pan" data-p="j0">
+  <div class="pan" data-p="j0" role="tabpanel" id="panel-j0" aria-labelledby="tab-j0">
     <h3>☉ J0 — origine (l'aube)</h3>
-    <p class="petit">J0 est l'instant où l'unité vaut 0 : l'aube. Par défaut, l'équinoxe du 20 mars 2026
-    à l'aube, à ta position.</p>
+    <p class="petit">J0 est l'instant où l'unité vaut 0 : l'aube. Par défaut, l'équinoxe de mars de
+    l'année en cours, à l'aube, à ta position.</p>
     <button class="bmenu" id="j0-now">☉ J0 = l'aube est maintenant</button>
-    <button class="bmenu" id="j0-eq">☉ J0 = équinoxe 20 mars 2026, aube ici</button>
+    <button class="bmenu" id="j0-eq">☉ J0 = équinoxe de mars, aube ici</button>
     <h3>🌍 Position — grille 36 × 36</h3>
     <label>Latitude <output id="lat-val">—</output><input type="range" id="lat" min="0" max="35" step="1"></label>
     <label>Longitude <output id="lon-val">—</output><input type="range" id="lon" min="0" max="35" step="1"></label>
@@ -212,7 +251,7 @@
     Ici aujourd'hui — lever <b id="lever">—</b> · coucher <b id="coucher">—</b> · jour <b id="duree">—</b></p>
   </div>
 
-  <div class="pan" data-p="obs">
+  <div class="pan" data-p="obs" role="tabpanel" id="panel-obs" aria-labelledby="tab-obs">
     <h3>🛰 Observateur externe neutre</h3>
     <button class="bmenu" id="o-reset">⊙ Position neutre (équatoriale, face au centre)</button>
     <button class="bmenu" id="o-haut">⌖ Vue zénithale (360°)</button>
@@ -223,7 +262,7 @@
     <label>Zoom fractal <output id="zoom-val">100%</output><input type="range" id="zoom" min="55" max="220" step="5" value="100"></label>
   </div>
 
-  <div class="pan" data-p="aff">
+  <div class="pan" data-p="aff" role="tabpanel" id="panel-aff" aria-labelledby="tab-aff">
     <h3>🎨 Affichage</h3>
     <button class="bmenu" id="amb-cosmos">🌌 Cosmos fractal</button>
     <button class="bmenu" id="amb-nuit">🌑 Nuit pure (OLED)</button>
@@ -237,11 +276,11 @@
     <button class="bmenu" id="fond-choisir">🖼 Importer une image de fond</button>
     <button class="bmenu" id="fond-retirer">↺ Ciel nu (retirer l'image)</button>
     <input type="file" id="fond-fichier" accept="image/*" style="display:none">
-    <p class="petit">Ton image devient le ciel, voilée par la nébuleuse pour rester lisible.
-    Traitée localement — rien n'est envoyé nulle part.</p>
+    <p class="petit" id="fond-statut" role="status">Ton image devient le ciel, voilée par la nébuleuse pour rester lisible.
+    Redimensionnée et traitée localement — rien n'est envoyé nulle part.</p>
   </div>
 
-  <div class="pan" data-p="theme">
+  <div class="pan" data-p="theme" role="tabpanel" id="panel-theme" aria-labelledby="tab-theme">
     <h3>✿ Thème charmant OmcV</h3>
     <p class="petit">Peu de monde est né au même endroit à la même heure : ton J0 personnel dessine
     un thème unique. Enregistre ta naissance, puis <b>bascule</b> pour comparer avec l'équinoxe.</p>
@@ -257,9 +296,10 @@
     <h3>Tes 4 phases · grand cycle</h3>
     <p class="petit">Les 4 densités du grand cycle, ancrées à <em>ta</em> naissance (cycle en cours) :</p>
     <div id="theme-phases"></div>
+    <button class="bmenu" id="n-clear" style="margin-top:14px">🗑 Effacer mon J0 personnel et mes données locales</button>
   </div>
 
-  <div class="pan" data-p="crea">
+  <div class="pan" data-p="crea" role="tabpanel" id="panel-crea" aria-labelledby="tab-crea">
     <h3>🛠 Créateur — le modèle n'est pas figé</h3>
     <p class="petit">Par humilité : si un jour quelqu'un a une meilleure idée, qu'il puisse l'appliquer.
     Change les 4 densités, la ½ seconde de base ou les comptes — <b>tout se recalcule en direct</b>,
@@ -313,8 +353,40 @@ const OMCV = {
   get PARTS(){ const s=this.SOMME; return DENS.map(d=>d.v/s); },// durées des 4 phases dans la Solônde
 };
 
+/* ── Réglages d'interaction et d'état de vue : plus de constantes magiques
+   éparpillées, plus de globales éparses — tout est ici, nommé. ── */
+const CONFIG = {
+  ROT_SENS:0.008, PITCH_SENS:0.006, WHEEL_ZOOM:0.0011,
+  ZOOM_MIN:.55, ZOOM_MAX:2.2, PITCH_MIN:0.08, PITCH_MAX:1.556,
+  AUTOROT_SPEED:0.0032, KEY_YAW_STEP:0.05, KEY_ZOOM_STEP:0.05,
+  DOUBLE_TAP_MS:320, DOUBLE_TAP_DIST:24,
+  SPHERE_SPIN:0.0003, HELIX_SPIN:0.0004,
+};
+const NEUTRE={yaw:0,pitch:1.02}, ZENITH={yaw:0,pitch:1.5533};
+/* état de vue consolidé (autrefois dispersé en variables globales isolées) */
+const VUE = {yaw:0, pitch:1.02, zoom:1, autoRot:false, warpIdx:0, phasesVisible:false};
+
+/* respecte prefers-reduced-motion : réduit les mouvements décoratifs
+   (rotation auto, nébuleuse, scintillement, comètes) — pas le rendu du temps lui-même */
+const mqReduit = matchMedia('(prefers-reduced-motion: reduce)');
+let REDUIT = mqReduit.matches;
+mqReduit.addEventListener('change', e=>{REDUIT=e.matches;});
+function motionScale(){ return REDUIT?0.15:1; }
+/* heuristique basse-perf simple : moins de segments de géométrie sur petits appareils */
+const BASSE_PERF = (navigator.hardwareConcurrency||4)<=4;
+const SPHERE_SEG = BASSE_PERF?26:40;
+
 const $ = id=>document.getElementById(id);
 const fmt = (n,d=0)=>n.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};};
+
+/* avertissement discret (une seule fois) si la sauvegarde locale échoue */
+let stockageAlerte=false;
+function avertirStockage(){
+  if(stockageAlerte) return; stockageAlerte=true;
+  const el=$('sr-live'); if(el) el.textContent='Attention, la sauvegarde locale a échoué (stockage plein ou bloqué).';
+  console.warn('OmcV: échec localStorage — les réglages ne seront pas conservés.');
+}
 
 /* ═══════════════════════ SOLEIL (NOAA local, repris de Chawatch396) ═══════════════════════ */
 const jj = date=>date.getTime()/86400000+2440587.5;
@@ -329,9 +401,31 @@ function solaire(date,latDeg,lonDeg){
   let eqDeg=Ld-alpha; if(eqDeg>180)eqDeg-=360; if(eqDeg<-180)eqDeg+=360;
   const noon=720-4*lonDeg-eqDeg*4, latR=latDeg*Math.PI/180;
   const cosH=(Math.sin(-0.83*Math.PI/180)-Math.sin(latR)*Math.sin(decl))/(Math.cos(latR)*Math.cos(decl));
-  let lever=null,coucher=null;
+  let lever=null,coucher=null,polaire=null;
   if(cosH>=-1&&cosH<=1){const H=Math.acos(cosH)*180/Math.PI;lever=noon-H*4;coucher=noon+H*4;}
-  return {lever,coucher};
+  else if(cosH<-1){ polaire='jour'; }     // le soleil ne descend jamais sous l'horizon
+  else { polaire='nuit'; }                 // le soleil ne se lève jamais
+  return {lever,coucher,polaire};
+}
+/* équinoxe de mars, calculé (Meeus, formule basse précision, valable ~1000-3000)
+   au lieu d'une date figée : reste juste année après année, sans retouche manuelle. */
+function equinoxeMarsUTC(annee){
+  const Y=(annee-2000)/1000;
+  const JDE0=2451623.80984+365242.37404*Y+0.05169*Y*Y-0.00411*Y*Y*Y-0.00057*Y*Y*Y*Y;
+  return julienVersDate(JDE0);
+}
+function julienVersDate(jd){
+  jd+=0.5;
+  const Z=Math.floor(jd), F=jd-Z;
+  let A=Z;
+  if(Z>=2299161){ const alpha=Math.floor((Z-1867216.25)/36524.25); A=Z+1+alpha-Math.floor(alpha/4); }
+  const B=A+1524, C=Math.floor((B-122.1)/365.25), D=Math.floor(365.25*C), E=Math.floor((B-D)/30.6001);
+  const jour=B-D-Math.floor(30.6001*E)+F;
+  const mois=(E<14)?E-1:E-13;
+  const an=(mois>2)?C-4716:C-4715;
+  const jourEntier=Math.floor(jour), frac=jour-jourEntier;
+  const hTot=frac*24, h=Math.floor(hTot), m=Math.floor((hTot-h)*60), s=Math.round(((hTot-h)*60-m)*60);
+  return new Date(Date.UTC(an,mois-1,jourEntier,h,m,s));
 }
 const minuitUTC=d=>Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());
 const instUTC=(d,m)=>new Date(minuitUTC(d)+m*60000);
@@ -341,11 +435,13 @@ const lonDe=b=>bande(b,360,-180);
 const hhmm=d=>d?String(new Date(d).getHours()).padStart(2,'0')+':'+String(new Date(d).getMinutes()).padStart(2,'0'):'—';
 
 /* ═══════════════════════ MÉMOIRE ═══════════════════════ */
-const lis=k=>localStorage.getItem('omcv.'+k), note=(k,v)=>{try{localStorage.setItem('omcv.'+k,v)}catch(e){}};
+const lis=k=>localStorage.getItem('omcv.'+k);
+function note(k,v){ try{ localStorage.setItem('omcv.'+k,v); return true; }catch(e){ avertirStockage(); return false; } }
+const noteDeb=debounce(note,400);
 let latB=lis('lat')==null?8:+lis('lat'), lonB=lis('lon')==null?18:+lis('lon');
 let ancreEq=+lis('ancre')||0;              // J0 équinoxe (universel)
 function ancreEquinoxe(){
-  const eq=new Date(Date.UTC(2026,2,20));
+  const eq=equinoxeMarsUTC(new Date().getUTCFullYear());
   const s=solaire(eq,latDe(latB),lonDe(lonB));
   ancreEq=s.lever!=null?instUTC(eq,s.lever).getTime():eq.getTime();
   note('ancre',ancreEq);
@@ -357,8 +453,8 @@ let ancre = (j0mode==='perso'&&ancrePerso)?ancrePerso:ancreEq;   // ancre active
 
 /* ═══════════════════════ HORLOGE VIRTUELLE (vitesse d'observation) ═══════════════════════ */
 const WARPS=[1,60,1000,20000,200000,2000000];
-let warpIdx=0, vClock=Date.now(), lastReal=performance.now();
-function avancer(){const n=performance.now(); vClock+=(n-lastReal)*WARPS[warpIdx]; lastReal=n;}
+let vClock=Date.now(), lastReal=performance.now();
+function avancer(){const n=performance.now(); vClock+=(n-lastReal)*WARPS[VUE.warpIdx]; lastReal=n;}
 
 /* ═══════════════════════ ÉTAT TEMPOREL DÉRIVÉ ═══════════════════════ */
 function etat(){ return etatCore(vClock, ancre); }
@@ -382,22 +478,25 @@ function etatCore(t, anc){
 
 /* ═══════════════════════ CADRAN 3D — projection & rendu ═══════════════════════ */
 const cv=$('omcv'), ctx=cv.getContext('2d');
+if(!ctx){
+  document.body.innerHTML='<p style="padding:40px;color:#f3e6d2;font-family:sans-serif;line-height:1.5">'+
+    "Ton navigateur ne permet pas d'afficher le cadran (contexte Canvas 2D indisponible). "+
+    "Essaie une mise à jour ou un autre navigateur.</p>";
+  throw new Error('OmcV: contexte Canvas 2D indisponible');
+}
 let W=0,H=0,DPR=Math.min(devicePixelRatio||1,2), U=1;   // U = unité monde en px
 function taille(){
   const r=cv.parentElement.getBoundingClientRect();
   W=r.width;H=r.height;
   cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';
   ctx.setTransform(DPR,0,0,DPR,0,0);
-  U=Math.min(W,H)*0.34*ZOOM;
+  U=Math.min(W,H)*0.34*VUE.zoom;
 }
-/* observateur : yaw (azimut 360°), pitch (élévation), zoom */
-let yaw=0, pitch=1.02, ZOOM=1, autoRot=false;
-const NEUTRE={yaw:0,pitch:1.02}, ZENITH={yaw:0,pitch:1.5533};
 const CAMD=3.0;
 function proj(x,y,z){
-  const cy=Math.cos(yaw),sy=Math.sin(yaw);
+  const cy=Math.cos(VUE.yaw),sy=Math.sin(VUE.yaw);
   let X=x*cy+z*sy, Z1=-x*sy+z*cy, Y=y;
-  const cp=Math.cos(pitch),sp=Math.sin(pitch);
+  const cp=Math.cos(VUE.pitch),sp=Math.sin(VUE.pitch);
   const Y2=Y*cp-Z1*sp, Z2=Y*sp+Z1*cp;
   const s=CAMD/(CAMD-Z2);
   return {x:W/2+X*U*s, y:H/2-Y2*U*s, s, z:Z2};
@@ -412,10 +511,11 @@ function pointSur(R,ang,yy){const a=ang*Math.PI*2-Math.PI/2;return proj(R*Math.c
 
 /* flux : vraie double hélice (2 brins réciproques) + sphère shadée */
 let INTENSITE_FLUX=1, GLOW=1, PERF=0;
-const HELIX={turns:3, R:0.5, H:1.2, N:64};
+const HELIX={turns:3, R:0.5, H:1.2, N: BASSE_PERF?40:64};
 function hx(c){return [parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];}
 function colLerp(a,b,t){const pa=hx(a),pb=hx(b);
   return 'rgb('+Math.round(pa[0]+(pb[0]-pa[0])*t)+','+Math.round(pa[1]+(pb[1]-pa[1])*t)+','+Math.round(pa[2]+(pb[2]-pa[2])*t)+')';}
+function hexA(c,a){const p=hx(c);return 'rgba('+p[0]+','+p[1]+','+p[2]+','+a+')';}
 
 const R_SAISON=1.06, R_JOUR=0.82, R_CV=0.56, R_RESP=0.32;
 function dessiner(E){
@@ -459,7 +559,7 @@ function dessiner(E){
     halo(p,r*2.4*p.s,c,.6);disque(p,r*p.s,c);});
 
   /* ---- phases-quartz : les 4 densités inégales DANS la Solônde (le quart qui respire) ---- */
-  if(phasesVisible){
+  if(VUE.phasesVisible){
     let start=0;
     for(let i=0;i<4;i++){
       const p0=start, p1=start+OMCV.PARTS[i];
@@ -472,43 +572,55 @@ function dessiner(E){
   }
 }
 function disque(p,r,c,a=1){ctx.globalAlpha=a;ctx.fillStyle=c;ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.5,r),0,7);ctx.fill();ctx.globalAlpha=1;}
-function halo(p,r,c,a){const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,Math.max(1,r));
-  g.addColorStop(0,c);g.addColorStop(1,'rgba(0,0,0,0)');ctx.globalAlpha=a;ctx.fillStyle=g;
-  ctx.beginPath();ctx.arc(p.x,p.y,Math.max(1,r),0,7);ctx.fill();ctx.globalAlpha=1;}
+/* halo à 3 arrêts (cœur vif → mi-teinte diffuse → transparence) : dégradé plus organique, façon bloom */
+function halo(p,r,c,a){
+  const rr=Math.max(1,r);
+  const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,rr);
+  g.addColorStop(0,hexA(c,a));g.addColorStop(.5,hexA(c,a*0.35));g.addColorStop(1,hexA(c,0));
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,rr,0,7);ctx.fill();
+}
 
 /* ---- vraie sphère shadée + wireframe (méridiens/parallèles), façon Chasphère ---- */
 function dessinerSphere(c0,breathe){
   const Rw=R_RESP*0.62*breathe;            // rayon monde (respire)
   const Rpx=Math.max(2,Rw*U*c0.s);         // rayon écran
+  /* intensité liée à la respiration : le halo et le rim pulsent avec le cristal, pas au hasard */
+  const resp=Math.max(0,Math.min(1,(breathe-1)/0.32));
   /* glow externe */
   ctx.save();ctx.globalCompositeOperation='lighter';
-  const gl=ctx.createRadialGradient(c0.x,c0.y,Rpx*0.6,c0.x,c0.y,Rpx*2.5*GLOW);
-  gl.addColorStop(0,'rgba(246,214,140,'+(0.5*GLOW)+')');gl.addColorStop(1,'rgba(226,169,79,0)');
-  ctx.fillStyle=gl;ctx.beginPath();ctx.arc(c0.x,c0.y,Rpx*2.5*GLOW,0,7);ctx.fill();ctx.restore();
+  const glR=Rpx*(2.3+0.4*resp)*GLOW;
+  const gl=ctx.createRadialGradient(c0.x,c0.y,Rpx*0.6,c0.x,c0.y,glR);
+  gl.addColorStop(0,'rgba(246,214,140,'+(0.42+0.18*resp)*GLOW+')');gl.addColorStop(1,'rgba(226,169,79,0)');
+  ctx.fillStyle=gl;ctx.beginPath();ctx.arc(c0.x,c0.y,glR,0,7);ctx.fill();ctx.restore();
   /* corps shadé : lumière en haut-gauche, terminateur en bas-droite */
   const lx=c0.x-Rpx*0.34, ly=c0.y-Rpx*0.4;
   const g=ctx.createRadialGradient(lx,ly,Rpx*0.05,c0.x,c0.y,Rpx*1.06);
   g.addColorStop(0,'#fff8e6');g.addColorStop(.35,'#f6d68c');g.addColorStop(.72,'#d99a3e');g.addColorStop(1,'#4e3410');
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(c0.x,c0.y,Rpx,0,7);ctx.fill();
+  /* reflet spéculaire : petit point vif qui suit la source de lumière, texture de surface */
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  const sg=ctx.createRadialGradient(lx,ly,0,lx,ly,Rpx*0.22);
+  sg.addColorStop(0,'rgba(255,255,255,.85)');sg.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=sg;ctx.beginPath();ctx.arc(lx,ly,Rpx*0.22,0,7);ctx.fill();ctx.restore();
   /* wireframe clippé au disque : la sphère respire son propre spin */
   ctx.save();ctx.beginPath();ctx.arc(c0.x,c0.y,Rpx,0,7);ctx.clip();
-  const spin=PERF*0.0003;
+  const spin=PERF*CONFIG.SPHERE_SPIN*motionScale();
   ctx.strokeStyle='rgba(255,244,208,.26)';ctx.lineWidth=.7;
   for(let m=0;m<6;m++){const phi=m/6*Math.PI+spin; ctx.beginPath();let f=true;
-    for(let i=0;i<=40;i++){const th=i/40*Math.PI*2;
+    for(let i=0;i<=SPHERE_SEG;i++){const th=i/SPHERE_SEG*Math.PI*2;
       const p=proj(Rw*Math.sin(th)*Math.cos(phi),Rw*Math.cos(th),Rw*Math.sin(th)*Math.sin(phi));
       f?(ctx.moveTo(p.x,p.y),f=false):ctx.lineTo(p.x,p.y);}
     ctx.stroke();}
   for(let ri=1;ri<6;ri++){const phi=ri/6*Math.PI, yr=Rw*Math.cos(phi), rr=Rw*Math.sin(phi);
     ctx.beginPath();let f=true;
-    for(let i=0;i<=40;i++){const th=i/40*Math.PI*2;const p=proj(rr*Math.cos(th),yr,rr*Math.sin(th));
+    for(let i=0;i<=SPHERE_SEG;i++){const th=i/SPHERE_SEG*Math.PI*2;const p=proj(rr*Math.cos(th),yr,rr*Math.sin(th));
       f?(ctx.moveTo(p.x,p.y),f=false):ctx.lineTo(p.x,p.y);}
     ctx.stroke();}
   ctx.restore();
-  /* rim light */
+  /* rim light — plus vif au pic d'expansion */
   ctx.save();ctx.globalCompositeOperation='lighter';
   const rg=ctx.createRadialGradient(c0.x,c0.y,Rpx*0.82,c0.x,c0.y,Rpx*1.04);
-  rg.addColorStop(0,'rgba(255,240,200,0)');rg.addColorStop(1,'rgba(255,240,200,.45)');
+  rg.addColorStop(0,'rgba(255,240,200,0)');rg.addColorStop(1,'rgba(255,240,200,'+(0.32+0.28*resp)+')');
   ctx.fillStyle=rg;ctx.beginPath();ctx.arc(c0.x,c0.y,Rpx*1.04,0,7);ctx.fill();ctx.restore();
   /* anneaux du centre fractal : plus grand (expansion) / plus petit (contraction) */
   ctx.strokeStyle='rgba(255,244,208,.4)';ctx.lineWidth=1.2;
@@ -518,7 +630,7 @@ function dessinerSphere(c0,breathe){
 
 /* ---- double hélice : brin A (expansions) et brin B (contractions), réciproques ---- */
 function dessinerBrins(E,breathe){
-  const spin=PERF*0.0004+E.fSolo*Math.PI*2;
+  const spin=PERF*CONFIG.HELIX_SPIN*motionScale()+E.fSolo*Math.PI*2;
   ctx.globalCompositeOperation='lighter';
   for(let strand=0;strand<2;strand++){
     const c1=strand===0?DENS[0].col:DENS[2].col, c2=strand===0?DENS[1].col:DENS[3].col;
@@ -528,11 +640,21 @@ function dessinerBrins(E,breathe){
       const ang=t*Math.PI*2*HELIX.turns+spin+strand*Math.PI;
       const rr=HELIX.R*(0.55+0.45*breathe)*(0.55+0.45*Math.sin(t*Math.PI));
       const p=proj(rr*Math.cos(ang),(t-0.5)*HELIX.H,rr*Math.sin(ang));
-      if(prev){ ctx.strokeStyle=colLerp(c1,c2,t);
+      if(prev){ const taper=0.5+0.5*Math.sin(t*Math.PI);   // fil qui s'amincit vers les pôles
+        ctx.strokeStyle=colLerp(c1,c2,t);
         ctx.globalAlpha=INTENSITE_FLUX*0.55*Math.max(.12,p.s-.35);
-        ctx.lineWidth=Math.max(.6,1.7*p.s*INTENSITE_FLUX);
+        ctx.lineWidth=Math.max(.6,1.7*p.s*INTENSITE_FLUX*taper);
         ctx.beginPath();ctx.moveTo(prev.x,prev.y);ctx.lineTo(p.x,p.y);ctx.stroke(); }
       prev=p;
+    }
+    /* étincelles scintillantes le long du brin : texture de flux vivante */
+    for(let k=0;k<5;k++){
+      const tt=(k/5+(strand?0.1:0)+PERF*0.00003*motionScale())%1;
+      const ang=tt*Math.PI*2*HELIX.turns+spin+strand*Math.PI;
+      const rr=HELIX.R*(0.55+0.45*breathe)*(0.55+0.45*Math.sin(tt*Math.PI));
+      const sp=proj(rr*Math.cos(ang),(tt-0.5)*HELIX.H,rr*Math.sin(ang));
+      const tw=0.4+0.6*Math.abs(Math.sin(PERF*0.004+k*1.7+strand*3));
+      disque(sp,1.6*sp.s,'#fff8e6',INTENSITE_FLUX*0.7*tw);
     }
     const bt=(E.fOmc+strand*0.5)%1;                       // perle voyageuse
     const ba=bt*Math.PI*2*HELIX.turns+spin+strand*Math.PI;
@@ -546,8 +668,8 @@ function dessinerBrins(E,breathe){
 /* ---- ciel : nébuleuse cosmique (blobs) + étoiles + rayons ---- */
 const ciel=$('ciel'), cctx=ciel.getContext('2d');
 let CW=0,CH=0,nebula=[],stars=[];
-function hexA(c,a){const p=hx(c);return 'rgba('+p[0]+','+p[1]+','+p[2]+','+a+')';}
 function cielTaille(){
+  if(!cctx) return;
   CW=innerWidth;CH=innerHeight;
   ciel.width=CW*DPR;ciel.height=CH*DPR;ciel.style.width=CW+'px';ciel.style.height=CH+'px';
   cctx.setTransform(DPR,0,0,DPR,0,0);
@@ -559,29 +681,39 @@ function cielTaille(){
     stars=Array.from({length:120},()=>({x:Math.random()*CW,y:Math.random()*CH,r:Math.random()*1.3+.2,tw:Math.random()*6.28,sp:.008+Math.random()*.03}));
   }
 }
+let nebFrame=0;
 function dessinerCiel(){
+  if(!cctx) return;
   cctx.clearRect(0,0,CW,CH);
   const amb=document.documentElement.dataset.ambiance||'cosmos';
   const neb=amb==='aurore'?0.05:amb==='nuit'?0.05:0.13, starA=amb==='aurore'?0.3:1;
+  const ms=motionScale();
+  /* parallaxe légère liée à l'orientation de l'observateur : profondeur 3D dans le ciel */
+  const parX=Math.sin(VUE.yaw)*18, parY=(VUE.pitch-1.02)*14;
   cctx.globalCompositeOperation='lighter';
-  nebula.forEach(n=>{ n.x+=n.dx;n.y+=n.dy;n.pw+=.006;
-    if(n.x<-320)n.x=CW+200;if(n.x>CW+320)n.x=-200;if(n.y<-320)n.y=CH+200;if(n.y>CH+320)n.y=-200;
+  /* la nébuleuse avance une frame sur deux (perf), à vitesse doublée pour rester fluide */
+  const avanceNeb=(nebFrame++%2===0);
+  nebula.forEach(n=>{
+    if(avanceNeb){ n.x+=n.dx*2*ms;n.y+=n.dy*2*ms;n.pw+=.012*ms;
+      if(n.x<-320)n.x=CW+200;if(n.x>CW+320)n.x=-200;if(n.y<-320)n.y=CH+200;if(n.y>CH+320)n.y=-200; }
     const rr=n.r*(1+.06*Math.sin(n.pw));
-    const g=cctx.createRadialGradient(n.x,n.y,0,n.x,n.y,rr);
+    const depth=Math.min(1,n.r/380);
+    const px=n.x+parX*depth, py=n.y+parY*depth;
+    const g=cctx.createRadialGradient(px,py,0,px,py,rr);
     g.addColorStop(0,hexA(n.c[1],neb));g.addColorStop(.45,hexA(n.c[0],neb*0.55));g.addColorStop(1,hexA(n.c[0],0));
-    cctx.fillStyle=g;cctx.beginPath();cctx.arc(n.x,n.y,rr,0,7);cctx.fill(); });
+    cctx.fillStyle=g;cctx.beginPath();cctx.arc(px,py,rr,0,7);cctx.fill(); });
   cctx.globalCompositeOperation='source-over';
-  stars.forEach(s=>{ s.tw+=s.sp;cctx.globalAlpha=(.2+.7*Math.abs(Math.sin(s.tw)))*starA;
+  stars.forEach(s=>{ s.tw+=s.sp*ms;cctx.globalAlpha=(.2+.7*Math.abs(Math.sin(s.tw)))*starA;
     cctx.fillStyle='#eef0ff';cctx.beginPath();cctx.arc(s.x,s.y,s.r,0,7);cctx.fill(); });
   cctx.globalAlpha=1;
-  if(Math.random()<.005){ const x=Math.random()*CW,y=Math.random()*CH,len=70+Math.random()*130,an=Math.random()*6.28;
+  if(Math.random()<.005*ms){ const x=Math.random()*CW,y=Math.random()*CH,len=70+Math.random()*130,an=Math.random()*6.28;
     const g=cctx.createLinearGradient(x,y,x+Math.cos(an)*len,y+Math.sin(an)*len);
     g.addColorStop(0,'rgba(200,220,255,0)');g.addColorStop(.5,'rgba(210,225,255,.5)');g.addColorStop(1,'rgba(200,220,255,0)');
     cctx.strokeStyle=g;cctx.lineWidth=1;cctx.beginPath();cctx.moveTo(x,y);cctx.lineTo(x+Math.cos(an)*len,y+Math.sin(an)*len);cctx.stroke(); }
 }
 
 /* ═══════════════════════ HUD ═══════════════════════ */
-let phasesVisible=false;
+let dernierAnnonce=0;
 function majHud(E){
   $('h-saison').textContent=DENS[E.si].r;
   $('h-saison-l').textContent=DENS[E.si].nom.split(' ')[0].toLowerCase()+' · j'+(E.jourAn+1)+'/432';
@@ -596,55 +728,133 @@ function majHud(E){
   let tail=' · jour OmcV = '+fmt(OMCV.UNITE_PAR_JOUR,0)+' unités';
   if(j0mode==='perso'&&ancrePerso){const nb=Math.floor((Date.now()-ancrePerso)/(OMCV.JOUR_S*1000));tail=' · ✿ perso · OmcV n°'+fmt(nb+1,0);}
   $('civil').textContent=civ+' civil'+tail;
+  /* équivalent textuel pour lecteur d'écran, annoncé au plus toutes les 4 s (pas à 60 fps) */
+  if(PERF-dernierAnnonce>4000){
+    dernierAnnonce=PERF;
+    const live=$('sr-live');
+    if(live) live.textContent='Saison '+DENS[E.si].r+', '+DENS[E.si].nom+', jour '+(E.jourAn+1)+' sur 432. '+
+      'Omc '+E.omc+' sur 432. Solônde '+Math.floor(E.solInOmc)+' sur 90. Unité '+fmt(E.uniteDay,0)+
+      ' sur '+fmt(OMCV.UNITE_PAR_JOUR,0)+'. Phase quartz '+DENS[E.q].r+'.';
+  }
 }
 
 /* ═══════════════════════ BOUCLE ═══════════════════════ */
-let themeTick=0;
+let themeTick=0, renduAlerte=false;
 function boucle(){
-  avancer(); PERF=performance.now();
-  if(autoRot) yaw+=0.0032;
-  const E=etat();
-  dessinerCiel();
-  dessiner(E); majHud(E);
-  if(++themeTick%30===0) majTheme();
+  try{
+    avancer(); PERF=performance.now();
+    if(!document.hidden){
+      if(VUE.autoRot) VUE.yaw+=CONFIG.AUTOROT_SPEED*motionScale();
+      const E=etat();
+      dessinerCiel();
+      dessiner(E); majHud(E);
+      if(++themeTick%30===0) majTheme();
+    }
+  }catch(err){
+    console.error('OmcV: erreur de rendu, frame ignorée', err);
+    if(!renduAlerte){ renduAlerte=true; const el=$('sr-live'); if(el) el.textContent='Un souci d’affichage est survenu ; recharge la page si le cadran se fige.'; }
+  }
   requestAnimationFrame(boucle);
 }
 
 /* ═══════════════════════ NAVIGATION OBSERVATEUR ═══════════════════════ */
 const scene=$('scene');
-let drag=false,px=0,py=0;
-scene.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;autoRot=false;$('obs-rot').classList.remove('actif');scene.classList.add('grab');scene.setPointerCapture(e.pointerId);});
+let drag=false,px=0,py=0,lastTapT=0,lastTapX=0,lastTapY=0;
+scene.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;VUE.autoRot=false;
+  $('obs-rot').classList.remove('actif');$('obs-rot').setAttribute('aria-pressed','false');
+  scene.classList.add('grab');scene.setPointerCapture(e.pointerId);});
 scene.addEventListener('pointermove',e=>{if(!drag)return;
-  yaw+=(e.clientX-px)*0.008; pitch=Math.max(0.08,Math.min(1.556,pitch-(e.clientY-py)*0.006));
+  VUE.yaw+=(e.clientX-px)*CONFIG.ROT_SENS; VUE.pitch=Math.max(CONFIG.PITCH_MIN,Math.min(CONFIG.PITCH_MAX,VUE.pitch-(e.clientY-py)*CONFIG.PITCH_SENS));
   px=e.clientX;py=e.clientY;});
-scene.addEventListener('pointerup',e=>{drag=false;scene.classList.remove('grab');});
-scene.addEventListener('wheel',e=>{e.preventDefault();ZOOM=Math.max(.55,Math.min(2.2,ZOOM-e.deltaY*0.0011));$('zoom').value=Math.round(ZOOM*100);$('zoom-val').textContent=Math.round(ZOOM*100)+'%';taille();},{passive:false});
+scene.addEventListener('pointerup',e=>{
+  drag=false;scene.classList.remove('grab');
+  if(e.pointerType==='touch'){
+    const now=performance.now(), dx=e.clientX-lastTapX, dy=e.clientY-lastTapY;
+    if(now-lastTapT<CONFIG.DOUBLE_TAP_MS && Math.hypot(dx,dy)<CONFIG.DOUBLE_TAP_DIST){
+      VUE.zoom=1;$('zoom').value=100;$('zoom-val').textContent='100%';taille();
+      vue(NEUTRE);VUE.autoRot=false;$('obs-rot').classList.remove('actif');$('obs-rot').setAttribute('aria-pressed','false');
+      lastTapT=0;
+    } else { lastTapT=now;lastTapX=e.clientX;lastTapY=e.clientY; }
+  }
+});
+scene.addEventListener('pointercancel',()=>{drag=false;scene.classList.remove('grab');});
+scene.addEventListener('wheel',e=>{e.preventDefault();VUE.zoom=Math.max(CONFIG.ZOOM_MIN,Math.min(CONFIG.ZOOM_MAX,VUE.zoom-e.deltaY*CONFIG.WHEEL_ZOOM));$('zoom').value=Math.round(VUE.zoom*100);$('zoom-val').textContent=Math.round(VUE.zoom*100)+'%';taille();},{passive:false});
+scene.addEventListener('keydown',e=>{
+  let manie=true;
+  switch(e.key){
+    case 'ArrowLeft': VUE.yaw-=CONFIG.KEY_YAW_STEP; break;
+    case 'ArrowRight': VUE.yaw+=CONFIG.KEY_YAW_STEP; break;
+    case 'ArrowUp': VUE.pitch=Math.max(CONFIG.PITCH_MIN,VUE.pitch-CONFIG.KEY_YAW_STEP); break;
+    case 'ArrowDown': VUE.pitch=Math.min(CONFIG.PITCH_MAX,VUE.pitch+CONFIG.KEY_YAW_STEP); break;
+    case '+': case '=':
+      VUE.zoom=Math.min(CONFIG.ZOOM_MAX,VUE.zoom+CONFIG.KEY_ZOOM_STEP);
+      $('zoom').value=Math.round(VUE.zoom*100);$('zoom-val').textContent=Math.round(VUE.zoom*100)+'%';taille(); break;
+    case '-': case '_':
+      VUE.zoom=Math.max(CONFIG.ZOOM_MIN,VUE.zoom-CONFIG.KEY_ZOOM_STEP);
+      $('zoom').value=Math.round(VUE.zoom*100);$('zoom-val').textContent=Math.round(VUE.zoom*100)+'%';taille(); break;
+    default: manie=false;
+  }
+  if(manie){ e.preventDefault(); VUE.autoRot=false; $('obs-rot').classList.remove('actif'); $('obs-rot').setAttribute('aria-pressed','false'); }
+});
 // pinch
 let pd=0;
-scene.addEventListener('touchmove',e=>{if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;const d=Math.hypot(dx,dy);if(pd)ZOOM=Math.max(.55,Math.min(2.2,ZOOM*(d/pd)));pd=d;taille();e.preventDefault();}},{passive:false});
+scene.addEventListener('touchmove',e=>{if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;const d=Math.hypot(dx,dy);if(pd)VUE.zoom=Math.max(CONFIG.ZOOM_MIN,Math.min(CONFIG.ZOOM_MAX,VUE.zoom*(d/pd)));pd=d;taille();e.preventDefault();}},{passive:false});
 scene.addEventListener('touchend',()=>pd=0);
 
-function vue(o){yaw=o.yaw;pitch=o.pitch;}
+function vue(o){VUE.yaw=o.yaw;VUE.pitch=o.pitch;}
 $('obs-reset').onclick=$('o-reset').onclick=()=>vue(NEUTRE);
 $('obs-haut').onclick=$('o-haut').onclick=()=>vue(ZENITH);
-function toggleRot(){autoRot=!autoRot;$('obs-rot').classList.toggle('actif',autoRot);}
+function toggleRot(){VUE.autoRot=!VUE.autoRot;$('obs-rot').classList.toggle('actif',VUE.autoRot);$('obs-rot').setAttribute('aria-pressed',String(VUE.autoRot));}
 $('obs-rot').onclick=$('o-rot').onclick=toggleRot;
 
+/* pause du rendu (pas de l'horloge) quand l'onglet est masqué : économie batterie */
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) lastReal=performance.now(); });
+
 /* ═══════════════════════ MENU ═══════════════════════ */
-const menu=$('menu');
-function ouvrir(t){menu.classList.add('ouvert'); if(t)onglet(t);}
+const menu=$('menu'), backdrop=$('menu-backdrop');
+let dernierFocus=null;
+function ouvrir(t){
+  menu.classList.add('ouvert'); backdrop.classList.add('ouvert');
+  $('obs-menu').setAttribute('aria-expanded','true');
+  if(t)onglet(t);
+  dernierFocus=document.activeElement;
+  requestAnimationFrame(()=>menu.focus());
+}
+function fermerMenu(){
+  menu.classList.remove('ouvert'); backdrop.classList.remove('ouvert');
+  $('obs-menu').setAttribute('aria-expanded','false');
+  if(dernierFocus&&dernierFocus.focus) dernierFocus.focus();
+}
 $('obs-menu').onclick=()=>ouvrir();
-$('fermer').onclick=()=>menu.classList.remove('ouvert');
-function onglet(t){document.querySelectorAll('.ong').forEach(o=>o.classList.toggle('actif',o.dataset.t===t));
-  document.querySelectorAll('.pan').forEach(p=>p.classList.toggle('actif',p.dataset.p===t));}
+$('fermer').onclick=fermerMenu;
+backdrop.onclick=fermerMenu;
+document.addEventListener('keydown',e=>{
+  if(!menu.classList.contains('ouvert')) return;
+  if(e.key==='Escape'){ fermerMenu(); return; }
+  if(e.key==='Tab'){
+    const f=menu.querySelectorAll('button, input, [tabindex]:not([tabindex="-1"])');
+    if(!f.length) return;
+    const first=f[0], last=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey&&document.activeElement===last){ e.preventDefault(); first.focus(); }
+  }
+});
+function onglet(t){
+  document.querySelectorAll('.ong').forEach(o=>{const actif=o.dataset.t===t;o.classList.toggle('actif',actif);o.setAttribute('aria-selected',actif?'true':'false');});
+  document.querySelectorAll('.pan').forEach(p=>p.classList.toggle('actif',p.dataset.p===t));
+}
 document.querySelectorAll('.ong').forEach(o=>o.onclick=()=>onglet(o.dataset.t));
 $('b-densites').onclick=()=>ouvrir('dens');
 $('b-j0').onclick=()=>ouvrir('j0');
-$('b-phases').onclick=()=>{phasesVisible=!phasesVisible;$('b-phases').classList.toggle('actif',phasesVisible);};
-$('b-vitesse').onclick=()=>{warpIdx=(warpIdx+1)%WARPS.length;const w=WARPS[warpIdx];const lbl='×'+(w>=1000?fmt(w):w);$('b-vitesse').textContent='⏩ '+lbl;$('warp').value=warpIdx;$('warp-val').textContent=lbl;};
+$('b-phases').onclick=()=>{VUE.phasesVisible=!VUE.phasesVisible;$('b-phases').classList.toggle('actif',VUE.phasesVisible);$('b-phases').setAttribute('aria-pressed',String(VUE.phasesVisible));};
+$('b-vitesse').onclick=()=>{VUE.warpIdx=(VUE.warpIdx+1)%WARPS.length;const w=WARPS[VUE.warpIdx];const lbl='×'+(w>=1000?fmt(w):w);$('b-vitesse').textContent='⏩ '+lbl;$('warp').value=VUE.warpIdx;$('warp-val').textContent=lbl;};
+
+/* première visite : révèle la Notice pour ne pas laisser l'essentiel caché dans un menu fermé */
+if(!lis('visite')){ note('visite','1'); setTimeout(()=>ouvrir('notice'),700); }
 
 /* ═══════════════════════ CRÉATEUR — le modèle n'est pas figé ═══════════════════════ */
 const DEF=[[11,10],[6,5],[10,11],[5,6]];
+const persistModeleDeb=debounce(persistModele,400);
 function heures(s){const h=s/3600;return Math.floor(h)+'h'+fmt((h-Math.floor(h))*60,1).replace('.',',');}
 function refreshDens(){
   const t=$('table-dens');t.innerHTML='';
@@ -661,7 +871,7 @@ function refreshDens(){
     'unités/jour = <b>'+fmt(OMCV.UNITE_PAR_JOUR,0)+'</b> ('+OMCV.UNITE_PAR_OMC+' × '+OMCV.OMC_PAR_JOUR+') · jour ≈ <b>'+heures(OMCV.JOUR_S)+'</b><br>'+
     'produit des densités = <b>'+OMCV.PRODUIT.toFixed(3).replace('.',',')+'</b>';
 }
-function persistModele(){try{note('modele',JSON.stringify({r:DENS.map(x=>x.r),demi:OMCV.DEMI,spo:OMCV.SOL_PAR_OMC,opj:OMCV.OMC_PAR_JOUR,ja:OMCV.JOURS_AN}));}catch(e){}}
+function persistModele(){note('modele',JSON.stringify({r:DENS.map(x=>x.r),demi:OMCV.DEMI,spo:OMCV.SOL_PAR_OMC,opj:OMCV.OMC_PAR_JOUR,ja:OMCV.JOURS_AN}));}
 function buildCreateur(){
   const box=$('crea-dens');box.innerHTML='';
   DENS.forEach((d,i)=>{const row=document.createElement('div');row.className='crea-row';
@@ -669,44 +879,76 @@ function buildCreateur(){
       '<input type="number" min="1" step="1" id="num'+i+'"><span>/</span><input type="number" min="1" step="1" id="den'+i+'">';
     box.appendChild(row);});
   DENS.forEach((d,i)=>{const p=d.r.split('/');$('num'+i).value=p[0];$('den'+i).value=p[1];
-    const upd=()=>{const n=+$('num'+i).value,dd=+$('den'+i).value;
-      if(n>0&&dd>0){d.v=n/dd;d.r=n+'/'+dd;refreshDens();persistModele();}};
+    const upd=()=>{
+      const n=+$('num'+i).value,dd=+$('den'+i).value;
+      const nOk=n>0&&Number.isFinite(n), ddOk=dd>0&&Number.isFinite(dd);
+      $('num'+i).classList.toggle('invalide',!nOk); $('den'+i).classList.toggle('invalide',!ddOk);
+      if(nOk&&ddOk){d.v=n/dd;d.r=n+'/'+dd;refreshDens();persistModeleDeb();}};
     $('num'+i).oninput=upd;$('den'+i).oninput=upd;});
   $('demi').value=OMCV.DEMI;$('demi-val').textContent=OMCV.DEMI.toFixed(2).replace('.',',')+' s';
-  $('demi').oninput=e=>{OMCV.DEMI=+e.target.value;$('demi-val').textContent=OMCV.DEMI.toFixed(2).replace('.',',')+' s';refreshDens();persistModele();};
+  $('demi').oninput=e=>{OMCV.DEMI=+e.target.value;$('demi-val').textContent=OMCV.DEMI.toFixed(2).replace('.',',')+' s';refreshDens();persistModeleDeb();};
   $('c-spo').value=OMCV.SOL_PAR_OMC;$('c-opj').value=OMCV.OMC_PAR_JOUR;$('c-ja').value=OMCV.JOURS_AN;
-  $('c-spo').oninput=e=>{OMCV.SOL_PAR_OMC=Math.max(1,e.target.value|0);refreshDens();persistModele();};
-  $('c-opj').oninput=e=>{OMCV.OMC_PAR_JOUR=Math.max(1,e.target.value|0);refreshDens();persistModele();};
-  $('c-ja').oninput=e=>{OMCV.JOURS_AN=Math.max(1,e.target.value|0);refreshDens();persistModele();};
+  $('c-spo').oninput=e=>{const v=+e.target.value,ok=v>0&&Number.isFinite(v);e.target.classList.toggle('invalide',!ok);if(ok){OMCV.SOL_PAR_OMC=v|0;refreshDens();persistModeleDeb();}};
+  $('c-opj').oninput=e=>{const v=+e.target.value,ok=v>0&&Number.isFinite(v);e.target.classList.toggle('invalide',!ok);if(ok){OMCV.OMC_PAR_JOUR=v|0;refreshDens();persistModeleDeb();}};
+  $('c-ja').oninput=e=>{const v=+e.target.value,ok=v>0&&Number.isFinite(v);e.target.classList.toggle('invalide',!ok);if(ok){OMCV.JOURS_AN=v|0;refreshDens();persistModeleDeb();}};
   refreshDens();
 }
-$('crea-reset').onclick=()=>{DEF.forEach((p,i)=>{DENS[i].v=p[0]/p[1];DENS[i].r=p[0]+'/'+p[1];});
-  OMCV.DEMI=0.5;OMCV.SOL_PAR_OMC=90;OMCV.OMC_PAR_JOUR=432;OMCV.JOURS_AN=432;note('modele','');buildCreateur();};
+$('crea-reset').onclick=()=>{
+  if(!confirm('Revenir au modèle d’origine ? Tes réglages personnalisés du Créateur seront perdus.')) return;
+  DEF.forEach((p,i)=>{DENS[i].v=p[0]/p[1];DENS[i].r=p[0]+'/'+p[1];});
+  OMCV.DEMI=0.5;OMCV.SOL_PAR_OMC=90;OMCV.OMC_PAR_JOUR=432;OMCV.JOURS_AN=432;note('modele','');buildCreateur();
+};
 /* charger un modèle sauvegardé (humilité : il survit d'une session à l'autre) */
 (function(){const m=lis('modele');if(m){try{const o=JSON.parse(m);
   if(o.r)o.r.forEach((rs,i)=>{const p=rs.split('/');if(DENS[i]&&+p[1]){DENS[i].r=rs;DENS[i].v=(+p[0])/(+p[1]);}});
   if(o.demi)OMCV.DEMI=o.demi;if(o.spo)OMCV.SOL_PAR_OMC=o.spo;if(o.opj)OMCV.OMC_PAR_JOUR=o.opj;if(o.ja)OMCV.JOURS_AN=o.ja;
-}catch(e){}}})();
+}catch(e){console.warn('OmcV: modèle sauvegardé illisible, ignoré.',e);}}})();
 buildCreateur();
 
-/* import de fond d'écran externe */
+/* import de fond d'écran externe : validé, redimensionné, puis stocké */
+function redimensionnerImage(file,maxDim){
+  return new Promise((resolve,reject)=>{
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let w=img.naturalWidth,h=img.naturalHeight;
+      const echelle=Math.min(1,maxDim/Math.max(w,h));
+      w=Math.round(w*echelle);h=Math.round(h*echelle);
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      const cx=c.getContext('2d');
+      if(!cx){reject(new Error('contexte indisponible'));return;}
+      cx.drawImage(img,0,0,w,h);
+      resolve(c.toDataURL('image/jpeg',0.85));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('image invalide'));};
+    img.src=url;
+  });
+}
+function fondStatut(msg){const el=$('fond-statut');if(el)el.textContent=msg;}
 $('fond-choisir').onclick=()=>$('fond-fichier').click();
-$('fond-fichier').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
-  rd.onload=ev=>{$('fond-perso').style.backgroundImage='url('+ev.target.result+')';try{note('fond',ev.target.result);}catch(x){}};
-  rd.readAsDataURL(f);};
-$('fond-retirer').onclick=()=>{$('fond-perso').style.backgroundImage='';note('fond','');};
+$('fond-fichier').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  if(!f.type.startsWith('image/')){fondStatut('Ce fichier n’est pas une image.');return;}
+  if(f.size>8*1024*1024){fondStatut('Image trop lourde (8 Mo max).');return;}
+  redimensionnerImage(f,1600).then(dataUrl=>{
+    $('fond-perso').style.backgroundImage='url('+dataUrl+')';
+    if(note('fond',dataUrl)) fondStatut('Image appliquée et enregistrée localement.');
+    else fondStatut('Image appliquée mais non sauvegardée (espace de stockage plein).');
+  }).catch(()=>fondStatut('Impossible de lire cette image.'));
+};
+$('fond-retirer').onclick=()=>{$('fond-perso').style.backgroundImage='';note('fond','');fondStatut('Ciel nu.');};
 if(lis('fond'))$('fond-perso').style.backgroundImage='url('+lis('fond')+')';
 
 /* ancres densité (observateur) */
 (function(){const c=$('ancres');DENS.forEach((d,i)=>{const b=document.createElement('button');
-  b.className='rond';b.style.borderColor=d.col;b.textContent=['🌱','☀️','🍂','❄️'][i];b.title=d.nom;
-  b.onclick=()=>{yaw=-(i/4)*Math.PI*2;autoRot=false;};c.appendChild(b);});})();
+  b.className='rond';b.style.borderColor=d.col;b.textContent=['🌱','☀️','🍂','❄️'][i];b.title=d.nom;b.setAttribute('aria-label',d.nom);
+  b.onclick=()=>{VUE.yaw=-(i/4)*Math.PI*2;VUE.autoRot=false;$('obs-rot').classList.remove('actif');$('obs-rot').setAttribute('aria-pressed','false');};c.appendChild(b);});})();
 
 /* affichage */
 $('flux').oninput=e=>{INTENSITE_FLUX=e.target.value/100;$('flux-val').textContent=e.target.value+'%';};
 $('glow').oninput=e=>{GLOW=e.target.value/100;$('glow-val').textContent=e.target.value+'%';};
-$('zoom').oninput=e=>{ZOOM=e.target.value/100;$('zoom-val').textContent=e.target.value+'%';taille();};
-$('warp').oninput=e=>{warpIdx=+e.target.value;const w=WARPS[warpIdx];const lbl='×'+(w>=1000?fmt(w):w);$('warp-val').textContent=lbl;$('b-vitesse').textContent='⏩ '+lbl;};
+$('zoom').oninput=e=>{VUE.zoom=e.target.value/100;$('zoom-val').textContent=e.target.value+'%';taille();};
+$('warp').oninput=e=>{VUE.warpIdx=+e.target.value;const w=WARPS[VUE.warpIdx];const lbl='×'+(w>=1000?fmt(w):w);$('warp-val').textContent=lbl;$('b-vitesse').textContent='⏩ '+lbl;};
 function amb(a){document.documentElement.dataset.ambiance=a;note('amb',a);}
 $('amb-cosmos').onclick=()=>amb('cosmos');$('amb-nuit').onclick=()=>amb('nuit');$('amb-aurore').onclick=()=>amb('aurore');
 if(lis('amb'))document.documentElement.dataset.ambiance=lis('amb');
@@ -716,13 +958,16 @@ function majSolaire(){
   $('lat-val').textContent=latDe(latB).toFixed(1)+'°'; $('lon-val').textContent=lonDe(lonB).toFixed(1)+'°';
   $('lat').value=latB;$('lon').value=lonB;
   const s=solaire(new Date(),latDe(latB),lonDe(lonB));
-  const lv=s.lever!=null?instUTC(new Date(),s.lever).getTime():null;
-  const cc=s.coucher!=null?instUTC(new Date(),s.coucher).getTime():null;
-  $('lever').textContent=hhmm(lv);$('coucher').textContent=hhmm(cc);
-  $('duree').textContent=(lv&&cc)?fmt((cc-lv)/3600000,1).replace('.',',')+' h':'—';
+  if(s.polaire==='jour'){ $('lever').textContent='soleil levé';$('coucher').textContent='(jour polaire)';$('duree').textContent='24 h'; }
+  else if(s.polaire==='nuit'){ $('lever').textContent='soleil couché';$('coucher').textContent='(nuit polaire)';$('duree').textContent='0 h'; }
+  else{
+    const lv=instUTC(new Date(),s.lever).getTime(), cc=instUTC(new Date(),s.coucher).getTime();
+    $('lever').textContent=hhmm(lv);$('coucher').textContent=hhmm(cc);
+    $('duree').textContent=fmt((cc-lv)/3600000,1).replace('.',',')+' h';
+  }
 }
-$('lat').oninput=e=>{latB=+e.target.value;note('lat',latB);majSolaire();};
-$('lon').oninput=e=>{lonB=+e.target.value;note('lon',lonB);majSolaire();};
+$('lat').oninput=e=>{latB=+e.target.value;noteDeb('lat',latB);majSolaire();};
+$('lon').oninput=e=>{lonB=+e.target.value;noteDeb('lon',lonB);majSolaire();};
 $('j0-now').onclick=()=>{ancreEq=Date.now();note('ancre',ancreEq);vClock=Date.now();appliquerJ0();};
 $('j0-eq').onclick=()=>{ancreEquinoxe();vClock=Date.now();appliquerJ0();};
 
@@ -749,6 +994,15 @@ $('n-save').onclick=()=>{
   note('perso',ancrePerso);note('ndate',d);note('ntime',t);
   setMode('perso');
 };
+$('n-clear').onclick=()=>{
+  if(!confirm('Effacer ta date de naissance et toutes les données enregistrées localement (thème, fond, réglages) ?')) return;
+  ['lat','lon','ancre','perso','j0mode','ndate','ntime','amb','fond','modele','visite'].forEach(k=>{try{localStorage.removeItem('omcv.'+k);}catch(e){}});
+  ancrePerso=0;j0mode='eq';note('j0mode','eq');
+  $('n-date').value='';$('n-time').value='';
+  $('fond-perso').style.backgroundImage='';
+  setMode('eq');majTheme();
+  $('theme-out').innerHTML='Données locales effacées. Enregistre ta naissance pour révéler ton thème.';
+};
 if(lis('ndate'))$('n-date').value=lis('ndate');
 if(lis('ntime'))$('n-time').value=lis('ntime');
 
@@ -767,9 +1021,8 @@ function majTheme(){
     'Né sous la saison <b style="color:'+DENS[sig.si].col+'">'+DENS[sig.si].r+' '+DENS[sig.si].nom+'</b>, '+
     'phase-quartz <b style="color:'+DENS[sig.q].col+'">'+DENS[sig.q].r+'</b>.';
   if(box){
-    const anLen=OMCV.SAISONS*(OMCV.JOURS_AN/OMCV.SAISONS)*jourMs; // = anMs
-    const cycleStart=ancrePerso+Math.floor((now-ancrePerso)/anMs)*anMs;
     const seasonDur=(OMCV.JOURS_AN/OMCV.SAISONS)*jourMs;
+    const cycleStart=ancrePerso+Math.floor((now-ancrePerso)/anMs)*anMs;
     const cur=Math.floor(((now-ancrePerso)%anMs)/seasonDur);
     box.innerHTML='';
     for(let i=0;i<4;i++){
@@ -783,10 +1036,45 @@ function majTheme(){
   }
 }
 
+/* ═══════════════════════ ÉCHELLES DES CURSEURS (repères min/max) ═══════════════════════ */
+function echelle(id,txtMin,txtMax){
+  const inp=$(id); if(!inp) return;
+  const row=document.createElement('div');row.className='curseur-echelle';
+  const a=document.createElement('span');a.textContent=txtMin;
+  const b=document.createElement('span');b.textContent=txtMax;
+  row.append(a,b);inp.insertAdjacentElement('afterend',row);
+}
+
+/* ═══════════════════════ AUTOTEST (fonctions pures) — ?debug=1 ═══════════════════════ */
+function autotest(){
+  const eq=equinoxeMarsUTC(2026);
+  console.assert(eq.getUTCMonth()===2 && eq.getUTCDate()>=18 && eq.getUTCDate()<=21,'equinoxeMarsUTC(2026) doit tomber vers le 20 mars', eq);
+  const s=solaire(new Date(Date.UTC(2026,2,20,12)),0,0);
+  console.assert(s.lever!=null&&s.coucher!=null,'solaire() doit donner lever/coucher à l’équateur',s);
+  const e0=etatCore(1000,1000);
+  console.assert(e0.uniteDay===0,'etatCore à t=ancre doit démarrer à l’unité 0',e0);
+  const e1=etatCore(1000+OMCV.SOL_S*1000*OMCV.SOL_PAR_JOUR,1000);
+  console.assert(e1.uniteDay===0 && e1.jourAn===1,'un jour OmcV complet doit revenir à l’unité 0, jour suivant',e1);
+  console.log('%cOmcV — autotest terminé','color:#7cc4ae');
+}
+if(new URLSearchParams(location.search).get('debug')==='1') autotest();
+
+/* ═══════════════════════ PWA — service worker (ignoré hors http/https) ═══════════════════════ */
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+  addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
+}
+
 /* ═══════════════════════ INIT ═══════════════════════ */
 function redim(){taille();cielTaille();}
 addEventListener('resize',redim);
 redim(); majSolaire(); appliquerJ0(); majTheme(); boucle();
+echelle('zoom','55 %','220 %');
+echelle('flux','0 %','200 %');
+echelle('glow','30 %','200 %');
+echelle('warp','×1','×2 000 000');
+echelle('demi','0,25 s','1 s');
+echelle('lat', latDe(0).toFixed(0)+'° Nord', latDe(35).toFixed(0)+'° Sud');
+echelle('lon', lonDe(0).toFixed(0)+'°', lonDe(35).toFixed(0)+'°');
 </script>
 </body>
 </html>

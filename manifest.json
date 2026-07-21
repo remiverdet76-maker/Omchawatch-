@@ -1,0 +1,15 @@
+{
+  "name": "Chawatch · OmcV — Centre fractal 432",
+  "short_name": "OmcV",
+  "description": "Cadran temporel fractal 3D : la Solônde rigide, les 4 densités, l'observateur libre.",
+  "start_url": "./Chawatch-OmcV.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#140f2e",
+  "theme_color": "#140f2e",
+  "lang": "fr",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
