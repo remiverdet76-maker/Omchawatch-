@@ -21,10 +21,17 @@
     /* les 4 densités */
     --d1:#f2b25c; --d2:#e2799b; --d3:#8fb4de; --d4:#7cc4ae;
     --or:#f6d68c; --or-profond:#e2a94f;
-    --fond1:#140f2e; --fond2:#221a49; --fond3:#301f57;
+    --fond1:#140f2e; --fond2:#221a49; --fond3:#2c1f4d;
     --texte:#f3e6d2; --texte-doux:#c9b8e8; --accent:#f6d68c;
     --verre:rgba(84,62,140,.34); --verre-bord:rgba(246,214,140,.36);
     --glow:1; --err:#e2799b;
+    /* tokens : élévation, rayons, espacements — un seul système partagé par les 3 ambiances */
+    --r-sm:8px; --r-md:12px; --r-lg:20px; --r-pill:20px;
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+    --ombre-1:0 2px 10px rgba(0,0,0,.28); --ombre-2:0 10px 30px rgba(0,0,0,.38);
+    --police-titre:"Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,serif;
+    --police-corps:"Nunito","Segoe UI",system-ui,sans-serif;
+    --police-instrument:"SF Mono","Roboto Mono","Consolas",monospace;
   }
   [data-ambiance="nuit"]{ --fond1:#04030a;--fond2:#070613;--fond3:#0a0819;
     --texte:#e8e6f6;--texte-doux:#9a94c4;--verre:rgba(20,18,44,.5);--verre-bord:rgba(230,225,255,.24);}
@@ -35,12 +42,15 @@
   html,body{height:100%;overflow:hidden;}
   html{background:radial-gradient(120% 120% at 50% 12%,var(--fond3),var(--fond2) 45%,var(--fond1) 100%);
     transition:background .6s ease;}
-  #fond-perso{position:fixed;inset:0;z-index:-2;background-size:cover;background-position:center;background-repeat:no-repeat;}
-  #ciel{position:fixed;inset:0;z-index:-1;pointer-events:none;}
+  #fond-perso{position:fixed;inset:0;z-index:-3;background-size:cover;background-position:center;background-repeat:no-repeat;}
+  #ciel{position:fixed;inset:0;z-index:-2;pointer-events:none;}
+  /* grain filmique : casse l'aspect "dégradé plat" sans aucune requête réseau (SVG turbulence en data-URI) */
+  #grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
   #vignette{position:fixed;inset:0;z-index:2;pointer-events:none;
     background:radial-gradient(120% 120% at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.4) 100%);}
   body{
-    font-family:"Nunito","Segoe UI",system-ui,sans-serif;
+    font-family:var(--police-corps);
     color:var(--texte);
     background:transparent;
     display:flex;flex-direction:column;height:100dvh;position:relative;
@@ -49,56 +59,124 @@
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
     clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 
-  header{padding:10px 14px 4px;text-align:center;pointer-events:none;}
-  header h1{font-size:clamp(15px,4.4vw,22px);letter-spacing:.42em;font-weight:700;
+  /* icônes SVG inline (aucun emoji nulle part) */
+  .ic{display:inline-flex;flex:none;vertical-align:-3px;margin-right:5px;}
+  .ic svg{display:block;}
+  .rond .ic,#fermer .ic{margin:0;}
+
+  header{padding:10px 14px 2px;text-align:center;pointer-events:none;}
+  .monogramme{display:inline-flex;vertical-align:-5px;margin-right:8px;opacity:.9;}
+  header h1{display:inline-flex;align-items:center;font-family:var(--police-titre);font-size:clamp(13px,3.6vw,18px);
+    letter-spacing:.34em;font-weight:600;font-style:normal;
     background:linear-gradient(90deg,var(--d1),var(--d2),var(--accent),var(--d4));
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-  header p{font-size:10.5px;color:var(--texte-doux);letter-spacing:.04em;margin-top:2px;opacity:.85;}
-  #civil{font-size:10.5px;color:var(--texte-doux);opacity:.72;margin-top:2px;letter-spacing:.05em;}
+  header p{font-size:10px;color:var(--texte-doux);letter-spacing:.04em;margin-top:3px;opacity:.75;}
+  #civil{font-family:var(--police-instrument);font-size:14px;font-weight:700;color:var(--accent);
+    margin-top:4px;letter-spacing:.02em;font-variant-numeric:tabular-nums;}
 
   /* scène 3D */
-  #scene{flex:1;position:relative;min-height:0;touch-action:none;cursor:grab;}
+  #scene{flex:1;position:relative;min-height:0;touch-action:none;cursor:grab;
+    animation:entree .7s ease both;}
   #scene.grab{cursor:grabbing;}
   #scene:focus-visible{outline:2px solid var(--accent);outline-offset:-3px;}
   #omcv{display:block;width:100%;height:100%;}
+  @keyframes entree{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:none;}}
 
   /* focus clavier visible partout où pointeur seul suffisait */
   .rond:focus-visible,.pilule:focus-visible,.ong:focus-visible,.bmenu:focus-visible,
   #fermer:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
-  /* HUD lectures */
-  #hud{position:absolute;top:70px;left:8px;display:flex;flex-direction:column;gap:5px;pointer-events:none;z-index:4;}
-  .carte{background:var(--verre);border:1px solid var(--verre-bord);border-radius:12px;
-    padding:6px 10px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);min-width:104px;}
-  .carte b{display:block;font-size:16px;line-height:1.05;font-variant-numeric:tabular-nums;}
+  /* HUD lectures — hiérarchisé : une carte principale, un bloc compact, une puce de phase */
+  #hud{position:absolute;top:70px;left:8px;display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:4;
+    max-width:min(58vw,220px);}
+  .carte{background:var(--verre);border:1px solid var(--verre-bord);border-radius:var(--r-md);
+    padding:7px 11px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);box-shadow:var(--ombre-1);}
+  .carte b{display:block;font-family:var(--police-instrument);line-height:1.05;font-variant-numeric:tabular-nums;}
   .carte small{display:block;font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--texte-doux);opacity:.85;}
-  #hud .saison b{background:linear-gradient(90deg,var(--d1),var(--d2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .carte.principale{padding:9px 12px;position:relative;}
+  .carte.principale b{font-size:20px;background:linear-gradient(90deg,var(--d1),var(--d2));-webkit-background-clip:text;
+    background-clip:text;-webkit-text-fill-color:transparent;}
+  .carte.principale small{font-size:9.5px;}
+  #mini-cycle{position:absolute;top:6px;right:8px;width:22px;height:22px;}
+  #mini-cycle circle{fill:none;stroke-width:3;}
+  #mini-cycle .fond{stroke:var(--verre-bord);}
+  #mini-cycle .prog{stroke:var(--accent);stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;
+    transition:stroke-dashoffset .3s linear;}
+  .carte.compacte{display:flex;gap:0;padding:5px 4px;}
+  .carte.compacte .stat{flex:1;text-align:center;padding:2px 4px;border-right:1px solid var(--verre-bord);}
+  .carte.compacte .stat:last-child{border-right:none;}
+  .carte.compacte b{font-size:13.5px;}
+  .chip-phase{display:inline-flex;align-items:center;gap:6px;background:var(--verre);border:1px solid var(--verre-bord);
+    border-radius:var(--r-pill);padding:5px 11px;align-self:flex-start;box-shadow:var(--ombre-1);}
+  .chip-phase b{font-size:13.5px;}
+  .chip-phase small{font-size:9px;}
 
   /* observateur */
   #obs{position:absolute;top:70px;right:8px;display:flex;flex-direction:column;gap:6px;z-index:5;}
   .rond{width:38px;height:38px;border-radius:50%;background:var(--verre);border:1px solid var(--verre-bord);
-    color:var(--texte);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-    backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);transition:transform .15s,background .2s;}
+    color:var(--texte);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);transition:transform .15s,background .2s;
+    box-shadow:var(--ombre-1);}
   .rond:hover{transform:scale(1.08);}
   .rond.actif{background:rgba(246,214,140,.28);border-color:var(--accent);}
 
-  /* barre du bas */
-  #barre{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;justify-content:center;
+  /* légende permanente discrète des 4 densités */
+  #legende{position:absolute;left:10px;bottom:58px;display:flex;gap:7px;z-index:5;pointer-events:none;
+    background:var(--verre);border:1px solid var(--verre-bord);border-radius:var(--r-pill);padding:5px 9px;
+    backdrop-filter:blur(7px);}
+  #legende .pt{width:8px;height:8px;border-radius:50%;opacity:.4;transition:opacity .3s,transform .3s;}
+  #legende .pt.actif{opacity:1;transform:scale(1.35);}
+
+  /* barre du bas — regroupée : vue / état */
+  #barre{position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;justify-content:center;align-items:center;
     flex-wrap:wrap;padding:10px 10px calc(10px + env(safe-area-inset-bottom));z-index:5;}
-  .pilule{background:var(--verre);border:1px solid var(--verre-bord);border-radius:20px;color:var(--texte);
-    font-size:12.5px;padding:8px 15px;cursor:pointer;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
-    letter-spacing:.04em;transition:transform .15s,background .2s;}
+  .grp{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+  .separateur{width:1px;height:22px;background:var(--verre-bord);}
+  .pilule{display:inline-flex;align-items:center;background:var(--verre);border:1px solid var(--verre-bord);
+    border-radius:var(--r-pill);color:var(--texte);font-size:12.5px;padding:8px 15px;cursor:pointer;
+    backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);letter-spacing:.03em;
+    transition:transform .15s,background .2s;box-shadow:var(--ombre-1);}
   .pilule:hover{transform:translateY(-2px);}
   .pilule.actif{background:rgba(246,214,140,.26);border-color:var(--accent);}
-  /* .toggle = pilule à état (on/off), distincte des pilules de navigation */
   .pilule.toggle{border-style:dashed;}
   .pilule.toggle::after{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;
-    background:currentColor;margin-left:6px;opacity:.5;vertical-align:middle;}
+    background:currentColor;margin-left:7px;opacity:.5;vertical-align:middle;}
   .pilule.toggle.actif::after{opacity:1;background:var(--accent);}
+  .pilule.pulse{animation:pulseVitesse .4s ease;}
+  @keyframes pulseVitesse{0%{transform:scale(1);}45%{transform:scale(1.12);}100%{transform:scale(1);}}
 
   footer{position:absolute;left:0;right:0;bottom:52px;text-align:center;font-size:10px;
-    color:var(--texte-doux);opacity:.72;letter-spacing:.06em;pointer-events:none;padding:0 10px;}
+    color:var(--texte-doux);opacity:.65;letter-spacing:.06em;pointer-events:none;padding:0 10px;}
   footer b{color:var(--accent);opacity:.9;}
+
+  #demo-caption{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);max-width:min(88vw,360px);
+    background:var(--verre);border:1px solid var(--verre-bord);border-radius:var(--r-md);padding:8px 14px;
+    font-size:11.5px;text-align:center;color:var(--texte);backdrop-filter:blur(9px);z-index:6;display:none;
+    box-shadow:var(--ombre-2);}
+  #demo-caption.visible{display:block;animation:fade .3s;}
+
+  /* info-bulle au tap sur un anneau */
+  #tooltip-anneau{position:absolute;z-index:7;background:var(--verre);border:1px solid var(--verre-bord);
+    border-radius:var(--r-sm);padding:6px 10px;font-size:11px;color:var(--texte);backdrop-filter:blur(9px);
+    box-shadow:var(--ombre-2);display:none;pointer-events:none;max-width:220px;}
+  #tooltip-anneau.visible{display:block;animation:fade .2s;}
+
+  /* tour guidé au premier lancement */
+  #tour-fond{position:fixed;inset:0;z-index:29;background:rgba(6,4,16,.55);display:none;}
+  #tour-fond.visible{display:block;}
+  #tour-surbrillance{position:fixed;z-index:30;border:2px solid var(--accent);border-radius:var(--r-md);
+    box-shadow:0 0 0 4000px rgba(6,4,16,.55),0 0 24px rgba(246,214,140,.5);pointer-events:none;
+    transition:all .35s ease;}
+  #tour-bulle{position:fixed;z-index:31;max-width:min(88vw,320px);background:linear-gradient(160deg,rgba(30,22,60,.98),rgba(18,13,40,.99));
+    border:1px solid var(--verre-bord);border-radius:var(--r-md);padding:14px 16px;box-shadow:var(--ombre-2);}
+  #tour-bulle p{font-size:12px;line-height:1.5;color:var(--texte-doux);margin-bottom:10px;}
+  #tour-bulle .tour-nav{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  #tour-bulle button{background:var(--verre);border:1px solid var(--verre-bord);color:var(--texte);
+    border-radius:var(--r-pill);padding:6px 13px;font-size:11.5px;cursor:pointer;}
+  #tour-bulle button.principal{background:rgba(246,214,140,.26);border-color:var(--accent);}
+  #tour-bulle .tour-pas{font-size:10px;color:var(--texte-doux);opacity:.7;}
+  .geste-anim{display:inline-flex;margin-bottom:6px;animation:geste 1.8s ease-in-out infinite;}
+  @keyframes geste{0%,100%{transform:translateX(-6px);}50%{transform:translateX(6px);}}
 
   /* menu */
   #menu-backdrop{position:fixed;inset:0;z-index:19;background:rgba(6,4,16,.45);opacity:0;
@@ -108,28 +186,40 @@
     background:linear-gradient(160deg,rgba(30,22,60,.97),rgba(18,13,40,.98));
     border-left:1px solid var(--verre-bord);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     transform:translateX(101%);transition:transform .4s cubic-bezier(.4,0,.2,1);
-    overflow-y:auto;padding:16px 16px 40px;box-shadow:-14px 0 40px rgba(0,0,0,.4);}
+    overflow-y:auto;padding:16px 16px 40px;box-shadow:var(--ombre-2);}
   #menu:focus{outline:none;}
   #menu.ouvert{transform:translateX(0);}
-  #menu h2{font-size:13px;letter-spacing:.28em;color:var(--accent);margin:2px 0 12px;}
-  #menu h3{font-size:12.5px;letter-spacing:.14em;margin:16px 0 7px;color:var(--texte);
+  #menu h2{font-family:var(--police-titre);font-size:14px;letter-spacing:.22em;color:var(--accent);margin:2px 0 12px;}
+  #menu h3{display:flex;align-items:center;font-size:12.5px;letter-spacing:.1em;margin:16px 0 7px;color:var(--texte);
     border-bottom:1px solid var(--verre-bord);padding-bottom:5px;}
-  #fermer{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--texte);font-size:22px;cursor:pointer;}
+  #fermer{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--texte);cursor:pointer;
+    width:26px;height:26px;display:flex;align-items:center;justify-content:center;}
   #tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
-  .ong{font-size:11px;padding:5px 10px;border-radius:14px;background:var(--verre);border:1px solid var(--verre-bord);
-    color:var(--texte);cursor:pointer;}
+  .ong{display:inline-flex;align-items:center;font-size:11px;padding:5px 10px;border-radius:var(--r-pill);
+    background:var(--verre);border:1px solid var(--verre-bord);color:var(--texte);cursor:pointer;}
   .ong.actif{background:rgba(246,214,140,.24);border-color:var(--accent);}
   .pan{display:none;animation:fade .3s;} .pan.actif{display:block;}
   @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
-  @media (prefers-reduced-motion:reduce){ .pan{animation:none;} .rond,.pilule{transition:none;} }
+  @media (prefers-reduced-motion:reduce){ .pan{animation:none;} .rond,.pilule{transition:none;} #scene{animation:none;} }
   .petit{font-size:11.5px;line-height:1.5;color:var(--texte-doux);margin:6px 0;}
   label{display:block;font-size:11.5px;margin:9px 0 3px;color:var(--texte-doux);}
   label output{color:var(--accent);font-weight:700;}
-  input[type=range]{width:100%;accent-color:var(--accent);}
+
+  /* curseurs custom : piste vitrée, curseur doré — cohérent avec le reste du design */
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;}
+  input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:4px;background:var(--verre);
+    border:1px solid var(--verre-bord);}
+  input[type=range]::-moz-range-track{height:5px;border-radius:4px;background:var(--verre);border:1px solid var(--verre-bord);}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:17px;height:17px;border-radius:50%;
+    background:radial-gradient(circle at 32% 30%,#fff8e6,var(--accent) 60%,var(--or-profond));
+    border:1px solid rgba(255,255,255,.5);box-shadow:0 1px 5px rgba(0,0,0,.4);margin-top:-6px;cursor:pointer;}
+  input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;border:1px solid rgba(255,255,255,.5);
+    background:radial-gradient(circle at 32% 30%,#fff8e6,var(--accent) 60%,var(--or-profond));
+    box-shadow:0 1px 5px rgba(0,0,0,.4);cursor:pointer;}
   .curseur-echelle{display:flex;justify-content:space-between;font-size:9px;color:var(--texte-doux);
     opacity:.6;margin-top:2px;}
-  .bmenu{width:100%;text-align:left;background:var(--verre);border:1px solid var(--verre-bord);color:var(--texte);
-    padding:9px 12px;border-radius:10px;font-size:12.5px;cursor:pointer;margin:5px 0;}
+  .bmenu{display:flex;align-items:center;width:100%;text-align:left;background:var(--verre);border:1px solid var(--verre-bord);
+    color:var(--texte);padding:9px 12px;border-radius:var(--r-sm);font-size:12.5px;cursor:pointer;margin:5px 0;}
   .bmenu:hover{background:rgba(246,214,140,.16);}
   table.dens{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;}
   table.dens td{padding:5px 4px;border-bottom:1px solid rgba(255,255,255,.06);}
@@ -137,77 +227,120 @@
   .veri{font-size:11.5px;margin-top:8px;padding:8px 10px;border-radius:9px;background:rgba(124,196,174,.12);
     border:1px solid rgba(124,196,174,.3);}
   .veri b{color:var(--d4);}
-  select{width:100%;padding:7px;border-radius:8px;background:var(--fond2);color:var(--texte);border:1px solid var(--verre-bord);font-size:12px;}
+  select{width:100%;padding:7px;border-radius:var(--r-sm);background:var(--fond2);color:var(--texte);border:1px solid var(--verre-bord);font-size:12px;}
   .crea-row{display:flex;align-items:center;gap:6px;margin:6px 0;font-size:11.5px;}
   .crea-row .nom{flex:1;color:var(--texte-doux);}
   .crea-row input{width:46px;padding:4px;border-radius:6px;background:var(--fond2);color:var(--texte);border:1px solid var(--verre-bord);font-size:12px;text-align:center;}
   .crea-line{display:flex;gap:8px;align-items:center;margin:8px 0;}
   .crea-line label{margin:0;flex:1;}
   .crea-line input[type=number]{width:74px;padding:5px;border-radius:7px;background:var(--fond2);color:var(--texte);border:1px solid var(--verre-bord);font-size:12px;text-align:center;}
-  input[type=date],input[type=time]{width:100%;padding:7px;border-radius:8px;background:var(--fond2);color:var(--texte);border:1px solid var(--verre-bord);font-size:12px;}
+  input[type=date],input[type=time]{width:100%;padding:7px;border-radius:var(--r-sm);background:var(--fond2);color:var(--texte);border:1px solid var(--verre-bord);font-size:12px;}
   input.invalide{border-color:var(--err) !important;box-shadow:0 0 0 1px rgba(226,121,155,.4);}
   .phase-row{display:flex;align-items:center;gap:8px;font-size:11.5px;padding:5px 6px;border-radius:8px;margin:3px 0;}
   .phase-row.actif{background:rgba(246,214,140,.14);border:1px solid var(--verre-bord);}
   .phase-row .pdate{margin-left:auto;color:var(--texte-doux);font-variant-numeric:tabular-nums;}
+  #crea-presets{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;}
+  .preset{display:flex;align-items:center;gap:4px;background:var(--verre);border:1px solid var(--verre-bord);
+    border-radius:var(--r-pill);padding:5px 10px;font-size:10.5px;color:var(--texte);cursor:pointer;}
+  .preset .pts{display:flex;gap:2px;}
+  .preset .pts span{width:6px;height:6px;border-radius:50%;}
+  .preset:hover{background:rgba(246,214,140,.14);}
+
+  /* menu en tiroir remontant sur mobile : plus naturel au pouce qu'un panneau plein écran */
+  @media (max-width:640px){
+    #menu{top:auto;left:0;right:0;bottom:0;height:auto;max-height:85vh;width:100%;
+      border-left:none;border-top:1px solid var(--verre-bord);border-radius:var(--r-lg) var(--r-lg) 0 0;
+      transform:translateY(101%);box-shadow:0 -14px 40px rgba(0,0,0,.4);}
+    #menu.ouvert{transform:translateY(0);}
+  }
 </style>
 </head>
 <body>
 
 <div id="fond-perso"></div>
 <canvas id="ciel"></canvas>
+<div id="grain" aria-hidden="true"></div>
 <div id="vignette" aria-hidden="true"></div>
 <div id="sr-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
 <header>
-  <h1>CHAWATCH · OMCV</h1>
+  <h1><span class="monogramme" data-icon="monogramme" data-size="18"></span>CHAWATCH · OMCV</h1>
   <p>le centre fractal · 432 à chaque octave · la solônde au cœur</p>
   <div id="civil">— · écart civil —</div>
 </header>
 
 <div id="hud">
-  <div class="carte saison"><b id="h-saison">—</b><small id="h-saison-l">saison · densité</small></div>
-  <div class="carte"><b id="h-omc">—</b><small>Omc / 432</small></div>
-  <div class="carte"><b id="h-cv">—</b><small>Solônde / 90</small></div>
-  <div class="carte"><b id="h-sol">—</b><small>unité / 155 520</small></div>
-  <div class="carte"><b id="h-unite">—</b><small>phase · quartz</small></div>
+  <div class="carte principale saison">
+    <svg id="mini-cycle" viewBox="0 0 24 24"><circle class="fond" cx="12" cy="12" r="10"></circle><circle class="prog" cx="12" cy="12" r="10"></circle></svg>
+    <b id="h-saison">—</b><small id="h-saison-l">saison · densité</small>
+  </div>
+  <div class="carte compacte">
+    <div class="stat"><b id="h-omc">—</b><small>Omc/432</small></div>
+    <div class="stat"><b id="h-cv">—</b><small>Solônde/90</small></div>
+    <div class="stat"><b id="h-sol">—</b><small>unité/155520</small></div>
+  </div>
+  <div class="chip-phase"><b id="h-unite">—</b><small>&nbsp;phase quartz</small></div>
 </div>
 
 <div id="obs">
-  <button class="rond" id="obs-reset" title="Observateur neutre" aria-label="Revenir à l'observateur neutre">⊙</button>
-  <button class="rond" id="obs-haut" title="Vue zénithale" aria-label="Passer en vue zénithale">⌖</button>
-  <button class="rond" id="obs-rot" title="Rotation auto" aria-label="Activer la rotation automatique" aria-pressed="false">↻</button>
-  <button class="rond" id="obs-menu" title="Interface" aria-label="Ouvrir le menu de l'interface" aria-haspopup="dialog" aria-expanded="false">☰</button>
+  <button class="rond" id="obs-reset" title="Observateur neutre" aria-label="Revenir à l'observateur neutre"><span class="ic" data-icon="cible"></span></button>
+  <button class="rond" id="obs-haut" title="Vue zénithale" aria-label="Passer en vue zénithale"><span class="ic" data-icon="zenith"></span></button>
+  <button class="rond" id="obs-rot" title="Rotation auto" aria-label="Activer la rotation automatique" aria-pressed="false"><span class="ic" data-icon="orbit"></span></button>
+  <button class="rond" id="obs-menu" title="Interface" aria-label="Ouvrir le menu de l'interface" aria-haspopup="dialog" aria-expanded="false"><span class="ic" data-icon="menu"></span></button>
 </div>
 
-<div id="scene" tabindex="0" role="application" aria-label="Cadran 3D de l'OmcV. Glisse ou utilise les flèches du clavier pour tourner l'observateur, + et - pour zoomer.">
+<div id="legende" aria-hidden="true"></div>
+
+<div id="scene" tabindex="0" role="application" aria-label="Cadran 3D de l'OmcV. Glisse ou utilise les flèches du clavier pour tourner l'observateur, + et - pour zoomer, tape un anneau pour en savoir plus.">
   <canvas id="omcv"></canvas>
 </div>
 
-<footer>1 jour = <b>155 520 unités</b> = 38 880 Solondes = 432 Omc · rigide à toutes les échelles 🙏</footer>
+<div id="tooltip-anneau" role="status"></div>
+<div id="demo-caption" role="status"></div>
+
+<footer>1 jour = <b>155 520 unités</b> = 38 880 Solondes = 432 Omc · rigide à toutes les échelles.</footer>
 
 <div id="barre">
-  <button class="pilule" id="b-densites" aria-label="Voir les 4 densités">✦ Densités</button>
-  <button class="pilule" id="b-j0" aria-label="Régler l'origine J0">☉ J0</button>
-  <button class="pilule toggle" id="b-phases" aria-pressed="false" aria-label="Afficher les phases du quartz">◔ Phases quartz</button>
-  <button class="pilule toggle" id="b-vitesse" aria-label="Changer la vitesse d'observation">⏩ ×1</button>
+  <div class="grp">
+    <button class="pilule" id="b-densites" aria-label="Voir les 4 densités"><span class="ic" data-icon="etoile"></span><span class="txt">Densités</span></button>
+    <button class="pilule" id="b-j0" aria-label="Régler l'origine J0"><span class="ic" data-icon="soleil"></span><span class="txt">J0</span></button>
+  </div>
+  <span class="separateur" aria-hidden="true"></span>
+  <div class="grp">
+    <button class="pilule toggle" id="b-phases" aria-pressed="false" aria-label="Afficher les phases du quartz"><span class="ic" data-icon="quartier"></span><span class="txt">Phases quartz</span></button>
+    <button class="pilule toggle" id="b-vitesse" aria-label="Changer la vitesse d'observation"><span class="ic" data-icon="vitesse"></span><span class="txt" id="b-vitesse-txt">×1</span></button>
+  </div>
+</div>
+
+<div id="tour-fond"></div>
+<div id="tour-surbrillance" style="display:none"></div>
+<div id="tour-bulle" style="display:none">
+  <p id="tour-texte"></p>
+  <div class="tour-nav">
+    <span class="tour-pas" id="tour-pas"></span>
+    <span>
+      <button id="tour-passer">Passer</button>
+      <button class="principal" id="tour-suivant">Suivant</button>
+    </span>
+  </div>
 </div>
 
 <div id="menu-backdrop"></div>
 <aside id="menu" role="dialog" aria-modal="true" aria-labelledby="menu-titre" tabindex="-1">
-  <button id="fermer" aria-label="Fermer le menu">✕</button>
+  <button id="fermer" aria-label="Fermer le menu"><span class="ic" data-icon="fermer" data-size="18"></span></button>
   <h2 id="menu-titre">INTERFACE</h2>
   <div id="tabs" role="tablist">
-    <button class="ong actif" data-t="notice" role="tab" aria-selected="true" id="tab-notice" aria-controls="panel-notice">❓ Notice</button>
-    <button class="ong" data-t="dens" role="tab" aria-selected="false" id="tab-dens" aria-controls="panel-dens">✦ Densités</button>
-    <button class="ong" data-t="j0" role="tab" aria-selected="false" id="tab-j0" aria-controls="panel-j0">☉ J0 · Position</button>
-    <button class="ong" data-t="obs" role="tab" aria-selected="false" id="tab-obs" aria-controls="panel-obs">🛰 Observateur</button>
-    <button class="ong" data-t="aff" role="tab" aria-selected="false" id="tab-aff" aria-controls="panel-aff">🎨 Affichage</button>
-    <button class="ong" data-t="theme" role="tab" aria-selected="false" id="tab-theme" aria-controls="panel-theme">✿ Thème</button>
-    <button class="ong" data-t="crea" role="tab" aria-selected="false" id="tab-crea" aria-controls="panel-crea">🛠 Créateur</button>
+    <button class="ong actif" data-t="notice" role="tab" aria-selected="true" id="tab-notice" aria-controls="panel-notice"><span class="ic" data-icon="info" data-size="14"></span><span class="txt">Notice</span></button>
+    <button class="ong" data-t="dens" role="tab" aria-selected="false" id="tab-dens" aria-controls="panel-dens"><span class="ic" data-icon="etoile" data-size="14"></span><span class="txt">Densités</span></button>
+    <button class="ong" data-t="j0" role="tab" aria-selected="false" id="tab-j0" aria-controls="panel-j0"><span class="ic" data-icon="soleil" data-size="14"></span><span class="txt">J0 · Position</span></button>
+    <button class="ong" data-t="obs" role="tab" aria-selected="false" id="tab-obs" aria-controls="panel-obs"><span class="ic" data-icon="satellite" data-size="14"></span><span class="txt">Observateur</span></button>
+    <button class="ong" data-t="aff" role="tab" aria-selected="false" id="tab-aff" aria-controls="panel-aff"><span class="ic" data-icon="palette" data-size="14"></span><span class="txt">Affichage</span></button>
+    <button class="ong" data-t="theme" role="tab" aria-selected="false" id="tab-theme" aria-controls="panel-theme"><span class="ic" data-icon="graine" data-size="14"></span><span class="txt">Thème</span></button>
+    <button class="ong" data-t="crea" role="tab" aria-selected="false" id="tab-crea" aria-controls="panel-crea"><span class="ic" data-icon="outil" data-size="14"></span><span class="txt">Créateur</span></button>
   </div>
 
   <div class="pan actif" data-p="notice" role="tabpanel" id="panel-notice" aria-labelledby="tab-notice">
-    <h3>❓ Lire l'OmcV</h3>
+    <h3><span class="ic" data-icon="info" data-size="15"></span>Lire l'OmcV</h3>
     <p class="petit"><b>Ce n'est pas une horloge civile.</b> Pas d'heure, pas de base 60. L'OmcV
     ne connaît que son propre flux, bâti sur une brique <b>rigide</b> : la <b>Solônde</b> (2,0212 s).
     La Solônde ne respire jamais — c'est l'unité inventée pour <em>unifier</em> les temps.</p>
@@ -220,17 +353,17 @@
     <p class="petit"><b>Le quartz qui respire :</b> chaque Solônde contient 4 phases <em>inégales</em> — les 4
     densités (11/10, 6/5, 10/11, 5/6). Comme tout ce qui est organique, le cristal oscille en 4 phases :
     l'expansion dure un peu plus, la contraction un peu moins. Mais leur somme rend <em>toujours</em> la
-    Solônde rigide. C'est « le quart qui respire », jamais la Solônde. (Bouton ◔ Phases quartz pour le voir.)</p>
+    Solônde rigide. C'est « le quart qui respire », jamais la Solônde. (Bouton Phases quartz pour le voir.)</p>
     <p class="petit"><b>Le centre fractal :</b> les 4 densités forment 2 paires réciproques
     (11/10 × 10/11 = 1 · 6/5 × 5/6 = 1) — leur produit vaut 1, le noyau revient exactement au centre.
-    Leur somme vaut 4,0424 : ce +1 % est <em>gelé</em> dans la Solônde (2,0212 = Σ × ½ s), il ne fuit
-    jamais vers le compte. Le macro reste parfaitement <b>360 × 432</b> ; seule la seconde respire, en douce.</p>
+    Une brume lumineuse relie en permanence chaque densité au centre en passant par la Solônde,
+    plus vive pour la phase active : tout revient toujours au cœur.</p>
     <p class="petit"><b>Naviguer :</b> glisse (ou flèches du clavier) pour tourner autour du cadran (observateur 360° neutre) ·
-    molette / pince / + et - pour le zoom fractal · ⊙ recentre · double-tap pour réinitialiser sur mobile.</p>
+    molette / pince / + et - pour le zoom fractal · tape un anneau pour ses détails · double-tap pour réinitialiser sur mobile.</p>
   </div>
 
   <div class="pan" data-p="dens" role="tabpanel" id="panel-dens" aria-labelledby="tab-dens">
-    <h3>✦ Les 4 densités</h3>
+    <h3><span class="ic" data-icon="etoile" data-size="15"></span>Les 4 densités</h3>
     <table class="dens" id="table-dens"></table>
     <div class="veri" id="veri-dens"></div>
     <p class="petit">Deux expansions, deux contractions ; deux paires réciproques.
@@ -239,12 +372,12 @@
   </div>
 
   <div class="pan" data-p="j0" role="tabpanel" id="panel-j0" aria-labelledby="tab-j0">
-    <h3>☉ J0 — origine (l'aube)</h3>
+    <h3><span class="ic" data-icon="soleil" data-size="15"></span>J0 — origine (l'aube)</h3>
     <p class="petit">J0 est l'instant où l'unité vaut 0 : l'aube. Par défaut, l'équinoxe de mars de
     l'année en cours, à l'aube, à ta position.</p>
-    <button class="bmenu" id="j0-now">☉ J0 = l'aube est maintenant</button>
-    <button class="bmenu" id="j0-eq">☉ J0 = équinoxe de mars, aube ici</button>
-    <h3>🌍 Position — grille 36 × 36</h3>
+    <button class="bmenu" id="j0-now"><span class="ic" data-icon="soleil"></span>J0 = l'aube est maintenant</button>
+    <button class="bmenu" id="j0-eq"><span class="ic" data-icon="soleil"></span>J0 = équinoxe de mars, aube ici</button>
+    <h3><span class="ic" data-icon="globe" data-size="15"></span>Position — grille 36 × 36</h3>
     <label>Latitude <output id="lat-val">—</output><input type="range" id="lat" min="0" max="35" step="1"></label>
     <label>Longitude <output id="lon-val">—</output><input type="range" id="lon" min="0" max="35" step="1"></label>
     <p class="petit">36 latitudes × 36 longitudes (5° × 10°), calcul solaire local NOAA — aucun service externe.<br>
@@ -252,10 +385,11 @@
   </div>
 
   <div class="pan" data-p="obs" role="tabpanel" id="panel-obs" aria-labelledby="tab-obs">
-    <h3>🛰 Observateur externe neutre</h3>
-    <button class="bmenu" id="o-reset">⊙ Position neutre (équatoriale, face au centre)</button>
-    <button class="bmenu" id="o-haut">⌖ Vue zénithale (360°)</button>
-    <button class="bmenu" id="o-rot">↻ Rotation automatique</button>
+    <h3><span class="ic" data-icon="satellite" data-size="15"></span>Observateur externe neutre</h3>
+    <button class="bmenu" id="o-reset"><span class="ic" data-icon="cible"></span>Position neutre (équatoriale, face au centre)</button>
+    <button class="bmenu" id="o-haut"><span class="ic" data-icon="zenith"></span>Vue zénithale (360°)</button>
+    <button class="bmenu" id="o-rot"><span class="ic" data-icon="orbit"></span>Rotation automatique</button>
+    <button class="bmenu" id="o-demo"><span class="ic" data-icon="info"></span>Mode démo auto-explicatif</button>
     <h3>Ancres par densité</h3>
     <p class="petit">Amener l'œil dans l'axe d'une saison :</p>
     <div id="ancres" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
@@ -263,47 +397,49 @@
   </div>
 
   <div class="pan" data-p="aff" role="tabpanel" id="panel-aff" aria-labelledby="tab-aff">
-    <h3>🎨 Affichage</h3>
-    <button class="bmenu" id="amb-cosmos">🌌 Cosmos fractal</button>
-    <button class="bmenu" id="amb-nuit">🌑 Nuit pure (OLED)</button>
-    <button class="bmenu" id="amb-aurore">🌅 Aurore</button>
+    <h3><span class="ic" data-icon="palette" data-size="15"></span>Affichage</h3>
+    <button class="bmenu" id="amb-cosmos"><span class="ic" data-icon="galaxie"></span>Cosmos fractal</button>
+    <button class="bmenu" id="amb-nuit"><span class="ic" data-icon="lune"></span>Nuit pure (OLED)</button>
+    <button class="bmenu" id="amb-aurore"><span class="ic" data-icon="aube"></span>Aurore</button>
     <label>Intensité du flux <output id="flux-val">100%</output><input type="range" id="flux" min="0" max="200" step="10" value="100"></label>
     <label>Éclat du noyau <output id="glow-val">100%</output><input type="range" id="glow" min="30" max="200" step="10" value="100"></label>
-    <label>Vitesse d'observation <output id="warp-val">×1</output><input type="range" id="warp" min="0" max="5" step="1" value="0"></label>
-    <p class="petit">La vitesse d'observation n'accélère que ton regard, pas le modèle : elle laisse voir
-    le jour et l'année défiler. ×1 = temps réel (la respiration dure ~2 s).</p>
-    <h3>🖼 Fond d'écran</h3>
-    <button class="bmenu" id="fond-choisir">🖼 Importer une image de fond</button>
-    <button class="bmenu" id="fond-retirer">↺ Ciel nu (retirer l'image)</button>
+    <label>Vitesse d'observation <output id="warp-val">×1</output><input type="range" id="warp" min="0" max="8" step="1" value="3"></label>
+    <p class="petit">Au-dessus de ×1, elle accélère le modèle pour voir le jour et l'année défiler.
+    En dessous de ×1, effet <b>méditatif</b> : elle ralentit seulement l'animation (respiration, spin) —
+    la donnée, elle, reste toujours exacte et en temps réel.</p>
+    <h3><span class="ic" data-icon="image" data-size="15"></span>Fond d'écran</h3>
+    <button class="bmenu" id="fond-choisir"><span class="ic" data-icon="image"></span>Importer une image de fond</button>
+    <button class="bmenu" id="fond-retirer"><span class="ic" data-icon="annuler"></span>Ciel nu (retirer l'image)</button>
     <input type="file" id="fond-fichier" accept="image/*" style="display:none">
     <p class="petit" id="fond-statut" role="status">Ton image devient le ciel, voilée par la nébuleuse pour rester lisible.
     Redimensionnée et traitée localement — rien n'est envoyé nulle part.</p>
   </div>
 
   <div class="pan" data-p="theme" role="tabpanel" id="panel-theme" aria-labelledby="tab-theme">
-    <h3>✿ Thème charmant OmcV</h3>
+    <h3><span class="ic" data-icon="graine" data-size="15"></span>Thème charmant OmcV</h3>
     <p class="petit">Peu de monde est né au même endroit à la même heure : ton J0 personnel dessine
     un thème unique. Enregistre ta naissance, puis <b>bascule</b> pour comparer avec l'équinoxe.</p>
     <label>Date de naissance <input type="date" id="n-date"></label>
     <label>Heure (locale au lieu) <input type="time" id="n-time"></label>
-    <p class="petit">Lieu = la position choisie dans ☉ J0 · Position (lat/lon) — elle décale l'heure locale.</p>
-    <button class="bmenu" id="n-save">✿ Définir mon J0 personnel</button>
+    <p class="petit">Lieu = la position choisie dans J0 · Position (lat/lon) — elle décale l'heure locale.</p>
+    <button class="bmenu" id="n-save"><span class="ic" data-icon="graine"></span>Définir mon J0 personnel</button>
     <div style="display:flex;gap:6px;margin:6px 0;">
-      <button class="bmenu" id="j0-eqmode" style="margin:0">☉ Équinoxe</button>
-      <button class="bmenu" id="j0-persomode" style="margin:0">✿ Perso</button>
+      <button class="bmenu" id="j0-eqmode" style="margin:0"><span class="ic" data-icon="soleil"></span>Équinoxe</button>
+      <button class="bmenu" id="j0-persomode" style="margin:0"><span class="ic" data-icon="graine"></span>Perso</button>
     </div>
     <div class="veri" id="theme-out">Enregistre ta naissance pour révéler ton thème.</div>
     <h3>Tes 4 phases · grand cycle</h3>
     <p class="petit">Les 4 densités du grand cycle, ancrées à <em>ta</em> naissance (cycle en cours) :</p>
     <div id="theme-phases"></div>
-    <button class="bmenu" id="n-clear" style="margin-top:14px">🗑 Effacer mon J0 personnel et mes données locales</button>
+    <button class="bmenu" id="n-clear" style="margin-top:14px"><span class="ic" data-icon="corbeille"></span>Effacer mon J0 personnel et mes données locales</button>
   </div>
 
   <div class="pan" data-p="crea" role="tabpanel" id="panel-crea" aria-labelledby="tab-crea">
-    <h3>🛠 Créateur — le modèle n'est pas figé</h3>
+    <h3><span class="ic" data-icon="outil" data-size="15"></span>Créateur — le modèle n'est pas figé</h3>
     <p class="petit">Par humilité : si un jour quelqu'un a une meilleure idée, qu'il puisse l'appliquer.
     Change les 4 densités, la ½ seconde de base ou les comptes — <b>tout se recalcule en direct</b>,
     et la sphère, les brins et le compte suivent.</p>
+    <div id="crea-presets"></div>
     <div id="crea-dens"></div>
     <div class="crea-line"><label>½ seconde de base <output id="demi-val">—</output></label>
       <input type="range" id="demi" min="0.25" max="1" step="0.01" style="flex:1"></div>
@@ -311,12 +447,49 @@
     <div class="crea-line"><label>Omc / jour</label><input type="number" id="c-opj" min="1" step="1"></div>
     <div class="crea-line"><label>Jours / année</label><input type="number" id="c-ja" min="1" step="1"></div>
     <div class="veri" id="crea-out"></div>
-    <button class="bmenu" id="crea-reset">↺ Revenir au modèle d'origine (11/10 · 6/5 · 10/11 · 5/6)</button>
+    <button class="bmenu" id="crea-reset"><span class="ic" data-icon="annuler"></span>Revenir au modèle d'origine (11/10 · 6/5 · 10/11 · 5/6)</button>
   </div>
 </aside>
 
 <script>
 'use strict';
+/* ═══════════════════════ ICÔNES SVG (aucun emoji) ═══════════════════════
+   Un seul jeu de traits fins cohérent, injecté dans tous les éléments
+   [data-icon] — boutons, onglets, titres. Rien n'est dupliqué en dur.  */
+const ICONS = {
+  monogramme:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.2"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>',
+  menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+  cible:'<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/>',
+  zenith:'<path d="M12 2.5v3.4M12 18.1v3.4M2.5 12h3.4M18.1 12h3.4"/><circle cx="12" cy="12" r="4"/>',
+  orbit:'<path d="M4.5 12a7.5 7.5 0 1 0 2.8-5.8"/><path d="M4.2 3.6v4.2h4.2"/>',
+  etoile:'<path d="M12 3 14 10 21 12 14 14 12 21 10 14 3 12 10 10Z"/>',
+  soleil:'<circle cx="12" cy="12" r="4"/><path d="M12 2.2v3M12 18.8v3M2.2 12h3M18.8 12h3M5 5l2.1 2.1M16.9 16.9 19 19M19 5l-2.1 2.1M7.1 16.9 5 19"/>',
+  quartier:'<circle cx="12" cy="12" r="9"/><path d="M12 12V3A9 9 0 0 1 21 12Z" fill="currentColor" stroke="none"/>',
+  vitesse:'<path d="M5 5l6 7-6 7M13 5l6 7-6 7"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 7.6h.01"/><path d="M10.6 11h1.6v6"/>',
+  satellite:'<rect x="9" y="9" width="6" height="6" rx="1.2"/><path d="M5 19l3-3M19 5l-3 3M2.6 21.4l4-4M21.4 2.6l-4 4"/>',
+  palette:'<path d="M12 3a9 9 0 1 0 0 18c1.3 0 2.2-1 2.2-2.1 0-.55-.25-1-.6-1.35-.35-.4-.4-1 .05-1.4.3-.28.75-.3 1.15-.2 1.2.35 2.5 0 3.4-.85A9 9 0 0 0 12 3Z"/><circle cx="8" cy="10.3" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="7.4" r="1" fill="currentColor" stroke="none"/><circle cx="15.8" cy="10.3" r="1" fill="currentColor" stroke="none"/>',
+  outil:'<path d="M14.9 6.1a3.8 3.8 0 0 1-5.2 5.2L4.3 16.7v3h3l5.4-5.4a3.8 3.8 0 0 1 5.2-5.2l-2.5 2.5-2-2Z"/>',
+  graine:'<path d="M12 21c-4-2.2-7-5.8-7-10.2a7 7 0 0 1 14 0c0 4.4-3 8-7 10.2Z"/><path d="M12 11.2v6.3"/>',
+  galaxie:'<circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><path d="M12 12C8.4 8 4.4 8.2 3.2 10.2c-1.1 2 1.8 5.3 5.8 5.3 4 0 7.4-3 7.4-6.3S13.3 3 10.4 3 5.7 5 6.6 7"/>',
+  lune:'<path d="M20 14.2A8.4 8.4 0 1 1 9.7 3.9a7 7 0 0 0 10.3 10.3Z"/>',
+  aube:'<path d="M4 18h16M6.2 18a5.8 5.8 0 0 1 11.6 0M12 7.6v3.6M8.4 9.3l1.4 1.4M15.6 9.3l-1.4 1.4"/>',
+  image:'<rect x="3" y="4.3" width="18" height="15.4" rx="2"/><circle cx="8.3" cy="9.6" r="1.4"/><path d="M21 15.3l-4.8-4.7-4 4-2.8-2.8-6 5.9"/>',
+  annuler:'<path d="M9.2 7 4.3 12l4.9 5M4.3 12h11a5 5 0 0 1 0 10h-1"/>',
+  corbeille:'<path d="M4.2 7h15.6M9 7V5h6v2M6.2 7l1 13h9.6l1-13"/>',
+  fermer:'<path d="M6 6l12 12M18 6 6 18"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a13.7 13.7 0 0 1 0 18 13.7 13.7 0 0 1 0-18Z"/>',
+};
+function icone(nom,taille){
+  const inner=ICONS[nom]; if(!inner) return '';
+  const t=taille||18;
+  return '<svg viewBox="0 0 24 24" width="'+t+'" height="'+t+'" fill="none" stroke="currentColor" '+
+    'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+inner+'</svg>';
+}
+document.querySelectorAll('[data-icon]').forEach(el=>{
+  el.innerHTML=icone(el.dataset.icon, el.dataset.size?+el.dataset.size:undefined);
+});
+
 /* ═══════════════════════ OBJET-VÉRITÉ OMCV ═══════════════════════
    Source unique de toute la géométrie temporelle. Rien n'est re-saisi
    à la main ailleurs : c'est ici, et seulement ici, que vivent les nombres.
@@ -359,12 +532,12 @@ const CONFIG = {
   ROT_SENS:0.008, PITCH_SENS:0.006, WHEEL_ZOOM:0.0011,
   ZOOM_MIN:.55, ZOOM_MAX:2.2, PITCH_MIN:0.08, PITCH_MAX:1.556,
   AUTOROT_SPEED:0.0032, KEY_YAW_STEP:0.05, KEY_ZOOM_STEP:0.05,
-  DOUBLE_TAP_MS:320, DOUBLE_TAP_DIST:24,
-  SPHERE_SPIN:0.0003, HELIX_SPIN:0.0004,
+  DOUBLE_TAP_MS:320, DOUBLE_TAP_DIST:24, TAP_MS:300, TAP_DIST:9, TAP_HIT_PX:20,
+  SPHERE_SPIN:0.0003, HELIX_SPIN:0.0004, ZOOM_DETAIL_SEUIL:1.35,
 };
 const NEUTRE={yaw:0,pitch:1.02}, ZENITH={yaw:0,pitch:1.5533};
 /* état de vue consolidé (autrefois dispersé en variables globales isolées) */
-const VUE = {yaw:0, pitch:1.02, zoom:1, autoRot:false, warpIdx:0, phasesVisible:false};
+const VUE = {yaw:0, pitch:1.02, zoom:1, autoRot:false, warpIdx:3, phasesVisible:false, demo:false};
 
 /* respecte prefers-reduced-motion : réduit les mouvements décoratifs
    (rotation auto, nébuleuse, scintillement, comètes) — pas le rendu du temps lui-même */
@@ -451,10 +624,19 @@ let ancrePerso=+lis('perso')||0;           // J0 personnel (naissance : date × 
 let j0mode=lis('j0mode')||'eq';            // 'eq' | 'perso' — basculable pour comparer
 let ancre = (j0mode==='perso'&&ancrePerso)?ancrePerso:ancreEq;   // ancre active lue par etat()
 
-/* ═══════════════════════ HORLOGE VIRTUELLE (vitesse d'observation) ═══════════════════════ */
-const WARPS=[1,60,1000,20000,200000,2000000];
-let vClock=Date.now(), lastReal=performance.now();
-function avancer(){const n=performance.now(); vClock+=(n-lastReal)*WARPS[VUE.warpIdx]; lastReal=n;}
+/* ═══════════════════════ HORLOGE VIRTUELLE (vitesse d'observation) ═══════════════════════
+   En dessous de ×1 : effet MÉDITATIF. vClock (le modèle, la donnée réelle) n'est JAMAIS
+   ralenti — seul visuTemps (qui pilote les spins et scintillements décoratifs) l'est.  */
+const WARPS     =[0.1,       0.25,     0.5,      1,           60,   1000,     20000,      200000,      2000000];
+const WARP_TXT  =['×0,1',    '×0,25',  '×0,5',   '×1',        '×60','×1 000', '×20 000',  '×200 000',  '×2 000 000'];
+const WARP_DESC =['rythme méditatif','rythme lent','rythme doux','temps réel','×60 accéléré','×1000 accéléré','×20 000 accéléré','×200 000 accéléré','×2 000 000 accéléré'];
+let vClock=Date.now(), lastReal=performance.now(), visuTemps=0;
+function avancer(){
+  const n=performance.now(), dt=n-lastReal, w=WARPS[VUE.warpIdx];
+  if(w>=1){ vClock+=dt*w; visuTemps+=dt; }        // le modèle peut accélérer, jamais ralentir sous le réel
+  else{ vClock+=dt; visuTemps+=dt*w; }            // horloge inchangée ; seule l'animation ralentit
+  lastReal=n;
+}
 
 /* ═══════════════════════ ÉTAT TEMPOREL DÉRIVÉ ═══════════════════════ */
 function etat(){ return etatCore(vClock, ancre); }
@@ -518,14 +700,24 @@ function colLerp(a,b,t){const pa=hx(a),pb=hx(b);
 function hexA(c,a){const p=hx(c);return 'rgba('+p[0]+','+p[1]+','+p[2]+','+a+')';}
 
 const R_SAISON=1.06, R_JOUR=0.82, R_CV=0.56, R_RESP=0.32;
+/* respiration lissée pour le rendu : la donnée (E) reste exacte, seule cette valeur
+   affichée est adoucie — plus lentement encore en régime méditatif (idée du flottement). */
+let breatheAffiche=1;
+let derniersPoints=null;   // dernières positions écran des marqueurs, pour le tap sur anneau
+
 function dessiner(E){
   ctx.clearRect(0,0,W,H);
   ctx.lineJoin='round';ctx.lineCap='round';
   const c0=proj(0,0,0);
   const keys=[1,1.1,1.32,1.2,1.0];                       // trajectoire de respiration
-  const breathe=keys[E.q]+(keys[E.q+1]-keys[E.q])*E.phaseFrac;
+  const breatheCible=keys[E.q]+(keys[E.q+1]-keys[E.q])*E.phaseFrac;
+  const w=WARPS[VUE.warpIdx];
+  const lerpK = w<1 ? Math.max(0.015,0.14*w) : 0.5;      // en dessous de ×1 : plus lent = plus flottant
+  breatheAffiche += (breatheCible-breatheAffiche)*lerpK;
+  const breathe=breatheAffiche;
+  const resp=Math.max(0,Math.min(1,(breathe-1)/0.32));   // intensité d'expansion, pour les pulsations liées
 
-  /* ---- anneau des saisons (l'année, 4 arcs) ---- */
+  /* ---- anneau des saisons (l'année, 4 arcs) + marqueurs de transition ---- */
   for(let s=0;s<4;s++){
     ctx.beginPath();
     for(let i=0;i<=24;i++){const a=(s/4+i/24/4)*Math.PI*2-Math.PI/2;
@@ -534,27 +726,54 @@ function dessiner(E){
     ctx.lineWidth=s===E.si?6:3; ctx.stroke();
   }
   ctx.globalAlpha=1;
+  for(let s=0;s<4;s++){ const pm=pointSur(R_SAISON,s/4,0); disque(pm,3.4*pm.s,DENS[s].col,0.85); }
+  /* chevron de sens sur l'arc actif : indique le sens de progression de l'année */
+  { const pTip=pointSur(R_SAISON,E.fAn,0);
+    const aTip=E.fAn*Math.PI*2-Math.PI/2, tx=-Math.sin(aTip), ty=Math.cos(aTip);
+    const pA=proj(R_SAISON*Math.cos(aTip)-tx*0.035,0,R_SAISON*Math.sin(aTip)-ty*0.035);
+    const pB=proj(R_SAISON*Math.cos(aTip)+ty*0.018,0,R_SAISON*Math.sin(aTip)-tx*0.018);
+    const pC=proj(R_SAISON*Math.cos(aTip)-ty*0.018,0,R_SAISON*Math.sin(aTip)+tx*0.018);
+    ctx.fillStyle=DENS[E.si].col; ctx.beginPath(); ctx.moveTo(pTip.x,pTip.y); ctx.lineTo(pB.x,pB.y); ctx.lineTo(pC.x,pC.y); ctx.closePath(); ctx.fill();
+  }
   const pSun=pointSur(R_SAISON,E.fAn,0);
   halo(pSun,15*pSun.s,'#f6d68c',0.9); disque(pSun,6*pSun.s,'#fff4d0');
 
-  /* ---- trois anneaux concentriques (jour / Solônde / respiration) ---- */
+  /* ---- trois anneaux concentriques (jour / Solônde / respiration) + graduations ---- */
   [[R_JOUR,'rgba(246,214,140,.5)'],[R_CV,'rgba(201,184,232,.45)'],[R_RESP,'rgba(124,196,174,.4)']].forEach(([R,c])=>{
     anneau(R,0,true); ctx.strokeStyle=c; ctx.lineWidth=1.4; ctx.globalAlpha=.75; ctx.stroke(); ctx.globalAlpha=1;
   });
+  graduations(R_JOUR,12,'rgba(246,214,140,.4)');
+  graduations(R_CV,9,'rgba(201,184,232,.4)');
+  /* dégradé de progression sur l'anneau du jour : plus lumineux du début jusqu'à maintenant */
+  { const seg=64, jusque=Math.max(1,Math.round(E.fJour*seg));
+    ctx.beginPath();
+    for(let i=0;i<=jusque;i++){ const a=(i/seg)*Math.PI*2-Math.PI/2; const p=proj(R_JOUR*Math.cos(a),0,R_JOUR*Math.sin(a));
+      i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y); }
+    ctx.strokeStyle='rgba(255,244,214,.85)'; ctx.lineWidth=2.2; ctx.stroke();
+  }
 
-  /* ---- vrais brins hélicoïdaux (double hélice réciproque) ---- */
-  if(INTENSITE_FLUX>0) dessinerBrins(E,breathe);
-
-  /* ---- sphère centrale shadée : le centre fractal ---- */
-  dessinerSphere(c0,breathe);
-
-  /* ---- marqueurs sur les 3 anneaux + fil de lumière ---- */
+  const c0f=proj(0,0,0);
   const pJour=pointSur(R_JOUR,E.fJour,0);
   const pCv=pointSur(R_CV,E.fOmc,0);
   const pResp=pointSur(R_RESP,E.fSolo,0);
+
+  /* ---- liaisons brume : chaque densité reliée au centre en passant par la Solônde,
+     la phase active plus vive — « tout revient toujours au cœur » ---- */
+  dessinerLiaisonsDensites(E,c0f,pCv);
+
+  /* ---- vrais brins hélicoïdaux (double hélice réciproque) ---- */
+  if(INTENSITE_FLUX>0) dessinerBrins(E,breathe,resp);
+
+  /* ---- sphère centrale shadée : le centre fractal ---- */
+  dessinerSphere(c0,breathe,resp);
+
+  /* ---- marqueurs sur les 3 anneaux + fil de données animé ---- */
+  ctx.save();
+  ctx.setLineDash([3,7]); ctx.lineDashOffset=-visuTemps*0.03;
   ctx.beginPath();ctx.moveTo(c0.x,c0.y);ctx.lineTo(pResp.x,pResp.y);ctx.lineTo(pCv.x,pCv.y);
   ctx.lineTo(pJour.x,pJour.y);ctx.lineTo(pSun.x,pSun.y);
-  ctx.strokeStyle='rgba(246,214,140,.5)';ctx.lineWidth=1.3;ctx.stroke();
+  ctx.strokeStyle='rgba(246,214,140,.55)';ctx.lineWidth=1.4;ctx.stroke();
+  ctx.restore();
   [[pJour,'#f6d68c',7],[pCv,'#c9b8e8',5.5],[pResp,DENS[E.q].col,5]].forEach(([p,c,r])=>{
     halo(p,r*2.4*p.s,c,.6);disque(p,r*p.s,c);});
 
@@ -570,6 +789,15 @@ function dessiner(E){
     }
     ctx.globalAlpha=1;
   }
+
+  derniersPoints={pJour,pCv,pResp,pSun,E};
+}
+function graduations(R,n,coul){
+  ctx.strokeStyle=coul; ctx.lineWidth=1;
+  for(let i=0;i<n;i++){ const a=(i/n)*Math.PI*2-Math.PI/2;
+    const p1=proj(R*0.965*Math.cos(a),0,R*0.965*Math.sin(a)), p2=proj(R*1.035*Math.cos(a),0,R*1.035*Math.sin(a));
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
+  }
 }
 function disque(p,r,c,a=1){ctx.globalAlpha=a;ctx.fillStyle=c;ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.5,r),0,7);ctx.fill();ctx.globalAlpha=1;}
 /* halo à 3 arrêts (cœur vif → mi-teinte diffuse → transparence) : dégradé plus organique, façon bloom */
@@ -580,31 +808,85 @@ function halo(p,r,c,a){
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,rr,0,7);ctx.fill();
 }
 
+/* ---- brume volumétrique : centre → Solônde → chaque densité (idée : tout est relié au cœur) ---- */
+function dessinerLiaisonsDensites(E,c0,pCv){
+  let start=0;
+  for(let i=0;i<4;i++){
+    const p0=start, p1=start+OMCV.PARTS[i]; const mid=(p0+p1)/2; start=p1;
+    const actif=i===E.q;
+    const pD=pointSur(R_RESP*1.14,mid,0);
+    brumeSegment(c0,pCv,DENS[i].col,actif?0.4:0.11,actif);
+    brumeSegment(pCv,pD,DENS[i].col,actif?0.55:0.15,actif);
+    if(actif){
+      const tt=(Math.sin(visuTemps*0.0015)+1)/2;
+      const fx=c0.x+(pD.x-c0.x)*tt, fy=c0.y+(pD.y-c0.y)*tt;
+      disque({x:fx,y:fy},2.6,'#fff8e6',0.85);
+    }
+  }
+}
+function brumeSegment(a,b,col,alphaBase,actif){
+  const steps=7;
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  for(let k=0;k<=steps;k++){
+    const t=k/steps, x=a.x+(b.x-a.x)*t, y=a.y+(b.y-a.y)*t;
+    const r=(actif?8.5:4.2)*(0.45+0.55*Math.sin(t*Math.PI));
+    const alpha=alphaBase*(0.45+0.55*Math.sin(t*Math.PI));
+    const g=ctx.createRadialGradient(x,y,0,x,y,Math.max(1,r));
+    g.addColorStop(0,hexA(col,alpha)); g.addColorStop(1,hexA(col,0));
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,Math.max(1,r),0,7); ctx.fill();
+  }
+  ctx.restore();
+}
+
 /* ---- vraie sphère shadée + wireframe (méridiens/parallèles), façon Chasphère ---- */
-function dessinerSphere(c0,breathe){
+function dessinerSphere(c0,breathe,resp){
   const Rw=R_RESP*0.62*breathe;            // rayon monde (respire)
   const Rpx=Math.max(2,Rw*U*c0.s);         // rayon écran
-  /* intensité liée à la respiration : le halo et le rim pulsent avec le cristal, pas au hasard */
-  const resp=Math.max(0,Math.min(1,(breathe-1)/0.32));
-  /* glow externe */
+
+  /* ombre de contact douce sous le noyau : ancre visuellement la sphère sur les anneaux */
+  ctx.save();
+  const shY=c0.y+Rpx*0.16, shR=Rpx*1.35;
+  const sh=ctx.createRadialGradient(c0.x,shY,0,c0.x,shY,shR);
+  sh.addColorStop(0,'rgba(8,5,18,.28)'); sh.addColorStop(1,'rgba(8,5,18,0)');
+  ctx.fillStyle=sh; ctx.beginPath(); ctx.arc(c0.x,shY,shR,0,7); ctx.fill();
+  ctx.restore();
+
+  /* glow externe — décentré légèrement selon la respiration : asymétrie organique */
   ctx.save();ctx.globalCompositeOperation='lighter';
+  const glOx=Rpx*0.06*Math.sin(resp*Math.PI*2), glOy=Rpx*0.045*Math.cos(resp*Math.PI*2);
   const glR=Rpx*(2.3+0.4*resp)*GLOW;
-  const gl=ctx.createRadialGradient(c0.x,c0.y,Rpx*0.6,c0.x,c0.y,glR);
+  const gl=ctx.createRadialGradient(c0.x+glOx,c0.y+glOy,Rpx*0.6,c0.x+glOx,c0.y+glOy,glR);
   gl.addColorStop(0,'rgba(246,214,140,'+(0.42+0.18*resp)*GLOW+')');gl.addColorStop(1,'rgba(226,169,79,0)');
-  ctx.fillStyle=gl;ctx.beginPath();ctx.arc(c0.x,c0.y,glR,0,7);ctx.fill();ctx.restore();
+  ctx.fillStyle=gl;ctx.beginPath();ctx.arc(c0.x+glOx,c0.y+glOy,glR,0,7);ctx.fill();
+  /* second lobe de bloom, teinte froide complémentaire : halo volumétrique en couches */
+  const gl2R=glR*1.32;
+  const gl2=ctx.createRadialGradient(c0.x,c0.y,Rpx*1.3,c0.x,c0.y,gl2R);
+  gl2.addColorStop(0,'rgba(226,121,155,0)');gl2.addColorStop(.68,'rgba(226,121,155,'+(0.09*GLOW)+')');gl2.addColorStop(1,'rgba(226,121,155,0)');
+  ctx.fillStyle=gl2;ctx.beginPath();ctx.arc(c0.x,c0.y,gl2R,0,7);ctx.fill();
+  ctx.restore();
+
   /* corps shadé : lumière en haut-gauche, terminateur en bas-droite */
   const lx=c0.x-Rpx*0.34, ly=c0.y-Rpx*0.4;
   const g=ctx.createRadialGradient(lx,ly,Rpx*0.05,c0.x,c0.y,Rpx*1.06);
   g.addColorStop(0,'#fff8e6');g.addColorStop(.35,'#f6d68c');g.addColorStop(.72,'#d99a3e');g.addColorStop(1,'#4e3410');
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(c0.x,c0.y,Rpx,0,7);ctx.fill();
+
+  /* lumière de remplissage froide, opposée à la source principale : éclairage à 2 sources */
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  const flx=c0.x+Rpx*0.4, fly=c0.y+Rpx*0.42;
+  const fg=ctx.createRadialGradient(flx,fly,0,flx,fly,Rpx*0.9);
+  fg.addColorStop(0,'rgba(143,180,222,.16)'); fg.addColorStop(1,'rgba(143,180,222,0)');
+  ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(flx,fly,Rpx*0.9,0,7); ctx.fill(); ctx.restore();
+
   /* reflet spéculaire : petit point vif qui suit la source de lumière, texture de surface */
   ctx.save();ctx.globalCompositeOperation='lighter';
   const sg=ctx.createRadialGradient(lx,ly,0,lx,ly,Rpx*0.22);
   sg.addColorStop(0,'rgba(255,255,255,.85)');sg.addColorStop(1,'rgba(255,255,255,0)');
   ctx.fillStyle=sg;ctx.beginPath();ctx.arc(lx,ly,Rpx*0.22,0,7);ctx.fill();ctx.restore();
-  /* wireframe clippé au disque : la sphère respire son propre spin */
+
+  /* wireframe + grain procédural clippés au disque : la sphère respire son propre spin */
   ctx.save();ctx.beginPath();ctx.arc(c0.x,c0.y,Rpx,0,7);ctx.clip();
-  const spin=PERF*CONFIG.SPHERE_SPIN*motionScale();
+  const spin=visuTemps*CONFIG.SPHERE_SPIN;
   ctx.strokeStyle='rgba(255,244,208,.26)';ctx.lineWidth=.7;
   for(let m=0;m<6;m++){const phi=m/6*Math.PI+spin; ctx.beginPath();let f=true;
     for(let i=0;i<=SPHERE_SEG;i++){const th=i/SPHERE_SEG*Math.PI*2;
@@ -616,25 +898,50 @@ function dessinerSphere(c0,breathe){
     for(let i=0;i<=SPHERE_SEG;i++){const th=i/SPHERE_SEG*Math.PI*2;const p=proj(rr*Math.cos(th),yr,rr*Math.sin(th));
       f?(ctx.moveTo(p.x,p.y),f=false):ctx.lineTo(p.x,p.y);}
     ctx.stroke();}
+  /* matériau procédural : grain cristallin — répartition en angle d'or, tourne avec le spin */
+  ctx.fillStyle='rgba(255,244,208,.4)';
+  for(let gi=0; gi<24; gi++){
+    const th=Math.acos(1-2*((gi+0.5)/24)), phi=gi*2.399963+spin;
+    const p=proj(Rw*Math.sin(th)*Math.cos(phi),Rw*Math.cos(th),Rw*Math.sin(th)*Math.sin(phi));
+    ctx.beginPath(); ctx.arc(p.x,p.y,0.9*p.s,0,7); ctx.fill();
+  }
   ctx.restore();
+
   /* rim light — plus vif au pic d'expansion */
   ctx.save();ctx.globalCompositeOperation='lighter';
   const rg=ctx.createRadialGradient(c0.x,c0.y,Rpx*0.82,c0.x,c0.y,Rpx*1.04);
   rg.addColorStop(0,'rgba(255,240,200,0)');rg.addColorStop(1,'rgba(255,240,200,'+(0.32+0.28*resp)+')');
   ctx.fillStyle=rg;ctx.beginPath();ctx.arc(c0.x,c0.y,Rpx*1.04,0,7);ctx.fill();ctx.restore();
+
   /* anneaux du centre fractal : plus grand (expansion) / plus petit (contraction) */
   ctx.strokeStyle='rgba(255,244,208,.4)';ctx.lineWidth=1.2;
   ctx.beginPath();ctx.arc(c0.x,c0.y,Rpx*1.5,0,7);ctx.stroke();
   ctx.strokeStyle='rgba(143,180,222,.45)';ctx.beginPath();ctx.arc(c0.x,c0.y,Rpx*0.66,0,7);ctx.stroke();
+
+  /* niveau de détail au zoom : un écho fractal plus petit apparaît en zoomant */
+  const zoomDetail=Math.max(0,Math.min(1,(VUE.zoom-CONFIG.ZOOM_DETAIL_SEUIL)/(CONFIG.ZOOM_MAX-CONFIG.ZOOM_DETAIL_SEUIL)));
+  if(zoomDetail>0.01){
+    ctx.save();ctx.globalAlpha=zoomDetail*0.55;
+    const Rw2=Rw*0.46;
+    for(let m=0;m<3;m++){const phi=m/3*Math.PI-spin*1.4; ctx.beginPath();let f=true;
+      for(let i=0;i<=24;i++){const th=i/24*Math.PI*2;
+        const p=proj(Rw2*Math.sin(th)*Math.cos(phi),Rw2*Math.cos(th),Rw2*Math.sin(th)*Math.sin(phi));
+        f?(ctx.moveTo(p.x,p.y),f=false):ctx.lineTo(p.x,p.y);}
+      ctx.strokeStyle='rgba(255,244,208,.5)';ctx.lineWidth=.8;ctx.stroke();}
+    ctx.restore();
+  }
 }
 
 /* ---- double hélice : brin A (expansions) et brin B (contractions), réciproques ---- */
-function dessinerBrins(E,breathe){
-  const spin=PERF*CONFIG.HELIX_SPIN*motionScale()+E.fSolo*Math.PI*2;
+function dessinerBrins(E,breathe,resp){
+  const spin=visuTemps*CONFIG.HELIX_SPIN+E.fSolo*Math.PI*2;
+  const strandActif=E.q<2?0:1;                 // le brin qui porte la phase active pulse davantage
+  const pulse=0.85+0.3*resp;
   ctx.globalCompositeOperation='lighter';
   for(let strand=0;strand<2;strand++){
     const c1=strand===0?DENS[0].col:DENS[2].col, c2=strand===0?DENS[1].col:DENS[3].col;
-    let prev=null;
+    const boost=strand===strandActif?1.5:1;
+    let prev=null, prevPrev=null;
     for(let i=0;i<=HELIX.N;i++){
       const t=i/HELIX.N;
       const ang=t*Math.PI*2*HELIX.turns+spin+strand*Math.PI;
@@ -642,19 +949,22 @@ function dessinerBrins(E,breathe){
       const p=proj(rr*Math.cos(ang),(t-0.5)*HELIX.H,rr*Math.sin(ang));
       if(prev){ const taper=0.5+0.5*Math.sin(t*Math.PI);   // fil qui s'amincit vers les pôles
         ctx.strokeStyle=colLerp(c1,c2,t);
-        ctx.globalAlpha=INTENSITE_FLUX*0.55*Math.max(.12,p.s-.35);
-        ctx.lineWidth=Math.max(.6,1.7*p.s*INTENSITE_FLUX*taper);
+        ctx.globalAlpha=INTENSITE_FLUX*0.42*Math.max(.12,p.s-.35)*pulse*(0.7+0.3*boost);
+        ctx.lineWidth=Math.max(.6,1.7*p.s*INTENSITE_FLUX*taper*boost);
         ctx.beginPath();ctx.moveTo(prev.x,prev.y);ctx.lineTo(p.x,p.y);ctx.stroke(); }
-      prev=p;
+      prevPrev=prev; prev=p;
     }
-    /* étincelles scintillantes le long du brin : texture de flux vivante */
-    for(let k=0;k<5;k++){
-      const tt=(k/5+(strand?0.1:0)+PERF*0.00003*motionScale())%1;
-      const ang=tt*Math.PI*2*HELIX.turns+spin+strand*Math.PI;
-      const rr=HELIX.R*(0.55+0.45*breathe)*(0.55+0.45*Math.sin(tt*Math.PI));
-      const sp=proj(rr*Math.cos(ang),(tt-0.5)*HELIX.H,rr*Math.sin(ang));
-      const tw=0.4+0.6*Math.abs(Math.sin(PERF*0.004+k*1.7+strand*3));
-      disque(sp,1.6*sp.s,'#fff8e6',INTENSITE_FLUX*0.7*tw);
+    /* étincelles scintillantes + traînée : texture de flux vivante */
+    for(let k=0;k<9;k++){
+      const base=(k/9+(strand?0.1:0));
+      for(let ech=0; ech<3; ech++){
+        const tt=(base+visuTemps*0.00003-ech*0.01+1)%1;
+        const ang=tt*Math.PI*2*HELIX.turns+spin+strand*Math.PI;
+        const rr=HELIX.R*(0.55+0.45*breathe)*(0.55+0.45*Math.sin(tt*Math.PI));
+        const sp=proj(rr*Math.cos(ang),(tt-0.5)*HELIX.H,rr*Math.sin(ang));
+        const tw=0.4+0.6*Math.abs(Math.sin(visuTemps*0.004+k*1.7+strand*3));
+        disque(sp,(1.7-ech*0.4)*sp.s,'#fff8e6',INTENSITE_FLUX*(0.7-ech*0.22)*tw);
+      }
     }
     const bt=(E.fOmc+strand*0.5)%1;                       // perle voyageuse
     const ba=bt*Math.PI*2*HELIX.turns+spin+strand*Math.PI;
@@ -714,6 +1024,9 @@ function dessinerCiel(){
 
 /* ═══════════════════════ HUD ═══════════════════════ */
 let dernierAnnonce=0;
+const miniCycle=document.querySelector('#mini-cycle .prog');
+const miniCycleLong = miniCycle ? 2*Math.PI*10 : 0;
+if(miniCycle) miniCycle.style.strokeDasharray=miniCycleLong;
 function majHud(E){
   $('h-saison').textContent=DENS[E.si].r;
   $('h-saison-l').textContent=DENS[E.si].nom.split(' ')[0].toLowerCase()+' · j'+(E.jourAn+1)+'/432';
@@ -722,11 +1035,13 @@ function majHud(E){
   $('h-sol').textContent=fmt(E.uniteDay,0);             // unité / 155 520 — le compte invariant
   $('h-unite').textContent=DENS[E.q].r;                 // phase active (le quart qui respire)
   $('h-unite').style.color=DENS[E.q].col;
+  if(miniCycle) miniCycle.style.strokeDashoffset = miniCycleLong*(1-E.fAn);
+  document.querySelectorAll('#legende .pt').forEach((p,i)=>p.classList.toggle('actif', i===E.q));
   // civil
   const d=new Date();
   const civ=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
   let tail=' · jour OmcV = '+fmt(OMCV.UNITE_PAR_JOUR,0)+' unités';
-  if(j0mode==='perso'&&ancrePerso){const nb=Math.floor((Date.now()-ancrePerso)/(OMCV.JOUR_S*1000));tail=' · ✿ perso · OmcV n°'+fmt(nb+1,0);}
+  if(j0mode==='perso'&&ancrePerso){const nb=Math.floor((Date.now()-ancrePerso)/(OMCV.JOUR_S*1000));tail=' · perso · OmcV n°'+fmt(nb+1,0);}
   $('civil').textContent=civ+' civil'+tail;
   /* équivalent textuel pour lecteur d'écran, annoncé au plus toutes les 4 s (pas à 60 fps) */
   if(PERF-dernierAnnonce>4000){
@@ -737,6 +1052,9 @@ function majHud(E){
       ' sur '+fmt(OMCV.UNITE_PAR_JOUR,0)+'. Phase quartz '+DENS[E.q].r+'.';
   }
 }
+
+/* légende permanente discrète (point 33) */
+(function(){const c=$('legende'); DENS.forEach(d=>{const s=document.createElement('span');s.className='pt';s.style.background=d.col;c.appendChild(s);});})();
 
 /* ═══════════════════════ BOUCLE ═══════════════════════ */
 let themeTick=0, renduAlerte=false;
@@ -749,6 +1067,7 @@ function boucle(){
       dessinerCiel();
       dessiner(E); majHud(E);
       if(++themeTick%30===0) majTheme();
+      if(VUE.demo) majDemo();
     }
   }catch(err){
     console.error('OmcV: erreur de rendu, frame ignorée', err);
@@ -757,25 +1076,43 @@ function boucle(){
   requestAnimationFrame(boucle);
 }
 
+/* ═══════════════════════ TRANSITIONS CAMÉRA DOUCES ═══════════════════════ */
+let animId=0;
+function animerVue(cible,dur){
+  const myId=++animId;
+  const y0=VUE.yaw, p0=VUE.pitch, t0=performance.now();
+  let dy=((cible.yaw-y0)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI;
+  const dp=cible.pitch-p0;
+  (function step(){
+    if(myId!==animId) return;
+    const t=Math.min(1,(performance.now()-t0)/(dur||500));
+    const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+    VUE.yaw=y0+dy*e; VUE.pitch=p0+dp*e;
+    if(t<1) requestAnimationFrame(step);
+  })();
+}
+
 /* ═══════════════════════ NAVIGATION OBSERVATEUR ═══════════════════════ */
 const scene=$('scene');
-let drag=false,px=0,py=0,lastTapT=0,lastTapX=0,lastTapY=0;
-scene.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;VUE.autoRot=false;
-  $('obs-rot').classList.remove('actif');$('obs-rot').setAttribute('aria-pressed','false');
+let drag=false,px=0,py=0,lastTapT=0,lastTapX=0,lastTapY=0,downT=0,downX=0,downY=0;
+scene.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;downT=performance.now();downX=e.clientX;downY=e.clientY;
+  VUE.autoRot=false;$('obs-rot').classList.remove('actif');$('obs-rot').setAttribute('aria-pressed','false');
   scene.classList.add('grab');scene.setPointerCapture(e.pointerId);});
 scene.addEventListener('pointermove',e=>{if(!drag)return;
   VUE.yaw+=(e.clientX-px)*CONFIG.ROT_SENS; VUE.pitch=Math.max(CONFIG.PITCH_MIN,Math.min(CONFIG.PITCH_MAX,VUE.pitch-(e.clientY-py)*CONFIG.PITCH_SENS));
   px=e.clientX;py=e.clientY;});
 scene.addEventListener('pointerup',e=>{
   drag=false;scene.classList.remove('grab');
+  const dtDown=performance.now()-downT, distDown=Math.hypot(e.clientX-downX,e.clientY-downY);
   if(e.pointerType==='touch'){
     const now=performance.now(), dx=e.clientX-lastTapX, dy=e.clientY-lastTapY;
     if(now-lastTapT<CONFIG.DOUBLE_TAP_MS && Math.hypot(dx,dy)<CONFIG.DOUBLE_TAP_DIST){
       VUE.zoom=1;$('zoom').value=100;$('zoom-val').textContent='100%';taille();
-      vue(NEUTRE);VUE.autoRot=false;$('obs-rot').classList.remove('actif');$('obs-rot').setAttribute('aria-pressed','false');
-      lastTapT=0;
+      animerVue(NEUTRE);VUE.autoRot=false;$('obs-rot').classList.remove('actif');$('obs-rot').setAttribute('aria-pressed','false');
+      lastTapT=0; return;
     } else { lastTapT=now;lastTapX=e.clientX;lastTapY=e.clientY; }
   }
+  if(dtDown<CONFIG.TAP_MS && distDown<CONFIG.TAP_DIST) gererTapAnneau(e.clientX,e.clientY);
 });
 scene.addEventListener('pointercancel',()=>{drag=false;scene.classList.remove('grab');});
 scene.addEventListener('wheel',e=>{e.preventDefault();VUE.zoom=Math.max(CONFIG.ZOOM_MIN,Math.min(CONFIG.ZOOM_MAX,VUE.zoom-e.deltaY*CONFIG.WHEEL_ZOOM));$('zoom').value=Math.round(VUE.zoom*100);$('zoom-val').textContent=Math.round(VUE.zoom*100)+'%';taille();},{passive:false});
@@ -801,11 +1138,56 @@ let pd=0;
 scene.addEventListener('touchmove',e=>{if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;const d=Math.hypot(dx,dy);if(pd)VUE.zoom=Math.max(CONFIG.ZOOM_MIN,Math.min(CONFIG.ZOOM_MAX,VUE.zoom*(d/pd)));pd=d;taille();e.preventDefault();}},{passive:false});
 scene.addEventListener('touchend',()=>pd=0);
 
-function vue(o){VUE.yaw=o.yaw;VUE.pitch=o.pitch;}
-$('obs-reset').onclick=$('o-reset').onclick=()=>vue(NEUTRE);
-$('obs-haut').onclick=$('o-haut').onclick=()=>vue(ZENITH);
-function toggleRot(){VUE.autoRot=!VUE.autoRot;$('obs-rot').classList.toggle('actif',VUE.autoRot);$('obs-rot').setAttribute('aria-pressed',String(VUE.autoRot));}
+/* info-bulle au tap sur un anneau (point 22) */
+function gererTapAnneau(clientX,clientY){
+  if(!derniersPoints) return;
+  const rect=cv.getBoundingClientRect();
+  const x=clientX-rect.left, y=clientY-rect.top;
+  const E=derniersPoints.E;
+  const cibles=[
+    {p:derniersPoints.pJour, txt:'Jour OmcV — Omc '+E.omc+'/432 · unité '+fmt(E.uniteDay,0)+'/155 520'},
+    {p:derniersPoints.pCv,   txt:'Solônde dans l’Omc — '+Math.floor(E.solInOmc)+'/90'},
+    {p:derniersPoints.pResp, txt:'Respiration — phase quartz '+DENS[E.q].r+' ('+DENS[E.q].nom+')'},
+    {p:derniersPoints.pSun,  txt:'Année — jour '+(E.jourAn+1)+'/432 · saison '+DENS[E.si].r+' '+DENS[E.si].nom},
+  ];
+  let meilleur=null,meilleurD=CONFIG.TAP_HIT_PX;
+  cibles.forEach(c=>{ const d=Math.hypot(x-c.p.x,y-c.p.y); if(d<meilleurD){meilleurD=d;meilleur=c;} });
+  const tip=$('tooltip-anneau');
+  if(!meilleur){ tip.classList.remove('visible'); return; }
+  tip.textContent=meilleur.txt;
+  tip.style.left=Math.min(W-230,Math.max(6,meilleur.p.x-100))+'px';
+  tip.style.top=Math.max(6,meilleur.p.y-46)+'px';
+  tip.classList.add('visible');
+  clearTimeout(gererTapAnneau._t);
+  gererTapAnneau._t=setTimeout(()=>tip.classList.remove('visible'),3500);
+}
+
+$('obs-reset').onclick=$('o-reset').onclick=()=>animerVue(NEUTRE);
+$('obs-haut').onclick=$('o-haut').onclick=()=>animerVue(ZENITH);
+function toggleRot(){VUE.autoRot=!VUE.autoRot;$('obs-rot').classList.toggle('actif',VUE.autoRot);$('obs-rot').setAttribute('aria-pressed',String(VUE.autoRot));
+  if(!VUE.autoRot){VUE.demo=false;$('demo-caption').classList.remove('visible');}}
 $('obs-rot').onclick=$('o-rot').onclick=toggleRot;
+
+/* mode démo auto-explicatif (point 36) : légendes qui défilent pendant la rotation auto */
+const DEMO_TXT=[
+  'L’anneau extérieur trace l’année : 432 jours rigides, une couleur par saison.',
+  'L’anneau doré suit le jour OmcV : 432 Omc, 155 520 unités invariantes.',
+  'L’anneau mauve suit la Solônde dans son Omc : 0 à 90.',
+  'L’anneau intérieur montre la respiration du quartz : les 4 densités qui alternent.',
+  'Le centre fractal : toutes les densités reviennent toujours à ce point.',
+];
+let demoIdx=0, demoT=0;
+function majDemo(){
+  if(PERF-demoT<6000) return; demoT=PERF;
+  const el=$('demo-caption'); el.textContent=DEMO_TXT[demoIdx%DEMO_TXT.length]; demoIdx++;
+  el.classList.add('visible');
+}
+$('o-demo').onclick=()=>{
+  VUE.demo=!VUE.demo;
+  $('o-demo').classList.toggle('actif',VUE.demo);
+  if(VUE.demo){ if(!VUE.autoRot) toggleRot(); demoT=0; majDemo(); }
+  else { $('demo-caption').classList.remove('visible'); }
+};
 
 /* pause du rendu (pas de l'horloge) quand l'onglet est masqué : économie batterie */
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) lastReal=performance.now(); });
@@ -847,13 +1229,47 @@ document.querySelectorAll('.ong').forEach(o=>o.onclick=()=>onglet(o.dataset.t));
 $('b-densites').onclick=()=>ouvrir('dens');
 $('b-j0').onclick=()=>ouvrir('j0');
 $('b-phases').onclick=()=>{VUE.phasesVisible=!VUE.phasesVisible;$('b-phases').classList.toggle('actif',VUE.phasesVisible);$('b-phases').setAttribute('aria-pressed',String(VUE.phasesVisible));};
-$('b-vitesse').onclick=()=>{VUE.warpIdx=(VUE.warpIdx+1)%WARPS.length;const w=WARPS[VUE.warpIdx];const lbl='×'+(w>=1000?fmt(w):w);$('b-vitesse').textContent='⏩ '+lbl;$('warp').value=VUE.warpIdx;$('warp-val').textContent=lbl;};
+function pulseBouton(el){ el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
+$('b-vitesse').onclick=()=>{VUE.warpIdx=(VUE.warpIdx+1)%WARPS.length;$('b-vitesse-txt').textContent=WARP_TXT[VUE.warpIdx];
+  $('b-vitesse').title=WARP_DESC[VUE.warpIdx];$('warp').value=VUE.warpIdx;$('warp-val').textContent=WARP_TXT[VUE.warpIdx];pulseBouton($('b-vitesse'));};
 
-/* première visite : révèle la Notice pour ne pas laisser l'essentiel caché dans un menu fermé */
-if(!lis('visite')){ note('visite','1'); setTimeout(()=>ouvrir('notice'),700); }
+/* ═══════════════════════ TOUR GUIDÉ (premier lancement) ═══════════════════════ */
+const TOUR=[
+  {sel:'#scene', txt:'Glisse (ou utilise les flèches du clavier) pour tourner autour du centre fractal. Molette, pince ou +/- pour zoomer.', geste:true},
+  {sel:'#hud', txt:'Ces cartes lisent le temps OmcV en direct : saison, Omc, Solônde, unité invariante, phase du quartz.'},
+  {sel:'#obs-menu', txt:'Ouvre l’interface complète : les 4 densités, la position, le thème personnel, le mode Créateur.'},
+  {sel:'#barre', txt:'Affiche les phases du quartz, ou règle la vitesse d’observation — y compris en dessous de ×1 pour un rythme méditatif.'},
+];
+let tourIdx=0;
+function tourAfficher(i){
+  const step=TOUR[i]; const cible=document.querySelector(step.sel);
+  const fond=$('tour-fond'), sur=$('tour-surbrillance'), bulle=$('tour-bulle');
+  fond.classList.add('visible'); sur.style.display='block'; bulle.style.display='block';
+  if(cible){ const r=cible.getBoundingClientRect();
+    sur.style.left=(r.left-6)+'px'; sur.style.top=(r.top-6)+'px'; sur.style.width=(r.width+12)+'px'; sur.style.height=(r.height+12)+'px';
+    let bx=r.left, by=r.bottom+14;
+    if(by+140>innerHeight) by=Math.max(10,r.top-150);
+    bx=Math.max(10,Math.min(innerWidth-320,bx));
+    bulle.style.left=bx+'px'; bulle.style.top=by+'px';
+  }
+  $('tour-texte').innerHTML=(step.geste?'<span class="geste-anim">'+icone('orbit',20)+'</span><br>':'')+step.txt;
+  $('tour-pas').textContent=(i+1)+' / '+TOUR.length;
+  $('tour-suivant').textContent = i===TOUR.length-1 ? 'Terminer' : 'Suivant';
+}
+function tourFermer(){
+  $('tour-fond').classList.remove('visible'); $('tour-surbrillance').style.display='none'; $('tour-bulle').style.display='none';
+}
+$('tour-suivant').onclick=()=>{ tourIdx++; if(tourIdx>=TOUR.length){ tourFermer(); } else tourAfficher(tourIdx); };
+$('tour-passer').onclick=tourFermer;
+if(!lis('visite')){ note('visite','1'); setTimeout(()=>{ tourIdx=0; tourAfficher(0); },700); }
 
 /* ═══════════════════════ CRÉATEUR — le modèle n'est pas figé ═══════════════════════ */
 const DEF=[[11,10],[6,5],[10,11],[5,6]];
+const PRESETS=[
+  {nom:'Origine',   r:[[11,10],[6,5],[10,11],[5,6]]},
+  {nom:'Symétrique doux', r:[[21,20],[11,10],[20,21],[10,11]]},
+  {nom:'Marqué',    r:[[6,5],[4,3],[5,6],[3,4]]},
+];
 const persistModeleDeb=debounce(persistModele,400);
 function heures(s){const h=s/3600;return Math.floor(h)+'h'+fmt((h-Math.floor(h))*60,1).replace('.',',');}
 function refreshDens(){
@@ -872,6 +1288,16 @@ function refreshDens(){
     'produit des densités = <b>'+OMCV.PRODUIT.toFixed(3).replace('.',',')+'</b>';
 }
 function persistModele(){note('modele',JSON.stringify({r:DENS.map(x=>x.r),demi:OMCV.DEMI,spo:OMCV.SOL_PAR_OMC,opj:OMCV.OMC_PAR_JOUR,ja:OMCV.JOURS_AN}));}
+function buildPresets(){
+  const box=$('crea-presets'); box.innerHTML='';
+  PRESETS.forEach(pr=>{
+    const b=document.createElement('button'); b.type='button'; b.className='preset';
+    const pts=pr.r.map((f,i)=>'<span style="background:'+DENS[i].col+'"></span>').join('');
+    b.innerHTML='<span class="pts">'+pts+'</span><span>'+pr.nom+'</span>';
+    b.onclick=()=>{ pr.r.forEach((f,i)=>{DENS[i].v=f[0]/f[1];DENS[i].r=f[0]+'/'+f[1];}); buildCreateur(); persistModeleDeb(); };
+    box.appendChild(b);
+  });
+}
 function buildCreateur(){
   const box=$('crea-dens');box.innerHTML='';
   DENS.forEach((d,i)=>{const row=document.createElement('div');row.className='crea-row';
@@ -903,6 +1329,7 @@ $('crea-reset').onclick=()=>{
   if(o.r)o.r.forEach((rs,i)=>{const p=rs.split('/');if(DENS[i]&&+p[1]){DENS[i].r=rs;DENS[i].v=(+p[0])/(+p[1]);}});
   if(o.demi)OMCV.DEMI=o.demi;if(o.spo)OMCV.SOL_PAR_OMC=o.spo;if(o.opj)OMCV.OMC_PAR_JOUR=o.opj;if(o.ja)OMCV.JOURS_AN=o.ja;
 }catch(e){console.warn('OmcV: modèle sauvegardé illisible, ignoré.',e);}}})();
+buildPresets();
 buildCreateur();
 
 /* import de fond d'écran externe : validé, redimensionné, puis stocké */
@@ -941,14 +1368,17 @@ if(lis('fond'))$('fond-perso').style.backgroundImage='url('+lis('fond')+')';
 
 /* ancres densité (observateur) */
 (function(){const c=$('ancres');DENS.forEach((d,i)=>{const b=document.createElement('button');
-  b.className='rond';b.style.borderColor=d.col;b.textContent=['🌱','☀️','🍂','❄️'][i];b.title=d.nom;b.setAttribute('aria-label',d.nom);
-  b.onclick=()=>{VUE.yaw=-(i/4)*Math.PI*2;VUE.autoRot=false;$('obs-rot').classList.remove('actif');$('obs-rot').setAttribute('aria-pressed','false');};c.appendChild(b);});})();
+  b.className='rond';b.style.borderColor=d.col;
+  b.innerHTML='<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:'+d.col+'"></span>';
+  b.title=d.nom;b.setAttribute('aria-label',d.nom);
+  b.onclick=()=>{animerVue({yaw:-(i/4)*Math.PI*2,pitch:VUE.pitch});VUE.autoRot=false;$('obs-rot').classList.remove('actif');$('obs-rot').setAttribute('aria-pressed','false');};c.appendChild(b);});})();
 
 /* affichage */
 $('flux').oninput=e=>{INTENSITE_FLUX=e.target.value/100;$('flux-val').textContent=e.target.value+'%';};
 $('glow').oninput=e=>{GLOW=e.target.value/100;$('glow-val').textContent=e.target.value+'%';};
 $('zoom').oninput=e=>{VUE.zoom=e.target.value/100;$('zoom-val').textContent=e.target.value+'%';taille();};
-$('warp').oninput=e=>{VUE.warpIdx=+e.target.value;const w=WARPS[VUE.warpIdx];const lbl='×'+(w>=1000?fmt(w):w);$('warp-val').textContent=lbl;$('b-vitesse').textContent='⏩ '+lbl;};
+$('warp').oninput=e=>{VUE.warpIdx=+e.target.value;$('warp-val').textContent=WARP_TXT[VUE.warpIdx];$('b-vitesse-txt').textContent=WARP_TXT[VUE.warpIdx];$('b-vitesse').title=WARP_DESC[VUE.warpIdx];};
+$('warp').value=VUE.warpIdx; $('warp-val').textContent=WARP_TXT[VUE.warpIdx]; $('b-vitesse-txt').textContent=WARP_TXT[VUE.warpIdx];
 function amb(a){document.documentElement.dataset.ambiance=a;note('amb',a);}
 $('amb-cosmos').onclick=()=>amb('cosmos');$('amb-nuit').onclick=()=>amb('nuit');$('amb-aurore').onclick=()=>amb('aurore');
 if(lis('amb'))document.documentElement.dataset.ambiance=lis('amb');
@@ -978,7 +1408,7 @@ function appliquerJ0(){
   const eb=$('j0-eqmode'), pb=$('j0-persomode');
   if(eb)eb.classList.toggle('actif',!persoOn);
   if(pb)pb.classList.toggle('actif',persoOn);
-  $('b-j0').textContent=persoOn?'✿ Perso':'☉ J0';
+  $('b-j0').querySelector('.txt').textContent=persoOn?'Perso':'J0';
 }
 function setMode(m){
   if(m==='perso'&&!ancrePerso){onglet('theme');return;}
@@ -1055,6 +1485,7 @@ function autotest(){
   console.assert(e0.uniteDay===0,'etatCore à t=ancre doit démarrer à l’unité 0',e0);
   const e1=etatCore(1000+OMCV.SOL_S*1000*OMCV.SOL_PAR_JOUR,1000);
   console.assert(e1.uniteDay===0 && e1.jourAn===1,'un jour OmcV complet doit revenir à l’unité 0, jour suivant',e1);
+  console.assert(WARPS[3]===1,'WARPS[3] doit valoir 1 (temps réel), VUE.warpIdx par défaut pointe dessus',WARPS);
   console.log('%cOmcV — autotest terminé','color:#7cc4ae');
 }
 if(new URLSearchParams(location.search).get('debug')==='1') autotest();
@@ -1071,7 +1502,7 @@ redim(); majSolaire(); appliquerJ0(); majTheme(); boucle();
 echelle('zoom','55 %','220 %');
 echelle('flux','0 %','200 %');
 echelle('glow','30 %','200 %');
-echelle('warp','×1','×2 000 000');
+echelle('warp','×0,1','×2 000 000');
 echelle('demi','0,25 s','1 s');
 echelle('lat', latDe(0).toFixed(0)+'° Nord', latDe(35).toFixed(0)+'° Sud');
 echelle('lon', lonDe(0).toFixed(0)+'°', lonDe(35).toFixed(0)+'°');
