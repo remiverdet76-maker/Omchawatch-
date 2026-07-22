@@ -295,3 +295,61 @@ Un vrai bug trouvé, directement lié au correctif de la 4e passe :
   `OmcVibe/branding/icons/` (icônes + splash natifs Android, mêmes chemins
   que l'APK d'origine), `<title>`/`document.title` dans `index.html`,
   `manifest.json`.
+
+## 6e passe — poids de l'APK (3,6 → 10,4 Mo) : compression des images de branding
+
+Constat (question directe de l'utilisateur) : l'APK était passé de 3,6 Mo à
+10,4 Mo depuis le rebrand OmcVibe432. Diagnostic : pas le code (`index.html`
+ne pèse que 561 Ko), mais les images natives Android ajoutées pour l'icône
+et l'écran de démarrage — `res/drawable*/splash.png` (10 densités,
+~5,9 Mo à elles seules, dont 2×1,3 Mo pour les xxxhdpi) et
+`res/mipmap*/ic_launcher*.png` (15 fichiers, ~1,2 Mo) — stockées **non
+compressées** dans le zip de l'APK (`ZIP_STORED`, comme c'est l'usage
+Android pour les ressources raster), donc leur poids dans l'APK = leur
+poids PNG brut à l'octet près.
+
+Ces PNG étaient en couleur vraie (RGB/RGBA, jusqu'à ~270 000 couleurs
+uniques par image — un mandala avec dégradés/lueurs/paillettes), donc peu
+compressibles par le DEFLATE interne au PNG malgré de larges zones de fond
+uni. Correctif : régénération de toutes ces images depuis la même source
+(`gen_icons.py`/nouveau `gen_icons_optimized.py` + `gen_splash_optimized.py`
+dans le scratchpad, même recadrage/redimensionnement qu'à l'origine) avec :
+
+1. **Splash (10 fichiers)** : quantification à 256 couleurs avec tramage
+   Floyd-Steinberg (`Image.quantize`) + recompression PNG max
+   (`optimize=True, compress_level=9`). 6,02 Mo → 2,37 Mo (-3,65 Mo).
+   Vérifié visuellement (comparaison des deux PNG côte à côte) : aucune
+   différence perceptible, le tramage absorbe bien les dégradés du mandala.
+2. **Icônes (15 fichiers)** : même quantification, mais en repartant du
+   canal alpha réel de chaque fichier au lieu de le quantifier à l'aveugle.
+   `ic_launcher`/`ic_launcher_foreground` ont un alpha **constant à 255**
+   (entièrement opaques malgré le mode RGBA) → sauvegardés en PNG indexé
+   (mode `P`, sans canal alpha du tout), ce qui élimine un canal entier de
+   contenu que le PNG doit encoder — gain de loin supérieur à la seule
+   quantification des couleurs (ex. le foreground xxxhdpi : 379 Ko → 130 Ko
+   en `P`, contre seulement 363 Ko si on avait gardé un canal alpha
+   RGBA constant). `ic_launcher_round` a un alpha **binaire** (0 ou 255,
+   masque circulaire sans anti-aliasing) → PNG indexé avec un index de
+   palette dédié à la transparence (`transparency=`), donc losslessly
+   fidèle au masque d'origine tout en gagnant l'indexation. 1,23 Mo →
+   0,42 Mo (-0,81 Mo). Vérifié : tous les PNG rouverts et validés
+   (`Image.verify()`), rendu visuel du round et du foreground inchangé.
+3. **Non touché** : `cosmic-flux.jpg` (fond d'écran, 250 Ko) et
+   `omcvibe432-logo.jpg` (93 Ko) sont déjà des JPEG compressés — gain
+   négligeable, laissés tels quels. `classes.dex` (6,8 Mo décompressé mais
+   compresse très bien dans le zip) et `index.html` (561 Ko) ne sont pas du
+   "poids mort", donc non concernés par cette passe.
+
+Résultat : APK **10,4 Mo → 6,5 Mo** (-4,46 Mo, -41 %). L'écart restant avec
+les 3,6 Mo d'avant le rebrand correspond au contenu réellement nouveau
+(icône + splash + fond d'écran + logo du rebrand OmcVibe432), pas à du
+gaspillage.
+
+Où regarder : `OmcVibe/branding/icons/` (fichiers régénérés en place, même
+chemins, `repack.py` n'a rien à changer). Les scripts de génération
+(`gen_icons_optimized.py`, `gen_splash_optimized.py`) restent dans le
+scratchpad de session (pas commités — dépendent d'un chemin d'upload
+temporaire) ; à reproduire à l'identique si l'image source du mandala
+change un jour (quantize 256 couleurs + dither Floyd-Steinberg + P/indexé
+avec transparency= pour l'alpha binaire, RGB/P opaque sans canal alpha
+quand l'alpha est constant à 255).
