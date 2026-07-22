@@ -2891,7 +2891,7 @@ function initFXChain() {
   masterDelay.connect(masterDelayFb); masterDelayFb.connect(dFbLP); dFbLP.connect(masterDelay);
   delayInBus = c.createGain(); delayInBus.gain.value = 0.5;   // bus d'entrée (envois de paires, headroom)
   const delayWet = c.createGain(); delayWet.gain.value = 0; // retour (curseur master)
-  delayInBus.connect(masterDelay); masterDelay.connect(delayWet);
+  masterDelay.connect(delayWet);
 
   // Reverb — entrée reverbSendBus → convolver → retour reverbWetGain
   masterReverb  = c.createConvolver();
@@ -2899,7 +2899,7 @@ function initFXChain() {
   reverbSendBus = c.createGain(); reverbSendBus.gain.value = 0.5; // entrée (envois de paires, headroom)
   reverbWetGain = c.createGain(); reverbWetGain.gain.value = 0; // retour (curseur master)
   reverbDryGain = c.createGain(); reverbDryGain.gain.value = 1; // compat (inutilisé)
-  reverbSendBus.connect(masterReverb); masterReverb.connect(reverbWetGain);
+  masterReverb.connect(reverbWetGain);
 
   // Ping-pong stéréo cross-feedback — entrée ppSendBus → tank → retour ppWet
   const ppDelL = c.createDelay(2.0); ppDelL.delayTime.value = 0.25;
@@ -2913,7 +2913,16 @@ function initFXChain() {
   ppWet    = c.createGain(); ppWet.gain.value = 0;   // retour (curseur master)
   ppSendBus = c.createGain(); ppSendBus.gain.value = 0.5; // entrée (envois de paires, headroom)
 
-  ppSendBus.connect(ppDelL);
+  // #34 (perf) : delayInBus→masterDelay / reverbSendBus→masterReverb /
+  // ppSendBus→ppDelL étaient connectés ICI, sans condition, à CHAQUE
+  // démarrage du Flux — alors que _gRev/_gDel/_gPP démarrent à false (donc
+  // "attendu déconnecté"). Résultat : le convolveur de reverb (jusqu'à 14s
+  // d'IR) et les tanks delay/ping-pong tournaient dès le lancement, sur le
+  // vrai signal envoyé par les paires (FX activé par défaut), et ce
+  // jusqu'à ce que l'utilisateur touche un curseur wet au moins une fois.
+  // _gateReverb(true)/_gateDelay(true)/_gatePP(true) (appelés par les
+  // curseurs wet dès qu'ils dépassent 0, y compris au chargement d'un
+  // preset) sont maintenant les SEULS à établir ces connexions d'entrée.
   ppDelL.connect(ppFbLR); ppFbLR.connect(ppLP1); ppLP1.connect(ppDelR);
   ppDelR.connect(ppFbRL); ppFbRL.connect(ppLP2); ppLP2.connect(ppDelL);
   ppDelL.connect(ppPanL); ppDelR.connect(ppPanR);

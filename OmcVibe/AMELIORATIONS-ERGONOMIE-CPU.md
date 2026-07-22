@@ -254,6 +254,36 @@ retiré). Limites techniques honnêtes sur ce rebrand :
   fonctionnera partout — c'était de toute façon le placeholder Capacitor
   générique par défaut, jamais personnalisé dans l'APK d'origine.
 
+## 5e passe — audit ciblé (pas de quota, ce qui était réellement à trouver)
+
+Demande explicite : creuser encore, sans viser un nombre de points fixe —
+remonter uniquement ce qui est réellement à réparer. Vérifiés et jugés
+sains (aucune modification nécessaire) : moteur "Bowl" (AudioWorklet des
+bols chantants — polyphonie déjà plafonnée à 24 voix avec éviction de la
+plus ancienne, voix auto-nettoyées ; **inutilisé par l'UI actuelle**, code
+mort mais inoffensif, laissé en l'état), fuites de blob URL (`sampleStop`/
+`sampleDelete` révoquent correctement), tous les `window.addEventListener`
+de gestes tactiles (chacun protégé par un flag anti-double-binding ou une
+référence de fonction nommée idempotente — molette EQ2D, glisser-déposer
+samples, poignées de découpe, rotation 3D…), historique des tirages
+(`_gameHistory`, déjà borné par `GAME_HISTORY_MAX`).
+
+Un vrai bug trouvé, directement lié au correctif de la 4e passe :
+
+1. **Les bus d'entrée reverb/delay/ping-pong étaient connectés sans
+   condition à `initFXChain()`** — appelée une seule fois par lancement du
+   Flux — alors que `_gRev`/`_gDel`/`_gPP` démarrent à `false` ("attendu
+   déconnecté"). Le correctif précédent (gating de l'entrée en plus de la
+   sortie) ne s'appliquait donc qu'à partir du premier geste de
+   l'utilisateur sur un curseur wet : entre le lancement du Flux et ce
+   premier geste, le convolveur de reverb (et les tanks delay/ping-pong)
+   tournaient déjà à plein régime sur le vrai signal envoyé par les paires
+   (FX actif par défaut sur la plupart d'entre elles). Corrigé : ces trois
+   connexions d'entrée ne sont plus établies qu'à la demande, par
+   `_gateReverb`/`_gateDelay`/`_gatePP` — jamais par défaut. Vérifié : état
+   des trois portes bien à `false` juste après le lancement du Flux, bascule
+   propre à `true`/`false` au geste utilisateur.
+
 ## Où regarder dans le code (qualité audio adaptative + branding)
 
 - Qualité audio : `AUDIO_QUALITY_MODE`/`AUDIO_QUALITY_TIER`, `setAudioQuality()`,
