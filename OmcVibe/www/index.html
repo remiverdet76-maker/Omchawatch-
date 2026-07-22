@@ -359,10 +359,13 @@ body{
 #freq-input-master::-webkit-inner-spin-button,#freq-input-master::-webkit-outer-spin-button{-webkit-appearance:none;}
 
 /* ── Menu rapide (tap court, toutes sphères) : 2 arcs tactiles + 2 cellules ──
-   Arc gauche = Volume (0→1) · Arc droit = Battement binaural (0→7,2 Hz).
-   Cellule haute = Random ratio (garde cette sphère) · Cellule basse = Verrou. */
+   Arc gauche = Volume (0→1) · Arc droit = Detune Sinus Duo de la paire (-72→+72¢).
+   Cellule haute = Random ratio (garde cette sphère) · Cellule basse = Verrou.
+   #36 : resserré au maximum (inset -16%→-1%, labels tirés vers l'intérieur)
+   — débordait de l'écran sur certains appareils (sphère déjà proche du bord,
+   le menu l'agrandissait encore de 16% de plus, labels poussés hors-écran). */
 .vp-mastermenu{
-  position:absolute;inset:-16%;z-index:25;
+  position:absolute;inset:-1%;z-index:25;
   opacity:0;transform:scale(.92);pointer-events:none;
   transition:opacity .2s ease,transform .2s ease;
 }
@@ -371,7 +374,7 @@ body{
 .mm-track{ fill:none;stroke:rgba(255,255,255,.14);stroke-width:5;stroke-linecap:round; }
 .mm-fill{ fill:none;stroke-width:6;stroke-linecap:round;transition:stroke .3s; }
 .mm-fill-vol{ stroke:#63E6FF;filter:drop-shadow(0 0 6px rgba(99,230,255,.7)); }
-.mm-fill-delta{ stroke:#FFB0FF;filter:drop-shadow(0 0 6px rgba(255,176,255,.7)); }
+.mm-fill-detune{ stroke:#FFB0FF;filter:drop-shadow(0 0 6px rgba(255,176,255,.7)); }
 .mm-hit{
   position:absolute;top:0;bottom:0;width:38%;cursor:pointer;
   touch-action:none;-webkit-tap-highlight-color:transparent;
@@ -385,13 +388,14 @@ body{
 }
 .mm-label{
   position:absolute;top:50%;transform:translateY(-50%);
-  font-family:'IM Fell English',serif;font-size:.72rem;font-style:italic;
+  font-family:'IM Fell English',serif;font-size:.68rem;font-style:italic;
   color:rgba(230,220,255,.75);text-align:center;line-height:1.5;
   pointer-events:none;white-space:nowrap;
+  max-width:22vw;overflow:hidden;text-overflow:ellipsis;
 }
-.mm-label span{ font-size:1rem;font-weight:bold;font-style:normal;color:#D7DAE0; }
-.mm-label-left{ left:-2%; }
-.mm-label-right{ right:-2%; }
+.mm-label span{ font-size:.92rem;font-weight:bold;font-style:normal;color:#D7DAE0; }
+.mm-label-left{ left:4%; }
+.mm-label-right{ right:4%; }
 .mm-cell{
   position:absolute;left:50%;transform:translateX(-50%);
   display:flex;flex-direction:column;align-items:center;gap:.1rem;
@@ -2328,7 +2332,7 @@ PAIRS.forEach(p => {
 });
 
 let masterFreq  = 144;
-let globalDelta = 4.0;   // référence thêta (n'impose plus le même battement à tous)
+let globalDelta = DELTA_DEFAULT;   // #35 : référence Delta (n'impose plus le même battement à tous)
 let masterVol   = 0.85;  // le curseur affichait 0.8 mais la valeur réelle était 0.6 — trop faible
 // Le curseur Gain reste 0-100% (intuitif), mais le volume audible max réel est
 // divisé par deux : plein curseur saturait trop facilement (retour terrain).
@@ -4401,10 +4405,14 @@ function _closeQuickMenu(){
 // ═══════════════════════════════════════════════════════════════════
 //  MENU RAPIDE — 2 cellules (haut/bas) + 2 arcs tactiles (G/D)
 //  Arc gauche  : Volume de la sphère   0 → 1     (glisser le long de la courbe)
-//  Arc droit   : Battement binaural 0 → 7,2 Hz
+//  Arc droit   : Detune Sinus Duo de CETTE paire  -72 → +72 ¢
 //  Commun au MAÎTRE et à toutes les paires satellites (_qmIdx = sphère active).
+//  #35/#36 : remplace l'ancien arc "Battement binaural" (0-7,2 Hz) — Δ est
+//  désormais verrouillé en bande Delta (0.8-1.2 Hz, cf. DELTA_MIN/DELTA_MAX)
+//  et n'a plus grand intérêt à occuper un raccourci tactile dédié ; la
+//  variété par paire vient maintenant du detune, qui en prend la place ici.
 // ═══════════════════════════════════════════════════════════════════
-const MM_DELTA_MAX = 7.2;
+const MM_DETUNE_MAX = 72;
 var _qmIdx = MASTER_IDX;
 
 function _mmPt(cx, cy, r, clockDeg) {
@@ -4429,18 +4437,29 @@ function _qmSetVol(i, v01){
   const vol=Math.round(v01*0.45*100)/100;
   setVolP(i,vol); setVolI(i,vol);
 }
-function _qmGetDelta(i){ return i===MASTER_IDX ? globalDelta : PAIRS[i].ida.delta; }
-function _qmSetDelta(i, d){ if(i===MASTER_IDX) setGlobalDelta(d); else setDelta(i, d); }
+// #35/#36 : detune Sinus Duo (-72..72 ¢) de la sphère active — global pour
+// le maître, PAIR_DUALSINE pour une paire satellite (même résolution que
+// _dualSineMagFor, utilisée par le moteur audio).
+function _qmGetDetune(i){
+  if (i === MASTER_IDX) return DUALSINE_DETUNE;
+  return (typeof PAIR_DUALSINE[i] === 'number') ? PAIR_DUALSINE[i] : DUALSINE_DETUNE;
+}
+function _qmSetDetune(i, mag){
+  const clamped = Math.max(-MM_DETUNE_MAX, Math.min(MM_DETUNE_MAX, mag));
+  if (i === MASTER_IDX) setDualSineDetune(clamped); else setPairDualSineDetune(i, clamped);
+}
 
 function _mmRender() {
-  const volPct   = _qmGetVol(_qmIdx);
-  const deltaPct = Math.max(0, Math.min(1, _qmGetDelta(_qmIdx) / MM_DELTA_MAX));
+  const volPct    = _qmGetVol(_qmIdx);
+  // Échelle bipolaire -72..+72 ¢ → 0..1 (0 = -72, 0.5 = 0, 1 = +72)
+  const detunePct = Math.max(0, Math.min(1, (_qmGetDetune(_qmIdx) + MM_DETUNE_MAX) / (MM_DETUNE_MAX * 2)));
   const lf = document.getElementById('mm-fill-left');
   const rf = document.getElementById('mm-fill-right');
   if (lf) lf.setAttribute('d', _mmArcPath(100, 100, 94, 180, 180 + volPct * 180));
-  if (rf) rf.setAttribute('d', _mmArcPath(100, 100, 94, 180 - deltaPct * 180, 180));
+  if (rf) rf.setAttribute('d', _mmArcPath(100, 100, 94, 180 - detunePct * 180, 180));
   const lv = document.getElementById('mm-val-left');  if (lv) lv.textContent = Math.round(volPct * 100) + '%';
-  const rv = document.getElementById('mm-val-right'); if (rv) rv.textContent = _qmGetDelta(_qmIdx).toFixed(1) + ' Hz';
+  const rv = document.getElementById('mm-val-right');
+  if (rv) { const m = _qmGetDetune(_qmIdx); rv.textContent = (m < 0 ? '−' : '±') + Math.abs(m).toFixed(0) + ' ¢'; }
 }
 function _openQuickMenu(i) {
   _closeQuickMenu();
@@ -4460,13 +4479,13 @@ function _openQuickMenu(i) {
       <path d="${_mmArcPath(100,100,94,180,360)}" class="mm-track"/>
       <path d="${_mmArcPath(100,100,94,0,180)}"   class="mm-track"/>
       <path id="mm-fill-left"  d="" class="mm-fill mm-fill-vol"/>
-      <path id="mm-fill-right" d="" class="mm-fill mm-fill-delta"/>
+      <path id="mm-fill-right" d="" class="mm-fill mm-fill-detune"/>
     </svg>
     <div class="mm-hit mm-hit-left"  onpointerdown="_mmDown(event)"></div>
     <div class="mm-hit mm-hit-right" onpointerdown="_mmDown(event)"></div>
     <div class="mm-center" onclick="event.stopPropagation();_mmOpenModal()" title="${isMaster?'Menu oscillateur maître':'Menu oscillateur — '+pair.label}"></div>
     <div class="mm-label mm-label-left">Volume<br><span id="mm-val-left">0%</span></div>
-    <div class="mm-label mm-label-right">Binaural<br><span id="mm-val-right">0 Hz</span></div>
+    <div class="mm-label mm-label-right">Detune<br><span id="mm-val-right">±0 ¢</span></div>
     <button class="mm-cell mm-cell-top" style="border-color:${mc}" onclick="event.stopPropagation();_mmRandomRatio()" title="${isMaster?'Random ratio (garde le maître)':'Random ratio (garde cette sphère)'}">
       ⚄<span>Random ratio</span>
     </button>
@@ -4536,7 +4555,7 @@ function _mmApply(e, force) {
   if (_mmDrag.side === 'left') {
     _qmSetVol(_qmIdx, v);
   } else {
-    _qmSetDelta(_qmIdx, Math.round(v * MM_DELTA_MAX * 10) / 10);
+    _qmSetDetune(_qmIdx, Math.round((v * MM_DETUNE_MAX * 2 - MM_DETUNE_MAX) * 10) / 10);
   }
 }
 function _mmPreviewRender(v) {
@@ -4548,9 +4567,9 @@ function _mmPreviewRender(v) {
   } else {
     const fill = document.getElementById('mm-fill-right');
     const lbl = document.getElementById('mm-val-right');
-    const hz = Math.round(v * MM_DELTA_MAX * 10) / 10;
+    const mag = Math.round((v * MM_DETUNE_MAX * 2 - MM_DETUNE_MAX) * 10) / 10;
     if (fill) fill.setAttribute('d', _mmArcPath(100, 100, 94, 180 - v * 180, 180));
-    if (lbl) lbl.textContent = hz.toFixed(1) + ' Hz';
+    if (lbl) lbl.textContent = (mag < 0 ? '−' : '±') + Math.abs(mag).toFixed(0) + ' ¢';
   }
 }
 

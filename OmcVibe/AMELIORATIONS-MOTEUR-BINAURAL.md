@@ -233,3 +233,46 @@ aléatoire ne pioche jamais "Voix Quat" (pool restreint à sine/sine2/defsin)
 et ne change le moteur que de la paire vedette ; ce plafond n'est atteignable
 qu'en réglage manuel délibéré, et "Qualité audio : Légère" y répond en
 coupant le doublage.
+
+## #36 — Menu rapide (quick-menu) : l'arc droit doit refléter le detune, pas Δ
+
+Retour terrain (capture d'écran réelle) : le changement stratégique ci-dessus
+n'était pas visible dans le **menu rapide** (tap court sur une sphère,
+maître ou satellite) — son arc droit affichait toujours "Bin... 1.2",
+c'est-à-dire l'ancien réglage Δ (battement binaural), et en plus les
+libellés dépassaient de l'écran sur les bords gauche et droit.
+
+1. **Arc droit du menu rapide : Δ → detune Sinus Duo de la paire.**
+   `MM_DELTA_MAX` renommé `MM_DETUNE_MAX = 72`. `_qmGetDelta`/`_qmSetDelta`
+   remplacés par `_qmGetDetune(i)`/`_qmSetDetune(i, mag)` : lit/écrit
+   `DUALSINE_DETUNE` pour le maître, `PAIR_DUALSINE[i]` pour une paire
+   satellite (même source que le moteur audio, donc le menu rapide agit
+   bien sur ce qu'entend l'utilisateur). Échelle bipolaire -72..+72 ¢
+   mappée sur l'arc 0..1 (mi-course = 0 ¢). `_mmRender()`, le template HTML
+   de `_openQuickMenu()`, `_mmApply()` et `_mmPreviewRender()` mis à jour en
+   conséquence ; libellé "Detune" + valeur `±N ¢`. Classe CSS
+   `.mm-fill-delta` renommée `.mm-fill-detune`. Aucune référence à
+   l'ancien arc Δ ne subsiste (vérifié par grep).
+2. **Débordement d'écran corrigé.** Cause : `.vp-mastermenu{inset:-16%}`
+   agrandissait le menu de 16% au-delà de la sphère elle-même (déjà
+   proche du bord sur petit écran), et les libellés `.mm-label-left{left:
+   -2%}`/`.mm-label-right{right:-2%}` les poussaient encore plus loin
+   vers l'extérieur. Resserré au maximum : `inset:-1%`, libellés ramenés
+   vers l'intérieur (`left:4%`/`right:4%`), `max-width:22vw` +
+   `overflow:hidden;text-overflow:ellipsis` en filet de sécurité, police
+   légèrement réduite. Vérifié par mesure de géométrie (Playwright,
+   viewport 393×851) : le menu (28→365px) et les deux libellés tiennent
+   entièrement dans l'écran, alors qu'ils débordaient avant le correctif.
+3. **Bug corrigé au passage : `globalDelta` démarrait à 4.0.** La mise à
+   jour stratégique avait bien mis à jour `DELTA_DEFAULT` et toutes les
+   fonctions de bornage, mais pas la déclaration brute
+   `let globalDelta = 4.0;`. Une session fraîche (sans sauvegarde locale)
+   démarrait donc hors bande (4 Hz, Thêta) jusqu'au premier tirage ou
+   réglage manuel. Corrigé en `let globalDelta = DELTA_DEFAULT;` (1.0 Hz,
+   bande Delta, cohérent dès le lancement).
+
+Vérifié (Playwright, viewport 393×851 simulant l'appareil de la capture
+d'écran) : géométrie du menu et des libellés entièrement dans l'écran ;
+`_qmGetDelta` totalement supprimé ; `_qmSetDetune(MASTER_IDX, 45)` met bien
+à jour `DUALSINE_DETUNE` sans toucher à `globalDelta` ; `globalDelta` vaut
+`1` (et non `4`) dès le chargement de la page, avant tout tirage.
