@@ -99,7 +99,7 @@ body{
 /* Dock bas — Flux + Nav horizontaux */
 #bottom-dock{
   position:fixed;
-  bottom:0;left:0;right:0;height:61px; /* #20 : raccourci d'1/3 (92px→61px) */
+  bottom:0;left:0;right:0;height:115px; /* #32 : cellules/sphères agrandies, +25% vs taille d'origine (92px→115px) */
   display:flex;flex-direction:row;align-items:center;justify-content:center;
   gap:.5rem;padding:0 .5rem;
   z-index:100;
@@ -109,11 +109,11 @@ body{
   box-shadow:0 -4px 24px rgba(80,40,160,.18);
   transition:transform .35s cubic-bezier(.4,0,.2,1);
 }
-#bottom-dock.collapsed{transform:translateY(61px);}
+#bottom-dock.collapsed{transform:translateY(115px);}
 /* Chevron (masquer/afficher le dock) + plein écran : conteneur commun,
    aimantés ensemble — ils se déplacent comme un seul bloc. */
 #dock-toggle-row{
-  position:fixed;bottom:61px;right:.5rem;
+  position:fixed;bottom:115px;right:.5rem;
   display:flex;gap:.35rem;
   z-index:101;
   transition:bottom .35s cubic-bezier(.4,0,.2,1);
@@ -143,7 +143,7 @@ body{
 /* Visualiseur spectral — au-dessus du dock */
 #spectroid-bar{
   position:fixed;
-  bottom:61px;left:50%;transform:translateX(-50%);
+  bottom:115px;left:50%;transform:translateX(-50%);
   width:min(680px,88vw);height:80px;
   z-index:22;
   background:linear-gradient(135deg,rgba(180,180,200,.12),rgba(220,220,240,.06),rgba(150,160,180,.10));
@@ -234,7 +234,7 @@ body{
 #osc-modal-inner{
   background:rgba(8,0,26,.97);
   border-bottom:1.5px solid rgba(200,100,255,.4);
-  width:100vw;height:calc(100vh - 61px);
+  width:100vw;height:calc(100vh - 115px);
   display:flex;flex-direction:column;
   backdrop-filter:blur(22px);
   box-shadow:0 0 70px rgba(120,0,255,.3);
@@ -268,7 +268,7 @@ body{
 /* Bouton Retour — visible uniquement quand un panneau/modal est ouvert */
 #btn-back{
   /* Empilé au-dessus du bloc chevron + plein écran (28px de haut + marge) */
-  position:fixed;right:1rem;bottom:calc(61px + 38px);z-index:90;
+  position:fixed;right:1rem;bottom:calc(115px + 38px);z-index:90;
   padding:.6rem 1.1rem;border-radius:24px;
   background:rgba(10,4,30,.92);border:1.5px solid rgba(200,140,255,.55);
   color:rgba(230,210,255,.95);font-family:'Cinzel Decorative',serif;
@@ -733,13 +733,13 @@ body{
 /* ═══════════════════════════════════════════════
    DOCK 5 TOUCHES — rouge/orange · Flux · vert/bleu
    ═══════════════════════════════════════════════ */
-#bottom-dock.dock5{ gap:.55rem; }
-.dock-col{ display:flex;flex-direction:column;gap:.4rem;justify-content:center;
-  flex:1 1 0;max-width:202px;min-width:0; }
+#bottom-dock.dock5{ gap:.69rem; }
+.dock-col{ display:flex;flex-direction:column;gap:.5rem;justify-content:center;
+  flex:1 1 0;max-width:253px;min-width:0; } /* #32 : +25% vs origine (202px→253px) */
 
 .dcell{
-  display:flex;align-items:center;justify-content:center;gap:.3rem;
-  flex:2 1 0;min-width:0;width:auto;height:23px;padding:0 .3rem; /* largeur -1/3 : voisine avec .dcell-extras dans .dcell-wrap */
+  display:flex;align-items:center;justify-content:center;gap:.35rem;
+  flex:1 1 0;min-width:0;width:auto;height:43px;padding:0 .4rem; /* #32 : +25% vs origine (34px→43px) */
   border-radius:11px;border:1.5px solid;
   cursor:pointer;user-select:none;-webkit-user-select:none;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
@@ -750,10 +750,10 @@ body{
 .dcell:active{ transform:scale(.96); }
 .dcell.dc-hold{ transform:scale(1.05); box-shadow:0 0 22px currentColor; }
 .dcell-txt{ display:flex;flex-direction:column;align-items:center;line-height:1.05;min-width:0;overflow:hidden; }
-.dcell-name{ font-family:'Cinzel Decorative',serif;font-size:.6rem;letter-spacing:.06em;font-weight:700;
+.dcell-name{ font-family:'Cinzel Decorative',serif;font-size:.72rem;letter-spacing:.06em;font-weight:700;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%; }
-.dcell-sub{ font-family:'IM Fell English',serif;font-size:.72rem;font-weight:bold;opacity:.85;white-space:nowrap; }
-.dcell-ico{ font-size:.95rem;flex-shrink:0; }
+.dcell-sub{ font-family:'IM Fell English',serif;font-size:.86rem;font-weight:bold;opacity:.85;white-space:nowrap; }
+.dcell-ico{ font-size:1.15rem;flex-shrink:0; }
 
 /* ROUGE translucide — Option Jeu aléatoire */
 .dcell-red{ background:rgba(255,70,70,.14);border-color:rgba(255,90,90,.5);color:#FF8E8E; }
@@ -767,22 +767,26 @@ body{
 .dcell-blue{ background:rgba(60,170,255,.14);border-color:rgba(80,190,255,.5);color:#78C6FF; }
 .dcell-blue .dcell-name{ font-size:.72rem;letter-spacing:.1em; }
 
-/* ── Chaque cellule = bouton principal + ses sphères "extra" (raccourcis) ──
-   #25 : mise en page flexbox — le bouton (~2/3) et ses sphères (~1/3, dans
-   .dcell-extras) sont des enfants normaux de .dcell-wrap, jamais en
-   position absolue par défaut → aucun chevauchement possible, quel que
-   soit l'écran (fini le calcul en pixels JS peu fiable d'un appareil à
-   l'autre). Le glisser-déposer (appui long, cf. _bindExtraDraggable) reste
-   possible : SEULE une sphère activement décrochée passe en position:fixed
-   (géré en JS, cf. .dcell-extra-dragging), et le reste au repos.
-   #27 : sphères pleines (couleur assortie à leur cellule) et symbole "+" doré. */
-.dcell-wrap{ display:flex;align-items:center;gap:.3rem;width:100%; }
-.dcell-extras{ display:flex;gap:.22rem;flex:1 0 auto;justify-content:flex-end;flex-shrink:0; }
+/* ── Chaque cellule = 1 sphère "extra" (raccourci) + bouton principal, en
+   flux flexbox normal, SANS espace entre eux (gap:0 — sphère et cellule
+   s'affleurent, jamais de vide ni de chevauchement, quel que soit l'écran :
+   fini le calcul en pixels JS). Colonne gauche (rouge/orange) : sphère côté
+   extérieur gauche. Colonne droite (vert/bleu) : sphère côté extérieur
+   droit — les sphères encadrent le dock des deux côtés.
+   #25 : plus de position absolue par défaut. Le glisser-déposer (appui
+   long, cf. _bindExtraDraggable) reste possible : SEULE une sphère
+   activement décrochée passe en position:fixed (géré en JS, cf.
+   .dcell-extra-dragging), et le reste au repos dans le flux.
+   #27 : sphères pleines (couleur assortie à leur cellule) et symbole "+" doré.
+   #32 : sphères et cellule agrandies (+25% vs origine). Retour à 1 seule
+   sphère par cellule (comme à l'origine) — 2 grosses sphères de chaque
+   côté ne laissaient plus de place pour un texte de cellule lisible. */
+.dcell-wrap{ display:flex;align-items:center;gap:0;width:100%; }
 .dcell-extra{
   position:static;z-index:2;
-  width:24px;height:24px;border-radius:50%;flex-shrink:0;
+  width:53px;height:53px;border-radius:50%;flex-shrink:0; /* #32 : +25% vs origine (42px→53px) */
   display:flex;align-items:center;justify-content:center;
-  font-size:1.05rem;line-height:1;font-weight:400;
+  font-size:1.5rem;line-height:1;font-weight:400;
   border:1.5px solid rgba(255,215,0,.65);
   color:#FFD700;cursor:pointer;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
@@ -816,7 +820,7 @@ body{
 .dcell-extra-flux:hover{ transform:scale(1.12); }
 .dcell-extra-flux:active{ transform:scale(.88); }
 .dcell-flux{
-  flex-shrink:0;width:51px;height:51px;margin-bottom:18px; /* #20 : raccourci d'1/3 */
+  flex-shrink:0;width:95px;height:95px;margin-bottom:33px; /* #32 : +25% vs origine (76px→95px) */
   border-radius:50%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.05rem;
   background:radial-gradient(circle at 40% 34%,rgba(255,222,120,.34),rgba(40,28,4,.9));
@@ -1004,7 +1008,7 @@ body{
 .pan-left,.pan-right{
   position:fixed;top:0;right:0;left:0;
   width:100vw;
-  height:calc(100vh - 61px);
+  height:calc(100vh - 115px);
   overflow-y:auto;scrollbar-width:none;
   background:rgba(1,3,6,.97);
   border-bottom:1px solid rgba(0,204,255,.12);
@@ -1466,24 +1470,25 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 @media (max-width: 900px), (max-height: 500px) {
 
   /* Dock 5 touches — lisible et accessible (les parents doivent viser sans effort) */
-  /* #20 : hauteur raccourcie d'1/3 (96px→64px) pour libérer de l'espace visuel/tactile */
+  /* #32 : cellules/sphères agrandies, +25% vs taille d'origine (96px→120px) */
   #bottom-dock {
-    height: 64px !important;
-    padding: 0 .45rem !important;
-    gap: .45rem !important;
+    height: 120px !important;
+    padding: 0 .55rem !important;
+    gap: .55rem !important;
   }
-  #dock-toggle-row { bottom: 64px !important; }
+  #dock-toggle-row { bottom: 120px !important; }
   #dock-toggle-row.dock-up { bottom: 0 !important; }
-  #bottom-dock.collapsed { transform: translateY(64px) !important; }
-  #spectroid-bar { bottom: 64px !important; width: 80vw !important; }
+  #bottom-dock.collapsed { transform: translateY(120px) !important; }
+  #spectroid-bar { bottom: 120px !important; width: 80vw !important; }
 
-  .dcell { height: 24px !important; }
-  .dcell-name { font-size: .54rem !important; }
-  .dcell-sub  { font-size: .68rem !important; }
-  .dcell-flux { width: 50px !important; height: 50px !important; margin-bottom: 20px !important; }
+  .dcell { height: 45px !important; }
+  .dcell-name { font-size: .66rem !important; }
+  .dcell-sub  { font-size: .84rem !important; }
+  .dcell-extra { width: 53px !important; height: 53px !important; }
+  .dcell-flux { width: 93px !important; height: 93px !important; margin-bottom: 38px !important; }
 
   /* Panneaux : plein écran (largeur) pour la lisibilité, déroulement haut → bas,
-     hauteur toujours réservée au-dessus du dock (64px sur smartphone) */
+     hauteur toujours réservée au-dessus du dock (120px sur smartphone, dock agrandi) */
   .pan-left.open,
   .pan-right.open {
     top: 0 !important;
@@ -1492,14 +1497,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     width: 100vw !important;
     min-width: 0 !important;
     max-width: none !important;
-    height: calc(100vh - 64px) !important;
+    height: calc(100vh - 120px) !important;
     border-bottom: none !important;
     padding: 14px 12px 30px 12px !important;
     overflow-y: auto !important;
     z-index: 80 !important;
   }
-  #osc-modal-inner { height: calc(100vh - 64px) !important; }
-  #btn-back { bottom: calc(64px + 38px) !important; }
+  #osc-modal-inner { height: calc(100vh - 120px) !important; }
+  #btn-back { bottom: calc(120px + 38px) !important; }
   #btn-back.dock-up { bottom: 38px !important; }
 
   /* Cacher non-essentiels sur smartphone */
@@ -1631,23 +1636,17 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   <div class="dock-col" data-html-import-id="html-import-15">
     <!-- ROUGE — Option Jeu aléatoire : tap=Options Aléatoire · long=Solo maître · sphères=raccourcis -->
     <div class="dcell-wrap" data-html-import-id="html-import-16">
+      <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Afficher / masquer les oscillateurs">+</button>
       <button class="dcell dcell-red canva-button" id="dcRed" title="Tap : Options Aléatoire · Appui long : Solo fréquence maître" data-html-import-id="html-import-17" data-template-id="button-8" style="background: rgba(255, 70, 70, 0.14); color: rgb(255, 142, 142);">
         <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">Option Jeu</b><span class="dcell-sub canva-text" data-html-import-id="html-import-21" data-template-id="span-12" style="color: rgb(255, 142, 142); font-family: &quot;IM Fell English&quot;; font-weight: 700; font-size: 12px;">Aléatoire</span></span>
       </button>
-      <div class="dcell-extras">
-        <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Afficher / masquer les oscillateurs">+</button>
-        <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra2" title="Ancre respiratoire on/off">+</button>
-      </div>
     </div>
-    <!-- ORANGE — Samples : tap=ouvrir · long=jeu aléatoire sur fréquence du sample · sphères=raccourcis -->
+    <!-- ORANGE — Samples : tap=ouvrir · long=jeu aléatoire sur fréquence du sample · sphère=raccourci -->
     <div class="dcell-wrap" data-html-import-id="html-import-22">
+      <button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra" title="Solo sample + fréquence maître">+</button>
       <button class="dcell dcell-orange canva-button" id="dcOrange" title="Tap : Samples · Appui long : jeu aléatoire sur fréquence du sample" data-html-import-id="html-import-23" data-template-id="button-13" style="background: rgba(255, 150, 40, 0.14); color: rgb(255, 192, 112);">
         <span class="dcell-txt canva-text" data-html-import-id="html-import-24" data-template-id="span-14" style="color: rgb(255, 192, 112);"><b class="dcell-name canva-text" data-html-import-id="html-import-25" data-template-id="b-15" style="color: rgb(255, 192, 112); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">Samples</b></span>
       </button>
-      <div class="dcell-extras">
-        <button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra" title="Solo sample + fréquence maître">+</button>
-        <button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra2" title="Sub-drone on/off">+</button>
-      </div>
     </div>
   </div>
 
@@ -1667,21 +1666,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <button class="dcell dcell-green canva-button" id="dcGreen" title="Tap : Effet · Appui long : Effet Aléatoire (≤72%)" data-html-import-id="html-import-32" data-template-id="button-19" style="background: rgba(90, 255, 160, 0.13); color: rgb(140, 255, 192);">
         <span class="dcell-txt canva-text" data-html-import-id="html-import-33" data-template-id="span-20" style="color: rgb(140, 255, 192);"><b class="dcell-name canva-text" data-html-import-id="html-import-34" data-template-id="b-21" style="color: rgb(140, 255, 192); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">Effet Audio</b></span>
       </button>
-      <div class="dcell-extras">
-        <button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra" title="Ouvre le menu FX géométrie">+</button>
-        <button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra2" title="Anti-pompage par paire on/off">+</button>
-      </div>
+      <button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra" title="Ouvre le menu FX géométrie">+</button>
     </div>
-    <!-- BLEU — Paramètres : tap=ouvrir · long=ouvrir Preset · sphères=raccourcis -->
+    <!-- BLEU — Paramètres : tap=ouvrir · long=ouvrir Preset · sphère=raccourci -->
     <div class="dcell-wrap" data-html-import-id="html-import-35">
       <button class="dcell dcell-blue canva-button" id="dcBlue" title="Tap : Paramètres · Appui long : Preset" data-html-import-id="html-import-36" data-template-id="button-22" style="background: rgba(60, 170, 255, 0.14); color: rgb(120, 198, 255);">
         <span class="dcell-txt canva-text" data-html-import-id="html-import-37" data-template-id="span-23" style="color: rgb(120, 198, 255);"><b class="dcell-name canva-text" data-html-import-id="html-import-38" data-template-id="b-24" style="color: rgb(120, 198, 255); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">Paramètres</b></span>
       </button>
-      <div class="dcell-extras">
-        <button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra" title="Ajouter le jeu au preset">+</button>
-        <button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra2" title="Annuler le dernier tirage">+</button>
-      </div>
-
+      <button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra" title="Ajouter le jeu au preset">+</button>
     </div>
   </div>
 </div>
@@ -5716,15 +5708,14 @@ function _custLS(key, def) {
 }
 function buildCustomizeHTML() {
   const cellLabels = { red:'Rouge', orange:'Orange', flux:'Jaune (Flux)', green:'Vert', blue:'Bleu' };
-  // #20 : "extra2" (2e sphère raccourci) — toutes les cases sauf Flux, qui
-  // garde une seule sphère (tap/appui long déjà pris par Flux on/off · random).
-  const slotLabels = { tap:'Tap', hold:'Appui long', extra:'Bouton extra 1', extra2:'Bouton extra 2' };
+  // #32 : 1 seule sphère raccourci ("extra") par case, y compris Flux.
+  const slotLabels = { tap:'Tap', hold:'Appui long', extra:'Sphère raccourci' };
   const optsHTML = (selected) => Object.keys(DOCK_ACTIONS).map(k =>
     `<option value="${k}"${selected===k?' selected':''}>${DOCK_ACTIONS[k].label}</option>`).join('');
 
   const cellRows = Object.keys(cellLabels).map(key => {
     const map = DOCK_MAP[key] || {};
-    const slotKeys = key === 'flux' ? ['tap','hold','extra'] : ['tap','hold','extra','extra2'];
+    const slotKeys = ['tap','hold','extra'];
     const slots = slotKeys.map(slot => `
       <div class="cust-slot">
         <span class="cust-slot-lbl">${slotLabels[slot]}</span>
@@ -6911,7 +6902,8 @@ function _bindExtraDraggable(el, onTap, holdMs, cellKey, slot) {
       // Décroché du flux flexbox de sa cellule → <body>, seulement MAINTENANT
       // (au premier vrai déplacement), pas au chargement : tant qu'aucune
       // position n'est sauvegardée, la sphère reste dans le flux normal.
-      if (!el.dataset.homeParent && el.parentElement && el.parentElement.id) el.dataset.homeParent = el.parentElement.id;
+      // Référence DOM directe (pas un id) : .dcell-wrap n'a pas d'id propre.
+      if (!el._homeParent && el.parentElement) el._homeParent = el.parentElement;
       if (el.parentElement !== document.body) document.body.appendChild(el);
       el.classList.add('dcell-extra-dragging');
       el.style.position = 'fixed';
@@ -6957,7 +6949,8 @@ function _applyExtraPos(el, pos) {
   // Une position sauvegardée = l'utilisateur a explicitement décroché cette
   // sphère à un endroit précis : on la sort du flux flexbox de sa cellule et
   // on la fixe à l'écran. Sans position sauvegardée, on ne touche à rien —
-  // la sphère reste dans le flux flexbox normal de `.dcell-extras`.
+  // la sphère reste dans le flux flexbox normal de son `.dcell-wrap`.
+  if (!el._homeParent && el.parentElement) el._homeParent = el.parentElement;
   if (el.parentElement !== document.body) document.body.appendChild(el);
   el.style.position = 'fixed';
   el.style.left = pos.left + 'px';
@@ -6971,10 +6964,7 @@ function _restoreExtraToFlow(el) {
   el.style.position = '';
   el.style.left = ''; el.style.top = ''; el.style.right = ''; el.style.transform = '';
   el.style.zIndex = '';
-  if (el.parentElement === document.body && el.dataset.homeParent) {
-    const parent = document.getElementById(el.dataset.homeParent);
-    if (parent) parent.appendChild(el);
-  }
+  if (el.parentElement === document.body && el._homeParent) el._homeParent.appendChild(el);
 }
 function _loadExtraPos() {
   try { DOCK_EXTRA_POS = JSON.parse(localStorage.getItem(DOCK_EXTRA_POS_KEY)) || {}; } catch(e) { DOCK_EXTRA_POS = {}; }
@@ -6989,9 +6979,9 @@ function _loadExtraPos() {
   DOCK_CELLS.forEach(c => c.extraIds.forEach(extraId => {
     const el = document.getElementById(extraId);
     if (!el) return;
-    if (!el.dataset.homeParent && el.parentElement && el.parentElement.id) el.dataset.homeParent = el.parentElement.id;
+    if (!el._homeParent && el.parentElement) el._homeParent = el.parentElement;
     if (DOCK_EXTRA_POS[extraId]) _applyExtraPos(el, DOCK_EXTRA_POS[extraId]);
-    // sinon : rien à faire, déjà à sa place dans `.dcell-extras` (flexbox).
+    // sinon : rien à faire, déjà à sa place dans son `.dcell-wrap` (flexbox).
   }));
 }
 // Remet tous les boutons extra dans leur cellule d'origine (flux flexbox)
@@ -7038,27 +7028,28 @@ const DOCK_ACTIONS = {
   undoRandom:            { label: 'Annuler le dernier tirage',   fn: () => { if (typeof undoLastRandom === 'function') undoLastRandom(); } },
 };
 
-// #20 : 2e sphère raccourci ("extra2") sur les 4 cases régulières — la case
-// Flux garde une seule sphère (son tap/appui long sont déjà pris par
-// Flux on/off et Nouveau jeu aléatoire, pas de place pour une 2e action).
+// #32 : retour à 1 seule sphère raccourci par case (comme à l'origine, mais
+// agrandie +25%) — la 2e sphère par case du tour précédent est retirée pour
+// que la cellule reste lisible sur un écran de téléphone réel (2 grosses
+// sphères de chaque côté d'une cellule ne laissaient plus de place au texte).
 const DOCK_MAP_DEFAULT = {
-  red:    { tap: 'openRand',    hold: 'soloMaster',    extra: 'toggleAdvanced',   extra2: 'breathAnchorToggle' },
-  orange: { tap: 'openSamples', hold: 'sampleAnchor',  extra: 'sampleSoloMaster', extra2: 'subDroneToggle' },
+  red:    { tap: 'openRand',    hold: 'soloMaster',    extra: 'toggleAdvanced' },
+  orange: { tap: 'openSamples', hold: 'sampleAnchor',  extra: 'sampleSoloMaster' },
   flux:   { tap: 'fluxToggle',  hold: 'randomAll',     extra: 'none' },
-  green:  { tap: 'openFX',      hold: 'randomFXQuick', extra: 'openGeo',         extra2: 'pairCompToggle' },
-  blue:   { tap: 'openParams',  hold: 'openPresets',   extra: 'presetQuickAdd',  extra2: 'undoRandom' },
+  green:  { tap: 'openFX',      hold: 'randomFXQuick', extra: 'openGeo' },
+  blue:   { tap: 'openParams',  hold: 'openPresets',   extra: 'presetQuickAdd' },
 };
 let DOCK_MAP = JSON.parse(JSON.stringify(DOCK_MAP_DEFAULT));
 const DOCK_MAP_KEY = 'fbf432-dockmap';
 
 const DOCK_CELLS = [
-  { key: 'red',    id: 'dcRed',    extraIds: ['dcRedExtra', 'dcRedExtra2'] },
-  { key: 'orange', id: 'dcOrange', extraIds: ['dcOrangeExtra', 'dcOrangeExtra2'] },
+  { key: 'red',    id: 'dcRed',    extraIds: ['dcRedExtra'] },
+  { key: 'orange', id: 'dcOrange', extraIds: ['dcOrangeExtra'] },
   { key: 'flux',   id: 'dcFlux',   extraIds: ['dcFluxExtra'] },
-  { key: 'green',  id: 'dcGreen',  extraIds: ['dcGreenExtra', 'dcGreenExtra2'] },
-  { key: 'blue',   id: 'dcBlue',   extraIds: ['dcBlueExtra', 'dcBlueExtra2'] },
+  { key: 'green',  id: 'dcGreen',  extraIds: ['dcGreenExtra'] },
+  { key: 'blue',   id: 'dcBlue',   extraIds: ['dcBlueExtra'] },
 ];
-const DOCK_EXTRA_SLOT = ['extra', 'extra2']; // index 0/1 → nom du slot dans DOCK_MAP
+const DOCK_EXTRA_SLOT = ['extra']; // index 0 → nom du slot dans DOCK_MAP
 
 function _runDockAction(actionId) {
   const a = DOCK_ACTIONS[actionId];
@@ -7119,7 +7110,7 @@ let _dqaCell = null, _dqaSlot = null;
 function _openDockQuickAssign(cellKey, slot) {
   _dqaCell = cellKey; _dqaSlot = slot;
   const cellLabels = { red:'Rouge', orange:'Orange', flux:'Jaune (Flux)', green:'Vert', blue:'Bleu' };
-  const slotLabels = { extra:'Bouton extra 1', extra2:'Bouton extra 2' };
+  const slotLabels = { extra:'Sphère raccourci' };
   const title = document.getElementById('dqa-title');
   if (title) title.textContent = (cellLabels[cellKey] || cellKey) + ' — ' + (slotLabels[slot] || slot);
   const togglesEl = document.getElementById('dqa-toggles');

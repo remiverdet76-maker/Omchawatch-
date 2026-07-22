@@ -123,3 +123,37 @@ variations réelles d'écran/densité. Corrections apportées :
 
 APK régénéré avec cette passe de correction en plus des 18+9 points
 précédents, même pipeline de signature (v2 uniquement, vérifiée API 24-34).
+
+## 2e passe de correction — dock agrandi, sphères encadrantes
+
+Retour utilisateur : le dock devait être agrandi (comme à l'origine +25%),
+avec les sphères raccourcis placées à gauche ET à droite de chaque cellule,
+sans espace vide (cellule et sphère affleurent), et sans jamais que le
+panneau général ne chevauche le dock/les boutons plein écran/retour.
+
+1. **Dock, cellules et sphères agrandis** — dimensions recalculées depuis la
+   toute première version de l'app (avant toute modification), ×1.25 :
+   hauteur du dock 92px→115px (96px→120px sur smartphone), cellule
+   34px→43px (36px→45px), sphère 42px→53px, bouton Flux 76px→95px
+   (74px→93px sur smartphone). Toutes les références à l'ancienne hauteur du
+   dock (positions du chevron, du bouton retour, hauteur réservée par les
+   panneaux) recalculées en conséquence — c'est ce mécanisme existant qui
+   garantit qu'aucun panneau ne chevauche jamais le dock, quelle que soit sa
+   hauteur.
+2. **Sphères à gauche ET à droite, affleurantes** — testé et mesuré : deux
+   sphères de 53px de chaque côté d'une cellule ne laissent quasiment plus
+   de place pour le texte sur un écran de téléphone réel (~15px de large,
+   illisible). Après clarification, retour à 1 seule sphère par cellule
+   (comme à l'origine, mais agrandie +25%) : colonne gauche (rouge/orange) →
+   sphère côté extérieur gauche, colonne droite (vert/bleu) → sphère côté
+   extérieur droit — les sphères encadrent bien le dock des deux côtés.
+   Layout flexbox `gap:0` : sphère et cellule se touchent exactement, sans
+   vide ni chevauchement. Perd la 2ᵉ sphère raccourci par case ajoutée dans
+   la passe précédente (accepté).
+3. **Aucun conflit avec le menu général** — vérifié avec Playwright sur
+   plusieurs largeurs d'écran (360/393/412px) : le bas du panneau
+   Paramètres/Samples/etc. s'arrête exactement au sommet du dock, le bouton
+   Retour et le bloc chevron/plein écran restent toujours au-dessus, jamais
+   de superposition.
+
+APK régénéré avec cette 2e passe de correction.
