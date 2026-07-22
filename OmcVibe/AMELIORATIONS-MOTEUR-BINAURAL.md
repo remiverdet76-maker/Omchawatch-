@@ -276,3 +276,34 @@ d'écran) : géométrie du menu et des libellés entièrement dans l'écran ;
 `_qmGetDelta` totalement supprimé ; `_qmSetDetune(MASTER_IDX, 45)` met bien
 à jour `DUALSINE_DETUNE` sans toucher à `globalDelta` ; `globalDelta` vaut
 `1` (et non `4`) dès le chargement de la page, avant tout tirage.
+
+## #37 — Le detune de la sphère MAÎTRE ne changeait rien au son (bug réel)
+
+Retour terrain : "la courbe detune est bien présente mais aucun impact
+audio". Reproduit et confirmé : le réglage **par paire** (satellites)
+fonctionnait bien (vérifié : detune live passe de ±7 à ±48 sur
+l'oscillateur réel), mais le réglage **global** (sphère MAÎTRE, ou le
+curseur "Sinus Duo" du panneau FX) ne faisait strictement rien — l'arc et
+le libellé bougeaient à l'écran, mais aucun `AudioParam.detune` n'était
+jamais modifié.
+
+Cause : `setDualSineDetune()` parcourait `Object.keys(OSC_WAVES)` pour
+trouver "tous les oscillateurs" à re-detuner. Mais `OSC_WAVES` n'est PAS un
+registre de tous les oscillateurs construits — c'est un registre des
+oscillateurs dont le **moteur d'onde** a été changé manuellement au moins
+une fois (`OSC_WAVES[id] = type` n'est écrit que par les sélecteurs de
+moteur d'onde). Sur une session fraîche — ou pour toute paire restée sur
+le moteur "sine" par défaut, y compris la sphère maître — cette liste est
+vide, donc la boucle ne touchait aucun oscillateur réel.
+
+Corrigé : `setDualSineDetune()` parcourt maintenant `PAIRS` (comme le fait
+déjà `setPairDualSineDetune()`), ciblant directement
+`pair.pingala.id`/`pair.ida.id` de chaque paire réellement construite —
+indépendamment de si son moteur d'onde a jamais été touché à la main.
+
+Vérifié (Playwright) : sur une session fraîche sans aucune interaction
+préalable, `setDualSineDetune(60)` fait maintenant passer le detune réel
+de l'oscillateur maître de `[-8, +8]` à `[-58, +58]` (avant le correctif :
+aucun changement, `[-8, +8]` → `[-8, +8]`). Suite complète de tests de
+non-régression (géométrie du menu rapide, bornage Δ, doublage sine2/light,
+re-detune en direct par paire) toujours au vert.

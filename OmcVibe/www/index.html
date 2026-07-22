@@ -2520,10 +2520,16 @@ function _applyDualSineDetune(id, mag) {
 }
 function setDualSineDetune(v) {
   DUALSINE_DETUNE = Math.max(-72, Math.min(72, parseFloat(v)));
-  Object.keys(OSC_WAVES).forEach(id => {
-    const pairIdx = PAIRS.findIndex(p => p.pingala.id === id || p.ida.id === id);
-    if (pairIdx >= 0 && typeof PAIR_DUALSINE[pairIdx] === 'number') return; // réglage par paire prioritaire
-    _applyDualSineDetune(id, DUALSINE_DETUNE);
+  // #37 : parcourt PAIRS (tous les oscillateurs réellement construits), pas
+  // Object.keys(OSC_WAVES) — OSC_WAVES ne référence QUE les oscillateurs
+  // dont le moteur d'onde a été changé manuellement au moins une fois ; sur
+  // une session fraîche (ou toute paire restée en "sine" par défaut), cette
+  // liste est vide et le réglage global du detune n'avait donc AUCUN effet
+  // audio malgré un curseur/arc qui bougeait bien à l'écran.
+  PAIRS.forEach((pair, pairIdx) => {
+    if (typeof PAIR_DUALSINE[pairIdx] === 'number') return; // réglage par paire prioritaire
+    _applyDualSineDetune(pair.pingala.id, DUALSINE_DETUNE);
+    _applyDualSineDetune(pair.ida.id, DUALSINE_DETUNE);
   });
   const el = document.getElementById('sv-dualsine'); if (el) el.textContent = (DUALSINE_DETUNE < 0 ? '−' : '±') + Math.abs(DUALSINE_DETUNE).toFixed(0) + ' ¢';
   saveState();
