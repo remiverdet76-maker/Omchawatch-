@@ -59,7 +59,7 @@ body{
 #cosmic-bg{
   position:fixed;inset:0;z-index:-1;
   width:100%;height:100%;
-  background-image:url('../img/cosmic-flux.jpg');
+  background-image:url('img/cosmic-flux.jpg');
   background-size:cover;background-position:center;background-repeat:no-repeat;
   opacity:0.42;
   transition:opacity .4s;
@@ -85,7 +85,7 @@ body{
 /* Dock bas — Flux + Nav horizontaux */
 #bottom-dock{
   position:fixed;
-  bottom:0;left:0;right:0;height:92px;
+  bottom:0;left:0;right:0;height:61px; /* #20 : raccourci d'1/3 (92px→61px) */
   display:flex;flex-direction:row;align-items:center;justify-content:center;
   gap:.5rem;padding:0 .5rem;
   z-index:100;
@@ -95,11 +95,11 @@ body{
   box-shadow:0 -4px 24px rgba(80,40,160,.18);
   transition:transform .35s cubic-bezier(.4,0,.2,1);
 }
-#bottom-dock.collapsed{transform:translateY(92px);}
+#bottom-dock.collapsed{transform:translateY(61px);}
 /* Chevron (masquer/afficher le dock) + plein écran : conteneur commun,
    aimantés ensemble — ils se déplacent comme un seul bloc. */
 #dock-toggle-row{
-  position:fixed;bottom:92px;right:.5rem;
+  position:fixed;bottom:61px;right:.5rem;
   display:flex;gap:.35rem;
   z-index:101;
   transition:bottom .35s cubic-bezier(.4,0,.2,1);
@@ -129,7 +129,7 @@ body{
 /* Visualiseur spectral — au-dessus du dock */
 #spectroid-bar{
   position:fixed;
-  bottom:92px;left:50%;transform:translateX(-50%);
+  bottom:61px;left:50%;transform:translateX(-50%);
   width:min(680px,88vw);height:80px;
   z-index:22;
   background:linear-gradient(135deg,rgba(180,180,200,.12),rgba(220,220,240,.06),rgba(150,160,180,.10));
@@ -220,7 +220,7 @@ body{
 #osc-modal-inner{
   background:rgba(8,0,26,.97);
   border-bottom:1.5px solid rgba(200,100,255,.4);
-  width:100vw;height:calc(100vh - 92px);
+  width:100vw;height:calc(100vh - 61px);
   display:flex;flex-direction:column;
   backdrop-filter:blur(22px);
   box-shadow:0 0 70px rgba(120,0,255,.3);
@@ -254,7 +254,7 @@ body{
 /* Bouton Retour — visible uniquement quand un panneau/modal est ouvert */
 #btn-back{
   /* Empilé au-dessus du bloc chevron + plein écran (28px de haut + marge) */
-  position:fixed;right:1rem;bottom:calc(92px + 38px);z-index:90;
+  position:fixed;right:1rem;bottom:calc(61px + 38px);z-index:90;
   padding:.6rem 1.1rem;border-radius:24px;
   background:rgba(10,4,30,.92);border:1.5px solid rgba(200,140,255,.55);
   color:rgba(230,210,255,.95);font-family:'Cinzel Decorative',serif;
@@ -725,7 +725,7 @@ body{
 
 .dcell{
   display:flex;align-items:center;justify-content:center;gap:.35rem;
-  width:100%;height:34px;padding:0 .4rem;
+  width:100%;height:23px;padding:0 .4rem; /* #20 : raccourci d'1/3 (34px→23px) */
   border-radius:11px;border:1.5px solid;
   cursor:pointer;user-select:none;-webkit-user-select:none;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
@@ -796,7 +796,7 @@ body{
 .dcell-extra-flux:hover{ transform:scale(1.12); }
 .dcell-extra-flux:active{ transform:scale(.88); }
 .dcell-flux{
-  flex-shrink:0;width:76px;height:76px;margin-bottom:26px;
+  flex-shrink:0;width:51px;height:51px;margin-bottom:18px; /* #20 : raccourci d'1/3 */
   border-radius:50%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.05rem;
   background:radial-gradient(circle at 40% 34%,rgba(255,222,120,.34),rgba(40,28,4,.9));
@@ -984,7 +984,7 @@ body{
 .pan-left,.pan-right{
   position:fixed;top:0;right:0;left:0;
   width:100vw;
-  height:calc(100vh - 92px);
+  height:calc(100vh - 61px);
   overflow-y:auto;scrollbar-width:none;
   background:rgba(1,3,6,.97);
   border-bottom:1px solid rgba(0,204,255,.12);
@@ -1446,23 +1446,24 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 @media (max-width: 900px), (max-height: 500px) {
 
   /* Dock 5 touches — lisible et accessible (les parents doivent viser sans effort) */
+  /* #20 : hauteur raccourcie d'1/3 (96px→64px) pour libérer de l'espace visuel/tactile */
   #bottom-dock {
-    height: 96px !important;
+    height: 64px !important;
     padding: 0 .45rem !important;
     gap: .45rem !important;
   }
-  #dock-toggle-row { bottom: 96px !important; }
+  #dock-toggle-row { bottom: 64px !important; }
   #dock-toggle-row.dock-up { bottom: 0 !important; }
-  #bottom-dock.collapsed { transform: translateY(96px) !important; }
-  #spectroid-bar { bottom: 96px !important; width: 80vw !important; }
+  #bottom-dock.collapsed { transform: translateY(64px) !important; }
+  #spectroid-bar { bottom: 64px !important; width: 80vw !important; }
 
-  .dcell { height: 36px !important; }
-  .dcell-name { font-size: .58rem !important; }
-  .dcell-sub  { font-size: .74rem !important; }
-  .dcell-flux { width: 74px !important; height: 74px !important; margin-bottom: 30px !important; }
+  .dcell { height: 24px !important; }
+  .dcell-name { font-size: .54rem !important; }
+  .dcell-sub  { font-size: .68rem !important; }
+  .dcell-flux { width: 50px !important; height: 50px !important; margin-bottom: 20px !important; }
 
   /* Panneaux : plein écran (largeur) pour la lisibilité, déroulement haut → bas,
-     hauteur toujours réservée au-dessus du dock (96px sur smartphone) */
+     hauteur toujours réservée au-dessus du dock (64px sur smartphone) */
   .pan-left.open,
   .pan-right.open {
     top: 0 !important;
@@ -1471,14 +1472,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     width: 100vw !important;
     min-width: 0 !important;
     max-width: none !important;
-    height: calc(100vh - 96px) !important;
+    height: calc(100vh - 64px) !important;
     border-bottom: none !important;
     padding: 14px 12px 30px 12px !important;
     overflow-y: auto !important;
     z-index: 80 !important;
   }
-  #osc-modal-inner { height: calc(100vh - 96px) !important; }
-  #btn-back { bottom: calc(96px + 38px) !important; }
+  #osc-modal-inner { height: calc(100vh - 64px) !important; }
+  #btn-back { bottom: calc(64px + 38px) !important; }
   #btn-back.dock-up { bottom: 38px !important; }
 
   /* Cacher non-essentiels sur smartphone */
@@ -1513,6 +1514,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   color:rgba(200,170,255,.75);border-radius:6px;cursor:pointer;flex-shrink:0;}
 .sample-row-btn.del{border-color:rgba(255,142,142,.3);color:rgba(255,142,142,.6);}
 
+/* #18 : glisser-déposer (appui long) d'un sample vers un dossier */
+.sample-row.dragging-source{opacity:.35;}
+.sample-folder-chip.drop-target{background:rgba(134,255,192,.22);border-color:#86FFC0;box-shadow:0 0 12px rgba(134,255,192,.4);}
+.sample-drag-ghost{position:fixed;z-index:400;transform:translate(-50%,-140%);pointer-events:none;
+  background:rgba(20,8,40,.95);border:1px solid rgba(200,170,255,.5);border-radius:8px;
+  padding:.35rem .6rem;font-size:.7rem;color:#F3D9FF;white-space:nowrap;max-width:60vw;overflow:hidden;
+  text-overflow:ellipsis;box-shadow:0 6px 20px rgba(0,0,0,.5);}
+
 /* Éditeur de découpe (overlay plein écran) */
 #sample-editor-modal{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;
   background:rgba(1,3,6,.97);backdrop-filter:blur(14px);padding:14px;}
@@ -1533,6 +1542,32 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 .sed-time{font-family:'Cinzel Decorative',serif;font-size:.72rem;color:rgba(220,200,255,.7);min-width:48px;text-align:center;}
 .sed-actions{display:flex;gap:.4rem;margin-top:.8rem;}
 .sed-note{font-size:.66rem;color:rgba(200,170,255,.55);font-style:italic;margin-top:.5rem;min-height:1em;}
+/* #16 : zoom/dézoom */
+.sed-zoom-row{display:flex;gap:.4rem;align-items:center;margin-bottom:.5rem;}
+.fbf-step.sm{padding:.28rem .55rem;font-size:.68rem;}
+.sed-zoom-val{font-family:'Cinzel Decorative',serif;font-size:.7rem;color:rgba(220,200,255,.7);min-width:44px;text-align:center;}
+.sed-hint{font-size:.62rem;color:rgba(200,170,255,.4);font-style:italic;margin-top:.35rem;}
+/* #17 : marqueurs + menu d'action flottant */
+#sed-marker-menu{position:absolute;top:6px;transform:translateX(-50%);display:flex;gap:.25rem;
+  background:rgba(10,4,24,.95);border:1px solid rgba(255,180,80,.5);border-radius:8px;padding:.3rem;z-index:3;
+  box-shadow:0 4px 16px rgba(0,0,0,.5);}
+#sed-marker-menu button{font-size:.62rem;padding:.25rem .4rem;background:rgba(255,180,80,.12);
+  border:1px solid rgba(255,180,80,.4);border-radius:5px;color:#FFD27A;white-space:nowrap;}
+/* #19 : superposition d'un 2e sample */
+.sed-overlay-row{display:flex;gap:.4rem;align-items:center;margin-top:.6rem;flex-wrap:wrap;}
+.sed-overlay-name{font-size:.68rem;color:rgba(220,200,255,.7);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sed-overlay-vol-row{display:flex;gap:.5rem;align-items:center;margin-top:.4rem;}
+
+/* #22 : assignation rapide (appui long sur une sphère "+") */
+.dqa-modal{position:fixed;inset:0;z-index:250;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);}
+.dqa-modal.open{display:flex;}
+.dqa-inner{width:100%;max-width:480px;max-height:78vh;overflow-y:auto;background:rgba(10,4,24,.97);
+  border:1px solid rgba(200,170,255,.25);border-radius:16px 16px 0 0;padding:1rem;}
+.dqa-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;
+  font-family:'Cinzel Decorative',serif;font-size:.85rem;color:#F3D9FF;}
+.dqa-section-t{font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.08em;font-style:italic;margin:.6rem 0 .3rem;}
+.dqa-toggles{display:flex;flex-direction:column;gap:.3rem;}
+.dqa-tog-row{display:flex;align-items:center;justify-content:space-between;font-size:.74rem;color:rgba(220,200,255,.85);padding:.2rem 0;}
 
 /* Rack de lecture : filtre + EQ 12 bandes + limiter */
 .filt-mode-row{display:flex;gap:.3rem;margin-bottom:.45rem;}
@@ -1634,7 +1669,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <button class="params-item canva-button" style="--ic: #FF9A8B; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="openTab('panSamples')" data-html-import-id="html-import-51" data-template-id="button-40"><canva-inline-text data-template-id="canva-inline-text-41" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">◎</canva-inline-text><span data-html-import-id="html-import-52" data-template-id="span-42" class="canva-text" style="color: color(srgb 1 0.683137 0.636078); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Samples</span></button>
     <button class="params-item canva-button" style="--ic: #FFB0FF; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="openTab('panNotice')" data-html-import-id="html-import-53" data-template-id="button-43"><canva-inline-text data-template-id="canva-inline-text-44" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">≡</canva-inline-text><span data-html-import-id="html-import-54" data-template-id="span-45" class="canva-text" style="color: color(srgb 1 0.752157 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Notice &amp; Thème</span></button>
     <button class="params-item canva-button" id="btn-advanced" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="toggleAdvanced()" data-html-import-id="html-import-55" data-template-id="button-46"><canva-inline-text data-template-id="canva-inline-text-47" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">⊹</canva-inline-text><span data-html-import-id="html-import-56" data-template-id="span-48" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Mode avancé (6 sphères) : OFF</span></button>
-    <button class="params-item canva-button" id="btn-vislite" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="toggleVisLite()" data-html-import-id="html-import-57" data-template-id="button-49"><canva-inline-text data-template-id="canva-inline-text-50" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">⚡</canva-inline-text><span data-html-import-id="html-import-58" data-template-id="span-51" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Visuel léger : OFF</span></button>
+    <button class="params-item canva-button" id="btn-vislite" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="toggleVisLite()" data-html-import-id="html-import-57" data-template-id="button-49"><canva-inline-text data-template-id="canva-inline-text-50" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">◐</canva-inline-text><span data-html-import-id="html-import-58" data-template-id="span-51" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Visuel léger : OFF</span></button>
     <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="openTab('panCustom')" data-html-import-id="html-import-59" data-template-id="button-52"><canva-inline-text data-template-id="canva-inline-text-53" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">◈</canva-inline-text><span data-html-import-id="html-import-60" data-template-id="span-54" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Personnaliser l'interface</span></button>
   </div>
 </div>
@@ -1994,7 +2029,7 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
 
   <div style="display:flex;gap:.35rem;align-items:center;margin-bottom:.35rem;">
     <div id="sample-folder-row" style="display:flex;gap:.35rem;flex-wrap:wrap;flex:1;"></div>
-    <button class="fbf-step" onclick="sampleToggleFolderManager()" title="Renommer / supprimer un dossier">🗂</button>
+    <button class="fbf-step" onclick="sampleToggleFolderManager()" title="Renommer / supprimer un dossier">▤</button>
   </div>
   <div id="sample-folder-manager"></div>
   <div style="font-size:.6rem;color:rgba(200,170,255,.45);font-style:italic;margin-bottom:.5rem;">★ = dossier utilisé comme banque pour le jeu aléatoire / binaural</div>
@@ -2025,7 +2060,7 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
       <button class="fbf-step canva-button" onclick="sampleRerollGame()" title="Relancer">⚄</button>
     </div>
     <div style="display:flex;gap:.4rem;margin-top:.4rem;">
-      <button class="fbf-step canva-button" style="flex:1;" onclick="sampleBankRandomGame()" title="Tire un sample au hasard dans les dossiers ★ puis lance le jeu">🎲 Jeu depuis une banque ★</button>
+      <button class="fbf-step canva-button" style="flex:1;" onclick="sampleBankRandomGame()" title="Tire un sample au hasard dans les dossiers ★ puis lance le jeu">⚄ Jeu depuis une banque ★</button>
     </div>
   </div>
 
@@ -2068,20 +2103,47 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
     <div class="sed-title" id="sed-title">Découpe</div>
     <button class="panel-close canva-button" onclick="sampleEditorClose()">✕</button>
   </div>
+  <!-- #16 : zoom/dézoom — molette (bureau) et pincement (tactile) sur la forme d'onde, boutons en repli -->
+  <div class="sed-zoom-row">
+    <button class="fbf-step sm" onclick="sedZoom(0.6)">− Zoom</button>
+    <span class="sed-zoom-val" id="sed-zoom-val">×1.0</span>
+    <button class="fbf-step sm" onclick="sedZoom(1.6)">+ Zoom</button>
+    <button class="fbf-step sm" onclick="sedZoomFit()">Ajuster</button>
+  </div>
   <div id="sed-wave-wrap">
     <canvas id="sed-wave-canvas"></canvas>
     <div class="sed-handle" id="sed-handle-in" style="left:0%;"></div>
     <div class="sed-handle" id="sed-handle-out" style="left:100%;"></div>
+    <!-- #17 : menu d'action d'un marqueur sélectionné (appui court sur un marqueur existant) -->
+    <div id="sed-marker-menu" class="sed-marker-menu" style="display:none;">
+      <button onclick="sedMarkerCut()">Couper</button>
+      <button onclick="sedMarkerCopy()">Copier</button>
+      <button onclick="sedMarkerPaste()">Coller</button>
+      <button onclick="sedMarkerDelete()">Supprimer</button>
+    </div>
   </div>
+  <div class="sed-hint">Appui long sur la forme d'onde : pose un marqueur. Appui court sur un marqueur : couper / copier / coller / supprimer.</div>
   <div class="sed-transport">
-    <button class="fbf-step" onclick="sampleEditorPlayPreview()">▶ Aperçu</button>
+    <button class="fbf-step" onclick="sampleEditorPlayPreview()">Aperçu</button>
     <span class="sed-time" id="sed-time-in">0.00s</span>
     <span style="flex:1;text-align:center;color:rgba(200,170,255,.4);">→</span>
     <span class="sed-time" id="sed-time-out">0.00s</span>
   </div>
+  <!-- #19 : superposition d'un 2e sample (mixé au moment de l'export) -->
+  <div class="sed-overlay-row">
+    <button class="fbf-step sm" onclick="sedOverlayPick()">+ Superposer un sample</button>
+    <span class="sed-overlay-name" id="sed-overlay-name"></span>
+    <button class="fbf-step sm" id="sed-overlay-clear" style="display:none;" onclick="sedOverlayClear()">Retirer</button>
+  </div>
+  <div class="sed-overlay-vol-row" id="sed-overlay-vol-row" style="display:none;">
+    <span class="fxq-lbl">Volume superposition</span>
+    <input type="range" class="fx-slider" min="0" max="1.2" step="0.02" value="0.8" oninput="sedOverlaySetGain(this.value)">
+    <span class="fx-val-disp" id="sed-overlay-vol-val">80%</span>
+  </div>
+  <input type="file" id="sed-overlay-file-input" accept="audio/*" style="display:none;" onchange="_sedOverlayFileChosen(this.files)">
   <div class="sed-actions">
-    <button class="btn-flow" id="sed-decode-btn" style="display:none;flex:1;border-color:rgba(99,230,255,.5);color:#63E6FF;background:rgba(99,230,255,.06);" onclick="sampleEditorDecodeNow()">⏬ Décoder pour découper</button>
-    <button class="btn-flow" style="flex:1;border-color:rgba(134,255,192,.5);color:#86FFC0;background:rgba(134,255,192,.06);" onclick="sampleEditorExport()">✂ Découper → nouveau sample</button>
+    <button class="btn-flow" id="sed-decode-btn" style="display:none;flex:1;border-color:rgba(99,230,255,.5);color:#63E6FF;background:rgba(99,230,255,.06);" onclick="sampleEditorDecodeNow()">Décoder pour découper</button>
+    <button class="btn-flow" style="flex:1;border-color:rgba(134,255,192,.5);color:#86FFC0;background:rgba(134,255,192,.06);" onclick="sampleEditorExport()">Découper → nouveau sample</button>
   </div>
   <div class="sed-note" id="sed-note"></div>
 </div>
@@ -3346,6 +3408,31 @@ function _backAction() {
   if (modal && modal.classList.contains('open')) { closeOscModal(); return; }
   closePanel();
 }
+// #23 (roadmap) : auto-adaptation CPU au premier plan — mesure l'écart réel
+// entre deux frames de rendu EFFECTIVEMENT dessinées (pas juste "sautées"
+// par le cap volontaire de 45ms). Sur un appareil qui tient le rythme, cet
+// écart reste proche de 45ms (borné par le cap) ; sur un appareil qui peine
+// (le dessin lui-même prend plus que le budget), l'écart mesuré grandit
+// nettement au-delà — signal fiable que reproduire la latence audio décrite
+// (claquements, mieux en arrière-plan) vient du rendu visuel, pas du son.
+// Bascule seule en "Visuel léger" (déjà existant, coupe tout dessin) après
+// ~40 échantillons si >35% d'entre eux dépassent le double du cap — jamais
+// si l'utilisateur a lui-même déjà choisi un réglage (ON ou OFF).
+let _perfSampleCount = 0, _perfSlowCount = 0, _perfLastTs = 0;
+const PERF_SAMPLE_TARGET = 40;
+function _perfAutoAdapt(ts) {
+  if (_perfSampleCount >= PERF_SAMPLE_TARGET) return;
+  try { if (localStorage.getItem(VISLITE_USER_KEY) === '1') { _perfSampleCount = PERF_SAMPLE_TARGET; return; } } catch(e) {}
+  const now = ts || (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  if (!_perfLastTs) { _perfLastTs = now; return; }
+  const dt = now - _perfLastTs;
+  _perfLastTs = now;
+  _perfSampleCount++;
+  if (dt > 90) _perfSlowCount++;
+  if (_perfSampleCount >= PERF_SAMPLE_TARGET && _perfSlowCount / _perfSampleCount > 0.35) {
+    _autoEnableVisLite();
+  }
+}
 function masterTick(ts) {
   masterRAF = requestAnimationFrame(masterTick);
   // Bride à ~22 fps : libère du CPU pour le thread audio (anti-"braises"/underrun)
@@ -3365,6 +3452,7 @@ function masterTick(ts) {
   }
   // #36 mode visuel "lite" : coupe TOUT dessin (métatron + spectroïde) → CPU max pour l'audio
   if (document.body.classList.contains('vis-lite')) return;
+  _perfAutoAdapt(ts); // #23 (roadmap) : bascule seule en mode léger si l'appareil peine
 
   metaAngle = (metaAngle + 0.006) % (Math.PI * 2);
   drawMetatron();
@@ -5596,13 +5684,16 @@ function _custLS(key, def) {
 }
 function buildCustomizeHTML() {
   const cellLabels = { red:'Rouge', orange:'Orange', flux:'Jaune (Flux)', green:'Vert', blue:'Bleu' };
-  const slotLabels = { tap:'Tap', hold:'Appui long', extra:'Bouton extra' };
+  // #20 : "extra2" (2e sphère raccourci) — toutes les cases sauf Flux, qui
+  // garde une seule sphère (tap/appui long déjà pris par Flux on/off · random).
+  const slotLabels = { tap:'Tap', hold:'Appui long', extra:'Bouton extra 1', extra2:'Bouton extra 2' };
   const optsHTML = (selected) => Object.keys(DOCK_ACTIONS).map(k =>
     `<option value="${k}"${selected===k?' selected':''}>${DOCK_ACTIONS[k].label}</option>`).join('');
 
   const cellRows = Object.keys(cellLabels).map(key => {
     const map = DOCK_MAP[key] || {};
-    const slots = ['tap','hold','extra'].map(slot => `
+    const slotKeys = key === 'flux' ? ['tap','hold','extra'] : ['tap','hold','extra','extra2'];
+    const slots = slotKeys.map(slot => `
       <div class="cust-slot">
         <span class="cust-slot-lbl">${slotLabels[slot]}</span>
         <select class="cust-select" onchange="setDockMapping('${key}','${slot}',this.value)">
@@ -6262,10 +6353,10 @@ function toggleDock() {
   if (toggleRow) toggleRow.classList.toggle('dock-up', collapsed);
   if (backBtn) backBtn.classList.toggle('dock-up', collapsed);
   // Le chevron masque le dock ET les sphères raccourcis ensemble.
-  DOCK_CELLS.forEach(c => {
-    const el = document.getElementById(c.extraId);
+  DOCK_CELLS.forEach(c => c.extraIds.forEach(extraId => {
+    const el = document.getElementById(extraId);
     if (el) el.classList.toggle('dc-hidden', collapsed);
-  });
+  }));
   setTimeout(buildVesicaPairs, 370);
 }
 
@@ -6607,9 +6698,13 @@ function _loadAdvanced() {
 
 // #36 mode visuel "lite" : coupe le dessin du métatron (CPU) pour les appareils faibles
 const VISLITE_KEY = 'fbf432-vislite';
+// #23 (roadmap) : dès que l'utilisateur touche lui-même l'interrupteur (ici
+// ou depuis le dock/customize), on retient que c'est un choix EXPLICITE —
+// l'auto-adaptation ci-dessous ne doit alors plus jamais y toucher.
+const VISLITE_USER_KEY = 'fbf432-vislite-userset';
 function toggleVisLite() {
   const on = document.body.classList.toggle('vis-lite');
-  try { localStorage.setItem(VISLITE_KEY, on ? '1' : '0'); } catch(e) {}
+  try { localStorage.setItem(VISLITE_KEY, on ? '1' : '0'); localStorage.setItem(VISLITE_USER_KEY, '1'); } catch(e) {}
   const b = document.getElementById('btn-vislite');
   if (b) { b.classList.toggle('on', on); b.querySelector('span').textContent = on ? 'Visuel léger : ON' : 'Visuel léger : OFF'; }
 }
@@ -6621,6 +6716,16 @@ function _loadVisLite() {
     const b = document.getElementById('btn-vislite');
     if (b) { b.classList.add('on'); const s=b.querySelector('span'); if(s) s.textContent='Visuel léger : ON'; }
   }
+}
+// #23 (roadmap) : bascule silencieuse (pas de marquage "choix utilisateur")
+// — appelée uniquement par l'auto-adaptation CPU, jamais par un clic.
+function _autoEnableVisLite() {
+  if (document.body.classList.contains('vis-lite')) return;
+  document.body.classList.add('vis-lite');
+  try { localStorage.setItem(VISLITE_KEY, '1'); } catch(e) {}
+  const b = document.getElementById('btn-vislite');
+  if (b) { b.classList.add('on'); const s = b.querySelector('span'); if (s) s.textContent = 'Visuel léger : ON'; }
+  if (typeof _toastFlash === 'function') _toastFlash('Visuel léger activé automatiquement (rendu trop lourd pour cet appareil) — désactivable dans Paramètres.');
 }
 
 // ── Splash 36 Rayons ──────────────────────────────────────────────
@@ -6735,7 +6840,11 @@ function _bindTapHold(el, onTap, onHold, holdMs) {
 // déjà installés (elles restent en storage, simplement ignorées).
 const DOCK_EXTRA_POS_KEY = 'fbf432-dockExtraPos-v2';
 let DOCK_EXTRA_POS = {};
-function _bindExtraDraggable(el, onTap, holdMs) {
+// #22 : cellKey/slot identifient CETTE sphère précise dans DOCK_MAP — un
+// appui long qui ne bouge PAS ouvre l'assignation rapide (bascules + choix
+// d'action) au lieu de re-sauver une position inchangée ; un appui long
+// SUIVI d'un déplacement reste le décrochage/repositionnement existant.
+function _bindExtraDraggable(el, onTap, holdMs, cellKey, slot) {
   if (!el) return;
   holdMs = holdMs || 480;
   let timer = null, dragging = false, moved = false, sx = 0, sy = 0, startLeft = 0, startTop = 0;
@@ -6773,7 +6882,8 @@ function _bindExtraDraggable(el, onTap, holdMs) {
       dragging = false;
       el.classList.remove('dcell-extra-dragging');
       el.style.zIndex = 100; // au-dessus des sphères/fond, sous les panneaux/modals
-      _saveExtraPos(el.id, parseFloat(el.style.left), parseFloat(el.style.top));
+      if (moved) { _saveExtraPos(el.id, parseFloat(el.style.left), parseFloat(el.style.top)); }
+      else if (cellKey && slot && typeof _openDockQuickAssign === 'function') { _openDockQuickAssign(cellKey, slot); }
       return;
     }
     if (!moved && onTap) onTap();
@@ -6788,6 +6898,8 @@ function _saveExtraPos(id, left, top) {
 }
 // Position par défaut : collées aux bords de l'écran, à côté de leur
 // cellule — rouge/orange à gauche (haut/bas), vert/bleu à droite (haut/bas).
+// #20 : la 2e sphère de chaque case (extraId2) se place plus loin encore du
+// dock, sur la même colonne — jamais de recouvrement avec la 1ère.
 // La sphère FLUX (jaune) a été retirée : plus d'entrée à positionner ici.
 function _defaultExtraPositions() {
   const dock = document.getElementById('bottom-dock');
@@ -6798,17 +6910,27 @@ function _defaultExtraPositions() {
   // hors écran. _applyExtraPos laissera alors le CSS par défaut (bord de
   // la cellule) faire le travail, toujours valide.
   if (!r.width || !r.height) return {};
-  const btnSize = 42, edgeMargin = 6, vGap = 8;
+  const btnSize = 42, edgeMargin = 6, vGap = 8, hGap = 8;
   const cy = r.top + r.height / 2;
   const leftX  = Math.max(4, r.left + edgeMargin);
   const rightX = Math.min(window.innerWidth - btnSize - 4, r.right - edgeMargin - btnSize);
   const topY    = Math.max(4, Math.round(cy - btnSize - vGap / 2));
   const bottomY = Math.min(window.innerHeight - btnSize - 4, Math.round(cy + vGap / 2));
+  // #20 : la 2e sphère se place à la MÊME hauteur que la 1ère (déjà garantie
+  // valide/à l'écran) mais décalée horizontalement VERS LE CENTRE — un
+  // décalage vertical supplémentaire se fait clamper au même plafond que la
+  // 1ère sphère sur un dock court près du bord d'écran (chevauchement).
+  const leftX2  = Math.min(window.innerWidth / 2 - btnSize - 4, leftX + btnSize + hGap);
+  const rightX2 = Math.max(window.innerWidth / 2 + 4, rightX - btnSize - hGap);
   const pos = {
-    dcRedExtra:    { left: Math.round(leftX),  top: topY },
-    dcOrangeExtra: { left: Math.round(leftX),  top: bottomY },
-    dcGreenExtra:  { left: Math.round(rightX), top: topY },
-    dcBlueExtra:   { left: Math.round(rightX), top: bottomY },
+    dcRedExtra:     { left: Math.round(leftX),  top: topY },
+    dcRedExtra2:    { left: Math.round(leftX2), top: topY },
+    dcOrangeExtra:  { left: Math.round(leftX),  top: bottomY },
+    dcOrangeExtra2: { left: Math.round(leftX2), top: bottomY },
+    dcGreenExtra:   { left: Math.round(rightX), top: topY },
+    dcGreenExtra2:  { left: Math.round(rightX2),top: topY },
+    dcBlueExtra:    { left: Math.round(rightX), top: bottomY },
+    dcBlueExtra2:   { left: Math.round(rightX2),top: bottomY },
   };
   return pos;
 }
@@ -6827,10 +6949,10 @@ function _applyExtraPos(el, pos) {
 // hors écran). C'est la vraie cause de "on a perdu nos boutons extra" :
 // on les détache du DOM du dock une fois pour toutes, direction <body>.
 function _detachExtraButtons() {
-  DOCK_CELLS.forEach(c => {
-    const el = document.getElementById(c.extraId);
+  DOCK_CELLS.forEach(c => c.extraIds.forEach(extraId => {
+    const el = document.getElementById(extraId);
     if (el && el.parentElement !== document.body) document.body.appendChild(el);
-  });
+  }));
 }
 function _loadExtraPos() {
   _detachExtraButtons();
@@ -6845,19 +6967,19 @@ function _loadExtraPos() {
     }
   });
   const defaults = _defaultExtraPositions();
-  DOCK_CELLS.forEach(c => {
-    const el = document.getElementById(c.extraId);
-    _applyExtraPos(el, DOCK_EXTRA_POS[c.extraId] || defaults[c.extraId]);
-  });
+  DOCK_CELLS.forEach(c => c.extraIds.forEach(extraId => {
+    const el = document.getElementById(extraId);
+    _applyExtraPos(el, DOCK_EXTRA_POS[extraId] || defaults[extraId]);
+  }));
   // Si le dock n'était pas encore mis en page au premier appel (rect vide),
   // on retente une fois une fois la mise en page stabilisée — sans quoi la
   // rangée par défaut ne s'affiche jamais, même après un resize.
   if (!Object.keys(defaults).length) requestAnimationFrame(() => {
     const retry = _defaultExtraPositions();
-    if (Object.keys(retry).length) DOCK_CELLS.forEach(c => {
-      if (DOCK_EXTRA_POS[c.extraId]) return;
-      _applyExtraPos(document.getElementById(c.extraId), retry[c.extraId]);
-    });
+    if (Object.keys(retry).length) DOCK_CELLS.forEach(c => c.extraIds.forEach(extraId => {
+      if (DOCK_EXTRA_POS[extraId]) return;
+      _applyExtraPos(document.getElementById(extraId), retry[extraId]);
+    }));
   });
 }
 // Reflow léger : si l'écran change de taille (rotation, clavier…), on
@@ -6865,10 +6987,10 @@ function _loadExtraPos() {
 // repositionnés par l'utilisateur restent où il les a mis.
 window.addEventListener('resize', () => {
   const defaults = _defaultExtraPositions();
-  DOCK_CELLS.forEach(c => {
-    if (DOCK_EXTRA_POS[c.extraId]) return;
-    _applyExtraPos(document.getElementById(c.extraId), defaults[c.extraId]);
-  });
+  DOCK_CELLS.forEach(c => c.extraIds.forEach(extraId => {
+    if (DOCK_EXTRA_POS[extraId]) return;
+    _applyExtraPos(document.getElementById(extraId), defaults[extraId]);
+  }));
 });
 // Remet tous les boutons extra à la rangée par défaut au-dessus du dock
 function resetExtraPos() {
@@ -6902,25 +7024,37 @@ const DOCK_ACTIONS = {
   toggleFullscreen: { label: 'Plein écran',                 fn: () => { if (typeof toggleFullscreen === 'function') toggleFullscreen(); } },
   openPresets:   { label: 'Ouvrir Presets',                 fn: () => openTab('panPresets') },
   presetQuickAdd:{ label: 'Ajouter le jeu au preset',       fn: () => { if (typeof presetQuickAdd === 'function') presetQuickAdd(); } },
+  // #22 : nouveaux paramètres — bascules directes, assignables à une sphère
+  strictHeadphoneToggle: { label: 'Casque strict on/off',        fn: () => setStrictHeadphone(!STRICT_HEADPHONE_MODE) },
+  subDroneToggle:        { label: 'Sub-drone on/off',            fn: () => setSubDrone(!SUBDRONE_STATE.on) },
+  pairCompToggle:        { label: 'Anti-pompage par paire on/off', fn: () => setPairCompression(!PAIR_COMP_STATE.on) },
+  deltaDriftToggle:      { label: 'Dérive lente du Δ on/off',    fn: () => setDeltaDrift(!DELTA_DRIFT_STATE.on) },
+  breathAnchorToggle:    { label: 'Ancre respiratoire on/off',   fn: () => setBreathAnchor(!BREATH_ANCHOR_STATE.on) },
+  breathRandomToggle:    { label: 'Respiration par paire on/off', fn: () => setRandBreath(!RAND_OPTS.breathRandom) },
+  undoRandom:            { label: 'Annuler le dernier tirage',   fn: () => { if (typeof undoLastRandom === 'function') undoLastRandom(); } },
 };
 
+// #20 : 2e sphère raccourci ("extra2") sur les 4 cases régulières — la case
+// Flux garde une seule sphère (son tap/appui long sont déjà pris par
+// Flux on/off et Nouveau jeu aléatoire, pas de place pour une 2e action).
 const DOCK_MAP_DEFAULT = {
-  red:    { tap: 'openRand',    hold: 'soloMaster',    extra: 'toggleAdvanced' },
-  orange: { tap: 'openSamples', hold: 'sampleAnchor',  extra: 'sampleSoloMaster' },
+  red:    { tap: 'openRand',    hold: 'soloMaster',    extra: 'toggleAdvanced',   extra2: 'breathAnchorToggle' },
+  orange: { tap: 'openSamples', hold: 'sampleAnchor',  extra: 'sampleSoloMaster', extra2: 'subDroneToggle' },
   flux:   { tap: 'fluxToggle',  hold: 'randomAll',     extra: 'none' },
-  green:  { tap: 'openFX',      hold: 'randomFXQuick', extra: 'openGeo' },
-  blue:   { tap: 'openParams',  hold: 'openPresets',   extra: 'presetQuickAdd' },
+  green:  { tap: 'openFX',      hold: 'randomFXQuick', extra: 'openGeo',         extra2: 'pairCompToggle' },
+  blue:   { tap: 'openParams',  hold: 'openPresets',   extra: 'presetQuickAdd',  extra2: 'undoRandom' },
 };
 let DOCK_MAP = JSON.parse(JSON.stringify(DOCK_MAP_DEFAULT));
 const DOCK_MAP_KEY = 'fbf432-dockmap';
 
 const DOCK_CELLS = [
-  { key: 'red',    id: 'dcRed',    extraId: 'dcRedExtra' },
-  { key: 'orange', id: 'dcOrange', extraId: 'dcOrangeExtra' },
-  { key: 'flux',   id: 'dcFlux',   extraId: 'dcFluxExtra' },
-  { key: 'green',  id: 'dcGreen',  extraId: 'dcGreenExtra' },
-  { key: 'blue',   id: 'dcBlue',   extraId: 'dcBlueExtra' },
+  { key: 'red',    id: 'dcRed',    extraIds: ['dcRedExtra', 'dcRedExtra2'] },
+  { key: 'orange', id: 'dcOrange', extraIds: ['dcOrangeExtra', 'dcOrangeExtra2'] },
+  { key: 'flux',   id: 'dcFlux',   extraIds: ['dcFluxExtra'] },
+  { key: 'green',  id: 'dcGreen',  extraIds: ['dcGreenExtra', 'dcGreenExtra2'] },
+  { key: 'blue',   id: 'dcBlue',   extraIds: ['dcBlueExtra', 'dcBlueExtra2'] },
 ];
+const DOCK_EXTRA_SLOT = ['extra', 'extra2']; // index 0/1 → nom du slot dans DOCK_MAP
 
 function _runDockAction(actionId) {
   const a = DOCK_ACTIONS[actionId];
@@ -6938,12 +7072,15 @@ function _bindDock() {
       _bindTapHold(mainBtn, () => _runDockAction(map.tap), () => _runDockAction(map.hold));
       mainBtn._dockBound = true;
     }
-    const extraBtn = document.getElementById(cell.extraId);
-    if (extraBtn && !extraBtn._dockBound) {
-      extraBtn.addEventListener('pointerdown', e => e.stopPropagation());
-      _bindExtraDraggable(extraBtn, () => _runDockAction(map.extra));
-      extraBtn._dockBound = true;
-    }
+    cell.extraIds.forEach((extraId, i) => {
+      const slot = DOCK_EXTRA_SLOT[i];
+      const extraBtn = document.getElementById(extraId);
+      if (extraBtn && !extraBtn._dockBound) {
+        extraBtn.addEventListener('pointerdown', e => e.stopPropagation());
+        _bindExtraDraggable(extraBtn, () => _runDockAction(map[slot]), 480, cell.key, slot);
+        extraBtn._dockBound = true;
+      }
+    });
   });
 }
 
@@ -6960,6 +7097,55 @@ function resetDockMap() {
   _bindDock();
   const body = document.getElementById('panel-custom-body');
   if (body && typeof buildCustomizeHTML === 'function') body.innerHTML = buildCustomizeHTML();
+}
+
+// ── #22 : assignation rapide — appui long sur une sphère "+" sans la
+// déplacer. Deux sections : bascules directes des nouveaux paramètres
+// (on/off immédiat, sans passer par un sous-menu), et réassignation de
+// CETTE sphère précise à n'importe quelle action du registre DOCK_ACTIONS.
+const DQA_TOGGLES = [
+  { label: 'Respiration par paire',  get: () => RAND_OPTS.breathRandom, set: v => setRandBreath(v) },
+  { label: 'Ancre respiratoire',     get: () => BREATH_ANCHOR_STATE.on, set: v => setBreathAnchor(v) },
+  { label: 'Dérive lente du Δ',      get: () => DELTA_DRIFT_STATE.on,   set: v => setDeltaDrift(v) },
+  { label: 'Mode casque strict',     get: () => STRICT_HEADPHONE_MODE,  set: v => setStrictHeadphone(v) },
+  { label: 'Anti-pompage par paire', get: () => PAIR_COMP_STATE.on,     set: v => setPairCompression(v) },
+  { label: "Sub-drone d'ancrage",    get: () => SUBDRONE_STATE.on,      set: v => setSubDrone(v) },
+];
+let _dqaCell = null, _dqaSlot = null;
+function _openDockQuickAssign(cellKey, slot) {
+  _dqaCell = cellKey; _dqaSlot = slot;
+  const cellLabels = { red:'Rouge', orange:'Orange', flux:'Jaune (Flux)', green:'Vert', blue:'Bleu' };
+  const slotLabels = { extra:'Bouton extra 1', extra2:'Bouton extra 2' };
+  const title = document.getElementById('dqa-title');
+  if (title) title.textContent = (cellLabels[cellKey] || cellKey) + ' — ' + (slotLabels[slot] || slot);
+  const togglesEl = document.getElementById('dqa-toggles');
+  if (togglesEl) {
+    togglesEl.innerHTML = DQA_TOGGLES.map((t, i) => `
+      <div class="dqa-tog-row"><span>${t.label}</span>
+        <label class="fx-toggle"><input type="checkbox" ${t.get() ? 'checked' : ''} onchange="_dqaToggleFlip(${i},this.checked)"><span class="fx-tog-track"></span></label>
+      </div>`).join('');
+  }
+  const sel = document.getElementById('dqa-select');
+  if (sel) {
+    const current = (DOCK_MAP[cellKey] || {})[slot];
+    sel.innerHTML = Object.keys(DOCK_ACTIONS).map(k =>
+      `<option value="${k}"${current === k ? ' selected' : ''}>${DOCK_ACTIONS[k].label}</option>`).join('');
+  }
+  const modal = document.getElementById('dock-quick-assign-modal');
+  if (modal) modal.classList.add('open');
+}
+function _closeDockQuickAssign() {
+  const modal = document.getElementById('dock-quick-assign-modal');
+  if (modal) modal.classList.remove('open');
+  _dqaCell = null; _dqaSlot = null;
+}
+function _dqaToggleFlip(i, checked) {
+  const t = DQA_TOGGLES[i]; if (t) t.set(!!checked);
+}
+function _dqaAssign(actionId) {
+  if (!_dqaCell || !_dqaSlot) return;
+  setDockMapping(_dqaCell, _dqaSlot, actionId);
+  _closeDockQuickAssign();
 }
 function _loadDockMap() {
   try {
@@ -7518,6 +7704,16 @@ async function _sdbUpdateFund(id, fund) {
     if (rec) { rec.fund = fund; s.put(rec); }
   } catch(e) {}
 }
+// #18 : ne déplace QUE la métadonnée folderId — les octets (IndexedDB ou
+// Filesystem natif, cf. storage/path) restent où ils sont, seul le rangement change.
+async function _sdbUpdateFolder(id, folderId) {
+  if (id == null) return;
+  try {
+    const s = await _sdbStore(SDB_STORE, 'readwrite');
+    const rec = await new Promise((res, rej) => { const r = s.get(id); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+    if (rec) { rec.folderId = folderId; s.put(rec); }
+  } catch(e) {}
+}
 
 /* ---------- 9.0b · CAPACITOR FILESYSTEM (fichiers réels sur l'appareil) ---------- */
 // Repli automatique sur IndexedDB (Blob) quand le pont natif Capacitor n'est
@@ -7659,10 +7855,10 @@ async function ensureFoldersLoaded() {
 function renderFolderRow() {
   const row = document.getElementById('sample-folder-row'); if (!row) return;
   row.innerHTML = SAMPLE_FOLDERS.map(f => `
-    <button class="fbf-step sample-cat-btn sample-folder-chip${f.id===_curFolderId?' active':''}" onclick="sampleOpenFolder('${f.id}')">
-      📁 ${_escHtml(f.name)}<span class="sample-folder-star${f.random?' on':''}" onclick="event.stopPropagation();sampleToggleFolderRandom('${f.id}')" title="Utiliser pour le jeu aléatoire / banque">★</span>
+    <button class="fbf-step sample-cat-btn sample-folder-chip${f.id===_curFolderId?' active':''}" data-folder="${f.id}" onclick="sampleOpenFolder('${f.id}')">
+      ${_escHtml(f.name)}<span class="sample-folder-star${f.random?' on':''}" onclick="event.stopPropagation();sampleToggleFolderRandom('${f.id}')" title="Utiliser pour le jeu aléatoire / banque">★</span>
     </button>`).join('')
-    + `<button class="fbf-step" onclick="sampleNewFolder()" title="Nouveau dossier">➕</button>`;
+    + `<button class="fbf-step" onclick="sampleNewFolder()" title="Nouveau dossier">+</button>`;
 }
 
 function sampleNewFolder() {
@@ -7690,13 +7886,106 @@ function sampleOpenFolder(id) {
     return;
   }
   list.innerHTML = files.map((f, idx) => `
-    <div class="sample-row">
+    <div class="sample-row" data-folder="${id}" data-idx="${idx}" title="Appui long : glisser vers un autre dossier">
       <button class="sample-row-main" onclick="samplePlay('${id}',${idx})">
         ▶ ${_escHtml(f.name)}${f.fund ? ` <span style="color:rgba(140,255,200,.6);">· ${Math.round(f.fund)}Hz</span>` : ''}${f.mode==='stream' ? ` <span style="color:rgba(150,180,255,.55);">· streaming</span>` : ''}
       </button>
       <button class="sample-row-btn" onclick="sampleEditorOpen('${id}',${idx})" title="Découper">✂ Découper</button>
       <button class="sample-row-btn del" onclick="sampleDelete('${id}',${idx})" title="Supprimer">✕</button>
     </div>`).join('');
+  _sampleListBindDrag(); // #18 : appui long → glisser vers un dossier (délégation, un seul binding)
+}
+
+// ── #18 : glisser-déposer (appui long) un sample vers un autre dossier ──
+// Délégation sur le conteneur de liste (recréé en innerHTML à chaque tirage/
+// import) — un seul binding, jamais à refaire même quand la liste change.
+let _dragState = null, _dragGhost = null;
+function _sampleListBindDrag() {
+  const list = document.getElementById('sample-file-list');
+  if (!list || list._dragBound) return;
+  // pointerdown délégué sur la liste (identifie la ligne d'origine) ; move/up
+  // sur window (une fois le geste commencé, le doigt quitte la liste pour
+  // survoler la rangée de dossiers — un binding local sur `list` cesserait
+  // de recevoir les événements dès que le pointeur sort de ses limites).
+  list.addEventListener('pointerdown', _sampleRowPointerDown);
+  window.addEventListener('pointermove', _sampleRowPointerMove);
+  window.addEventListener('pointerup', _sampleRowPointerUp);
+  window.addEventListener('pointercancel', _sampleRowPointerUp);
+  list._dragBound = true;
+}
+function _sampleRowPointerDown(ev) {
+  if (ev.target.closest('.sample-row-btn')) return; // pas sur Découper/Supprimer
+  const row = ev.target.closest('.sample-row'); if (!row) return;
+  _dragState = { folderId: row.dataset.folder, idx: parseInt(row.dataset.idx), startX: ev.clientX, startY: ev.clientY, dragging: false, row };
+  _dragState.timer = setTimeout(() => {
+    if (!_dragState) return;
+    _dragState.dragging = true;
+    _sampleDragStart(_dragState);
+  }, 420);
+}
+function _sampleRowPointerMove(ev) {
+  if (!_dragState) return;
+  if (!_dragState.dragging) {
+    const dx = ev.clientX - _dragState.startX, dy = ev.clientY - _dragState.startY;
+    if (Math.hypot(dx, dy) > 10) { clearTimeout(_dragState.timer); _dragState = null; } // scroll, pas un drag
+    return;
+  }
+  _sampleDragMove(ev.clientX, ev.clientY);
+}
+function _sampleRowPointerUp(ev) {
+  if (!_dragState) return;
+  clearTimeout(_dragState.timer);
+  if (_dragState.dragging) _sampleDragEnd(ev.clientX, ev.clientY);
+  _dragState = null;
+}
+function _sampleDragStart(state) {
+  if (navigator.vibrate) { try { navigator.vibrate(15); } catch(e) {} }
+  const f = (SAMPLE_FILES[state.folderId] || [])[state.idx];
+  _dragGhost = document.createElement('div');
+  _dragGhost.className = 'sample-drag-ghost';
+  _dragGhost.textContent = f ? f.name : 'Sample';
+  document.body.appendChild(_dragGhost);
+  _positionDragGhost(state.startX, state.startY);
+  state.row.classList.add('dragging-source');
+}
+function _positionDragGhost(x, y) {
+  if (!_dragGhost) return;
+  _dragGhost.style.left = x + 'px'; _dragGhost.style.top = y + 'px';
+}
+function _sampleDragMove(x, y) {
+  _positionDragGhost(x, y);
+  document.querySelectorAll('.sample-folder-chip.drop-target').forEach(c => c.classList.remove('drop-target'));
+  const el = document.elementFromPoint(x, y);
+  const chip = el && el.closest ? el.closest('.sample-folder-chip') : null;
+  if (chip) chip.classList.add('drop-target');
+}
+function _sampleDragEnd(x, y) {
+  document.querySelectorAll('.sample-folder-chip.drop-target').forEach(c => c.classList.remove('drop-target'));
+  if (_dragState && _dragState.row) _dragState.row.classList.remove('dragging-source');
+  if (_dragGhost) { _dragGhost.remove(); _dragGhost = null; }
+  const el = document.elementFromPoint(x, y);
+  const chip = el && el.closest ? el.closest('.sample-folder-chip') : null;
+  if (!chip || !chip.dataset.folder) return;
+  const destFolderId = chip.dataset.folder;
+  if (destFolderId === _dragState.folderId) return;
+  _sampleMoveToFolder(_dragState.folderId, _dragState.idx, destFolderId);
+}
+async function _sampleMoveToFolder(srcFolderId, idx, destFolderId) {
+  const files = SAMPLE_FILES[srcFolderId]; if (!files || !files[idx]) return;
+  const entry = files[idx];
+  files.splice(idx, 1);
+  entry.folderId = destFolderId;
+  (SAMPLE_FILES[destFolderId] || (SAMPLE_FILES[destFolderId] = [])).push(entry);
+  if (entry.id != null) await _sdbUpdateFolder(entry.id, destFolderId);
+  sampleOpenFolder(_curFolderId);
+  const destFolder = SAMPLE_FOLDERS.find(f => f.id === destFolderId);
+  _toastFlash('Déplacé vers « ' + (destFolder ? destFolder.name : '…') + ' ».');
+}
+function _toastFlash(msg) {
+  const s = document.getElementById('stxt'); if (!s) return;
+  const prev = s.textContent;
+  s.textContent = msg;
+  setTimeout(() => { if (s.textContent === msg) s.textContent = prev; }, 2200);
 }
 
 function sampleToggleFolderManager() {
@@ -7710,7 +7999,7 @@ function renderFolderManager() {
   el.innerHTML = SAMPLE_FOLDERS.map(f => `
     <div class="sfm-row">
       <input type="text" value="${_escHtml(f.name)}" onchange="sampleRenameFolder('${f.id}',this.value)">
-      <button class="sfm-del" onclick="sampleDeleteFolder('${f.id}')" title="Supprimer le dossier">🗑</button>
+      <button class="sfm-del" onclick="sampleDeleteFolder('${f.id}')" title="Supprimer le dossier">✕</button>
     </div>`).join('');
 }
 function sampleRenameFolder(id, name) {
@@ -8177,7 +8466,16 @@ function sampleBankRandomGame() {
 }
 
 /* ---------- 9.8 · ÉDITEUR DE DÉCOUPE ---------- */
-let _sed = { folderId: null, idx: null, buf: null, big: false, wavHeader: null, wavUrl: null, inSec: 0, outSec: 0, dragging: null, previewSrc: null, _bound: false };
+let _sed = {
+  folderId: null, idx: null, buf: null, big: false, wavHeader: null, wavUrl: null,
+  inSec: 0, outSec: 0, dragging: null, previewSrc: null, _bound: false,
+  // #16 : zoom/pan — zoom=1 montre tout le sample, viewStart = début de la
+  // fenêtre visible (secondes). #17 : markers = points de coupe/copie/colle.
+  zoom: 1, viewStart: 0, markers: [], markerSel: null,
+  // #19 : overlay — 2e sample superposé (mixdown à l'export)
+  overlayBuf: null, overlayName: null, overlayGain: 0.8
+};
+let _sedClipboard = null; // #17 : portion copiée (indépendante de la paire ouverte)
 
 function _sedDuration() {
   if (_sed.buf) return _sed.buf.duration;
@@ -8202,6 +8500,16 @@ function sampleEditorOpen(folderId, idx) {
     _sed.folderId = folderId; _sed.idx = idx; _sed.buf = f.buf || null; _sed.big = f.mode === 'stream';
     _sed.wavHeader = null; _sed.wavUrl = null;
     _sed.inSec = 0; _sed.outSec = 0; _sed.dragging = null;
+    // #16/#17/#19 : repart de zéro à chaque ouverture (zoom, marqueurs, overlay)
+    _sed.zoom = 1; _sed.viewStart = 0; _sed.markers = []; _sed.markerSel = null;
+    _sed.overlayBuf = null; _sed.overlayName = null; _sed.overlayGain = 0.8;
+    _sedUpdateZoomUI(); _sedUpdateOverlayUI();
+    const menu0 = document.getElementById('sed-marker-menu'); if (menu0) menu0.style.display = 'none';
+    // #19 : la découpe est un moment d'édition précis — pas besoin du moteur
+    // binaural en même temps, et ça libère tout le CPU/la batterie pour
+    // l'édition (décodage, dessin waveform, glisser/pincer) sur un appareil
+    // modeste. Reprend automatiquement à la fermeture de l'éditeur.
+    _sedPauseBinauralForEdit();
 
     if (!_sed.buf && _sed.big) {
       // WAV volumineux : découpe par plage d'octets (fetch Range sur l'URL
@@ -8330,8 +8638,25 @@ async function sampleEditorDecodeNow() {
 function sampleEditorClose() {
   const modal = document.getElementById('sample-editor-modal'); if (modal) modal.classList.remove('open');
   _sampleEditorStopPreview();
+  _sedResumeBinauralAfterEdit(); // #19
+}
+// #19 : pause complète (pas juste muet) du moteur binaural pendant la
+// découpe — libère tout le CPU pour l'édition, reprend automatiquement.
+let _sedBinauralWasFlowing = false;
+function _sedPauseBinauralForEdit() {
+  _sedBinauralWasFlowing = !!flowing;
+  if (flowing && typeof stopFlow === 'function') stopFlow();
+}
+function _sedResumeBinauralAfterEdit() {
+  if (_sedBinauralWasFlowing && typeof startFlow === 'function') startFlow();
+  _sedBinauralWasFlowing = false;
 }
 
+// #16 : durée de la fenêtre visible (zoom=1 → tout le sample)
+function _sedViewDur() {
+  const dur = _sedDuration();
+  return dur ? dur / Math.max(1, _sed.zoom) : 0;
+}
 function _drawSedWaveform() {
   const canvas = document.getElementById('sed-wave-canvas'); if (!canvas) return;
   const wrap = canvas.parentElement;
@@ -8347,13 +8672,45 @@ function _drawSedWaveform() {
     return;
   }
   const data = _sed.buf.getChannelData(0);
-  const step = Math.max(1, Math.floor(data.length / canvas.width));
+  const sr = _sed.buf.sampleRate;
+  const viewDur = _sedViewDur() || _sedDuration();
+  const viewStartSample = Math.max(0, Math.floor(_sed.viewStart * sr));
+  const viewSamples = Math.max(1, Math.floor(viewDur * sr));
+  const step = Math.max(1, viewSamples / canvas.width);
   ctx.strokeStyle = 'rgba(200,160,255,.85)'; ctx.lineWidth = 1; ctx.beginPath();
   const mid = canvas.height / 2;
   for (let x = 0; x < canvas.width; x++) {
+    const start = viewStartSample + Math.floor(x * step);
+    const end = Math.min(data.length, start + Math.max(1, Math.ceil(step)));
     let min = 1, max = -1;
-    const start = x * step;
-    for (let i = 0; i < step; i++) { const v = data[start + i] || 0; if (v < min) min = v; if (v > max) max = v; }
+    for (let i = start; i < end; i++) { const v = data[i] || 0; if (v < min) min = v; if (v > max) max = v; }
+    if (min > max) { min = 0; max = 0; }
+    ctx.moveTo(x, mid + min * mid); ctx.lineTo(x, mid + max * mid);
+  }
+  ctx.stroke();
+  _drawSedOverlayWaveform(ctx, canvas); // #19
+  _drawSedMarkers(ctx, canvas); // #17
+}
+
+// #19 : trace de la superposition, alignée sur le même repère temporel (t=0
+// commun), dans une teinte distincte pour bien la différencier du sample principal.
+function _drawSedOverlayWaveform(ctx, canvas) {
+  if (!_sed.overlayBuf) return;
+  const data = _sed.overlayBuf.getChannelData(0);
+  const sr = _sed.overlayBuf.sampleRate;
+  const viewDur = _sedViewDur() || _sedDuration();
+  const viewStartSample = Math.max(0, Math.floor(_sed.viewStart * sr));
+  const viewSamples = Math.max(1, Math.floor(viewDur * sr));
+  const step = Math.max(1, viewSamples / canvas.width);
+  ctx.strokeStyle = 'rgba(134,255,192,.6)'; ctx.lineWidth = 1; ctx.beginPath();
+  const mid = canvas.height / 2;
+  for (let x = 0; x < canvas.width; x++) {
+    const start = viewStartSample + Math.floor(x * step);
+    const end = Math.min(data.length, start + Math.max(1, Math.ceil(step)));
+    if (start >= data.length) break;
+    let min = 1, max = -1;
+    for (let i = start; i < end; i++) { const v = data[i] || 0; if (v < min) min = v; if (v > max) max = v; }
+    if (min > max) { min = 0; max = 0; }
     ctx.moveTo(x, mid + min * mid); ctx.lineTo(x, mid + max * mid);
   }
   ctx.stroke();
@@ -8361,27 +8718,32 @@ function _drawSedWaveform() {
 
 function _updateSedHandles() {
   const dur = _sedDuration(); if (!dur) return;
+  const viewDur = _sedViewDur() || dur;
   const hin = document.getElementById('sed-handle-in'), hout = document.getElementById('sed-handle-out');
-  if (hin) hin.style.left = (100 * _sed.inSec / dur) + '%';
-  if (hout) hout.style.left = (100 * _sed.outSec / dur) + '%';
+  const pctIn  = (_sed.inSec  - _sed.viewStart) / viewDur;
+  const pctOut = (_sed.outSec - _sed.viewStart) / viewDur;
+  if (hin)  { hin.style.display  = (pctIn  >= -0.03 && pctIn  <= 1.03) ? '' : 'none'; hin.style.left  = (100 * Math.max(0, Math.min(1, pctIn)))  + '%'; }
+  if (hout) { hout.style.display = (pctOut >= -0.03 && pctOut <= 1.03) ? '' : 'none'; hout.style.left = (100 * Math.max(0, Math.min(1, pctOut))) + '%'; }
   const tin = document.getElementById('sed-time-in'), tout = document.getElementById('sed-time-out');
   if (tin) tin.textContent = _sed.inSec.toFixed(2) + 's';
   if (tout) tout.textContent = _sed.outSec.toFixed(2) + 's';
 }
 
+// clientX → secondes, en tenant compte de la fenêtre zoomée courante.
 function _sedPosToSec(clientX) {
   const wrap = document.getElementById('sed-wave-wrap');
   const r = wrap.getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
-  return pct * _sedDuration();
+  const viewDur = _sedViewDur() || _sedDuration();
+  return _sed.viewStart + pct * viewDur;
 }
 
 function _sedBindDrag() {
   if (_sed._bound) return;
   const hin = document.getElementById('sed-handle-in'), hout = document.getElementById('sed-handle-out');
   if (!hin || !hout) return;
-  hin.onpointerdown  = (ev) => { _sed.dragging = 'in';  ev.preventDefault(); };
-  hout.onpointerdown = (ev) => { _sed.dragging = 'out'; ev.preventDefault(); };
+  hin.onpointerdown  = (ev) => { _sed.dragging = 'in';  ev.preventDefault(); ev.stopPropagation(); };
+  hout.onpointerdown = (ev) => { _sed.dragging = 'out'; ev.preventDefault(); ev.stopPropagation(); };
   window.addEventListener('pointermove', (ev) => {
     const dur = _sedDuration();
     if (!_sed.dragging || !dur) return;
@@ -8392,19 +8754,327 @@ function _sedBindDrag() {
     _updateSedHandles();
   });
   window.addEventListener('pointerup', () => { _sed.dragging = null; });
+  _sedBindWaveInteractions(); // #16/#17 : zoom, pan, marqueurs
   _sed._bound = true;
+}
+
+// ── #16 : zoom molette + pincement, pan par glissement ──────────────
+// ── #17 : appui long = pose un marqueur, appui court sur un marqueur = sélection ──
+function sedZoom(factor, clientX) {
+  const dur = _sedDuration(); if (!dur) return;
+  const wrap = document.getElementById('sed-wave-wrap');
+  const r = wrap.getBoundingClientRect();
+  const pivotPct = clientX != null ? Math.max(0, Math.min(1, (clientX - r.left) / r.width)) : 0.5;
+  const oldViewDur = _sedViewDur() || dur;
+  const pivotSec = _sed.viewStart + pivotPct * oldViewDur;
+  _sed.zoom = Math.max(1, Math.min(200, _sed.zoom * factor));
+  const newViewDur = _sedViewDur();
+  _sed.viewStart = Math.max(0, Math.min(Math.max(0, dur - newViewDur), pivotSec - pivotPct * newViewDur));
+  _drawSedWaveform(); _updateSedHandles(); _updateSedMarkers(); _sedUpdateZoomUI();
+}
+function sedZoomFit() {
+  _sed.zoom = 1; _sed.viewStart = 0;
+  _drawSedWaveform(); _updateSedHandles(); _updateSedMarkers(); _sedUpdateZoomUI();
+}
+function _sedUpdateZoomUI() {
+  const el = document.getElementById('sed-zoom-val'); if (el) el.textContent = '×' + _sed.zoom.toFixed(1);
+}
+
+const _sedPointers = new Map();
+let _sedPinchStartDist = null, _sedPinchStartZoom = 1, _sedPinchStartView = 0, _sedPinchCenterX = 0;
+let _sedPanStartX = null, _sedPanStartView = 0, _sedDidPan = false;
+let _sedLongPressTimer = null, _sedLongPressFired = false;
+
+function _sedBindWaveInteractions() {
+  const wrap = document.getElementById('sed-wave-wrap'); if (!wrap) return;
+  wrap.addEventListener('wheel', (ev) => {
+    if (!_sedDuration()) return;
+    ev.preventDefault();
+    sedZoom(ev.deltaY < 0 ? 1.25 : 1 / 1.25, ev.clientX);
+  }, { passive: false });
+  wrap.addEventListener('pointerdown', (ev) => {
+    if (ev.target.classList && ev.target.classList.contains('sed-handle')) return; // géré par les poignées
+    if (!_sedDuration()) return;
+    _sedPointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (_sedPointers.size === 1) {
+      _sedPanStartX = ev.clientX; _sedPanStartView = _sed.viewStart; _sedDidPan = false;
+      _sedLongPressFired = false;
+      clearTimeout(_sedLongPressTimer);
+      _sedLongPressTimer = setTimeout(() => {
+        if (_sedDidPan) return;
+        _sedLongPressFired = true;
+        _sedPlaceMarkerAt(_sedPosToSec(ev.clientX));
+        if (navigator.vibrate) { try { navigator.vibrate(12); } catch(e) {} }
+      }, 480);
+    } else if (_sedPointers.size === 2) {
+      clearTimeout(_sedLongPressTimer);
+      const pts = [..._sedPointers.values()];
+      _sedPinchStartDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+      _sedPinchStartZoom = _sed.zoom; _sedPinchStartView = _sed.viewStart;
+      _sedPinchCenterX = (pts[0].x + pts[1].x) / 2;
+    }
+  });
+  wrap.addEventListener('pointermove', (ev) => {
+    if (!_sedPointers.has(ev.pointerId)) return;
+    _sedPointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    const dur = _sedDuration(); if (!dur) return;
+    if (_sedPointers.size === 2 && _sedPinchStartDist) {
+      const pts = [..._sedPointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+      const r = wrap.getBoundingClientRect();
+      const pivotPct = Math.max(0, Math.min(1, (_sedPinchCenterX - r.left) / r.width));
+      const oldViewDur = dur / _sedPinchStartZoom;
+      const pivotSec = _sedPinchStartView + pivotPct * oldViewDur;
+      _sed.zoom = Math.max(1, Math.min(200, _sedPinchStartZoom * (dist / _sedPinchStartDist)));
+      const newViewDur = dur / _sed.zoom;
+      _sed.viewStart = Math.max(0, Math.min(Math.max(0, dur - newViewDur), pivotSec - pivotPct * newViewDur));
+      _drawSedWaveform(); _updateSedHandles(); _updateSedMarkers(); _sedUpdateZoomUI();
+      return;
+    }
+    if (_sedPointers.size === 1 && _sedPanStartX != null) {
+      const dx = ev.clientX - _sedPanStartX;
+      if (Math.abs(dx) > 6) {
+        _sedDidPan = true; clearTimeout(_sedLongPressTimer);
+        const viewDur = _sedViewDur() || dur;
+        const r = wrap.getBoundingClientRect();
+        const deltaSec = -(dx / r.width) * viewDur;
+        _sed.viewStart = Math.max(0, Math.min(Math.max(0, dur - viewDur), _sedPanStartView + deltaSec));
+        _drawSedWaveform(); _updateSedHandles(); _updateSedMarkers();
+      }
+    }
+  });
+  const onUp = (ev) => {
+    const wasSingle = _sedPointers.size === 1;
+    _sedPointers.delete(ev.pointerId);
+    clearTimeout(_sedLongPressTimer);
+    if (_sedPointers.size < 2) _sedPinchStartDist = null;
+    if (_sedPointers.size === 0) {
+      if (wasSingle && !_sedDidPan && !_sedLongPressFired) _sedHandleShortTap(ev.clientX);
+      _sedPanStartX = null;
+    }
+  };
+  wrap.addEventListener('pointerup', onUp);
+  wrap.addEventListener('pointercancel', onUp);
+}
+
+function _sedHandleShortTap(clientX) {
+  if (!_sed.markers.length) { _sed.markerSel = null; _updateSedMarkers(); return; }
+  const wrap = document.getElementById('sed-wave-wrap');
+  const r = wrap.getBoundingClientRect();
+  const viewDur = _sedViewDur() || _sedDuration();
+  let best = -1, bestDist = Infinity;
+  _sed.markers.forEach((sec, i) => {
+    const pct = (sec - _sed.viewStart) / viewDur;
+    const x = pct * r.width;
+    const d = Math.abs(x - (clientX - r.left));
+    if (d < bestDist) { bestDist = d; best = i; }
+  });
+  _sed.markerSel = (best >= 0 && bestDist < 24) ? best : null;
+  _updateSedMarkers();
+}
+
+// ── #17 : marqueurs — pose, dessin, sélection, actions coupe/copie/colle/suppr ──
+function _sedPlaceMarkerAt(sec) {
+  if (!_sed.buf) { _sedNoteFlash('Marqueurs disponibles seulement une fois le sample décodé.'); return; }
+  const dur = _sedDuration();
+  sec = Math.max(0, Math.min(dur, sec));
+  _sed.markers.push(sec);
+  _sed.markers.sort((a, b) => a - b);
+  _sed.markerSel = _sed.markers.indexOf(sec);
+  _drawSedWaveform(); _updateSedMarkers();
+}
+function _drawSedMarkers(ctx, canvas) {
+  if (!_sed.markers.length) return;
+  const viewDur = _sedViewDur() || _sedDuration();
+  ctx.lineWidth = 2;
+  _sed.markers.forEach((sec, i) => {
+    const pct = (sec - _sed.viewStart) / viewDur;
+    if (pct < -0.02 || pct > 1.02) return;
+    const x = pct * canvas.width;
+    ctx.strokeStyle = i === _sed.markerSel ? '#FFD27A' : 'rgba(255,180,80,.65)';
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+  });
+}
+function _updateSedMarkers() {
+  const menu = document.getElementById('sed-marker-menu'); if (!menu) return;
+  if (_sed.markerSel == null || _sed.markers[_sed.markerSel] == null) { menu.style.display = 'none'; return; }
+  const sec = _sed.markers[_sed.markerSel];
+  const viewDur = _sedViewDur() || _sedDuration();
+  const pct = (sec - _sed.viewStart) / viewDur;
+  if (pct < -0.05 || pct > 1.05) { menu.style.display = 'none'; return; }
+  menu.style.display = 'flex';
+  menu.style.left = Math.max(6, Math.min(94, pct * 100)) + '%';
+}
+function _sedNoteFlash(msg) {
+  const el = document.getElementById('sed-note'); if (!el) return;
+  const prev = el.textContent;
+  el.textContent = msg;
+  setTimeout(() => { if (el.textContent === msg) el.textContent = prev; }, 1800);
+}
+// Fin de la portion "à couper/copier" pour un marqueur donné : le marqueur
+// suivant, ou la fin du sample s'il n'y en a pas.
+function _sedMarkerRangeEnd(selIdx) {
+  const dur = _sedDuration();
+  return (selIdx + 1 < _sed.markers.length) ? _sed.markers[selIdx + 1] : dur;
+}
+function sedMarkerCopy() {
+  if (_sed.markerSel == null || !_sed.buf) return;
+  const startSec = _sed.markers[_sed.markerSel];
+  const endSec = _sedMarkerRangeEnd(_sed.markerSel);
+  const buf = _sed.buf, sr = buf.sampleRate;
+  const s = Math.floor(startSec * sr), e = Math.min(buf.length, Math.ceil(endSec * sr));
+  if (e <= s) { _sedNoteFlash('Rien à copier (portion vide).'); return; }
+  const clip = audioCtx().createBuffer(buf.numberOfChannels, e - s, sr);
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) clip.getChannelData(ch).set(buf.getChannelData(ch).subarray(s, e));
+  _sedClipboard = clip;
+  _sedNoteFlash('Copié : ' + (endSec - startSec).toFixed(2) + 's');
+}
+function sedMarkerCut() {
+  if (_sed.markerSel == null || !_sed.buf) return;
+  const startSec = _sed.markers[_sed.markerSel];
+  const endSec = _sedMarkerRangeEnd(_sed.markerSel);
+  sedMarkerCopy(); // couper = copier puis retirer la portion
+  _sedSpliceOut(startSec, endSec);
+  _sed.markers.splice(_sed.markerSel, 1);
+  _sed.markerSel = null;
+  _sedAfterBufferEdit();
+  _sedNoteFlash('Coupé.');
+}
+function sedMarkerPaste() {
+  if (_sed.markerSel == null || !_sed.buf || !_sedClipboard) { _sedNoteFlash('Rien à coller — copie une portion d\'abord.'); return; }
+  const atSec = _sed.markers[_sed.markerSel];
+  _sedSpliceIn(atSec, _sedClipboard);
+  _sedAfterBufferEdit();
+  _sedNoteFlash('Collé.');
+}
+function sedMarkerDelete() {
+  if (_sed.markerSel == null) return;
+  _sed.markers.splice(_sed.markerSel, 1);
+  _sed.markerSel = null;
+  _drawSedWaveform(); _updateSedMarkers();
+}
+// Retire l'audio entre startSec et endSec de _sed.buf, décale marqueurs/bornes.
+function _sedSpliceOut(startSec, endSec) {
+  const buf = _sed.buf, sr = buf.sampleRate;
+  const s = Math.floor(startSec * sr), e = Math.min(buf.length, Math.ceil(endSec * sr));
+  if (e <= s) return;
+  const removedLen = e - s;
+  const newLen = Math.max(1, buf.length - removedLen);
+  const out = audioCtx().createBuffer(buf.numberOfChannels, newLen, sr);
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const src = buf.getChannelData(ch), dst = out.getChannelData(ch);
+    dst.set(src.subarray(0, s), 0);
+    dst.set(src.subarray(e), s);
+  }
+  _sed.buf = out;
+  const removedSec = removedLen / sr;
+  _sed.markers = _sed.markers.map(m => m > startSec ? Math.max(startSec, m - removedSec) : m);
+  if (_sed.inSec  > startSec) _sed.inSec  = Math.max(startSec, _sed.inSec  - removedSec);
+  if (_sed.outSec > startSec) _sed.outSec = Math.max(startSec, _sed.outSec - removedSec);
+}
+// Insère clipBuf dans _sed.buf à atSec, décale marqueurs/bornes après.
+function _sedSpliceIn(atSec, clipBuf) {
+  const buf = _sed.buf, sr = buf.sampleRate;
+  const at = Math.max(0, Math.min(buf.length, Math.floor(atSec * sr)));
+  const insLen = clipBuf.length;
+  const out = audioCtx().createBuffer(buf.numberOfChannels, buf.length + insLen, sr);
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const src = buf.getChannelData(ch), dst = out.getChannelData(ch);
+    const clipCh = clipBuf.getChannelData(Math.min(ch, clipBuf.numberOfChannels - 1));
+    dst.set(src.subarray(0, at), 0);
+    dst.set(clipCh, at);
+    dst.set(src.subarray(at), at + insLen);
+  }
+  _sed.buf = out;
+  const insSec = insLen / sr;
+  _sed.markers = _sed.markers.map(m => m >= atSec ? m + insSec : m);
+  if (_sed.outSec >= atSec) _sed.outSec += insSec;
+}
+function _sedAfterBufferEdit() {
+  const dur = _sedDuration();
+  _sed.outSec = Math.min(_sed.outSec, dur);
+  const viewDur = _sedViewDur() || dur;
+  _sed.viewStart = Math.max(0, Math.min(Math.max(0, dur - viewDur), _sed.viewStart));
+  _drawSedWaveform(); _updateSedHandles(); _updateSedMarkers();
+}
+
+// ── #19 : superposition d'un 2e sample ───────────────────────────────
+function sedOverlayPick() {
+  const inp = document.getElementById('sed-overlay-file-input');
+  if (inp) inp.click();
+}
+async function _sedOverlayFileChosen(files) {
+  if (!files || !files[0]) return;
+  const file = files[0];
+  _sedNoteFlash('Décodage de la superposition…');
+  try {
+    const arrBuf = await file.arrayBuffer();
+    const buf = await audioCtx().decodeAudioData(arrBuf);
+    _sed.overlayBuf = buf; _sed.overlayName = file.name;
+    _sedUpdateOverlayUI();
+    _drawSedWaveform();
+    _sedNoteFlash('Superposition prête : ' + file.name);
+  } catch(e) {
+    _sedNoteFlash('Superposition impossible : ' + (e && e.message ? e.message : e));
+  }
+  const inp = document.getElementById('sed-overlay-file-input'); if (inp) inp.value = '';
+}
+function sedOverlayClear() {
+  _sed.overlayBuf = null; _sed.overlayName = null;
+  _sedUpdateOverlayUI();
+  _drawSedWaveform();
+}
+function sedOverlaySetGain(v) {
+  _sed.overlayGain = Math.max(0, Math.min(1.2, parseFloat(v)));
+  const el = document.getElementById('sed-overlay-vol-val'); if (el) el.textContent = Math.round(_sed.overlayGain * 100) + '%';
+}
+function _sedUpdateOverlayUI() {
+  const nameEl = document.getElementById('sed-overlay-name');
+  const clearBtn = document.getElementById('sed-overlay-clear');
+  const volRow = document.getElementById('sed-overlay-vol-row');
+  const has = !!_sed.overlayBuf;
+  if (nameEl) nameEl.textContent = has ? _sed.overlayName : '';
+  if (clearBtn) clearBtn.style.display = has ? '' : 'none';
+  if (volRow) volRow.style.display = has ? 'flex' : 'none';
+}
+// Mélange la superposition dans un buffer déjà découpé, repère temporel
+// commun (t=0 partagé entre les deux samples), clampé pour éviter l'écrêtage.
+function _sedMixOverlayInto(out, inSec) {
+  if (!_sed.overlayBuf) return;
+  const sr = out.sampleRate, ov = _sed.overlayBuf, ovSr = ov.sampleRate, gain = _sed.overlayGain;
+  for (let ch = 0; ch < out.numberOfChannels; ch++) {
+    const dst = out.getChannelData(ch);
+    const ovCh = ov.getChannelData(Math.min(ch, ov.numberOfChannels - 1));
+    for (let i = 0; i < dst.length; i++) {
+      const tAbs = inSec + i / sr;
+      const ovIdx = Math.round(tAbs * ovSr);
+      if (ovIdx >= 0 && ovIdx < ovCh.length) dst[i] = Math.max(-1, Math.min(1, dst[i] + ovCh[ovIdx] * gain));
+    }
+  }
 }
 
 function sampleEditorPlayPreview() {
   _sampleEditorStopPreview();
   if (_sed.buf) {
     const c = audioCtx();
+    const sources = [];
     const src = c.createBufferSource(); src.buffer = _sed.buf;
     const g = c.createGain(); g.gain.value = 0.7;
     src.connect(g); g.connect(c.destination);
     src.start(0, _sed.inSec, Math.max(0.02, _sed.outSec - _sed.inSec));
-    _sed.previewSrc = src;
-    src.onended = () => { if (_sed.previewSrc === src) _sed.previewSrc = null; };
+    sources.push(src);
+    if (_sed.overlayBuf) {
+      const ovOffset = Math.max(0, _sed.inSec);
+      const ovDur = Math.max(0, Math.min(_sed.overlayBuf.duration - ovOffset, _sed.outSec - _sed.inSec));
+      if (ovOffset < _sed.overlayBuf.duration && ovDur > 0.02) {
+        const ovSrc = c.createBufferSource(); ovSrc.buffer = _sed.overlayBuf;
+        const ovG = c.createGain(); ovG.gain.value = 0.7 * _sed.overlayGain;
+        ovSrc.connect(ovG); ovG.connect(c.destination);
+        ovSrc.start(0, ovOffset, ovDur);
+        sources.push(ovSrc);
+      }
+    }
+    _sed.previewSrc = { stop: () => sources.forEach(s => { try { s.stop(); } catch(e) {} }) };
   } else if (_sed.wavUrl) {
     const audioEl = new Audio(_sed.wavUrl);
     audioEl.currentTime = _sed.inSec;
@@ -8430,6 +9100,7 @@ async function sampleEditorExport() {
       for (let ch = 0; ch < buf.numberOfChannels; ch++) {
         out.getChannelData(ch).set(buf.getChannelData(ch).subarray(startI, endI));
       }
+      _sedMixOverlayInto(out, inSec); // #19 : fusionne la superposition dans la découpe exportée
       _fadeBufferEdges(out, 8);
       const wavBlob = _audioBufferToWavBlob(out);
       const srcFiles = SAMPLE_FILES[folderId]; const orig = srcFiles && srcFiles[idx];
@@ -8655,4 +9326,23 @@ function recToggle() {
 </script>
 
 
-<button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Afficher / masquer les oscillateurs" data-html-import-id="html-import-877" data-template-id="button-791">+</button><button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra" title="Solo sample + fréquence maître" data-html-import-id="html-import-878" data-template-id="button-792">+</button><button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra" title="Ouvre le menu FX géométrie" data-html-import-id="html-import-880" data-template-id="button-794">+</button><button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra" title="Ajouter le jeu au preset" data-html-import-id="html-import-881" data-template-id="button-795">+</button></body></html>
+<button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Afficher / masquer les oscillateurs" data-html-import-id="html-import-877" data-template-id="button-791">+</button><button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra" title="Solo sample + fréquence maître" data-html-import-id="html-import-878" data-template-id="button-792">+</button><button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra" title="Ouvre le menu FX géométrie" data-html-import-id="html-import-880" data-template-id="button-794">+</button><button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra" title="Ajouter le jeu au preset" data-html-import-id="html-import-881" data-template-id="button-795">+</button>
+<!-- #20 : 2e sphère raccourci par case (sauf Flux) — appui long sans déplacement = assignation rapide (#22) -->
+<button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra2" title="Ancre respiratoire on/off">+</button>
+<button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra2" title="Sub-drone on/off">+</button>
+<button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra2" title="Anti-pompage par paire on/off">+</button>
+<button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra2" title="Annuler le dernier tirage">+</button>
+<!-- #22 : assignation rapide — ouvert par appui long sur une sphère "+" sans la déplacer -->
+<div id="dock-quick-assign-modal" class="dqa-modal">
+  <div class="dqa-inner">
+    <div class="dqa-head">
+      <span id="dqa-title">Sphère</span>
+      <button class="panel-close canva-button" onclick="_closeDockQuickAssign()">✕</button>
+    </div>
+    <div class="dqa-section-t">Bascules rapides</div>
+    <div id="dqa-toggles" class="dqa-toggles"></div>
+    <div class="dqa-section-t">Assigner cette sphère à…</div>
+    <select id="dqa-select" class="cust-select" onchange="_dqaAssign(this.value)"></select>
+  </div>
+</div>
+</body></html>
