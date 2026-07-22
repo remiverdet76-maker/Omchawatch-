@@ -15,6 +15,20 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;}
 
+/* #30 : plus de sélection de texte tactile ni de menu contextuel natif
+   (Copier/Partager/Tout sélectionner) nulle part dans l'app — un appui long
+   sur un libellé quelconque (ex: "Limiter" dans le panneau FX) déclenchait
+   le menu système Android. Exception explicite pour les VRAIS champs de
+   saisie (input/textarea), qui doivent rester sélectionnables/collables. */
+html,body,*{
+  -webkit-user-select:none;-moz-user-select:none;user-select:none;
+  -webkit-touch-callout:none;
+}
+input,textarea,[contenteditable="true"]{
+  -webkit-user-select:text;-moz-user-select:text;user-select:text;
+  -webkit-touch-callout:default;
+}
+
 /* ── Faders — piste et curseur agrandis partout, tactile précis ──
    S'applique à TOUS les input[type=range] de l'app (aucune exception).
    La teinte par oscillateur/canal est préservée via currentColor : chaque
@@ -336,7 +350,7 @@ body{
   50%{ transform:scale(1.06); }
 }
 .ms-freq{font-family:'IM Fell English',serif;font-size:2.2rem;color:#F3D9FF;line-height:1;cursor:text;text-shadow:0 0 20px rgba(220,130,255,.75);font-weight:bold;}
-.ms-freq:hover{color:#fff;}
+.ms-freq:hover{color:#FFD700;}
 .ms-state{font-size:.7rem;font-style:italic;letter-spacing:.1em;color:rgba(220,180,255,.7);text-transform:uppercase;transition:color .5s;font-weight:bold;}
 #freq-input-master{
   display:none;width:95px;background:transparent;border:none;border-bottom:2px solid rgba(220,140,255,.75);
@@ -375,7 +389,7 @@ body{
   color:rgba(230,220,255,.75);text-align:center;line-height:1.5;
   pointer-events:none;white-space:nowrap;
 }
-.mm-label span{ font-size:1rem;font-weight:bold;font-style:normal;color:#fff; }
+.mm-label span{ font-size:1rem;font-weight:bold;font-style:normal;color:#D7DAE0; }
 .mm-label-left{ left:-2%; }
 .mm-label-right{ right:-2%; }
 .mm-cell{
@@ -383,7 +397,7 @@ body{
   display:flex;flex-direction:column;align-items:center;gap:.1rem;
   width:64px;height:56px;border-radius:14px;border:2px solid;
   background:rgba(10,4,30,.9);backdrop-filter:blur(8px);
-  color:#fff;font-size:1.3rem;cursor:pointer;transition:all .18s;
+  color:#D7DAE0;font-size:1.3rem;cursor:pointer;transition:all .18s;
   box-shadow:0 0 14px rgba(0,0,0,.6);
 }
 .mm-cell span{ font-size:.5rem;font-family:'Cinzel Decorative',serif;letter-spacing:.02em;color:rgba(230,220,255,.75); }
@@ -450,9 +464,9 @@ body{
   border-color:#63E6FF;
   animation:magicRotate 3s ease-in-out infinite alternate,fbfPulse 1.2s ease-in-out infinite;
 }
-.fbf-label{font-size:1.05rem;font-weight:900;letter-spacing:.22em;color:#fff;text-shadow:0 0 14px rgba(0,0,0,.9),0 0 28px rgba(255,255,255,.7);}
-.fbf-hz{font-family:'IM Fell English',serif;font-size:1.1rem;font-weight:bold;color:#fff;text-shadow:0 0 10px rgba(0,0,0,.9);line-height:1;}
-.fbf-state{font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.75);text-shadow:0 0 6px rgba(0,0,0,.9);}
+.fbf-label{font-size:1.05rem;font-weight:900;letter-spacing:.22em;color:#FFD700;text-shadow:0 0 14px rgba(0,0,0,.9),0 0 28px rgba(255,215,0,.65);}
+.fbf-hz{font-family:'IM Fell English',serif;font-size:1.1rem;font-weight:bold;color:#FFD700;text-shadow:0 0 10px rgba(0,0,0,.9);line-height:1;}
+.fbf-state{font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(210,214,224,.75);text-shadow:0 0 6px rgba(0,0,0,.9);}
 
 /* ─── Step buttons (dans Jeu Aléatoire) ─────── */
 .fbf-step{
@@ -540,9 +554,9 @@ body{
   color:rgba(235,220,255,.7);border-radius:7px;padding:.38rem .2rem;
   font-family:'IM Fell English',serif;font-size:.7rem;cursor:pointer;transition:all .2s;text-align:center;line-height:1.2;
 }
-.geometry-btn:hover{background:rgba(200,100,255,.15);border-color:#F3D9FF;color:#fff;}
-.geometry-btn.active,.geometry-btn.on{background:rgba(200,100,255,.28);border-color:#F3D9FF;color:#fff;box-shadow:0 0 12px rgba(200,100,255,.45);}
-.fx3d-ratio.on{background:rgba(99,200,255,.22);border-color:#63E6FF;color:#fff;box-shadow:0 0 10px rgba(99,200,255,.4);}
+.geometry-btn:hover{background:rgba(200,100,255,.15);border-color:#F3D9FF;color:#FFD700;}
+.geometry-btn.active,.geometry-btn.on{background:rgba(200,100,255,.28);border-color:#F3D9FF;color:#FFD700;box-shadow:0 0 12px rgba(200,100,255,.45);}
+.fx3d-ratio.on{background:rgba(99,200,255,.22);border-color:#63E6FF;color:#FFD700;box-shadow:0 0 10px rgba(99,200,255,.4);}
 
 /* Sliders OmCv 477 */
 .sl-row{display:flex;flex-direction:column;gap:3px;padding:5px 2px;}
@@ -712,7 +726,7 @@ body{
 .tnav-fullscreen:hover{
   background:rgba(255,255,255,.14);
   border-color:rgba(255,255,255,.6);
-  color:#fff;
+  color:#FFD700;
   box-shadow:0 0 16px rgba(200,180,255,.3);
 }
 
@@ -724,8 +738,8 @@ body{
   flex:1 1 0;max-width:202px;min-width:0; }
 
 .dcell{
-  display:flex;align-items:center;justify-content:center;gap:.35rem;
-  width:100%;height:23px;padding:0 .4rem; /* #20 : raccourci d'1/3 (34px→23px) */
+  display:flex;align-items:center;justify-content:center;gap:.3rem;
+  flex:2 1 0;min-width:0;width:auto;height:23px;padding:0 .3rem; /* largeur -1/3 : voisine avec .dcell-extras dans .dcell-wrap */
   border-radius:11px;border:1.5px solid;
   cursor:pointer;user-select:none;-webkit-user-select:none;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
@@ -753,46 +767,52 @@ body{
 .dcell-blue{ background:rgba(60,170,255,.14);border-color:rgba(80,190,255,.5);color:#78C6FF; }
 .dcell-blue .dcell-name{ font-size:.72rem;letter-spacing:.1em; }
 
-/* ── Chaque cellule = bouton principal + petit bouton "extra" (3ᵉ action) ──
-   Placé à GAUCHE de la cellule (au lieu du coin haut-droit), agrandi, et
-   assorti à la couleur de sa cellule. Plus d'icône : un simple "+" — l'état
-   (solo actif, enregistrement…) se lit sur la couleur/l'animation. */
-.dcell-wrap{ position:relative;width:100%; }
+/* ── Chaque cellule = bouton principal + ses sphères "extra" (raccourcis) ──
+   #25 : mise en page flexbox — le bouton (~2/3) et ses sphères (~1/3, dans
+   .dcell-extras) sont des enfants normaux de .dcell-wrap, jamais en
+   position absolue par défaut → aucun chevauchement possible, quel que
+   soit l'écran (fini le calcul en pixels JS peu fiable d'un appareil à
+   l'autre). Le glisser-déposer (appui long, cf. _bindExtraDraggable) reste
+   possible : SEULE une sphère activement décrochée passe en position:fixed
+   (géré en JS, cf. .dcell-extra-dragging), et le reste au repos.
+   #27 : sphères pleines (couleur assortie à leur cellule) et symbole "+" doré. */
+.dcell-wrap{ display:flex;align-items:center;gap:.3rem;width:100%; }
+.dcell-extras{ display:flex;gap:.22rem;flex:1 0 auto;justify-content:flex-end;flex-shrink:0; }
 .dcell-extra{
-  position:absolute;top:50%;left:-15px;z-index:2;
-  transform:translateY(-50%);
-  width:42px;height:42px;border-radius:50%;
+  position:static;z-index:2;
+  width:24px;height:24px;border-radius:50%;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  font-size:1.35rem;line-height:1;font-weight:300;
-  background:rgba(10,4,26,.94);border:2px solid rgba(255,255,255,.4);
-  color:rgba(255,255,255,.9);cursor:pointer;
+  font-size:1.05rem;line-height:1;font-weight:400;
+  border:1.5px solid rgba(255,215,0,.65);
+  color:#FFD700;cursor:pointer;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-  transition:transform .16s,box-shadow .16s,border-color .16s,color .16s,background .16s;
-  box-shadow:0 0 8px rgba(0,0,0,.6);
+  transition:transform .16s,box-shadow .16s,border-color .16s;
+  box-shadow:0 0 6px rgba(0,0,0,.55);
 }
-.dcell-extra:hover{ transform:translateY(-50%) scale(1.12);border-color:#fff;color:#fff; }
-.dcell-extra:active{ transform:translateY(-50%) scale(.88); }
-.dcell-extra.active{ background:rgba(255,208,96,.35);border-color:#FFD060;color:#FFD060;box-shadow:0 0 12px rgba(255,208,96,.6); }
-.dcell-extra.recording{ background:rgba(255,80,80,.4);border-color:#FF6E6E;color:#fff;animation:blink 1s infinite; }
+.dcell-extra:active{ transform:scale(.88); }
+.dcell-extra.active{ border-color:#FFD700;box-shadow:0 0 12px rgba(255,215,0,.65); }
+.dcell-extra.recording{ border-color:#FF6E6E;animation:blink 1s infinite; }
 /* Masquées avec le dock quand le chevron replie le dock */
 .dcell-extra.dc-hidden{ opacity:0;pointer-events:none;transition:opacity .3s ease; }
-/* Appui long : le bouton se décroche et suit le doigt jusqu'au relâcher */
+/* Appui long : le bouton se décroche (position:fixed posé par le JS) et suit le doigt */
 .dcell-extra-dragging{
-  transform:scale(1.25) !important;opacity:.92;
-  box-shadow:0 0 22px rgba(255,255,255,.5),0 4px 16px rgba(0,0,0,.6) !important;
+  position:fixed !important;
+  transform:scale(1.25) !important;opacity:.95;
+  box-shadow:0 0 22px rgba(255,215,0,.6),0 4px 16px rgba(0,0,0,.6) !important;
   transition:none !important;
 }
 
-/* Assortiment aux couleurs de chaque cellule */
-.dcell-extra-red{ border-color:rgba(255,90,90,.6);color:#FF8E8E;background:rgba(255,70,70,.22); }
-.dcell-extra-orange{ border-color:rgba(255,170,60,.6);color:#FFC070;background:rgba(255,150,40,.22); }
-.dcell-extra-green{ border-color:rgba(90,255,160,.6);color:#8CFFC0;background:rgba(90,255,160,.2); }
-.dcell-extra-blue{ border-color:rgba(80,190,255,.6);color:#78C6FF;background:rgba(60,170,255,.22); }
+/* Fond plein assorti à la couleur de chaque cellule (même code couleur) */
+.dcell-extra-red{ background:#FF4646; }
+.dcell-extra-orange{ background:#FF9628; }
+.dcell-extra-green{ background:#5AFFA0; }
+.dcell-extra-blue{ background:#3CAAFF; }
 
-/* CENTRE — Flux : cercle jaune surélevé, plus gros */
+/* CENTRE — Flux : cercle jaune surélevé, plus gros — reste en position
+   absolue (seule sphère de la case, pas de risque de chevauchement). */
 .dcell-wrap-flux{ position:relative;flex-shrink:0;width:auto; }
-.dcell-extra-flux{ top:6px;left:-15px;transform:none;
-  border-color:rgba(255,210,90,.75);color:#FFDE78;background:rgba(255,190,70,.22); }
+.dcell-extra-flux{ position:absolute;top:6px;left:-15px;transform:none;
+  border-color:rgba(255,215,0,.65);color:#FFD700;background:#FFB020; }
 .dcell-extra-flux:hover{ transform:scale(1.12); }
 .dcell-extra-flux:active{ transform:scale(.88); }
 .dcell-flux{
@@ -910,7 +930,7 @@ body{
 #btn-fav-dock:hover{border-color:#FF9EC0;color:#FFB0CC;box-shadow:0 0 24px rgba(255,110,150,.5);}
 #btn-fav-dock:active{transform:scale(.92);}
 #btn-fav-dock.fav-flash{animation:favPulse .6s ease-out;}
-@keyframes favPulse{0%{transform:scale(1);}40%{transform:scale(1.35);color:#fff;box-shadow:0 0 36px rgba(255,140,180,.8);}100%{transform:scale(1);}}
+@keyframes favPulse{0%{transform:scale(1);}40%{transform:scale(1.35);color:#FFD700;box-shadow:0 0 36px rgba(255,140,180,.8);}100%{transform:scale(1);}}
 
 /* ─── Verrou par fréquence (table aléatoire) ─── */
 .rand-lock{
@@ -977,7 +997,7 @@ body{
   backdrop-filter:blur(10px);white-space:nowrap;
 }
 .tbtn:hover{background:rgba(0,204,255,.1);border-color:rgba(0,204,255,.5);}
-.tbtn.on{background:rgba(0,204,255,.14);border-color:rgba(0,204,255,.7);color:#fff;}
+.tbtn.on{background:rgba(0,204,255,.14);border-color:rgba(0,204,255,.7);color:#FFD700;}
 
 /* Panneaux — plein écran (largeur), déroulement haut → bas, s'arrêtent
    toujours au-dessus du dock du bas (height réservée + padding de garde). */
@@ -1085,7 +1105,7 @@ body{
   letter-spacing:.04em;text-align:center;
 }
 .fx-space-btn:hover{background:rgba(200,100,255,.18);border-color:#C0AAFF;color:#F3D9FF;}
-.fx-space-btn.active{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#FFF;}
+.fx-space-btn.active{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#FFD700;}
 
 /* Presets sessions */
 .fx-presets-list{display:flex;flex-direction:column;gap:.35rem;}
@@ -1132,7 +1152,7 @@ body{
   background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.22);
   color:rgba(245,240,225,.8);font-weight:bold;
 }
-.pair-mute-p:hover,.pair-mute-i:hover{border-color:rgba(255,255,255,.55);color:#fff;}
+.pair-mute-p:hover,.pair-mute-i:hover{border-color:rgba(255,255,255,.55);color:#FFD700;}
 .pair-mute-p.muted,.pair-mute-i.muted{background:rgba(220,60,60,.14);border-color:rgba(220,70,70,.45);color:rgba(255,150,130,.9);}
 .btn-activer{
   background:rgba(120,220,60,.09);border:1.5px solid rgba(120,220,60,.42);
@@ -1157,7 +1177,7 @@ body{
 /* Accordéon */
 .accord-header{display:flex;align-items:center;gap:.5rem;cursor:pointer;padding:.45rem .55rem;border-radius:6px;transition:background .18s;user-select:none;}
 .accord-header:hover{background:rgba(255,255,255,.07);}
-.accord-arrow{font-size:.85rem;transition:transform .22s;color:rgba(255,255,255,.4);}
+.accord-arrow{font-size:.85rem;transition:transform .22s;color:rgba(200,205,215,.45);}
 .accord-arrow.open{transform:rotate(90deg);}
 .accord-body{overflow:hidden;transition:max-height .3s ease,opacity .2s;max-height:0;opacity:0;}
 .accord-body.open{max-height:700px;opacity:1;}
@@ -1193,7 +1213,7 @@ input.param-input{
   cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
   transition:all .2s;flex-shrink:0;font-weight:bold;
 }
-.polarity-btn:hover{border-color:#F3D9FF;color:#fff;}
+.polarity-btn:hover{border-color:#F3D9FF;color:#FFD700;}
 .polarity-btn.negative{color:#FFB0B0;border-color:rgba(255,160,160,.5);}
 
 /* Notice */
@@ -1250,7 +1270,7 @@ input.param-input{
   color:rgba(225,210,255,.7);font-family:'Cinzel Decorative',serif;font-size:.72rem;
   letter-spacing:.02em;transition:all .2s;padding:.2rem;}
 .osc-tab.on{background:color-mix(in srgb,var(--ec,#888) 22%,transparent);
-  border-color:var(--ec,#888);color:#fff;box-shadow:0 0 14px color-mix(in srgb,var(--ec,#888) 40%,transparent);}
+  border-color:var(--ec,#888);color:#D7DAE0;box-shadow:0 0 14px color-mix(in srgb,var(--ec,#888) 40%,transparent);}
 .osc-tab:active{transform:scale(.96);}
 .osc-pane.hidden{display:none;}
 .osc-sec-t{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;
@@ -1263,7 +1283,7 @@ input.param-input{
   background:rgba(255,255,255,.03);border:1px solid color-mix(in srgb,var(--ec,#888) 30%,transparent);
   color:color-mix(in srgb,var(--ec,#888) 75%,white);transition:all .18s;
   white-space:normal;line-height:1.05;text-align:center;}
-.eng-btn.on{background:color-mix(in srgb,var(--ec,#888) 28%,transparent);border-color:var(--ec,#888);color:#fff;
+.eng-btn.on{background:color-mix(in srgb,var(--ec,#888) 28%,transparent);border-color:var(--ec,#888);color:#D7DAE0;
   box-shadow:0 0 12px color-mix(in srgb,var(--ec,#888) 45%,transparent);}
 .eng-btn:active{transform:scale(.95);}
 
@@ -1283,7 +1303,7 @@ input.param-input{
 .rt-cell .rt-hz{font-size:.7rem;font-family:'IM Fell English',serif;color:rgba(225,205,255,.7);}
 .rt-cell.on{background:color-mix(in srgb,var(--ec,#888) 26%,transparent);border-color:var(--ec,#888);
   box-shadow:0 0 10px color-mix(in srgb,var(--ec,#888) 40%,transparent);}
-.rt-cell.on .rt-l,.rt-cell.on .rt-hz{color:#fff;}
+.rt-cell.on .rt-l,.rt-cell.on .rt-hz{color:#D7DAE0;}
 .rt-cell:active{transform:scale(.94);}
 
 /* Patchbay */
@@ -1295,8 +1315,8 @@ input.param-input{
   border:1px solid color-mix(in srgb,var(--ec,#888) 28%,transparent);color:rgba(200,180,255,.5);transition:all .16s;letter-spacing:1px;}
 .patch-cell.jack:active{transform:scale(.92);}
 .patch-cell.jack.lvl1{border-color:var(--ec,#888);color:var(--ec,#888);}
-.patch-cell.jack.lvl2{border-color:var(--ec,#888);color:#fff;background:color-mix(in srgb,var(--ec,#888) 18%,transparent);}
-.patch-cell.jack.lvl3{border-color:var(--ec,#888);color:#fff;background:color-mix(in srgb,var(--ec,#888) 34%,transparent);
+.patch-cell.jack.lvl2{border-color:var(--ec,#888);color:#D7DAE0;background:color-mix(in srgb,var(--ec,#888) 18%,transparent);}
+.patch-cell.jack.lvl3{border-color:var(--ec,#888);color:#FFD700;background:color-mix(in srgb,var(--ec,#888) 34%,transparent);
   box-shadow:0 0 12px color-mix(in srgb,var(--ec,#888) 50%,transparent);}
 
 /* Verrou dans l'en-tête du modal */
@@ -1323,7 +1343,7 @@ input.param-input{
 .theme-btns{display:flex;gap:.35rem;}
 .theme-b{flex:1;min-height:40px;border-radius:8px;cursor:pointer;font-size:.7rem;
   background:rgba(255,255,255,.03);border:1px solid rgba(200,170,255,.22);color:rgba(220,200,255,.7);transition:all .18s;}
-.theme-b.on{border-color:#FFD060;color:#fff;background:rgba(255,208,96,.14);box-shadow:0 0 12px rgba(255,208,96,.3);}
+.theme-b.on{border-color:#FFD060;color:#FFD700;background:rgba(255,208,96,.14);box-shadow:0 0 12px rgba(255,208,96,.3);}
 .theme-b:active{transform:scale(.95);}
 
 /* Theme OR (432 doré) — défaut chaud */
@@ -1339,7 +1359,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 .fx-onoff{min-height:44px;min-width:96px;border-radius:9px;cursor:pointer;font-size:.8rem;font-weight:bold;
   background:rgba(255,255,255,.03);border:1px solid color-mix(in srgb,var(--ec,#888) 30%,transparent);
   color:rgba(200,180,255,.6);transition:all .18s;letter-spacing:.05em;}
-.fx-onoff.on{background:color-mix(in srgb,var(--ec,#888) 26%,transparent);border-color:var(--ec,#888);color:#fff;
+.fx-onoff.on{background:color-mix(in srgb,var(--ec,#888) 26%,transparent);border-color:var(--ec,#888);color:#D7DAE0;
   box-shadow:0 0 14px color-mix(in srgb,var(--ec,#888) 45%,transparent);}
 .fx-onoff:active{transform:scale(.95);}
 
@@ -1350,10 +1370,10 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   display:flex;align-items:center;gap:.7rem;min-height:52px;padding:.6rem .9rem;
   border-radius:12px;cursor:pointer;text-align:left;
   background:rgba(255,255,255,.04);border:1px solid color-mix(in srgb,var(--ic,#888) 35%,transparent);
-  color:#fff;font-size:1.4rem;transition:all .18s;
+  color:#FFD700;font-size:1.4rem;transition:all .18s;
 }
 .params-item span{font-family:'Cinzel Decorative',serif;font-size:.86rem;letter-spacing:.06em;
-  color:color-mix(in srgb,var(--ic,#888) 80%,white);}
+  color:color-mix(in srgb,var(--ic,#888) 78%,#FFD700 22%);}
 .params-item:hover{background:color-mix(in srgb,var(--ic,#888) 18%,transparent);border-color:var(--ic,#888);
   box-shadow:0 0 16px color-mix(in srgb,var(--ic,#888) 35%,transparent);transform:translateX(2px);}
 .params-item:active{transform:scale(.98);}
@@ -1385,8 +1405,8 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   background:rgba(255,255,255,.04);border:1.5px solid rgba(200,160,255,.25);
   color:rgba(230,220,255,.75);font-family:'IM Fell English',serif;font-size:.85rem;transition:all .18s;
 }
-.cust-bg-btn:hover{border-color:#D29DFF;color:#fff;}
-.cust-bg-btn.on{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#fff;box-shadow:0 0 12px rgba(200,100,255,.4);}
+.cust-bg-btn:hover{border-color:#D29DFF;color:#FFD700;}
+.cust-bg-btn.on{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#FFD700;box-shadow:0 0 12px rgba(200,100,255,.4);}
 .cust-upload-btn{
   display:block;width:100%;text-align:center;padding:.6rem;border-radius:10px;cursor:pointer;
   background:rgba(99,230,255,.08);border:1.5px dashed rgba(99,230,255,.4);
@@ -1573,7 +1593,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 .filt-mode-row{display:flex;gap:.3rem;margin-bottom:.45rem;}
 .filt-mode-btn{flex:1;padding:.32rem 0;border-radius:8px;font-size:.68rem;letter-spacing:.05em;
   border:1px solid rgba(200,160,255,.28);background:rgba(12,2,32,.5);color:rgba(200,170,255,.75);cursor:pointer;}
-.filt-mode-btn.active{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#FFF;}
+.filt-mode-btn.active{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#FFD700;}
 
 .eq12-rack{display:flex;gap:.22rem;align-items:flex-end;height:112px;padding:.3rem .1rem .1rem;margin-bottom:.3rem;}
 .eq12-band{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;height:100%;}
@@ -1609,20 +1629,25 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 
   <!-- Colonne gauche : ROUGE (haut) sur ORANGE (bas) -->
   <div class="dock-col" data-html-import-id="html-import-15">
-    <!-- ROUGE — Option Jeu aléatoire : tap=Options Aléatoire · long=Solo maître · sphère=afficher/masquer oscillateurs -->
+    <!-- ROUGE — Option Jeu aléatoire : tap=Options Aléatoire · long=Solo maître · sphères=raccourcis -->
     <div class="dcell-wrap" data-html-import-id="html-import-16">
       <button class="dcell dcell-red canva-button" id="dcRed" title="Tap : Options Aléatoire · Appui long : Solo fréquence maître" data-html-import-id="html-import-17" data-template-id="button-8" style="background: rgba(255, 70, 70, 0.14); color: rgb(255, 142, 142);">
-        <span class="dcell-ico canva-text" id="dcGameIco" data-html-import-id="html-import-18" data-template-id="span-9" style="color: rgb(255, 142, 142); font-size: 15px;">⚄</span>
         <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">Option Jeu</b><span class="dcell-sub canva-text" data-html-import-id="html-import-21" data-template-id="span-12" style="color: rgb(255, 142, 142); font-family: &quot;IM Fell English&quot;; font-weight: 700; font-size: 12px;">Aléatoire</span></span>
       </button>
-
+      <div class="dcell-extras">
+        <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Afficher / masquer les oscillateurs">+</button>
+        <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra2" title="Ancre respiratoire on/off">+</button>
+      </div>
     </div>
-    <!-- ORANGE — Samples : tap=ouvrir · long=jeu aléatoire sur fréquence du sample · sphère=solo sample + fréq. maître -->
+    <!-- ORANGE — Samples : tap=ouvrir · long=jeu aléatoire sur fréquence du sample · sphères=raccourcis -->
     <div class="dcell-wrap" data-html-import-id="html-import-22">
       <button class="dcell dcell-orange canva-button" id="dcOrange" title="Tap : Samples · Appui long : jeu aléatoire sur fréquence du sample" data-html-import-id="html-import-23" data-template-id="button-13" style="background: rgba(255, 150, 40, 0.14); color: rgb(255, 192, 112);">
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-24" data-template-id="span-14" style="color: rgb(255, 192, 112);"><b class="dcell-name canva-text" data-html-import-id="html-import-25" data-template-id="b-15" style="color: rgb(255, 192, 112); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">♪ Samples</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-24" data-template-id="span-14" style="color: rgb(255, 192, 112);"><b class="dcell-name canva-text" data-html-import-id="html-import-25" data-template-id="b-15" style="color: rgb(255, 192, 112); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">Samples</b></span>
       </button>
-
+      <div class="dcell-extras">
+        <button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra" title="Solo sample + fréquence maître">+</button>
+        <button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra2" title="Sub-drone on/off">+</button>
+      </div>
     </div>
   </div>
 
@@ -1637,18 +1662,25 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 
   <!-- Colonne droite : VERT (haut) sur BLEU (bas) -->
   <div class="dock-col" data-html-import-id="html-import-30">
-    <!-- VERT — Effet Audio : tap=ouvrir Effet · long=Effet Aléatoire (≤72%) · sphère=ouvrir FX3D géométrie -->
+    <!-- VERT — Effet Audio : tap=ouvrir Effet · long=Effet Aléatoire (≤72%) · sphères=raccourcis -->
     <div class="dcell-wrap" data-html-import-id="html-import-31">
       <button class="dcell dcell-green canva-button" id="dcGreen" title="Tap : Effet · Appui long : Effet Aléatoire (≤72%)" data-html-import-id="html-import-32" data-template-id="button-19" style="background: rgba(90, 255, 160, 0.13); color: rgb(140, 255, 192);">
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-33" data-template-id="span-20" style="color: rgb(140, 255, 192);"><b class="dcell-name canva-text" data-html-import-id="html-import-34" data-template-id="b-21" style="color: rgb(140, 255, 192); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">✦ Effet Audio</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-33" data-template-id="span-20" style="color: rgb(140, 255, 192);"><b class="dcell-name canva-text" data-html-import-id="html-import-34" data-template-id="b-21" style="color: rgb(140, 255, 192); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">Effet Audio</b></span>
       </button>
-
+      <div class="dcell-extras">
+        <button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra" title="Ouvre le menu FX géométrie">+</button>
+        <button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra2" title="Anti-pompage par paire on/off">+</button>
+      </div>
     </div>
-    <!-- BLEU — Paramètres : tap=ouvrir · long=ouvrir Preset · sphère=ajouter le jeu au preset -->
+    <!-- BLEU — Paramètres : tap=ouvrir · long=ouvrir Preset · sphères=raccourcis -->
     <div class="dcell-wrap" data-html-import-id="html-import-35">
       <button class="dcell dcell-blue canva-button" id="dcBlue" title="Tap : Paramètres · Appui long : Preset" data-html-import-id="html-import-36" data-template-id="button-22" style="background: rgba(60, 170, 255, 0.14); color: rgb(120, 198, 255);">
         <span class="dcell-txt canva-text" data-html-import-id="html-import-37" data-template-id="span-23" style="color: rgb(120, 198, 255);"><b class="dcell-name canva-text" data-html-import-id="html-import-38" data-template-id="b-24" style="color: rgb(120, 198, 255); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">Paramètres</b></span>
       </button>
+      <div class="dcell-extras">
+        <button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra" title="Ajouter le jeu au preset">+</button>
+        <button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra2" title="Annuler le dernier tirage">+</button>
+      </div>
 
     </div>
   </div>
@@ -1662,15 +1694,15 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 <div class="pan-right canva-container" id="panParams" data-html-import-id="html-import-40" data-template-id="div-26" style="background: rgba(1, 3, 6, 0.97);">
   <div class="pct canva-container" data-html-import-id="html-import-41" data-template-id="div-27" style="color: rgb(0, 204, 255); font-family: &quot;IM Fell English&quot;; font-size: 8px;">⚙ Paramètres</div>
   <div class="params-menu" data-html-import-id="html-import-42">
-    <button class="params-item canva-button" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="openTab('panFX')" data-html-import-id="html-import-43" data-template-id="button-28"><canva-inline-text data-template-id="canva-inline-text-29" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">✦</canva-inline-text><span data-html-import-id="html-import-44" data-template-id="span-30" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Effet</span></button>
-    <button class="params-item canva-button" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="openTab('panRand')" data-html-import-id="html-import-45" data-template-id="button-31"><canva-inline-text data-template-id="canva-inline-text-32" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">⚄</canva-inline-text><span data-html-import-id="html-import-46" data-template-id="span-33" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Options Aléatoire</span></button>
-    <button class="params-item canva-button" style="--ic: #60D8FF; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="openTab('panGeo')" data-html-import-id="html-import-47" data-template-id="button-34"><canva-inline-text data-template-id="canva-inline-text-35" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">⊞</canva-inline-text><span data-html-import-id="html-import-48" data-template-id="span-36" class="canva-text" style="color: color(srgb 0.501176 0.877647 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">FX3D · Géométrie</span></button>
-    <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="openTab('panPresets')" data-html-import-id="html-import-49" data-template-id="button-37"><canva-inline-text data-template-id="canva-inline-text-38" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">⊙</canva-inline-text><span data-html-import-id="html-import-50" data-template-id="span-39" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Presets</span></button>
-    <button class="params-item canva-button" style="--ic: #FF9A8B; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="openTab('panSamples')" data-html-import-id="html-import-51" data-template-id="button-40"><canva-inline-text data-template-id="canva-inline-text-41" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">◎</canva-inline-text><span data-html-import-id="html-import-52" data-template-id="span-42" class="canva-text" style="color: color(srgb 1 0.683137 0.636078); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Samples</span></button>
-    <button class="params-item canva-button" style="--ic: #FFB0FF; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="openTab('panNotice')" data-html-import-id="html-import-53" data-template-id="button-43"><canva-inline-text data-template-id="canva-inline-text-44" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">≡</canva-inline-text><span data-html-import-id="html-import-54" data-template-id="span-45" class="canva-text" style="color: color(srgb 1 0.752157 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Notice &amp; Thème</span></button>
-    <button class="params-item canva-button" id="btn-advanced" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="toggleAdvanced()" data-html-import-id="html-import-55" data-template-id="button-46"><canva-inline-text data-template-id="canva-inline-text-47" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">⊹</canva-inline-text><span data-html-import-id="html-import-56" data-template-id="span-48" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Mode avancé (6 sphères) : OFF</span></button>
-    <button class="params-item canva-button" id="btn-vislite" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="toggleVisLite()" data-html-import-id="html-import-57" data-template-id="button-49"><canva-inline-text data-template-id="canva-inline-text-50" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">◐</canva-inline-text><span data-html-import-id="html-import-58" data-template-id="span-51" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Visuel léger : OFF</span></button>
-    <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: rgb(255, 255, 255); font-size: 22px;" onclick="openTab('panCustom')" data-html-import-id="html-import-59" data-template-id="button-52"><canva-inline-text data-template-id="canva-inline-text-53" class="canva-text" style="color: rgb(255, 255, 255); font-size: 22px;">◈</canva-inline-text><span data-html-import-id="html-import-60" data-template-id="span-54" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Personnaliser l'interface</span></button>
+    <button class="params-item canva-button" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panFX')" data-html-import-id="html-import-43" data-template-id="button-28"><canva-inline-text data-template-id="canva-inline-text-29" class="canva-text" style="color: #FFD700; font-size: 22px;">✦</canva-inline-text><span data-html-import-id="html-import-44" data-template-id="span-30" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Effet</span></button>
+    <button class="params-item canva-button" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panRand')" data-html-import-id="html-import-45" data-template-id="button-31"><canva-inline-text data-template-id="canva-inline-text-32" class="canva-text" style="color: #FFD700; font-size: 22px;">⚄</canva-inline-text><span data-html-import-id="html-import-46" data-template-id="span-33" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Options Aléatoire</span></button>
+    <button class="params-item canva-button" style="--ic: #60D8FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panGeo')" data-html-import-id="html-import-47" data-template-id="button-34"><canva-inline-text data-template-id="canva-inline-text-35" class="canva-text" style="color: #FFD700; font-size: 22px;">⊞</canva-inline-text><span data-html-import-id="html-import-48" data-template-id="span-36" class="canva-text" style="color: color(srgb 0.501176 0.877647 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">FX3D · Géométrie</span></button>
+    <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panPresets')" data-html-import-id="html-import-49" data-template-id="button-37"><canva-inline-text data-template-id="canva-inline-text-38" class="canva-text" style="color: #FFD700; font-size: 22px;">⊙</canva-inline-text><span data-html-import-id="html-import-50" data-template-id="span-39" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Presets</span></button>
+    <button class="params-item canva-button" style="--ic: #FF9A8B; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panSamples')" data-html-import-id="html-import-51" data-template-id="button-40"><canva-inline-text data-template-id="canva-inline-text-41" class="canva-text" style="color: #FFD700; font-size: 22px;">◎</canva-inline-text><span data-html-import-id="html-import-52" data-template-id="span-42" class="canva-text" style="color: color(srgb 1 0.683137 0.636078); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Samples</span></button>
+    <button class="params-item canva-button" style="--ic: #FFB0FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panNotice')" data-html-import-id="html-import-53" data-template-id="button-43"><canva-inline-text data-template-id="canva-inline-text-44" class="canva-text" style="color: #FFD700; font-size: 22px;">≡</canva-inline-text><span data-html-import-id="html-import-54" data-template-id="span-45" class="canva-text" style="color: color(srgb 1 0.752157 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Notice &amp; Thème</span></button>
+    <button class="params-item canva-button" id="btn-advanced" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleAdvanced()" data-html-import-id="html-import-55" data-template-id="button-46"><canva-inline-text data-template-id="canva-inline-text-47" class="canva-text" style="color: #FFD700; font-size: 22px;">⊹</canva-inline-text><span data-html-import-id="html-import-56" data-template-id="span-48" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Mode avancé (6 sphères) : OFF</span></button>
+    <button class="params-item canva-button" id="btn-vislite" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleVisLite()" data-html-import-id="html-import-57" data-template-id="button-49"><canva-inline-text data-template-id="canva-inline-text-50" class="canva-text" style="color: #FFD700; font-size: 22px;">◐</canva-inline-text><span data-html-import-id="html-import-58" data-template-id="span-51" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Visuel léger : OFF</span></button>
+    <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panCustom')" data-html-import-id="html-import-59" data-template-id="button-52"><canva-inline-text data-template-id="canva-inline-text-53" class="canva-text" style="color: #FFD700; font-size: 22px;">◈</canva-inline-text><span data-html-import-id="html-import-60" data-template-id="span-54" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Personnaliser l'interface</span></button>
   </div>
 </div>
 
@@ -6390,6 +6422,23 @@ document.addEventListener('fullscreenchange', () => {
   if (btn) btn.textContent = document.fullscreenElement ? '✕' : '⤢';
 });
 
+// #31 : plein écran par défaut. La Fullscreen API exige un vrai geste
+// utilisateur — un appel direct à l'init peut échouer silencieusement selon
+// le contexte (WebView Capacitor vs navigateur). On tente quand même tout
+// de suite (best-effort, peut réussir hors contexte navigateur strict), ET
+// on arme un déclenchement de secours sur le tout premier appui tactile/clic
+// de la session, qui satisfait la contrainte de geste dans tous les cas.
+function _autoRequestFullscreen() {
+  if (document.fullscreenElement || document.webkitFullscreenElement) return;
+  const el = document.documentElement;
+  try {
+    const p = (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+    if (p && p.catch) p.catch(() => {});
+  } catch (e) {}
+}
+_autoRequestFullscreen();
+document.addEventListener('pointerdown', _autoRequestFullscreen, { once: true, capture: true });
+
 // ── Panel navigation (tab-nav centré) ────────────────────────────
 let _openPanel = null;
 let _openBtnId = null;
@@ -6830,15 +6879,17 @@ function _bindTapHold(el, onTap, onHold, holdMs) {
   el.addEventListener('pointerleave', clear);
 }
 
-// ── Boutons extra du dock : déplaçables librement (appui long = poignée) ──
+// ── Boutons extra du dock : en flux flexbox par défaut, déplaçables ───────
 // Tap court = action habituelle · appui long (~480ms) = décroche le bouton
-// de sa cellule et le fait suivre le doigt jusqu'au relâcher. Position
-// mémorisée par bouton (fixed, coordonnées écran), persistée localement.
-// v2 : nouveau layout par défaut (sphères aux bords gauche/droit, plus une
-// rangée centrée) — clé renommée pour que les anciennes positions
-// sauvegardées ne masquent pas le nouveau défaut chez les utilisateurs
-// déjà installés (elles restent en storage, simplement ignorées).
-const DOCK_EXTRA_POS_KEY = 'fbf432-dockExtraPos-v2';
+// de sa cellule (passage en position:fixed, direction <body>) et le fait
+// suivre le doigt jusqu'au relâcher. Une sphère jamais déplacée reste dans
+// le flux flexbox normal de sa cellule — jamais de calcul de pixels JS, donc
+// jamais de chevauchement/débordement selon la taille d'écran réelle.
+// v3 : layout flexbox par défaut (fini le positionnement absolu calculé en
+// JS, source du bug "chevauchement/dock qui grossit" sur appareil réel) —
+// clé renommée pour ignorer les anciennes positions (potentiellement hors
+// écran) sauvegardées par les builds précédents.
+const DOCK_EXTRA_POS_KEY = 'fbf432-dockExtraPos-v3';
 let DOCK_EXTRA_POS = {};
 // #22 : cellKey/slot identifient CETTE sphère précise dans DOCK_MAP — un
 // appui long qui ne bouge PAS ouvre l'assignation rapide (bascules + choix
@@ -6857,6 +6908,11 @@ function _bindExtraDraggable(el, onTap, holdMs, cellKey, slot) {
       try { navigator.vibrate && navigator.vibrate(20); } catch(_) {}
       const r = el.getBoundingClientRect();
       startLeft = r.left; startTop = r.top;
+      // Décroché du flux flexbox de sa cellule → <body>, seulement MAINTENANT
+      // (au premier vrai déplacement), pas au chargement : tant qu'aucune
+      // position n'est sauvegardée, la sphère reste dans le flux normal.
+      if (!el.dataset.homeParent && el.parentElement && el.parentElement.id) el.dataset.homeParent = el.parentElement.id;
+      if (el.parentElement !== document.body) document.body.appendChild(el);
       el.classList.add('dcell-extra-dragging');
       el.style.position = 'fixed';
       el.style.left = startLeft + 'px';
@@ -6896,107 +6952,55 @@ function _saveExtraPos(id, left, top) {
   DOCK_EXTRA_POS[id] = { left, top };
   try { localStorage.setItem(DOCK_EXTRA_POS_KEY, JSON.stringify(DOCK_EXTRA_POS)); } catch(e) {}
 }
-// Position par défaut : collées aux bords de l'écran, à côté de leur
-// cellule — rouge/orange à gauche (haut/bas), vert/bleu à droite (haut/bas).
-// #20 : la 2e sphère de chaque case (extraId2) se place plus loin encore du
-// dock, sur la même colonne — jamais de recouvrement avec la 1ère.
-// La sphère FLUX (jaune) a été retirée : plus d'entrée à positionner ici.
-function _defaultExtraPositions() {
-  const dock = document.getElementById('bottom-dock');
-  if (!dock) return {};
-  const r = dock.getBoundingClientRect();
-  // Dock pas encore mis en page (rect vide — arrive dans certains contextes
-  // d'aperçu/iframe) → on ne calcule RIEN plutôt que de placer les boutons
-  // hors écran. _applyExtraPos laissera alors le CSS par défaut (bord de
-  // la cellule) faire le travail, toujours valide.
-  if (!r.width || !r.height) return {};
-  const btnSize = 42, edgeMargin = 6, vGap = 8, hGap = 8;
-  const cy = r.top + r.height / 2;
-  const leftX  = Math.max(4, r.left + edgeMargin);
-  const rightX = Math.min(window.innerWidth - btnSize - 4, r.right - edgeMargin - btnSize);
-  const topY    = Math.max(4, Math.round(cy - btnSize - vGap / 2));
-  const bottomY = Math.min(window.innerHeight - btnSize - 4, Math.round(cy + vGap / 2));
-  // #20 : la 2e sphère se place à la MÊME hauteur que la 1ère (déjà garantie
-  // valide/à l'écran) mais décalée horizontalement VERS LE CENTRE — un
-  // décalage vertical supplémentaire se fait clamper au même plafond que la
-  // 1ère sphère sur un dock court près du bord d'écran (chevauchement).
-  const leftX2  = Math.min(window.innerWidth / 2 - btnSize - 4, leftX + btnSize + hGap);
-  const rightX2 = Math.max(window.innerWidth / 2 + 4, rightX - btnSize - hGap);
-  const pos = {
-    dcRedExtra:     { left: Math.round(leftX),  top: topY },
-    dcRedExtra2:    { left: Math.round(leftX2), top: topY },
-    dcOrangeExtra:  { left: Math.round(leftX),  top: bottomY },
-    dcOrangeExtra2: { left: Math.round(leftX2), top: bottomY },
-    dcGreenExtra:   { left: Math.round(rightX), top: topY },
-    dcGreenExtra2:  { left: Math.round(rightX2),top: topY },
-    dcBlueExtra:    { left: Math.round(rightX), top: bottomY },
-    dcBlueExtra2:   { left: Math.round(rightX2),top: bottomY },
-  };
-  return pos;
-}
 function _applyExtraPos(el, pos) {
   if (!el || !pos) return;
+  // Une position sauvegardée = l'utilisateur a explicitement décroché cette
+  // sphère à un endroit précis : on la sort du flux flexbox de sa cellule et
+  // on la fixe à l'écran. Sans position sauvegardée, on ne touche à rien —
+  // la sphère reste dans le flux flexbox normal de `.dcell-extras`.
+  if (el.parentElement !== document.body) document.body.appendChild(el);
   el.style.position = 'fixed';
   el.style.left = pos.left + 'px';
   el.style.top  = pos.top + 'px';
   el.style.right = 'auto'; el.style.transform = 'none';
   el.style.zIndex = 100; // au-dessus des sphères/fond, sous les panneaux/modals
 }
-// #bottom-dock a un backdrop-filter (blur) : par spec CSS, ça en fait un
-// "containing block" pour tout descendant en position:fixed — les boutons
-// extra, restés enfants du dock, se positionnaient donc par rapport AU DOCK
-// et non à l'écran (top:692px calculé devenait ~692px SOUS le dock, donc
-// hors écran). C'est la vraie cause de "on a perdu nos boutons extra" :
-// on les détache du DOM du dock une fois pour toutes, direction <body>.
-function _detachExtraButtons() {
-  DOCK_CELLS.forEach(c => c.extraIds.forEach(extraId => {
-    const el = document.getElementById(extraId);
-    if (el && el.parentElement !== document.body) document.body.appendChild(el);
-  }));
+// Remet une sphère décrochée dans le flux flexbox normal de sa cellule.
+function _restoreExtraToFlow(el) {
+  if (!el) return;
+  el.style.position = '';
+  el.style.left = ''; el.style.top = ''; el.style.right = ''; el.style.transform = '';
+  el.style.zIndex = '';
+  if (el.parentElement === document.body && el.dataset.homeParent) {
+    const parent = document.getElementById(el.dataset.homeParent);
+    if (parent) parent.appendChild(el);
+  }
 }
 function _loadExtraPos() {
-  _detachExtraButtons();
   try { DOCK_EXTRA_POS = JSON.parse(localStorage.getItem(DOCK_EXTRA_POS_KEY)) || {}; } catch(e) { DOCK_EXTRA_POS = {}; }
-  // Garde-fou : une position sauvegardée hors écran (venant d'un ancien
-  // build affecté par le bug ci-dessus) ne doit jamais rester bloquée —
-  // on l'ignore et on retombe sur la rangée par défaut.
+  // Garde-fou : une position sauvegardée hors écran ne doit jamais rester
+  // bloquée — on l'ignore et la sphère retombe dans son flux flexbox normal.
   Object.keys(DOCK_EXTRA_POS).forEach(k => {
     const p = DOCK_EXTRA_POS[k];
     if (!p || p.top < 0 || p.left < 0 || p.top > window.innerHeight - 4 || p.left > window.innerWidth - 4) {
       delete DOCK_EXTRA_POS[k];
     }
   });
-  const defaults = _defaultExtraPositions();
   DOCK_CELLS.forEach(c => c.extraIds.forEach(extraId => {
     const el = document.getElementById(extraId);
-    _applyExtraPos(el, DOCK_EXTRA_POS[extraId] || defaults[extraId]);
+    if (!el) return;
+    if (!el.dataset.homeParent && el.parentElement && el.parentElement.id) el.dataset.homeParent = el.parentElement.id;
+    if (DOCK_EXTRA_POS[extraId]) _applyExtraPos(el, DOCK_EXTRA_POS[extraId]);
+    // sinon : rien à faire, déjà à sa place dans `.dcell-extras` (flexbox).
   }));
-  // Si le dock n'était pas encore mis en page au premier appel (rect vide),
-  // on retente une fois une fois la mise en page stabilisée — sans quoi la
-  // rangée par défaut ne s'affiche jamais, même après un resize.
-  if (!Object.keys(defaults).length) requestAnimationFrame(() => {
-    const retry = _defaultExtraPositions();
-    if (Object.keys(retry).length) DOCK_CELLS.forEach(c => c.extraIds.forEach(extraId => {
-      if (DOCK_EXTRA_POS[extraId]) return;
-      _applyExtraPos(document.getElementById(extraId), retry[extraId]);
-    }));
-  });
 }
-// Reflow léger : si l'écran change de taille (rotation, clavier…), on
-// replace uniquement les boutons jamais déplacés à la main — ceux déjà
-// repositionnés par l'utilisateur restent où il les a mis.
-window.addEventListener('resize', () => {
-  const defaults = _defaultExtraPositions();
-  DOCK_CELLS.forEach(c => c.extraIds.forEach(extraId => {
-    if (DOCK_EXTRA_POS[extraId]) return;
-    _applyExtraPos(document.getElementById(extraId), defaults[extraId]);
-  }));
-});
-// Remet tous les boutons extra à la rangée par défaut au-dessus du dock
+// Remet tous les boutons extra dans leur cellule d'origine (flux flexbox)
 function resetExtraPos() {
   DOCK_EXTRA_POS = {};
   try { localStorage.removeItem(DOCK_EXTRA_POS_KEY); } catch(e) {}
-  _loadExtraPos();
+  DOCK_CELLS.forEach(c => c.extraIds.forEach(extraId => {
+    _restoreExtraToFlow(document.getElementById(extraId));
+  }));
 }
 
 // ── Registre des actions disponibles pour les raccourcis du dock ──────
@@ -9326,12 +9330,9 @@ function recToggle() {
 </script>
 
 
-<button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Afficher / masquer les oscillateurs" data-html-import-id="html-import-877" data-template-id="button-791">+</button><button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra" title="Solo sample + fréquence maître" data-html-import-id="html-import-878" data-template-id="button-792">+</button><button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra" title="Ouvre le menu FX géométrie" data-html-import-id="html-import-880" data-template-id="button-794">+</button><button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra" title="Ajouter le jeu au preset" data-html-import-id="html-import-881" data-template-id="button-795">+</button>
-<!-- #20 : 2e sphère raccourci par case (sauf Flux) — appui long sans déplacement = assignation rapide (#22) -->
-<button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra2" title="Ancre respiratoire on/off">+</button>
-<button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra2" title="Sub-drone on/off">+</button>
-<button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra2" title="Anti-pompage par paire on/off">+</button>
-<button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra2" title="Annuler le dernier tirage">+</button>
+<!-- #25 : les sphères "+" (extra/extra2, sauf Flux) vivent maintenant DANS
+     leur .dcell-wrap (cf. #bottom-dock ci-dessus) — mise en page flexbox,
+     plus d'éléments orphelins à positionner en JS par défaut. -->
 <!-- #22 : assignation rapide — ouvert par appui long sur une sphère "+" sans la déplacer -->
 <div id="dock-quick-assign-modal" class="dqa-modal">
   <div class="dqa-inner">

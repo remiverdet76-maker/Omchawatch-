@@ -78,3 +78,48 @@ Android 5.1/6.0 (API 22-23) — sans impact sur un usage réel en 2026.
 - Dock (2ᵉ sphère + assignation rapide) : `DOCK_CELLS`, `DOCK_MAP_DEFAULT`, `_bindExtraDraggable()`,
   `_openDockQuickAssign()`, `DQA_TOGGLES`.
 - Auto-adaptation CPU : `_perfAutoAdapt()`, `_autoEnableVisLite()`, appelé depuis `masterTick()`.
+
+## Passe de correction (retours du test sur appareil réel)
+
+Le premier rendu du dock raccourci (point 6 ci-dessus) s'est révélé cassé sur
+un appareil réel : le dock avait grossi de 50% au lieu de rétrécir, et les
+sphères raccourcis chevauchaient les cellules. Cause : un système de
+positionnement `position:absolute` calculé en pixels par JS
+(`_defaultExtraPositions()`), fiable en test mais pas assez robuste face aux
+variations réelles d'écran/densité. Corrections apportées :
+
+1. **Dock reconstruit en flexbox pur** — chaque cellule (`.dcell-wrap`)
+   contient maintenant son bouton principal (`flex:2`, largeur réduite d'1/3)
+   et un conteneur `.dcell-extras` (`flex:1`) avec ses 2 sphères, tous en
+   flux normal. Plus aucun calcul de pixels JS par défaut : impossible que ça
+   chevauche ou déborde, quel que soit l'écran. Le glisser-déposer (appui
+   long) reste possible — SEULE une sphère activement décrochée passe en
+   `position:fixed`, gérée dans `_bindExtraDraggable()`/`_loadExtraPos()`/
+   `resetExtraPos()` (clé de sauvegarde renommée en `-v3` pour ignorer les
+   anciennes positions issues du build cassé).
+2. **Émoticônes colorées retirées des 3 cellules signalées** — ⚄ (Option Jeu
+   Aléatoire), ♪ (Samples), ✦ (Effet Audio) : ces glyphes, censés être en
+   "présentation texte" par défaut selon Unicode, s'affichaient en couleur
+   sur l'appareil réel (police emoji du fabricant plus agressive que prévu).
+   Retirés purement et simplement des libellés de ces 3 cellules.
+3. **Sphères "+" pleines et cohérentes** — fond plein assorti à la couleur de
+   la cellule (`#FF4646`/`#FF9628`/`#5AFFA0`/`#3CAAFF`), bordure et symbole
+   "+" en doré (`#FFD700`).
+4. **Plus aucune police blanche** — chaque `color:#fff`/`rgb(255,255,255)`
+   du fichier a été remplacé par une teinte cuivrée/argentée/dorée selon le
+   contexte (doré `#FFD700` pour les états actifs/survol/icônes de menu,
+   argenté `#D7DAE0` pour le texte neutre secondaire). Le corps de l'app
+   utilisait déjà un blanc cassé chaleureux (`#f0ead8`), inchangé.
+5. **Sélection de texte tactile désactivée** — `user-select:none` +
+   `-webkit-touch-callout:none` posés globalement (`html,body,*`), avec
+   exception explicite pour les vrais champs `input`/`textarea` (renommage
+   de dossier/sample) qui restent sélectionnables/collables normalement.
+   Corrige le menu contextuel natif Android ("Copier/Partager/Tout
+   sélectionner") qui apparaissait sur un appui long dans les panneaux.
+6. **Plein écran par défaut** — tentative immédiate au chargement
+   (`_autoRequestFullscreen()`), plus un déclenchement de secours sur le
+   tout premier appui tactile de la session (la Fullscreen API exige un
+   geste utilisateur, non garanti au chargement pur).
+
+APK régénéré avec cette passe de correction en plus des 18+9 points
+précédents, même pipeline de signature (v2 uniquement, vérifiée API 24-34).
