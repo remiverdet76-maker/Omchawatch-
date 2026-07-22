@@ -157,3 +157,41 @@ panneau général ne chevauche le dock/les boutons plein écran/retour.
    de superposition.
 
 APK régénéré avec cette 2e passe de correction.
+
+## 3e passe — correction du claquement audio ("saturation façon LFO")
+
+Retour terrain (Redmi 2021) : claquements rythmés ressemblant à un LFO réglé
+beaucoup trop haut, empirant avec l'usage. Diagnostic posé puis corrigé :
+
+1. **Fuite de nœuds LFO à chaque reconstruction d'oscillateur (cause
+   principale)** — `releaseOsc()` (§2.5) nettoyait le patchbay modulaire
+   (`clearOscMods`) mais jamais le LFO de respiration par paire
+   (`_oscVolLFOs`, §2.10), actif par défaut sur quasiment tous les
+   oscillateurs. À chaque reconstruction (`rebuildAllOscs()` — déclenché par
+   "Annuler le dernier tirage", le chargement d'un preset à moteurs
+   différents, le toggle anti-pompage — ou un simple changement de moteur
+   d'onde par paire), l'ancien LFO restait connecté à un `AudioParam`
+   orphelin et continuait de tourner indéfiniment, jamais stoppé. Sur une
+   session avec beaucoup de tirages/annulations, ces nœuds fantômes
+   s'accumulaient jusqu'à ce que le thread audio ne tienne plus le temps
+   réel → dépassements de tampon → claquements rythmés. Corrigé :
+   `releaseOsc()` appelle maintenant `clearOscVolLFO()` (et, par sécurité,
+   `clearDeltaDrift()` pour la paire concernée) de façon synchrone à la
+   destruction de l'oscillateur. Vérifié : 8 tirages aléatoires consécutifs
+   maintiennent exactement 14 LFO de respiration + 7 dérives Δ (un jeu de
+   7 paires), sans aucune croissance — avant le correctif, ce test n'était
+   pas borné.
+2. **Animation CSS continue du bouton Flux insensible au mode "Visuel
+   léger"** — `fluxIdleGold`/`fluxPulseGold` (`box-shadow` en boucle
+   infinie) tournaient même quand "Visuel léger" était actif, ce mode ne
+   coupant que le rendu JS (`masterTick`), pas les animations CSS pures.
+   Sur le bouton Flux agrandi (#32, 95px), cette recomposition continue
+   pesait davantage. Corrigé : `body.vis-lite .dcell-flux{ animation:none; }`
+   — "Visuel léger" libère maintenant vraiment ce budget CPU/GPU.
+
+## Où regarder dans le code (audio)
+
+- Fuite corrigée : `releaseOsc()`, `attachOscVolLFO()`/`clearOscVolLFO()`,
+  `attachDeltaDriftToNode()`/`clearDeltaDrift()`, `rebuildAllOscs()`.
+- Mode Visuel léger : `toggleVisLite()`, `_autoEnableVisLite()`,
+  classe `body.vis-lite`, règle CSS sur `.dcell-flux`.

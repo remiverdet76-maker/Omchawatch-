@@ -841,6 +841,13 @@ body{
   background:radial-gradient(circle at 40% 34%,rgba(255,235,150,.5),rgba(60,42,6,.9));
   animation:fluxPulseGold 1.6s ease-in-out infinite;
 }
+/* Mode "Visuel léger" : ces animations CSS `infinite` (box-shadow, donc
+   repaint permanent) tournaient même quand le mode léger était actif, car
+   il ne coupe que le rendu JS (masterTick) — pas les animations CSS pures.
+   Sur l'écran agrandi (#32), leur zone de repaint est plus grande ; on les
+   coupe explicitement ici pour que "Visuel léger" libère vraiment le CPU. */
+body.vis-lite .dcell-flux,
+body.vis-lite .dcell-flux.flowing{ animation:none; }
 @keyframes fluxPulseGold{
   0%,100%{ box-shadow:0 0 22px rgba(255,220,110,.5),0 6px 18px rgba(0,0,0,.5); }
   50%{ box-shadow:0 0 46px rgba(255,230,140,.9),0 6px 18px rgba(0,0,0,.5); }
@@ -2708,7 +2715,18 @@ function tuneOsc(id, freq, rampDur) {
 
 function releaseOsc(node) {
   const subs = node.subs || (node.o ? [{ osc: node.o }] : []);
-  if (node._id) clearOscMods(node._id);
+  if (node._id) {
+    clearOscMods(node._id);
+    // Fuite corrigée : le LFO de respiration (§2.10) et la dérive lente du Δ
+    // (§2.11) restaient connectés au node.g.gain / osc.frequency de CET
+    // oscillateur après sa destruction — plus aucune sortie audible, mais le
+    // LFO continuait de tourner indéfiniment (jamais stoppé), accumulant des
+    // nœuds fantômes à chaque reconstruction (rebuildAllOscs, changement de
+    // moteur d'onde, annuler un tirage…) jusqu'à saturer le thread audio.
+    clearOscVolLFO(node._id);
+  }
+  const _relPairIdx = PAIRS.findIndex(p => p.ida.id === node._id);
+  if (_relPairIdx >= 0) clearDeltaDrift(_relPairIdx);
   try {
     const now = aNow();
     const rel = Math.max(FADE / 5, (OSC_ENV[node._id] && OSC_ENV[node._id].r) || 0);
