@@ -173,3 +173,63 @@ habituel : `npx cap sync android && cd android && ./gradlew assembleDebug`
   ancre) et bloc FX compact (Sinus Duo, dérive Δ, casque strict, anti-pompage,
   sub-drone, indicateur anti-tremolo) ; onglet Oscillo par paire (Sinus Duo
   par paire).
+
+## Mise à jour stratégique — Δ resserré en bande Delta, richesse par le detune
+
+Changement de fond demandé : le battement binaural Δ, qui pouvait aller de
+0,1 à 36 Hz (jusqu'en Gamma), est **verrouillé entre 0,8 et 1,2 Hz** — reste
+toujours en bande "Delta" au sens neuro (`waveState()` : ≤4 Hz), au lieu de
+dériver vers Thêta/Alpha/Bêta/Gamma selon le tirage. Comme le Δ n'apporte
+plus de variété d'un jeu à l'autre, cette variété vient maintenant du
+**detune Sinus Duo appliqué en couche sur chaque oscillateur**, quel que
+soit son moteur d'onde (sinus, triangle, carré, dents de scie, voix…), tiré
+au hasard entre -72 et +72 cents à **chaque tirage, pour chaque paire** —
+et pas seulement quand le moteur "Sinus Duo" est choisi à la main.
+
+1. **`DELTA_MIN`/`DELTA_MAX` (0.8/1.2 Hz), `DELTA_DEFAULT` = 1.0** —
+   nouvelles constantes, appliquées partout où Δ est réglé ou restauré :
+   `setGlobalDelta()`, `setDelta()`, `deltaStep()`, le tirage principal
+   (`triggerMagicAuto`), `globalHarmonicRandom()`, et par sécurité les
+   restaurations de session/preset (`loadState()`, `_restoreGame()`) au cas
+   où une ancienne valeur hors bande traînerait encore en local.
+2. **`DELTA_CHARACTER` (Apaisé/Équilibré/Immersif) recentré** — les 3
+   familles existent toujours mais piochent désormais dans des
+   sous-plages de la bande resserrée (0.80-1.00 / 0.90-1.10 / 1.00-1.20)
+   au lieu de s'étendre jusqu'en Gamma.
+3. **`DELTA_DRIFT_STATE.amount` réduit (0.3→0.06 Hz)** — l'ancienne
+   amplitude de dérive lente aurait pu faire sortir le battement réel de
+   la bande resserrée ; réduite pour rester dans les clous en toute
+   circonstance tout en gardant une respiration perceptible.
+4. **`buildOsc()` double chaque partiel en 2 voix ±mag** (sauf le moteur
+   "Sinus Duo" lui-même, déjà structuré ainsi) — voix détune `_baseDetune ±
+   mag` (+ le micro-désaccord existant ±1.2¢), gain `.62` chacune (même
+   convention que `sine2Engine`). Coupé automatiquement en qualité audio
+   "Légère" (retour à 1 voix/partiel) pour ne pas doubler le coût CPU sur
+   un appareil déjà en tension — cf. `AUDIO_QUALITY_TIER`.
+5. **Re-detune EN DIRECT, sans reconstruction d'oscillateur** —
+   `_applyDualSineDetune(id, mag)` (généralisation de l'ancien
+   `setPairDualSineDetune`, qui ne marchait qu'avec le moteur sine2) modifie
+   le detune des voix déjà existantes via `.setTargetAtTime`, taguées à la
+   construction (`_dualSign` ±1, `_baseDetune`). Le tirage aléatoire
+   randomise `PAIR_DUALSINE[i]` pour **toutes** les paires à chaque tirage
+   (pas seulement la paire vedette comme le moteur d'onde) sans jamais
+   reconstruire — donc aucun risque de craquement, contrairement à un
+   changement de moteur d'onde.
+6. **Historique/undo étendu** — `_snapshotGameState()`/`undoLastRandom()`
+   capturent et restaurent maintenant aussi `PAIR_DUALSINE` (annuler un
+   tirage restaure aussi bien le detune que le Δ/timbre/filtres).
+
+Vérifié : bornage Δ (global et par paire) jamais dépassé même en forçant
+des valeurs extrêmes ; doublage correct sur un moteur non-sine2 (2 voix,
+signes ±1) ; sine2 non re-doublé (reste à 2 voix) ; qualité "Légère" repasse
+à 1 voix ; re-detune en direct confirmé (mêmes références d'oscillateur
+avant/après, donc 0 reconstruction) ; tirage complet confirmé : toutes les
+paires ressortent avec Δ et detune dans les bornes attendues.
+
+Coût CPU pire cas (best-effort, configuration extrême manuelle : les 7
+paires en moteur "Voix Quat" à 4 partiels + detune Sinus Duo partout) :
+112 sous-oscillateurs contre 56 avant ce changement — mais le tirage
+aléatoire ne pioche jamais "Voix Quat" (pool restreint à sine/sine2/defsin)
+et ne change le moteur que de la paire vedette ; ce plafond n'est atteignable
+qu'en réglage manuel délibéré, et "Qualité audio : Légère" y répond en
+coupant le doublage.

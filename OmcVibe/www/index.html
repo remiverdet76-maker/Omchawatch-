@@ -2234,10 +2234,14 @@ const RATIO_OPTS = [
   {r:12/10, l:'12/10'}, {r:10/12, l:'10/12'},   // 4,5
 ];
 
-// Battement binaural par défaut — UNE seule valeur douce (thêta 4 Hz).
-// Réglable finement par ±0,1 Hz (cellule orange) et verrouillé pendant le
-// jeu aléatoire (le delta binaural, testé 100% fautif du « mode IRM »).
-const DELTA_DEFAULT = 4.0;
+// #35 : Δ resserré en bande Delta profonde — bien avant, la plage large
+// (0,1-36 Hz, jusqu'en Gamma) laissait le battement binaural lui-même
+// porter toute la variété d'un tirage à l'autre. Recentré sur 0,8-1,2 Hz
+// (toujours en bande "Delta" au sens neuro, cf. waveState()) : le battement
+// reste fin et stable, la variété vient désormais du detune Sinus Duo
+// appliqué à chaque oscillateur (cf. #10/#33, sine2Engine côté timbre).
+const DELTA_MIN = 0.8, DELTA_MAX = 1.2;
+const DELTA_DEFAULT = 1.0;
 
 const PAIRS = [
   { label:'Paire 1', color:'#FF6B6B', grad:['#FF6B6B','#FF9A8B'],
@@ -2436,7 +2440,9 @@ const BREATH_STATE = {on:true, rate:0.11, depth:0.18};  // respiration douce par
 // plusieurs minutes) autour de sa valeur, jamais assez pour changer de
 // bande cérébrale. Évite l'habituation, rend une session longue vivante
 // plutôt que figée sur un seul tirage.
-const DELTA_DRIFT_STATE = { on: true, amount: 0.3 }; // Hz
+// #35 : réduit (0.3→0.06 Hz) — avec le Δ resserré à 0.8-1.2 Hz, l'ancienne
+// amplitude aurait pu faire sortir le battement réel de la bande Delta.
+const DELTA_DRIFT_STATE = { on: true, amount: 0.06 }; // Hz
 const _deltaDriftLFOs = {}; // pairIdx → { lfo, depthGain }
 let _lfoNode = null, _lfoGain = null, _lfoDepthGain = null;
 let _breathLFO = null, _breathGain = null, _breathDepthGain = null;
@@ -2494,15 +2500,26 @@ function sine2Engine(mag) {
   const d = Math.max(-72, Math.min(72, mag != null ? mag : DUALSINE_DETUNE));
   return [{t:'sine', d:-d, g:.62}, {t:'sine', d:d, g:.62}];
 }
+// #35 : re-detune EN DIRECT (pas de reconstruction d'oscillateur, donc
+// aucun risque de craquement) — marche pour n'importe quel moteur d'onde
+// désormais, plus seulement sine2 : buildOsc() tague chaque voix doublée
+// avec _dualSign (±1, quelle voix) et _baseDetune (détune propre du
+// partiel avant le ±mag) ; les voix non doublées (_dualSign 0, ex. qualité
+// audio "Légère") sont ignorées, pas de reconstruction non plus pour elles.
+function _applyDualSineDetune(id, mag) {
+  const node = nodes[id]; if (!node || !node.subs) return;
+  const now = aNow();
+  node.subs.forEach(s => {
+    if (!s._dualSign) return;
+    try { s.osc.detune.setTargetAtTime((s._baseDetune || 0) + s._dualSign * mag, now, 0.12); } catch(e) {}
+  });
+}
 function setDualSineDetune(v) {
   DUALSINE_DETUNE = Math.max(-72, Math.min(72, parseFloat(v)));
-  const now = aNow();
   Object.keys(OSC_WAVES).forEach(id => {
-    if (OSC_WAVES[id] !== 'sine2') return;
-    const node = nodes[id]; if (!node || !node.subs || node.subs.length < 2) return;
-    const mag = _dualSineMagFor(id); // respecte un éventuel réglage par paire
-    node.subs[0].osc.detune.setTargetAtTime(-mag, now, 0.12);
-    node.subs[1].osc.detune.setTargetAtTime( mag, now, 0.12);
+    const pairIdx = PAIRS.findIndex(p => p.pingala.id === id || p.ida.id === id);
+    if (pairIdx >= 0 && typeof PAIR_DUALSINE[pairIdx] === 'number') return; // réglage par paire prioritaire
+    _applyDualSineDetune(id, DUALSINE_DETUNE);
   });
   const el = document.getElementById('sv-dualsine'); if (el) el.textContent = (DUALSINE_DETUNE < 0 ? '−' : '±') + Math.abs(DUALSINE_DETUNE).toFixed(0) + ' ¢';
   saveState();
@@ -2510,13 +2527,8 @@ function setDualSineDetune(v) {
 // Réglage individuel par paire (surcharge le global pour cette paire seule).
 function setPairDualSineDetune(i, v) {
   PAIR_DUALSINE[i] = Math.max(-72, Math.min(72, parseFloat(v)));
-  const now = aNow();
-  [PAIRS[i].pingala.id, PAIRS[i].ida.id].forEach(id => {
-    if (OSC_WAVES[id] !== 'sine2') return;
-    const node = nodes[id]; if (!node || !node.subs || node.subs.length < 2) return;
-    node.subs[0].osc.detune.setTargetAtTime(-PAIR_DUALSINE[i], now, 0.12);
-    node.subs[1].osc.detune.setTargetAtTime( PAIR_DUALSINE[i], now, 0.12);
-  });
+  _applyDualSineDetune(PAIRS[i].pingala.id, PAIR_DUALSINE[i]);
+  _applyDualSineDetune(PAIRS[i].ida.id, PAIR_DUALSINE[i]);
   saveState();
 }
 
@@ -2643,19 +2655,36 @@ function buildOsc(id, freq, vol, pan) {
     // juste appliqué à tous ses partiels en même temps plutôt qu'en plusieurs
     // exemplaires indépendants — différence inaudible, coût bien moindre.
     const sharedDrift = _connectDecorrelatedDrift(null);
+    // #35 : detune Sinus Duo en COUCHE sur chaque partiel, quel que soit le
+    // moteur d'onde — remplace la variété qu'apportait un Δ binaural large
+    // (désormais resserré 0.8-1.2 Hz, cf. DELTA_MIN/DELTA_MAX). sine2 est
+    // exclu ici : ses 2 partiels SONT déjà les 2 voix ±mag (d:-d/d, cf.
+    // sine2Engine) — le doubler ici les doublerait une seconde fois.
+    // Coupé en qualité audio "Légère" (retour à 1 voix/partiel, cf. #33).
+    const isSine2 = OSC_WAVES[id] === 'sine2';
+    const dualMag = (!isSine2 && AUDIO_QUALITY_TIER !== 'light') ? _dualSineMagFor(id) : 0;
     engine.forEach(part => {
-      const osc = c.createOscillator();
-      osc.type = part.t;
       const ratio = part.r || 1;
-      osc.frequency.value = Math.max(1, f0 * ratio);
-      // #6 : micro-désaccord aléatoire (±1.2 cents) → décorrèle les phases,
-      // évite l'addition constructive parfaite dans le grave (pic de crête). Δ binaural inchangé.
-      osc.detune.value = (part.d || 0) + (Math.random() * 2 - 1) * 1.2;
-      const pg = c.createGain(); pg.gain.value = part.g != null ? part.g : 1;
-      osc.connect(pg); pg.connect(signalIn);
-      if (sharedDrift) { try { sharedDrift.connect(osc.detune); } catch(e) {} }
-      osc.start();
-      subs.push({ osc, ratio, _driftDelay: sharedDrift });
+      const baseFreq = Math.max(1, f0 * ratio);
+      const baseDetune = part.d || 0;
+      const doDouble = !isSine2 && Math.abs(dualMag) > 0.05;
+      const voiceOffsets = doDouble ? [-dualMag, dualMag] : [0];
+      voiceOffsets.forEach(off => {
+        const osc = c.createOscillator();
+        osc.type = part.t;
+        osc.frequency.value = baseFreq;
+        // #6 : micro-désaccord aléatoire (±1.2 cents) → décorrèle les phases,
+        // évite l'addition constructive parfaite dans le grave (pic de crête). Δ binaural inchangé.
+        osc.detune.value = baseDetune + off + (Math.random() * 2 - 1) * 1.2;
+        const gainScale = doDouble ? 0.62 : 1; // même convention que sine2Engine (2 voix, .62 chacune)
+        const pg = c.createGain(); pg.gain.value = (part.g != null ? part.g : 1) * gainScale;
+        osc.connect(pg); pg.connect(signalIn);
+        if (sharedDrift) { try { sharedDrift.connect(osc.detune); } catch(e) {} }
+        osc.start();
+        const dualSign = isSine2 ? Math.sign(baseDetune) : (doDouble ? Math.sign(off) : 0);
+        const dualBase = isSine2 ? 0 : baseDetune;
+        subs.push({ osc, ratio, _driftDelay: sharedDrift, _baseDetune: dualBase, _dualSign: dualSign });
+      });
     });
   }
 
@@ -4665,10 +4694,13 @@ function toggleLock(i) {
 // opaque) — piochées par triggerMagicAuto() quand le verrou binaural est
 // décoché. La séparation stéréo anti-tremolo (binauralPanGap) suit
 // automatiquement, plus large pour "Immersif" que pour "Apaisé".
+// #35 : les 3 caractères restent, mais recentrés dans la bande Delta
+// resserrée 0.8-1.2 Hz (Apaisé = bas de bande, Immersif = haut de bande)
+// au lieu de s'étendre jusqu'en Gamma — cf. DELTA_MIN/DELTA_MAX.
 const DELTA_CHARACTER = {
-  apaise:    { label: 'Apaisé',    deltas: [0.8, 1.2, 1.6, 2.0] },
-  equilibre: { label: 'Équilibré', deltas: [3, 4, 5, 6] },
-  immersif:  { label: 'Immersif',  deltas: [6, 7.83, 9, 10] },
+  apaise:    { label: 'Apaisé',    deltas: [0.80, 0.87, 0.93, 1.00] },
+  equilibre: { label: 'Équilibré', deltas: [0.90, 0.97, 1.03, 1.10] },
+  immersif:  { label: 'Immersif',  deltas: [1.00, 1.07, 1.13, 1.20] },
 };
 let DELTA_CHARACTER_MODE = 'equilibre';
 function setDeltaCharacter(mode, btn) {
@@ -4861,7 +4893,8 @@ function setRatio(i, ri) {
   saveState();
 }
 function setDelta(i, raw) {
-  const d = Math.round(Math.max(0.1, Math.min(36, parseFloat(raw))) * 10) / 10;
+  // #35 : Δ verrouillé en bande Delta profonde (0.8-1.2 Hz) — cf. DELTA_MIN/MAX
+  const d = Math.round(Math.max(DELTA_MIN, Math.min(DELTA_MAX, parseFloat(raw))) * 100) / 100;
   if (isNaN(d)) return;
   PAIRS[i].ida.delta = d;
   updatePairUI(i);
@@ -4943,10 +4976,10 @@ function setMasterFreq(f) {
 }
 
 function deltaStep(delta) {
-  setGlobalDelta(Math.round(Math.max(0.1, Math.min(36, globalDelta + delta)) * 10) / 10);
+  setGlobalDelta(Math.round(Math.max(DELTA_MIN, Math.min(DELTA_MAX, globalDelta + delta)) * 100) / 100);
 }
 function setGlobalDelta(raw) {
-  const d = Math.round(Math.max(0.1, Math.min(36, parseFloat(raw))) * 10) / 10;
+  const d = Math.round(Math.max(DELTA_MIN, Math.min(DELTA_MAX, parseFloat(raw))) * 100) / 100;
   if (isNaN(d)) return;
   globalDelta = d;
   PAIRS.forEach((pair, i) => {
@@ -5146,7 +5179,8 @@ function _snapshotGameState() {
       delta:p.ida.delta, polarity:p.ida.polarity, volI:p.ida.vol
     })),
     waves: { ...OSC_WAVES },
-    filters: JSON.parse(JSON.stringify(OSC_FILTER))
+    filters: JSON.parse(JSON.stringify(OSC_FILTER)),
+    dualSine: { ...PAIR_DUALSINE } // #35 : re-tiré à chaque tirage désormais
   };
 }
 function _pushGameHistory() {
@@ -5173,6 +5207,15 @@ function undoLastRandom() {
     OSC_FILTER[id] = snap.filters[id];
     if (nodes[id]) setOscFilter(id, snap.filters[id].cutoff, snap.filters[id].res);
   });
+  if (snap.dualSine) { // #35
+    Object.keys(PAIR_DUALSINE).forEach(k => delete PAIR_DUALSINE[k]);
+    Object.assign(PAIR_DUALSINE, snap.dualSine);
+    PAIRS.forEach((pair, i) => {
+      if (typeof PAIR_DUALSINE[i] !== 'number') return;
+      _applyDualSineDetune(pair.pingala.id, PAIR_DUALSINE[i]);
+      _applyDualSineDetune(pair.ida.id, PAIR_DUALSINE[i]);
+    });
+  }
   refreshBinauralPan();
   updateDisplay();
   PAIRS.forEach((_, i) => updatePairUI(i));
@@ -5274,6 +5317,16 @@ function triggerMagicAuto(opts) {
     const curWave = (typeof OSC_WAVES !== 'undefined' && OSC_WAVES[pair.pingala.id]) || 'sine';
     const wavePool = _wavePoolForDraw();
     const wave    = (isSpot && RAND_OPTS.randomTimbre) ? wavePool[Math.floor(Math.random() * wavePool.length)] : curWave;
+
+    // #35 : detune Sinus Duo re-tiré au hasard À CHAQUE TIRAGE, pour CHAQUE
+    // paire (y compris le maître) — remplace la variété qu'apportait un Δ
+    // large, désormais resserré 0.8-1.2 Hz. Application EN DIRECT (aucune
+    // reconstruction d'oscillateur, cf. _applyDualSineDetune), donc jamais
+    // le risque de craquement qui limite le changement de moteur d'onde à
+    // la seule paire vedette.
+    PAIR_DUALSINE[idx] = Math.round((-72 + Math.random() * 144) * 10) / 10;
+    _applyDualSineDetune(pair.pingala.id, PAIR_DUALSINE[idx]);
+    _applyDualSineDetune(pair.ida.id, PAIR_DUALSINE[idx]);
 
     if (idx === MASTER_IDX) {
       pair.pingala.ri = 0; pair.pingala.n = 1.0;
@@ -5420,7 +5473,7 @@ function triggerMagicAuto(opts) {
 
 function resetAll() {
   if (flowing) return;
-  masterFreq = 252; globalDelta = 4.0; masterVol = 0.85;
+  masterFreq = 252; globalDelta = DELTA_DEFAULT; masterVol = 0.85;
   PAIRS.forEach((p, i) => {
     p.pingala.ri = i % RATIO_OPTS.length;
     p.pingala.n  = (i === MASTER_IDX) ? 1.0 : 0.2 + (i*0.5);
@@ -5745,13 +5798,13 @@ function buildMasterFXHTML() {
         <button class="fxq-step" onclick="masterStep(1)">+</button>
         <span class="fxq-unit">Hz</span>
       </div>
-      <!-- Battement binaural ±0,1 -->
+      <!-- #35 : Battement binaural verrouillé en bande Delta profonde, ±0,02 -->
       <div class="fxq-row">
         <span class="fxq-lbl">Binaural</span>
-        <button class="fxq-step" onclick="deltaStep(-0.1)">−</button>
-        <input type="number" id="global-delta-input" class="fxq-num" min="0.1" max="36" step="0.1" value="4.0" oninput="setGlobalDelta(this.value)" onchange="setGlobalDelta(this.value)">
-        <button class="fxq-step" onclick="deltaStep(0.1)">+</button>
-        <span class="fxq-wave" id="global-ws">Thêta</span>
+        <button class="fxq-step" onclick="deltaStep(-0.02)">−</button>
+        <input type="number" id="global-delta-input" class="fxq-num" min="0.8" max="1.2" step="0.02" value="1.0" oninput="setGlobalDelta(this.value)" onchange="setGlobalDelta(this.value)">
+        <button class="fxq-step" onclick="deltaStep(0.02)">+</button>
+        <span class="fxq-wave" id="global-ws">Delta</span>
       </div>
       <!-- #1 : écart stéréo Pingala/Ida appliqué au Δ courant (anti-tremolo) -->
       <div class="fxq-row" style="font-size:.62rem;color:rgba(200,170,255,.45);font-style:italic;justify-content:flex-end;">
@@ -6156,8 +6209,8 @@ function buildPairHTML(pair, i) {
           </div>
           <div class="param-row">
             <span class="param-label">Δ =</span>
-            <input type="number" class="param-input" id="bd-${i}" min="0.1" max="36" step="0.1" value="${pair.ida.delta}" oninput="setDelta(${i},this.value)">
-            <span class="param-hint">Hz (0.1 → 36)</span>
+            <input type="number" class="param-input" id="bd-${i}" min="0.8" max="1.2" step="0.02" value="${pair.ida.delta}" oninput="setDelta(${i},this.value)">
+            <span class="param-hint">Hz (0.8 → 1.2)</span>
           </div>
         </div>
       </div>
@@ -6405,7 +6458,9 @@ function loadState() {
     const s = JSON.parse(localStorage.getItem(LS_KEY));
     if (!s) return;
     if (s.masterFreq>=F_MIN&&s.masterFreq<=432) masterFreq = s.masterFreq;
-    if (s.globalDelta>0) globalDelta = s.globalDelta;
+    // #35 : clampé — une session sauvegardée avant le resserrement du Δ
+    // (0.8-1.2 Hz) pouvait contenir une ancienne valeur hors bande.
+    if (s.globalDelta>0) globalDelta = Math.max(DELTA_MIN, Math.min(DELTA_MAX, s.globalDelta));
     if (s.masterVol>=0&&s.masterVol<=1) masterVol = s.masterVol;
     if (typeof s.activeGeometry==='number') activeGeometry = Math.max(0, Math.min(GEO_NAMES.length-1, s.activeGeometry));
     (s.pairs||[]).forEach((sp,i) => {
@@ -6413,7 +6468,7 @@ function loadState() {
       if (sp.ri>=0&&sp.ri<RATIO_OPTS.length) PAIRS[i].pingala.ri = sp.ri;
       if (!isNaN(sp.n)&&sp.n>=0) PAIRS[i].pingala.n = sp.n;
       if (sp.volP>=0) PAIRS[i].pingala.vol = sp.volP;
-      if (sp.delta>0) PAIRS[i].ida.delta = sp.delta;
+      if (sp.delta>0) PAIRS[i].ida.delta = Math.max(DELTA_MIN, Math.min(DELTA_MAX, sp.delta)); // #35
       if (sp.polarity===1||sp.polarity===-1) PAIRS[i].ida.polarity = sp.polarity;
       if (sp.volI>=0) PAIRS[i].ida.vol = sp.volI;
       mutedOscs[PAIRS[i].pingala.id] = !!sp.mutedP;
@@ -6550,8 +6605,8 @@ function globalHarmonicRandom() {
   harmonicRandomInit();
   PAIRS.forEach((pair, i) => {
     pair.pingala.ri = Math.floor(Math.random() * RATIO_OPTS.length);
-    const deltas = [0.5, 1.0, 1.5, 1.8, 2.1, 3.5, 4.0, 6.0, 7.83];
-    pair.ida.delta = deltas[Math.floor(Math.random() * deltas.length)];
+    // #35 : Δ resserré 0.8-1.2 Hz (cf. DELTA_MIN/DELTA_MAX)
+    pair.ida.delta = Math.round((DELTA_MIN + Math.random() * (DELTA_MAX - DELTA_MIN)) * 100) / 100;
   });
   updateDisplay();
   if (flowing) PAIRS.forEach((_,i) => { tuneOsc(PAIRS[i].pingala.id,calcPFreq(i)); tuneOsc(PAIRS[i].ida.id,calcIFreq(i)); });
@@ -6712,7 +6767,7 @@ function _restoreGame(p) {
     if (sp.ri>=0 && sp.ri<RATIO_OPTS.length) PAIRS[i].pingala.ri = sp.ri;
     if (!isNaN(sp.n) && sp.n>0) PAIRS[i].pingala.n = sp.n;
     if (sp.vp>=0) PAIRS[i].pingala.vol = sp.vp;
-    if (sp.dt>0)  PAIRS[i].ida.delta   = sp.dt;
+    if (sp.dt>0)  PAIRS[i].ida.delta   = Math.max(DELTA_MIN, Math.min(DELTA_MAX, sp.dt)); // #35
     if (sp.po===1||sp.po===-1) PAIRS[i].ida.polarity = sp.po;
     if (sp.vi>=0) PAIRS[i].ida.vol = sp.vi;
   });
