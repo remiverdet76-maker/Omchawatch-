@@ -195,3 +195,73 @@ beaucoup trop haut, empirant avec l'usage. Diagnostic posé puis corrigé :
   `attachDeltaDriftToNode()`/`clearDeltaDrift()`, `rebuildAllOscs()`.
 - Mode Visuel léger : `toggleVisLite()`, `_autoEnableVisLite()`,
   classe `body.vis-lite`, règle CSS sur `.dcell-flux`.
+
+## 4e passe — "Qualité audio" adaptative + rebrand OmcVibe432
+
+Retour terrain : claquements toujours présents malgré le correctif de fuite.
+Demande : passe d'analyse en 18 points (sources + options) pour que tout
+appareil, bas ou haut de gamme, profite d'un son propre, avec l'idée d'un
+"détecteur CPU + limiteur". Implémenté dans la foulée, à la suite de
+l'analyse validée par l'utilisateur :
+
+1. **Le convolveur de reverb tournait à plein régime en permanence, même à
+   0%** — `masterReverb` (IR jusqu'à 14s sur l'espace "Cosmos") recevait un
+   signal réel des 7 paires en continu (`PAIR_FX` = `true` par défaut). Un
+   gating existait déjà (`_gateReverb`/`_gateDelay`/`_gatePP`) mais ne
+   coupait que la SORTIE (après le calcul) — le calcul de convolution
+   lui-même tournait quand même. Corrigé : le gating coupe maintenant aussi
+   l'ENTRÉE (`reverbSendBus↔masterReverb`, idem delay/ping-pong), au même
+   instant sûr (retour déjà à ~0). En creusant, le contrôle qui déclenche ce
+   gating avait lui-même un délai trop court (350ms/300ms) pour un wet parti
+   du maximum (1.0) avec le time-constant utilisé — le seuil de coupure
+   n'était souvent jamais atteint, donc le gate ne se déclenchait quasiment
+   jamais, même pour la sortie. Délais recalculés (550/450ms) pour couvrir
+   le pire cas ; vérifié par mesure directe du gain toutes les 150ms.
+2. **Un DelayNode de dérive analogique par PARTIEL** (`_connectDecorrelatedDrift`)
+   — un moteur à 4 partiels (voixquat) créait jusqu'à 4 DelayNode pour ce
+   seul effet cosmétique par oscillateur. Mutualisé : un seul DelayNode par
+   oscillateur (Pingala/Ida), partagé entre tous ses partiels — même rythme
+   de dérive propre à cet oscillateur, juste appliqué à tous ses partiels au
+   lieu d'être dupliqué. Jusqu'à 56 nœuds → 14 dans le pire cas.
+3. **"Qualité audio" (Auto / Complète / Légère)** — nouveau réglage dans
+   Personnaliser l'interface. En "Légère" : reverb totalement coupée (quel
+   que soit le curseur) et le tirage aléatoire ne pioche plus que le moteur
+   d'onde le plus simple (1 partiel) pour la paire vedette. En "Auto"
+   (défaut) : un watchdog (`_armAudioWatchdog`, toutes les 3s pendant la
+   lecture) surveille `AudioContext.outputLatency` — signal standard du Web
+   Audio API qui grandit spécifiquement quand le THREAD AUDIO peine à tenir
+   le temps réel (contrairement au détecteur visuel existant, qui ne voit
+   que le thread de rendu, séparé et non prioritaire sur Android). Après ~9s
+   de tension soutenue, bascule seule en "Légère" — jamais si l'utilisateur
+   a lui-même choisi un réglage fixe, jamais ne remonte automatiquement
+   (redémarrer le Flux repart propre), même logique que "Visuel léger".
+
+APK renommé **OmcVibe432** à la demande (l'ancien "OmcVibe 181" est
+retiré). Limites techniques honnêtes sur ce rebrand :
+- Le **nom affiché sous l'icône** dans le tiroir d'applications Android
+  (`android:label` d'AndroidManifest.xml) ne peut pas être changé avec ce
+  pipeline (fichier XML compilé, hors de portée sans les outils Android SDK
+  complets) — seuls le titre de la page web, le titre d'onglet dynamique
+  (`OmcVibe432 · <fréquence>`) et le splash à l'ouverture sont renommés.
+- L'**icône réelle de l'écran d'accueil sur Android 8+** utilise une icône
+  adaptative dont le calque de premier plan est un vecteur XML compilé
+  (`res/drawable-anydpi-v24/ic_launcher_foreground.xml`) — non modifiable
+  avec ce pipeline pour la même raison. Les PNG de secours (legacy/round,
+  utilisés par les lanceurs plus anciens, les notifications, certains
+  contextes) sont bien remplacés par le nouveau visuel.
+- L'**écran de démarrage natif** (`res/drawable*/splash.png`, image simple,
+  pas de vecteur ni de manifest impliqué) est lui entièrement remplacé et
+  fonctionnera partout — c'était de toute façon le placeholder Capacitor
+  générique par défaut, jamais personnalisé dans l'APK d'origine.
+
+## Où regarder dans le code (qualité audio adaptative + branding)
+
+- Qualité audio : `AUDIO_QUALITY_MODE`/`AUDIO_QUALITY_TIER`, `setAudioQuality()`,
+  `_armAudioWatchdog()`/`_audioWatchdogCheck()`/`_degradeAudioQuality()`,
+  `_gateReverb()`/`_gateDelay()`/`_gatePP()`, `_wavePoolForDraw()`.
+- Dérive mutualisée : `_connectDecorrelatedDrift()`, boucle `engine.forEach`
+  dans `buildOsc()`.
+- Branding : `OmcVibe/www/img/omcvibe432-logo.jpg` (splash web),
+  `OmcVibe/branding/icons/` (icônes + splash natifs Android, mêmes chemins
+  que l'APK d'origine), `<title>`/`document.title` dans `index.html`,
+  `manifest.json`.

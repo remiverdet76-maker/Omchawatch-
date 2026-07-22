@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
-<title>OmcVibe 181</title>
+<title>OmcVibe432</title>
 <style>
 /* ═══════════════════════════════════════════
    01-base.css — Layout plein écran, fond flux cosmique
@@ -1621,8 +1621,8 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 
 <!-- Splash OmcVibe -->
 <div id="splash-36" class="hide" data-html-import-id="html-import-1" style="display: none;">
-  <img onerror="this.style.display='none'" style="display: none;" data-html-import-id="html-import-2" data-template-id="img-0" class="canva-image" src="codelet://assets/logo-omcvibe.jpg" alt="OmcVibe">
-  <div class="splash-title canva-container" data-html-import-id="html-import-3" data-template-id="div-1" style="font-family: &quot;Cinzel Decorative&quot;; font-weight: 900; font-size: 27px;">OmcVibe</div>
+  <img onerror="this.style.display='none'" data-html-import-id="html-import-2" data-template-id="img-0" class="canva-image" src="img/omcvibe432-logo.jpg" alt="OmcVibe432">
+  <div class="splash-title canva-container" data-html-import-id="html-import-3" data-template-id="div-1" style="font-family: &quot;Cinzel Decorative&quot;; font-weight: 900; font-size: 27px;">OmcVibe432</div>
   <div class="splash-sub canva-container" data-html-import-id="html-import-4" data-template-id="div-2" style="color: rgba(255, 210, 130, 0.7); font-family: &quot;IM Fell English&quot;; font-style: italic; font-size: 15px;">✦ Flux Binaural Fractal ✦</div>
 </div>
 
@@ -2404,6 +2404,14 @@ let masterDelay = null, masterDelayFb = null;
 let masterReverb = null, reverbWetGain = null, reverbDryGain = null;
 let pingPongDelay = null, ppL = null, ppR = null, ppFb = null, ppWet = null;
 let ppSendBus = null, reverbSendBus = null, delayInBus = null;
+// #33 (perf) : "Qualité audio" — détecteur de charge + limiteur de
+// complexité (cf. _armAudioWatchdog / _applyAudioQualityTier, §2.5b).
+// AUDIO_QUALITY_MODE = choix utilisateur ('auto'|'full'|'light') persisté.
+// AUDIO_QUALITY_TIER = palier réellement appliqué ('full'|'light') — en
+// mode 'auto', ne descend JAMAIS tout seul plus d'un cran et ne remonte
+// jamais automatiquement (même logique que le mode Visuel léger existant).
+let AUDIO_QUALITY_MODE = 'auto';
+let AUDIO_QUALITY_TIER = 'full';
 // FX par paire : envoi unique (fxSend) vers les 3 tanks. OFF = 100% sec.
 const PAIR_FX = {};           // id oscillateur → bool (défaut true)
 const FX_SEND_LEVEL = 0.3;    // niveau d'envoi quand FX ON
@@ -2561,7 +2569,10 @@ function _connectDecorrelatedDrift(param) {
     const delay = c.createDelay(15);
     delay.delayTime.value = Math.random() * 14.28; // période du LFO ≈ 1/0.07Hz ≈ 14,3s
     _driftDepth.connect(delay);
-    delay.connect(param);
+    // #33 (perf) : param optionnel — passer null pour obtenir juste le
+    // DelayNode et le connecter soi-même à plusieurs AudioParam (mutualisé
+    // entre les partiels d'un même oscillateur, cf. buildOsc()).
+    if (param) delay.connect(param);
     return delay;
   } catch(e) { return null; }
 }
@@ -2624,6 +2635,14 @@ function buildOsc(id, freq, vol, pan) {
     subs.push({ osc: carrier, ratio: 1, _driftDelay: carrierDrift });
     subs.push({ osc: modulator, ratio: modRatio, _fmIndex: modIndex });
   } else {
+    // #33 (perf) : UN SEUL DelayNode de dérive décorrélée par oscillateur
+    // (partagé entre tous ses partiels) au lieu d'un par partiel — un moteur
+    // à 4 partiels (voixquat) créait jusqu'à 4 DelayNode pour ce simple effet
+    // cosmétique, ×2 (Pingala+Ida) ×7 paires = jusqu'à 56 nœuds. Le rythme de
+    // dérive reste propre à CET oscillateur (toujours décorrélé des autres),
+    // juste appliqué à tous ses partiels en même temps plutôt qu'en plusieurs
+    // exemplaires indépendants — différence inaudible, coût bien moindre.
+    const sharedDrift = _connectDecorrelatedDrift(null);
     engine.forEach(part => {
       const osc = c.createOscillator();
       osc.type = part.t;
@@ -2634,9 +2653,9 @@ function buildOsc(id, freq, vol, pan) {
       osc.detune.value = (part.d || 0) + (Math.random() * 2 - 1) * 1.2;
       const pg = c.createGain(); pg.gain.value = part.g != null ? part.g : 1;
       osc.connect(pg); pg.connect(signalIn);
-      const driftDelay = _connectDecorrelatedDrift(osc.detune);
+      if (sharedDrift) { try { sharedDrift.connect(osc.detune); } catch(e) {} }
       osc.start();
-      subs.push({ osc, ratio, _driftDelay: driftDelay });
+      subs.push({ osc, ratio, _driftDelay: sharedDrift });
     });
   }
 
@@ -2978,18 +2997,38 @@ function initFXChain() {
 let _fxRefs = {};
 
 /* ---------- 2.4b · GATING DES TANKS FX (#29 — CPU), retours → preMaster ---------- */
+// #33 (perf) : ce gating ne coupait que la SORTIE (reverbWetGain→preMaster) —
+// le convolveur de reverb (jusqu'à 14s d'IR sur l'espace "Cosmos") et les
+// bus delay/ping-pong continuaient de calculer en continu même à wet=0,
+// juste rendus inaudibles en aval. On coupe maintenant AUSSI l'ENTRÉE
+// (sendBus→tank), au même moment (le retour est déjà à ~0 à cet instant,
+// donc aucune coupure audible) — élimine le vrai coût de calcul, pas
+// seulement le résultat.
 let _gRev = false, _gDel = false, _gPP = false;
 function _gateReverb(on) {
+  if (AUDIO_QUALITY_TIER === 'light') on = false; // #33 : reverb coupée en qualité "Légère"
   if (on === _gRev || !reverbWetGain || !preMaster) return;
-  try { on ? reverbWetGain.connect(preMaster) : reverbWetGain.disconnect(preMaster); _gRev = on; } catch(e) {}
+  try {
+    on ? reverbWetGain.connect(preMaster) : reverbWetGain.disconnect(preMaster);
+    if (reverbSendBus && masterReverb) { on ? reverbSendBus.connect(masterReverb) : reverbSendBus.disconnect(masterReverb); }
+    _gRev = on;
+  } catch(e) {}
 }
 function _gateDelay(on) {
   if (on === _gDel || !_fxRefs.delayWet || !preMaster) return;
-  try { on ? _fxRefs.delayWet.connect(preMaster) : _fxRefs.delayWet.disconnect(preMaster); _gDel = on; } catch(e) {}
+  try {
+    on ? _fxRefs.delayWet.connect(preMaster) : _fxRefs.delayWet.disconnect(preMaster);
+    if (delayInBus && masterDelay) { on ? delayInBus.connect(masterDelay) : delayInBus.disconnect(masterDelay); }
+    _gDel = on;
+  } catch(e) {}
 }
 function _gatePP(on) {
   if (on === _gPP || !ppWet || !preMaster) return;
-  try { on ? ppWet.connect(preMaster) : ppWet.disconnect(preMaster); _gPP = on; } catch(e) {}
+  try {
+    on ? ppWet.connect(preMaster) : ppWet.disconnect(preMaster);
+    if (ppSendBus && pingPongDelay && pingPongDelay.delayL) { on ? ppSendBus.connect(pingPongDelay.delayL) : ppSendBus.disconnect(pingPongDelay.delayL); }
+    _gPP = on;
+  } catch(e) {}
 }
 // Intensité FX globale (fader)
 function setFXIntensity(v) {
@@ -3193,7 +3232,7 @@ function setPingPongWet(v) {
   const val = Math.max(0, Math.min(1, parseFloat(v)));
   if (!ppWet) return;
   if (val > 0.001) { _gatePP(true); ppWet.gain.setTargetAtTime(val, aNow(), 0.05); }
-  else { ppWet.gain.setTargetAtTime(0, aNow(), 0.05); setTimeout(() => { if (ppWet && ppWet.gain.value < 0.002) _gatePP(false); }, 300); }
+  else { ppWet.gain.setTargetAtTime(0, aNow(), 0.05); setTimeout(() => { if (ppWet && ppWet.gain.value < 0.002) _gatePP(false); }, 450); } // #33 (perf) : cf. reverbWet
 }
 
 /* ---------- 2.6d · SNAPSHOT / RESTORE FX (pour ❤️ presets) ---------- */
@@ -3362,6 +3401,7 @@ async function startFlow() {
     PAIRS.forEach((_, i) => setTimeout(() => swapPingala(i), 60 + i * 60));
     PAIRS.forEach((_, i) => updateOrbUI(i));
     _armBreathAnchor(); // #9 (roadmap)
+    _armAudioWatchdog(); // #33 (perf)
     if (SUBDRONE_STATE.on) _startSubDrone(); // #16 (roadmap)
     ui('live', 'En expansion…');
   } catch(err) {
@@ -3424,6 +3464,7 @@ async function stopFlow() {
     PAIRS.forEach((_, i) => clearDeltaDrift(i));
     _clearAllPairComp();
     clearInterval(_breathAnchorTimer); _breathAnchorTimer = null; // #9 (roadmap)
+    clearInterval(_audioWatchdogTimer); _audioWatchdogTimer = null; // #33 (perf)
     _stopSubDrone(); // #16 (roadmap)
     _lfoNode=_lfoGain=_lfoDepthGain=_breathLFO=_breathGain=_breathDepthGain=_driftLFO=_driftDepth=masterGain=analyser=null;
     PAIRS.forEach((_, i) => updateOrbUI(i));
@@ -3475,6 +3516,75 @@ function _perfAutoAdapt(ts) {
     _autoEnableVisLite();
   }
 }
+
+/* ---------- 2.8b · QUALITÉ AUDIO ADAPTATIVE (#33 — détecteur + limiteur) ----------
+   Le détecteur visuel ci-dessus (_perfAutoAdapt) surveille le thread de
+   RENDU — sur Android/Chromium le thread AUDIO est séparé et prioritaire,
+   un appareil peut donc saturer l'audio sans jamais ralentir visiblement.
+   Ce watchdog surveille directement la santé du thread audio via
+   AudioContext.outputLatency (grandit quand le moteur peine à tenir le
+   temps réel — signal standard du Web Audio API, indépendant du visuel) et
+   réagit en coupant progressivement le superflu : d'abord la reverb
+   (convolveur, le calcul le plus lourd de la chaîne FX), puis les moteurs
+   d'onde complexes du tirage aléatoire. Comme "Visuel léger" : ne descend
+   qu'en mode Auto, jamais si l'utilisateur a lui-même choisi un réglage
+   fixe, et ne remonte jamais tout seul (redémarrer le Flux repart propre). */
+const AUDIO_QUALITY_KEY = 'fbf432-audioQuality';
+let _audioWatchdogTimer = null, _audioStrainCount = 0;
+function _loadAudioQuality() {
+  try { AUDIO_QUALITY_MODE = localStorage.getItem(AUDIO_QUALITY_KEY) || 'auto'; } catch(e) { AUDIO_QUALITY_MODE = 'auto'; }
+  AUDIO_QUALITY_TIER = AUDIO_QUALITY_MODE === 'light' ? 'light' : 'full';
+  _syncAudioQualityUI();
+}
+function setAudioQuality(mode) {
+  AUDIO_QUALITY_MODE = (mode === 'full' || mode === 'light') ? mode : 'auto';
+  try { localStorage.setItem(AUDIO_QUALITY_KEY, AUDIO_QUALITY_MODE); } catch(e) {}
+  const wasLight = AUDIO_QUALITY_TIER === 'light';
+  AUDIO_QUALITY_TIER = AUDIO_QUALITY_MODE === 'light' ? 'light' : 'full';
+  _audioStrainCount = 0;
+  if (wasLight && AUDIO_QUALITY_TIER === 'full' && reverbWetGain && reverbWetGain.gain.value > 0.001) _gateReverb(true);
+  if (AUDIO_QUALITY_TIER === 'light') _gateReverb(false);
+  _armAudioWatchdog();
+  _syncAudioQualityUI();
+}
+function _syncAudioQualityUI() {
+  ['auto','full','light'].forEach(m => {
+    const el = document.getElementById('aq-btn-' + m);
+    if (el) el.classList.toggle('on', AUDIO_QUALITY_MODE === m);
+  });
+}
+function _armAudioWatchdog() {
+  clearInterval(_audioWatchdogTimer); _audioWatchdogTimer = null;
+  _audioStrainCount = 0;
+  if (AUDIO_QUALITY_MODE !== 'auto' || AUDIO_QUALITY_TIER === 'light') return;
+  _audioWatchdogTimer = setInterval(_audioWatchdogCheck, 3000);
+}
+function _audioWatchdogCheck() {
+  if (!flowing || AUDIO_QUALITY_MODE !== 'auto') return;
+  let strained = false;
+  try {
+    const c = audioCtx();
+    if (typeof c.outputLatency === 'number' && typeof c.baseLatency === 'number' && c.baseLatency > 0.001) {
+      if (c.outputLatency > c.baseLatency * 2.2) strained = true;
+    }
+  } catch(e) {}
+  if (strained) {
+    _audioStrainCount++;
+    if (_audioStrainCount >= 3) _degradeAudioQuality(); // ~9s de tension soutenue avant de réagir
+  } else {
+    _audioStrainCount = 0;
+  }
+}
+function _degradeAudioQuality() {
+  _audioStrainCount = 0;
+  if (AUDIO_QUALITY_TIER === 'light') return;
+  AUDIO_QUALITY_TIER = 'light';
+  _gateReverb(false);
+  clearInterval(_audioWatchdogTimer); _audioWatchdogTimer = null; // déjà au plancher, plus rien à surveiller
+  _syncAudioQualityUI();
+  ui('live', '☾ Qualité audio réduite (appareil en tension)');
+}
+
 function masterTick(ts) {
   masterRAF = requestAnimationFrame(masterTick);
   // Bride à ~22 fps : libère du CPU pour le thread audio (anti-"braises"/underrun)
@@ -4972,6 +5082,11 @@ function _drawFundamental(min, max) {
 const RATIO_DUOS = [[0, 1], [2, 3], [4, 5]];
 // Formes d'onde tirées au hasard par paire — FM Sinus réservé au réglage manuel
 const WAVE_POOL = ['sine', 'sine2', 'defsin'];
+// #33 (perf) : en qualité "Légère", le tirage aléatoire ne pioche plus que
+// le moteur le plus simple (1 seul partiel) pour la paire vedette — évite
+// d'ajouter des partiels/filtres/dérive supplémentaires sur un appareil
+// déjà en tension.
+function _wavePoolForDraw() { return AUDIO_QUALITY_TIER === 'light' ? ['sine'] : WAVE_POOL; }
 
 // Anti-rafale : un tap répété ne doit jamais empiler les rebuilds
 // d'oscillateurs (thread audio protégé, 0 craquement).
@@ -5148,7 +5263,8 @@ function triggerMagicAuto(opts) {
     // et sont juste retunées (glissando lisse, 0 rebuild).
     // Option "Timbre aléatoire" décochée → le moteur d'onde ne change jamais.
     const curWave = (typeof OSC_WAVES !== 'undefined' && OSC_WAVES[pair.pingala.id]) || 'sine';
-    const wave    = (isSpot && RAND_OPTS.randomTimbre) ? WAVE_POOL[Math.floor(Math.random() * WAVE_POOL.length)] : curWave;
+    const wavePool = _wavePoolForDraw();
+    const wave    = (isSpot && RAND_OPTS.randomTimbre) ? wavePool[Math.floor(Math.random() * wavePool.length)] : curWave;
 
     if (idx === MASTER_IDX) {
       pair.pingala.ri = 0; pair.pingala.n = 1.0;
@@ -5758,6 +5874,14 @@ function buildCustomizeHTML() {
     <div class="cust-hint" style="margin-top:.5rem">Appui long sur un bouton "+" du dock pour le décrocher et le déplacer où tu veux — sa position est mémorisée.</div>
     <button class="btn-reset-wide" onclick="resetExtraPos()">↺ Position des boutons "+" par défaut</button>
 
+    <div class="pct" style="margin-top:1.1rem">Qualité audio</div>
+    <div class="cust-hint">"Auto" détecte seul un appareil en tension (reverb coupée, moteurs d'onde simplifiés) — jamais en cours de lecture sans raison, jamais s'il n'y a pas besoin.</div>
+    <div class="cust-bg-grid" style="grid-template-columns:repeat(3,1fr);">
+      <button class="cust-bg-btn" id="aq-btn-auto"  onclick="setAudioQuality('auto')">Auto</button>
+      <button class="cust-bg-btn" id="aq-btn-full"  onclick="setAudioQuality('full')">Complète</button>
+      <button class="cust-bg-btn" id="aq-btn-light" onclick="setAudioQuality('light')">Légère</button>
+    </div>
+
     <div class="pct" style="margin-top:1.1rem">Apparence</div>
     <div class="sl-row">
       <label>Taille du texte <span id="uisize-val">${uisize}%</span></label>
@@ -5850,11 +5974,22 @@ function updateFX(paramId, value) {
   else if(paramId==='delayTime')     { if(valDisp)valDisp.textContent=v.toFixed(2)+'s'; try{if(masterDelay)masterDelay.delayTime.setTargetAtTime(v,now,0.05);}catch(e){} }
   else if(paramId==='delayFeedback') { if(valDisp)valDisp.textContent=Math.round(v*100)+'%'; try{if(masterDelayFb)masterDelayFb.gain.setTargetAtTime(v,aNow(),.05);}catch(e){} }
   else if(paramId==='delayWet')  { if(valDisp)valDisp.textContent=Math.round(v*100)+'%';
+    // #33 (perf) : délai porté à 450ms — à timeConstant .05, un wet parti de
+    // 1.0 (curseur au max) met ~310ms à repasser sous 0.002 ; l'ancien délai
+    // de 300ms vérifiait parfois TROP TÔT (valeur encore ~0.006-0.008) et,
+    // comme le contrôle est un coup unique (pas de nouvelle tentative), le
+    // bus restait connecté indéfiniment — le vrai coût de calcul (delay +,
+    // depuis ce correctif, reverb) continuait de tourner malgré le wet à 0.
     try{ if(v>0.001){ if(typeof _gateDelay==='function')_gateDelay(true); _fxRefs.delayWet.gain.setTargetAtTime(v,aNow(),.05); }
-         else { _fxRefs.delayWet.gain.setTargetAtTime(0,aNow(),.05); setTimeout(()=>{if(typeof _gateDelay==='function'&&_fxRefs.delayWet.gain.value<0.002)_gateDelay(false);},300); } }catch(e){} }
+         else { _fxRefs.delayWet.gain.setTargetAtTime(0,aNow(),.05); setTimeout(()=>{if(typeof _gateDelay==='function'&&_fxRefs.delayWet.gain.value<0.002)_gateDelay(false);},450); } }catch(e){} }
   else if(paramId==='reverbWet') { if(valDisp)valDisp.textContent=Math.round(v*100)+'%';
+    // #33 (perf) : même correctif, délai porté à 550ms (timeConstant .08 →
+    // ~500ms nécessaires depuis un wet à 1.0) — c'est CE contrôle qui coupe
+    // maintenant aussi l'entrée du convolveur (cf. _gateReverb), le calcul
+    // le plus lourd de la chaîne FX ; s'il ne se déclenchait jamais, le
+    // convolveur restait allumé en permanence même reverb à 0%.
     try{ if(v>0.001){ if(typeof _gateReverb==='function')_gateReverb(true); reverbWetGain.gain.setTargetAtTime(v,aNow(),.08); }
-         else { reverbWetGain.gain.setTargetAtTime(0,aNow(),.08); setTimeout(()=>{if(typeof _gateReverb==='function'&&reverbWetGain.gain.value<0.002)_gateReverb(false);},350); } }catch(e){} }
+         else { reverbWetGain.gain.setTargetAtTime(0,aNow(),.08); setTimeout(()=>{if(typeof _gateReverb==='function'&&reverbWetGain.gain.value<0.002)_gateReverb(false);},550); } }catch(e){} }
 }
 
 // ── updateMasterState ─────────────────────────────────────────────
@@ -5882,7 +6017,7 @@ function updateDisplay() {
   const msf = document.getElementById('ms-freq'); if (msf) msf.textContent = masterFreq;
   const mi  = document.getElementById('master-input');
   if (mi && document.activeElement!==mi) mi.value = masterFreq;
-  document.title = 'OmcVibe '+masterFreq;
+  document.title = 'OmcVibe432 · '+masterFreq;
   PAIRS.forEach((_,i) => updatePairUI(i));
   updateMasterState();
   patchRandomTable();
@@ -6806,6 +6941,7 @@ function init() {
   _loadBubbleSize();
   _loadDisplayFilter();
   _loadBackground();
+  _loadAudioQuality(); // #33 (perf)
   harmonicRandomInit();
 
   // Inject FX panel
@@ -6818,6 +6954,7 @@ function init() {
   // Inject panneau Personnaliser l'interface
   const customBody = document.getElementById('panel-custom-body');
   if (customBody && typeof buildCustomizeHTML === 'function') customBody.innerHTML = buildCustomizeHTML();
+  _syncAudioQualityUI(); // #33 (perf) : les boutons Auto/Complète/Légère viennent d'apparaître dans le DOM
 
   // Inject progression into random panel
   const progWrap = document.getElementById('rand-prog-wrap');
