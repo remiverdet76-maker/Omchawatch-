@@ -353,3 +353,43 @@ temporaire) ; à reproduire à l'identique si l'image source du mandala
 change un jour (quantize 256 couleurs + dither Floyd-Steinberg + P/indexé
 avec transparency= pour l'alpha binaire, RGB/P opaque sans canal alpha
 quand l'alpha est constant à 255).
+
+## 7e passe — #38 : le volume max était bridé sans raison (marge inutilisée)
+
+Retour terrain : "le gain max est trop faible". Avant de toucher au code,
+mesure de la marge RÉELLE en sortie (Playwright + `AnalyserNode` branché
+en parallèle à plusieurs points de la chaîne : `busTrim`, `preMaster`,
+`masterGlue`, `limiter`, `safetyClip`), dans un scénario délibérément
+extrême — 7 paires en moteur 4 partiels ("Voix Quat"), detune Sinus Duo à
+±72 ¢ partout, Δ en haut de bande (1,2 Hz), FX (reverb/delay/ping-pong) à
+80% wet, volume maître à fond. Même dans ce pire cas, le signal final ne
+dépassait jamais environ **-12 dBFS** — c'est-à-dire que l'app tournait à
+volume "max" avec la moitié du budget de gain totalement inutilisée.
+
+Cause : `MASTER_GAIN_SCALE = 0.5`, un plafond fixe (-6 dB, appliqué
+au-dessus du curseur 0-100%) posé par prudence à une époque antérieure à
+la chaîne de sécurité actuelle. Cette chaîne (`masterGlue`, compresseur
+doux ratio 1.5 ; `limiter`, compresseur dur seuil -3.6dB/ratio 20:1,
+attaque 6ms ; `safetyClip`, waveshaper tanh sans latence qui garantit un
+plafond dur à 0.95 pleine échelle) garantit déjà "0 clipping" quel que
+soit le gain injecté en amont — le plafond `MASTER_GAIN_SCALE=0.5` ne
+servait donc plus qu'à brider le volume sans plus aucun bénéfice réel de
+sécurité.
+
+Corrigé : `MASTER_GAIN_SCALE` remonté à **1.0** (+6 dB). Revérifié avec le
+même protocole (fichier modifié rechargé, pas juste un override en
+mémoire) sur une fenêtre de mesure plus longue (9s, pour limiter le risque
+de rater un pic rare parmi ~100 partiels sinusoïdaux dérivant lentement) :
+le pire cas plafonne autour de **-5,5 à -7,6 dBFS** selon la fenêtre — la
+variance vient de la nature statistique de la sommation de ~100 partiels
+en dérive lente (micro-detune aléatoire, LFO de drift), pas d'un problème
+de réglage. Marge restante confirmée : encore plusieurs dB avant tout
+risque de saturation, et le filet `safetyClip` (jamais dépassé, par
+construction) absorbe en douceur les rares dépassements sans "clac".
+En usage normal (config par défaut, rien de forcé), le gain de volume
+perçu (RMS) est de **+7,4 dB** — un doublement de perception de volume,
+sans distorsion additionnelle mesurée.
+
+Où regarder : `MASTER_GAIN_SCALE` (const, section config, près de
+`masterVol`), chaîne `preMaster→masterGlue→masterFader→masterHPF→
+masterLowCut→limiter→safetyClip→destination` dans `initFXChain()`.

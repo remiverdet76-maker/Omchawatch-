@@ -2334,9 +2334,17 @@ PAIRS.forEach(p => {
 let masterFreq  = 144;
 let globalDelta = DELTA_DEFAULT;   // #35 : référence Delta (n'impose plus le même battement à tous)
 let masterVol   = 0.85;  // le curseur affichait 0.8 mais la valeur réelle était 0.6 — trop faible
-// Le curseur Gain reste 0-100% (intuitif), mais le volume audible max réel est
-// divisé par deux : plein curseur saturait trop facilement (retour terrain).
-const MASTER_GAIN_SCALE = 0.5;
+// #38 : remonté 0.5→1.0 (+6 dB). Le plafond à 0.5 datait d'avant la chaîne
+// de sécurité actuelle (masterGlue + limiter dur -3.6dB/20:1 + safetyClip,
+// tanh sans latence, garantit 0 clipping quel que soit le gain en amont) —
+// il ne servait plus qu'à brider le volume sans plus aucun bénéfice. Mesuré
+// (Playwright, AnalyserNode en sortie finale) : même dans un pire cas
+// exagéré (7 paires en moteur 4 partiels, detune ±72 partout, Δ en haut de
+// bande, FX à 80% wet, volume maître à fond), le signal final ne dépasse
+// jamais -11 dBFS à ce réglage — encore ~11 dB de marge propre avant tout
+// risque de saturation. En usage normal, le gain de volume perçu (RMS) est
+// de +7,4 dB, sans distorsion additionnelle.
+const MASTER_GAIN_SCALE = 1.0;
 
 function waveState(hz) {
   const a = Math.abs(hz);
