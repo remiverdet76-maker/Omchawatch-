@@ -99,7 +99,7 @@ body{
 /* Dock bas — Flux + Nav horizontaux */
 #bottom-dock{
   position:fixed;
-  bottom:0;left:0;right:0;height:115px; /* #32 : cellules/sphères agrandies, +25% vs taille d'origine (92px→115px) */
+  bottom:0;left:0;right:0;height:148px; /* #32 : cellules/sphères agrandies (92px→115px) ; #40 : +33px pour la cellule violette fréquence maître sous Flux (115px→148px) */
   display:flex;flex-direction:row;align-items:center;justify-content:center;
   gap:.5rem;padding:0 .5rem;
   z-index:100;
@@ -109,11 +109,11 @@ body{
   box-shadow:0 -4px 24px rgba(80,40,160,.18);
   transition:transform .35s cubic-bezier(.4,0,.2,1);
 }
-#bottom-dock.collapsed{transform:translateY(115px);}
+#bottom-dock.collapsed{transform:translateY(148px);}
 /* Chevron (masquer/afficher le dock) + plein écran : conteneur commun,
    aimantés ensemble — ils se déplacent comme un seul bloc. */
 #dock-toggle-row{
-  position:fixed;bottom:115px;right:.5rem;
+  position:fixed;bottom:148px;right:.5rem;
   display:flex;gap:.35rem;
   z-index:101;
   transition:bottom .35s cubic-bezier(.4,0,.2,1);
@@ -143,7 +143,7 @@ body{
 /* Visualiseur spectral — au-dessus du dock */
 #spectroid-bar{
   position:fixed;
-  bottom:115px;left:50%;transform:translateX(-50%);
+  bottom:148px;left:50%;transform:translateX(-50%);
   width:min(680px,88vw);height:80px;
   z-index:22;
   background:linear-gradient(135deg,rgba(180,180,200,.12),rgba(220,220,240,.06),rgba(150,160,180,.10));
@@ -234,7 +234,7 @@ body{
 #osc-modal-inner{
   background:rgba(8,0,26,.97);
   border-bottom:1.5px solid rgba(200,100,255,.4);
-  width:100vw;height:calc(100vh - 115px);
+  width:100vw;height:calc(100vh - 148px);
   display:flex;flex-direction:column;
   backdrop-filter:blur(22px);
   box-shadow:0 0 70px rgba(120,0,255,.3);
@@ -268,7 +268,7 @@ body{
 /* Bouton Retour — visible uniquement quand un panneau/modal est ouvert */
 #btn-back{
   /* Empilé au-dessus du bloc chevron + plein écran (28px de haut + marge) */
-  position:fixed;right:1rem;bottom:calc(115px + 38px);z-index:90;
+  position:fixed;right:1rem;bottom:calc(148px + 38px);z-index:90;
   padding:.6rem 1.1rem;border-radius:24px;
   background:rgba(10,4,30,.92);border:1.5px solid rgba(200,140,255,.55);
   color:rgba(230,210,255,.95);font-family:'Cinzel Decorative',serif;
@@ -358,57 +358,40 @@ body{
 }
 #freq-input-master::-webkit-inner-spin-button,#freq-input-master::-webkit-outer-spin-button{-webkit-appearance:none;}
 
-/* ── Menu rapide (tap court, toutes sphères) : 2 arcs tactiles + 2 cellules ──
-   Arc gauche = Volume (0→1) · Arc droit = Detune Sinus Duo de la paire (-72→+72¢).
-   Cellule haute = Random ratio (garde cette sphère) · Cellule basse = Verrou.
-   #36 : resserré au maximum (inset -16%→-1%, labels tirés vers l'intérieur)
-   — débordait de l'écran sur certains appareils (sphère déjà proche du bord,
-   le menu l'agrandissait encore de 16% de plus, labels poussés hors-écran). */
+/* ── Menu rapide (appui long sur satellite, tap court sur le maître) ──────
+   #41 : simplifié à 2 cellules seules (plus d'arcs Volume/Detune, retirés
+   — ils restent réglables dans le panneau complet de l'oscillateur).
+   Cellule haute = Random ratio (garde cette sphère) · Cellule basse =
+   Verrou (appui long dessus = random ciblé sur cette sphère).
+   `inset:0` (pas -1%) : le menu ne dépasse plus JAMAIS le cadre (wrap) de
+   sa propre sphère — garantit qu'il ne peut plus chevaucher une sphère
+   voisine, quelle que soit la densité de la couronne de satellites.
+   Cellules resserrées et tirées vers l'INTÉRIEUR du cadre (top/bottom
+   positifs, pas négatifs) pour la même raison. */
 .vp-mastermenu{
-  position:absolute;inset:-1%;z-index:25;
+  position:absolute;inset:0;z-index:25;
   opacity:0;transform:scale(.92);pointer-events:none;
   transition:opacity .2s ease,transform .2s ease;
 }
 .vp-mastermenu.vpq-show{ opacity:1;transform:scale(1);pointer-events:auto; }
-.mm-svg{ position:absolute;inset:0;width:100%;height:100%;pointer-events:none; }
-.mm-track{ fill:none;stroke:rgba(255,255,255,.14);stroke-width:5;stroke-linecap:round; }
-.mm-fill{ fill:none;stroke-width:6;stroke-linecap:round;transition:stroke .3s; }
-.mm-fill-vol{ stroke:#63E6FF;filter:drop-shadow(0 0 6px rgba(99,230,255,.7)); }
-.mm-fill-detune{ stroke:#FFB0FF;filter:drop-shadow(0 0 6px rgba(255,176,255,.7)); }
-.mm-hit{
-  position:absolute;top:0;bottom:0;width:38%;cursor:pointer;
-  touch-action:none;-webkit-tap-highlight-color:transparent;
-}
-.mm-hit-left{ left:0; }
-.mm-hit-right{ right:0; }
-/* Zone centrale libre : tap = ouvre le menu oscillateur complet du maître */
+/* Zone centrale libre : tap = ouvre le menu oscillateur complet */
 .mm-center{
-  position:absolute;top:0;bottom:0;left:38%;right:38%;
+  position:absolute;inset:0;
   cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
-.mm-label{
-  position:absolute;top:50%;transform:translateY(-50%);
-  font-family:'IM Fell English',serif;font-size:.68rem;font-style:italic;
-  color:rgba(230,220,255,.75);text-align:center;line-height:1.5;
-  pointer-events:none;white-space:nowrap;
-  max-width:22vw;overflow:hidden;text-overflow:ellipsis;
-}
-.mm-label span{ font-size:.92rem;font-weight:bold;font-style:normal;color:#D7DAE0; }
-.mm-label-left{ left:4%; }
-.mm-label-right{ right:4%; }
 .mm-cell{
   position:absolute;left:50%;transform:translateX(-50%);
   display:flex;flex-direction:column;align-items:center;gap:.1rem;
-  width:64px;height:56px;border-radius:14px;border:2px solid;
-  background:rgba(10,4,30,.9);backdrop-filter:blur(8px);
-  color:#D7DAE0;font-size:1.3rem;cursor:pointer;transition:all .18s;
+  width:56px;height:48px;border-radius:12px;border:2px solid;
+  background:rgba(10,4,30,.92);backdrop-filter:blur(8px);
+  color:#D7DAE0;font-size:1.15rem;cursor:pointer;transition:all .18s;
   box-shadow:0 0 14px rgba(0,0,0,.6);
 }
-.mm-cell span{ font-size:.5rem;font-family:'Cinzel Decorative',serif;letter-spacing:.02em;color:rgba(230,220,255,.75); }
+.mm-cell span{ font-size:.46rem;font-family:'Cinzel Decorative',serif;letter-spacing:.02em;color:rgba(230,220,255,.75); }
 .mm-cell:hover{ transform:translateX(-50%) scale(1.08); }
 .mm-cell:active{ transform:translateX(-50%) scale(.94); }
-.mm-cell-top{ top:-6%; }
-.mm-cell-bottom{ bottom:-6%; }
+.mm-cell-top{ top:6%; }
+.mm-cell-bottom{ bottom:6%; }
 .mm-cell-bottom.locked{ border-color:#FFD060 !important;background:rgba(255,208,96,.18);box-shadow:0 0 18px rgba(255,208,96,.5); }
 
 
@@ -824,7 +807,7 @@ body{
 .dcell-extra-flux:hover{ transform:scale(1.12); }
 .dcell-extra-flux:active{ transform:scale(.88); }
 .dcell-flux{
-  flex-shrink:0;width:95px;height:95px;margin-bottom:33px; /* #32 : +25% vs origine (76px→95px) */
+  flex-shrink:0;width:95px;height:95px;margin-bottom:8px; /* #32 : +25% vs origine (76px→95px) ; #40 : réduit (33→8px), la cellule violette sous Flux reprend le rôle d'"élévation" visuelle */
   border-radius:50%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.05rem;
   background:radial-gradient(circle at 40% 34%,rgba(255,222,120,.34),rgba(40,28,4,.9));
@@ -858,6 +841,45 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
 }
 .dcell-flux .flux-icon{ font-size:1.5rem;line-height:1; }
 .dcell-flux .flux-state{ font-size:.5rem;letter-spacing:.14em;font-weight:700;opacity:.9; }
+
+/* #40 : cellule VIOLETTE — saisie directe de la fréquence maître, sous la
+   sphère Flux (on/off). Même thème visuel que les 5 autres cellules
+   (fond translucide + bordure de la couleur, backdrop-filter). Colonne
+   centrale dédiée (.dock-col-center) pour empiler Flux + cette cellule
+   sans toucher aux colonnes gauche/droite existantes. Une seule ligne
+   compacte (−9 / saisie / +9 / ✓) plutôt que 2 lignes : la largeur ET la
+   hauteur disponibles dans le dock sont très limitées (dock à hauteur
+   fixe, colonnes à largeur égale) — chaque pixel compte ici.
+   `width:100%` (pas de largeur fixe) : épouse la largeur réellement
+   allouée à sa colonne par flexbox plutôt que de risquer un débordement
+   sur les colonnes voisines si cette largeur est plus étroite que prévu. */
+.dock-col-center{ display:flex;flex-direction:column;align-items:center;gap:.3rem;flex-shrink:0; }
+.dcell-purple{
+  display:flex;align-items:center;justify-content:center;gap:.22rem;
+  width:100%;max-width:150px;padding:.22rem .3rem;border-radius:10px;border:1.5px solid rgba(190,110,255,.5);
+  background:rgba(150,60,255,.14);backdrop-filter:blur(10px);
+}
+.dcell-purple-step{
+  width:22px;height:22px;border-radius:6px;border:1.5px solid rgba(190,110,255,.5);
+  background:rgba(150,60,255,.2);color:#D9B3FF;font-size:.62rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .12s;
+}
+.dcell-purple-step:active{ transform:scale(.9); }
+.dcell-purple-input{
+  width:38px;min-width:0;flex:1 1 auto;background:rgba(0,0,0,.32);border:1.5px solid rgba(190,110,255,.4);border-radius:6px;
+  color:#F0DCFF;font-family:'IM Fell English',serif;font-size:.82rem;text-align:center;
+  padding:.15rem 0;outline:none;-moz-appearance:textfield;
+}
+.dcell-purple-input::-webkit-inner-spin-button,.dcell-purple-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+.dcell-purple-validate{
+  width:22px;height:22px;flex-shrink:0;border-radius:6px;border:1.5px solid rgba(190,110,255,.55);
+  background:rgba(150,60,255,.22);color:#F0DCFF;font-size:.7rem;font-weight:700;line-height:1;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.dcell-purple-validate:active{ transform:scale(.9); }
+.dcell-purple-validate.applied{ background:rgba(90,255,160,.28);border-color:#5AFFA0;color:#8CFFC0; }
 
 /* ─── Navigation — ligne dans #bottom-dock ─── */
 #tab-nav{
@@ -1019,7 +1041,7 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
 .pan-left,.pan-right{
   position:fixed;top:0;right:0;left:0;
   width:100vw;
-  height:calc(100vh - 115px);
+  height:calc(100vh - 148px);
   overflow-y:auto;scrollbar-width:none;
   background:rgba(1,3,6,.97);
   border-bottom:1px solid rgba(0,204,255,.12);
@@ -1161,21 +1183,6 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
 .pair-head{display:flex;align-items:center;gap:.7rem;padding-bottom:.5rem;border-bottom:1px solid rgba(255,255,255,.12);}
 .pair-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;}
 .pair-name{font-family:'Cinzel Decorative',serif;font-size:1rem;letter-spacing:.12em;flex:1;font-weight:bold;}
-.pair-mute-p,.pair-mute-i{
-  font-family:inherit;font-size:.85rem;padding:.28rem .7rem;border-radius:6px;cursor:pointer;
-  transition:all .2s;letter-spacing:.06em;
-  background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.22);
-  color:rgba(245,240,225,.8);font-weight:bold;
-}
-.pair-mute-p:hover,.pair-mute-i:hover{border-color:rgba(255,255,255,.55);color:#FFD700;}
-.pair-mute-p.muted,.pair-mute-i.muted{background:rgba(220,60,60,.14);border-color:rgba(220,70,70,.45);color:rgba(255,150,130,.9);}
-.btn-activer{
-  background:rgba(120,220,60,.09);border:1.5px solid rgba(120,220,60,.42);
-  color:rgba(150,240,90,.85);font-family:inherit;font-size:.85rem;
-  padding:.28rem .7rem;border-radius:6px;cursor:pointer;transition:all .2s;font-weight:bold;
-}
-.btn-activer:hover{background:rgba(120,220,60,.2);border-color:rgba(120,220,60,.75);color:#b2ff59;}
-
 /* Formules */
 .block-formula{
   display:flex;align-items:baseline;gap:.35rem;flex-wrap:wrap;
@@ -1481,25 +1488,25 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 @media (max-width: 900px), (max-height: 500px) {
 
   /* Dock 5 touches — lisible et accessible (les parents doivent viser sans effort) */
-  /* #32 : cellules/sphères agrandies, +25% vs taille d'origine (96px→120px) */
+  /* #32 : cellules/sphères agrandies (96px→120px) ; #40 : +38px pour la cellule violette fréquence maître sous Flux (120px→158px) */
   #bottom-dock {
-    height: 120px !important;
+    height: 158px !important;
     padding: 0 .55rem !important;
     gap: .55rem !important;
   }
-  #dock-toggle-row { bottom: 120px !important; }
+  #dock-toggle-row { bottom: 158px !important; }
   #dock-toggle-row.dock-up { bottom: 0 !important; }
-  #bottom-dock.collapsed { transform: translateY(120px) !important; }
-  #spectroid-bar { bottom: 120px !important; width: 80vw !important; }
+  #bottom-dock.collapsed { transform: translateY(158px) !important; }
+  #spectroid-bar { bottom: 158px !important; width: 80vw !important; }
 
   .dcell { height: 45px !important; }
   .dcell-name { font-size: .66rem !important; }
   .dcell-sub  { font-size: .84rem !important; }
   .dcell-extra { width: 53px !important; height: 53px !important; }
-  .dcell-flux { width: 93px !important; height: 93px !important; margin-bottom: 38px !important; }
+  .dcell-flux { width: 93px !important; height: 93px !important; margin-bottom: 8px !important; } /* #40 : réduit (38→8px), la cellule violette sous Flux reprend le rôle d'"élévation" */
 
   /* Panneaux : plein écran (largeur) pour la lisibilité, déroulement haut → bas,
-     hauteur toujours réservée au-dessus du dock (120px sur smartphone, dock agrandi) */
+     hauteur toujours réservée au-dessus du dock (158px sur smartphone, dock agrandi) */
   .pan-left.open,
   .pan-right.open {
     top: 0 !important;
@@ -1508,14 +1515,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     width: 100vw !important;
     min-width: 0 !important;
     max-width: none !important;
-    height: calc(100vh - 120px) !important;
+    height: calc(100vh - 158px) !important;
     border-bottom: none !important;
     padding: 14px 12px 30px 12px !important;
     overflow-y: auto !important;
     z-index: 80 !important;
   }
-  #osc-modal-inner { height: calc(100vh - 120px) !important; }
-  #btn-back { bottom: calc(120px + 38px) !important; }
+  #osc-modal-inner { height: calc(100vh - 158px) !important; }
+  #btn-back { bottom: calc(158px + 38px) !important; }
   #btn-back.dock-up { bottom: 38px !important; }
 
   /* Cacher non-essentiels sur smartphone */
@@ -1662,12 +1669,20 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   </div>
 
   <!-- CENTRE — FLUX : cercle jaune surélevé, plus gros — tap=on/off · long=nouveau jeu aléatoire -->
-  <div class="dcell-wrap dcell-wrap-flux" data-html-import-id="html-import-26">
-    <button class="dcell-flux canva-button" id="dcFlux" title="Tap : Flux on/off · Appui long : nouveau jeu aléatoire" data-html-import-id="html-import-27" data-template-id="button-16" style="background: radial-gradient(circle at 40% 34%, rgba(255, 222, 120, 0.34), rgba(40, 28, 4, 0.9)); color: rgb(255, 222, 120);">
-      <span class="flux-icon canva-text" id="flux-icon" data-html-import-id="html-import-28" data-template-id="span-17" style="color: rgb(255, 222, 120); font-size: 24px;">◎</span>
-      <span class="flux-state canva-text" id="flux-state-side" data-html-import-id="html-import-29" data-template-id="span-18" style="color: rgb(255, 222, 120); font-weight: 700; font-size: 8px;">OFF</span>
-    </button>
-
+  <div class="dock-col dock-col-center">
+    <div class="dcell-wrap dcell-wrap-flux" data-html-import-id="html-import-26">
+      <button class="dcell-flux canva-button" id="dcFlux" title="Tap : Flux on/off · Appui long : nouveau jeu aléatoire" data-html-import-id="html-import-27" data-template-id="button-16" style="background: radial-gradient(circle at 40% 34%, rgba(255, 222, 120, 0.34), rgba(40, 28, 4, 0.9)); color: rgb(255, 222, 120);">
+        <span class="flux-icon canva-text" id="flux-icon" data-html-import-id="html-import-28" data-template-id="span-17" style="color: rgb(255, 222, 120); font-size: 24px;">◎</span>
+        <span class="flux-state canva-text" id="flux-state-side" data-html-import-id="html-import-29" data-template-id="span-18" style="color: rgb(255, 222, 120); font-weight: 700; font-size: 8px;">OFF</span>
+      </button>
+    </div>
+    <!-- #40 : VIOLET — saisie directe de la fréquence maître (+9/-9, Valider) -->
+    <div class="dcell-purple" id="dcPurple" title="Fréquence maître directe">
+      <button class="dcell-purple-step" onclick="_purpleFreqStep(-9)" title="-9 Hz">−9</button>
+      <input type="number" id="dcell-purple-input" class="dcell-purple-input" inputmode="numeric" autocomplete="off" onkeydown="_purpleFreqKey(event)">
+      <button class="dcell-purple-step" onclick="_purpleFreqStep(9)" title="+9 Hz">+9</button>
+      <button class="dcell-purple-validate" id="dcell-purple-validate" onclick="_purpleFreqValidate()" title="Valider">✓</button>
+    </div>
   </div>
 
   <!-- Colonne droite : VERT (haut) sur BLEU (bas) -->
@@ -4353,11 +4368,12 @@ function animMetatron(){
    04-vesica-ui.js — Sphères Vesica & édition
    ═══════════════════════════════════════════ */
 
-// TAP (court)  = menu rapide (2 cellules + 2 arcs tactiles Volume/Binaural),
-//                identique pour le MAÎTRE et toutes les sphères satellites.
-// APPUI LONG   = changement aléatoire immédiat :
-//                · sphère MAÎTRE    → random global (façon dé, toutes les paires)
-//                · sphère satellite → random UNIQUEMENT sur sa propre fréquence
+// #41 : sphère MAÎTRE — inchangée : TAP court = menu rapide · APPUI LONG =
+// random global (façon dé, toutes les paires).
+// Sphère SATELLITE — permutées : TAP court = mute/unmute Pingala+Ida direct
+// (cf. toggleMutePair) · APPUI LONG = menu rapide (le random ciblé sur
+// cette seule paire, _pairRandomFreq, est désormais dans le menu rapide —
+// appui long sur son bouton verrou, cf. _mmLockLongPress).
 var _vpTimer=null, _vpLongFired=false, _vpSX=0, _vpSY=0;
 const VP_LONG_MS = 420;
 
@@ -4372,7 +4388,7 @@ function _vpStart(i,e){
     _vpLongFired=true; _vpTimer=null;
     try{navigator.vibrate&&navigator.vibrate(16);}catch(x){}
     if(i===MASTER_IDX) triggerMagicAuto();
-    else _pairRandomFreq(i);
+    else _openQuickMenu(i);
   },VP_LONG_MS);
 }
 function _vpMove(i,e){
@@ -4383,7 +4399,8 @@ function _vpMove(i,e){
 function _vpEnd(i){
   if(_vpTimer){
     clearTimeout(_vpTimer);_vpTimer=null;
-    _openQuickMenu(i);
+    if(i===MASTER_IDX) _openQuickMenu(i);
+    else toggleMutePair(i);
   }
   // sinon : l'appui long a déjà déclenché son action
 }
@@ -4417,64 +4434,17 @@ function _closeQuickMenu(){
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  MENU RAPIDE — 2 cellules (haut/bas) + 2 arcs tactiles (G/D)
-//  Arc gauche  : Volume de la sphère   0 → 1     (glisser le long de la courbe)
-//  Arc droit   : Detune Sinus Duo de CETTE paire  -72 → +72 ¢
+//  MENU RAPIDE — #41 : simplifié à 2 cellules (haut/bas) + centre.
+//  Les arcs Volume/Detune sont retirés (ils restent réglables "en interne",
+//  dans le panneau complet de l'oscillateur, ouvert par le centre du menu
+//  ou par le tap sur une sphère puis le bouton dédié) — le mute/unmute est
+//  maintenant sur le TAP COURT de la sphère elle-même (cf. toggleMutePair),
+//  donc ce menu n'a plus besoin d'être un gros widget circulaire : juste
+//  assez pour Random ratio + Verrou (+ appui long dessus = random ciblé).
 //  Commun au MAÎTRE et à toutes les paires satellites (_qmIdx = sphère active).
-//  #35/#36 : remplace l'ancien arc "Battement binaural" (0-7,2 Hz) — Δ est
-//  désormais verrouillé en bande Delta (0.8-1.2 Hz, cf. DELTA_MIN/DELTA_MAX)
-//  et n'a plus grand intérêt à occuper un raccourci tactile dédié ; la
-//  variété par paire vient maintenant du detune, qui en prend la place ici.
 // ═══════════════════════════════════════════════════════════════════
-const MM_DETUNE_MAX = 72;
 var _qmIdx = MASTER_IDX;
 
-function _mmPt(cx, cy, r, clockDeg) {
-  const rad = clockDeg * Math.PI / 180;
-  return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
-}
-function _mmArcPath(cx, cy, r, a1, a2) {
-  const p1 = _mmPt(cx, cy, r, a1), p2 = _mmPt(cx, cy, r, a2);
-  const large = Math.abs(a2 - a1) > 180 ? 1 : 0;
-  return `M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
-}
-// Volume normalisé 0..1 de la sphère i (maître = fader global ; satellite =
-// moyenne P/I ramenée à l'échelle 0..0.45 des sliders du menu oscillateur).
-function _qmGetVol(i){
-  if(i===MASTER_IDX) return Math.max(0,Math.min(1,masterVol));
-  const pair=PAIRS[i];
-  return Math.max(0,Math.min(1, ((pair.pingala.vol+pair.ida.vol)/2) / 0.45));
-}
-function _qmSetVol(i, v01){
-  v01=Math.max(0,Math.min(1,v01));
-  if(i===MASTER_IDX){ setMasterVol(v01); return; }
-  const vol=Math.round(v01*0.45*100)/100;
-  setVolP(i,vol); setVolI(i,vol);
-}
-// #35/#36 : detune Sinus Duo (-72..72 ¢) de la sphère active — global pour
-// le maître, PAIR_DUALSINE pour une paire satellite (même résolution que
-// _dualSineMagFor, utilisée par le moteur audio).
-function _qmGetDetune(i){
-  if (i === MASTER_IDX) return DUALSINE_DETUNE;
-  return (typeof PAIR_DUALSINE[i] === 'number') ? PAIR_DUALSINE[i] : DUALSINE_DETUNE;
-}
-function _qmSetDetune(i, mag){
-  const clamped = Math.max(-MM_DETUNE_MAX, Math.min(MM_DETUNE_MAX, mag));
-  if (i === MASTER_IDX) setDualSineDetune(clamped); else setPairDualSineDetune(i, clamped);
-}
-
-function _mmRender() {
-  const volPct    = _qmGetVol(_qmIdx);
-  // Échelle bipolaire -72..+72 ¢ → 0..1 (0 = -72, 0.5 = 0, 1 = +72)
-  const detunePct = Math.max(0, Math.min(1, (_qmGetDetune(_qmIdx) + MM_DETUNE_MAX) / (MM_DETUNE_MAX * 2)));
-  const lf = document.getElementById('mm-fill-left');
-  const rf = document.getElementById('mm-fill-right');
-  if (lf) lf.setAttribute('d', _mmArcPath(100, 100, 94, 180, 180 + volPct * 180));
-  if (rf) rf.setAttribute('d', _mmArcPath(100, 100, 94, 180 - detunePct * 180, 180));
-  const lv = document.getElementById('mm-val-left');  if (lv) lv.textContent = Math.round(volPct * 100) + '%';
-  const rv = document.getElementById('mm-val-right');
-  if (rv) { const m = _qmGetDetune(_qmIdx); rv.textContent = (m < 0 ? '−' : '±') + Math.abs(m).toFixed(0) + ' ¢'; }
-}
 function _openQuickMenu(i) {
   _closeQuickMenu();
   _qmIdx = i;
@@ -4489,32 +4459,22 @@ function _openQuickMenu(i) {
   mm.className = 'vp-mastermenu';
   mm.id = 'vp-mm';
   mm.innerHTML = `
-    <svg viewBox="0 0 200 200" class="mm-svg" preserveAspectRatio="xMidYMid meet">
-      <path d="${_mmArcPath(100,100,94,180,360)}" class="mm-track"/>
-      <path d="${_mmArcPath(100,100,94,0,180)}"   class="mm-track"/>
-      <path id="mm-fill-left"  d="" class="mm-fill mm-fill-vol"/>
-      <path id="mm-fill-right" d="" class="mm-fill mm-fill-detune"/>
-    </svg>
-    <div class="mm-hit mm-hit-left"  onpointerdown="_mmDown(event)"></div>
-    <div class="mm-hit mm-hit-right" onpointerdown="_mmDown(event)"></div>
     <div class="mm-center" onclick="event.stopPropagation();_mmOpenModal()" title="${isMaster?'Menu oscillateur maître':'Menu oscillateur — '+pair.label}"></div>
-    <div class="mm-label mm-label-left">Volume<br><span id="mm-val-left">0%</span></div>
-    <div class="mm-label mm-label-right">Detune<br><span id="mm-val-right">±0 ¢</span></div>
     <button class="mm-cell mm-cell-top" style="border-color:${mc}" onclick="event.stopPropagation();_mmRandomRatio()" title="${isMaster?'Random ratio (garde le maître)':'Random ratio (garde cette sphère)'}">
       ⚄<span>Random ratio</span>
     </button>
-    <button class="mm-cell mm-cell-bottom${locked?' locked':''}" id="mm-lock-btn" style="border-color:${mc}" onclick="event.stopPropagation();_mmToggleLock()" title="${isMaster?'Verrouiller la fréquence maître':'Verrouiller cette fréquence'}">
+    <button class="mm-cell mm-cell-bottom${locked?' locked':''}" id="mm-lock-btn" style="border-color:${mc}" title="${isMaster?'Verrouiller la fréquence maître · Appui long : random ciblé':'Verrouiller cette fréquence · Appui long : random ciblé'}">
       ${locked?'◉':'◎'}<span>${locked?'Verrouillé':'Verrouiller'}</span>
     </button>`;
   wrap.appendChild(mm);
-  _mmRender();
+  const lockBtn = document.getElementById('mm-lock-btn');
+  if (lockBtn) _bindTapHold(lockBtn, _mmToggleLock, _mmLockLongPress, 420);
   requestAnimationFrame(() => mm.classList.add('vpq-show'));
   setTimeout(() => document.addEventListener('pointerdown', _quickMenuOutside, { capture: true }), 10);
 }
 function _mmRandomRatio() {
   if(_qmIdx===MASTER_IDX) triggerMagicAuto({ keepMaster: true });
   else triggerMagicAuto({ keepIdx: _qmIdx });
-  _mmRender();
 }
 function _mmOpenModal() {
   const i=_qmIdx;
@@ -4526,65 +4486,16 @@ function _mmToggleLock() {
   const b = document.getElementById('mm-lock-btn');
   const locked = (typeof isLocked === 'function') && isLocked(_qmIdx);
   if (b) { b.classList.toggle('locked', locked); b.innerHTML = (locked?'◉':'◎') + '<span>' + (locked?'Verrouillé':'Verrouiller') + '</span>'; }
-  _mmRender();
 }
-var _mmDrag = null;
-var _mmLastApplyAt = 0;
-var _mmThrottleMs = 60;
-function _mmDown(e) {
-  e.stopPropagation();
-  const side = e.currentTarget.classList.contains('mm-hit-left') ? 'left' : 'right';
-  const svg = document.querySelector('#vp-mm .mm-svg');
-  if (!svg) return;
-  const rect = svg.getBoundingClientRect();
-  _mmDrag = { side, cx: rect.left + rect.width / 2, cy: rect.top + rect.height / 2 };
-  _mmLastApplyAt = 0;
-  _mmApply(e, true);
-  window.addEventListener('pointermove', _mmMove);
-  window.addEventListener('pointerup', _mmUp, { once: true });
-}
-function _mmMove(e) { if (_mmDrag) _mmApply(e, false); }
-function _mmUp() {
-  _mmDrag = null;
-  window.removeEventListener('pointermove', _mmMove);
-  saveState();
-}
-function _mmComputeVal(e) {
-  const dx = e.clientX - _mmDrag.cx, dy = e.clientY - _mmDrag.cy;
-  let clockDeg = Math.atan2(dx, -dy) * 180 / Math.PI;
-  if (clockDeg < 0) clockDeg += 360;
-  if (_mmDrag.side === 'left') {
-    return Math.max(0, Math.min(1, (clockDeg - 180) / 180));
-  }
-  return Math.max(0, Math.min(1, 1 - clockDeg / 180));
-}
-function _mmApply(e, force) {
-  if (!_mmDrag) return;
-  const v = _mmComputeVal(e);
-  _mmDrag.pendingVal = v;
-  _mmPreviewRender(v);
-  const now = performance.now();
-  if (!force && (now - _mmLastApplyAt) < _mmThrottleMs) return;
-  _mmLastApplyAt = now;
-  if (_mmDrag.side === 'left') {
-    _qmSetVol(_qmIdx, v);
-  } else {
-    _qmSetDetune(_qmIdx, Math.round((v * MM_DETUNE_MAX * 2 - MM_DETUNE_MAX) * 10) / 10);
-  }
-}
-function _mmPreviewRender(v) {
-  if (_mmDrag.side === 'left') {
-    const fill = document.getElementById('mm-fill-left');
-    const lbl = document.getElementById('mm-val-left');
-    if (fill) fill.setAttribute('d', _mmArcPath(100, 100, 94, 180, 180 + v * 180));
-    if (lbl) lbl.textContent = Math.round(v * 100) + '%';
-  } else {
-    const fill = document.getElementById('mm-fill-right');
-    const lbl = document.getElementById('mm-val-right');
-    const mag = Math.round((v * MM_DETUNE_MAX * 2 - MM_DETUNE_MAX) * 10) / 10;
-    if (fill) fill.setAttribute('d', _mmArcPath(100, 100, 94, 180 - v * 180, 180));
-    if (lbl) lbl.textContent = (mag < 0 ? '−' : '±') + Math.abs(mag).toFixed(0) + ' ¢';
-  }
+// #41 : appui long sur le bouton verrou du menu rapide = random ciblé sur
+// CETTE sphère (reprend l'ancien comportement de l'appui long sur la
+// sphère satellite elle-même, déplacé ici puisque ce raccourci sert
+// maintenant à mute/unmute). isLocked bloque déjà ce random s'il y a lieu
+// (cf. _pairRandomFreq). Sphère maître : reprend le random global (comme
+// son propre appui long, qui reste par ailleurs inchangé).
+function _mmLockLongPress() {
+  if (_qmIdx === MASTER_IDX) triggerMagicAuto();
+  else _pairRandomFreq(_qmIdx);
 }
 
 function buildVesicaPairs() {
@@ -4941,18 +4852,20 @@ function togglePolarity(i) {
   saveState();
 }
 
-function toggleMuteP(i) {
-  const pid = PAIRS[i].pingala.id;
-  mutedOscs[pid] = !mutedOscs[pid];
-  const node = nodes[pid];
-  if (node) safeRamp(node.g.gain, mutedOscs[pid] ? 0 : PAIRS[i].pingala.vol, 0.5);
-  updatePairUI(i); saveState();
-}
-function toggleMuteI(i) {
-  const iid = PAIRS[i].ida.id;
-  mutedOscs[iid] = !mutedOscs[iid];
-  const node = nodes[iid];
-  if (node) safeRamp(node.g.gain, mutedOscs[iid] ? 0 : PAIRS[i].ida.vol, 0.5);
+// #41 : mute/unmute UNIFIÉ Pingala+Ida — remplace les 2 boutons séparés
+// pmute-/imute- des réglages internes (tap court sur la sphère satellite
+// fait maintenant ce que faisaient ces 2 boutons, mais ensemble d'un coup).
+function toggleMutePair(i) {
+  const pair = PAIRS[i];
+  const pid = pair.pingala.id, iid = pair.ida.id;
+  const bothMuted = !!mutedOscs[pid] && !!mutedOscs[iid];
+  const next = !bothMuted; // pas encore tout coupé -> on coupe tout ; déjà tout coupé -> on redonne le son
+  mutedOscs[pid] = next;
+  mutedOscs[iid] = next;
+  const np = nodes[pid], ni = nodes[iid];
+  if (np) safeRamp(np.g.gain, next ? 0 : pair.pingala.vol, 0.5);
+  if (ni) safeRamp(ni.g.gain, next ? 0 : pair.ida.vol, 0.5);
+  try { navigator.vibrate && navigator.vibrate(12); } catch(x) {}
   updatePairUI(i); updateMasterState(); saveState();
 }
 // Solo maître : coupe toutes les paires satellites, ne garde que la fréquence
@@ -5006,6 +4919,33 @@ function setMasterFreq(f) {
   });
   _retuneSubDrone(); // #16 (roadmap)
   saveState();
+}
+
+// #40 : cellule violette du dock — saisie directe de la fréquence maître.
+function _purpleFlashValidate() {
+  const btn = document.getElementById('dcell-purple-validate');
+  if (!btn) return;
+  btn.classList.add('applied');
+  clearTimeout(btn._flashT);
+  btn._flashT = setTimeout(() => { btn.classList.remove('applied'); }, 500);
+}
+function _purpleFreqStep(delta) {
+  const inp = document.getElementById('dcell-purple-input');
+  const cur = inp && inp.value !== '' && !isNaN(parseFloat(inp.value)) ? parseFloat(inp.value) : masterFreq;
+  const next = Math.round(Math.max(F_MIN, Math.min(432, cur + delta)));
+  setMasterFreq(next);
+  if (inp) inp.value = masterFreq;
+  _purpleFlashValidate();
+}
+function _purpleFreqValidate() {
+  const inp = document.getElementById('dcell-purple-input');
+  if (!inp || inp.value === '' || isNaN(parseFloat(inp.value))) { if (inp) inp.value = masterFreq; return; }
+  setMasterFreq(Math.round(parseFloat(inp.value)));
+  inp.value = masterFreq;
+  _purpleFlashValidate();
+}
+function _purpleFreqKey(e) {
+  if (e.key === 'Enter') { e.preventDefault(); _purpleFreqValidate(); e.target.blur(); }
 }
 
 function deltaStep(delta) {
@@ -6112,6 +6052,8 @@ function updateDisplay() {
   const msf = document.getElementById('ms-freq'); if (msf) msf.textContent = masterFreq;
   const mi  = document.getElementById('master-input');
   if (mi && document.activeElement!==mi) mi.value = masterFreq;
+  const pmi = document.getElementById('dcell-purple-input'); // #40
+  if (pmi && document.activeElement!==pmi) pmi.value = masterFreq;
   document.title = 'OmcVibe432 · '+masterFreq;
   PAIRS.forEach((_,i) => updatePairUI(i));
   updateMasterState();
@@ -6145,15 +6087,6 @@ function updatePairUI(i) {
   const bd=document.getElementById('bd-'+i);
   if(bd&&document.activeElement!==bd) bd.value=pair.ida.delta;
 
-  const pmb=document.getElementById('pmute-'+i);
-  const isMutedP=!!mutedOscs[pair.pingala.id];
-  if(pmb){pmb.textContent=isMutedP?'Son':'Mute';pmb.classList.toggle('muted',isMutedP);}
-  const imb=document.getElementById('imute-'+i);
-  const isMutedI=!!mutedOscs[pair.ida.id];
-  if(imb){
-    if(isMutedI){imb.textContent='Activer';imb.className='btn-activer';}
-    else{imb.textContent='Couper';imb.className='pair-mute-i muted';}
-  }
   updateOrbUI(i);
 }
 
@@ -6179,8 +6112,6 @@ function buildPairHTML(pair, i) {
   const c=pair.color;
   const pF=calcPFreq(i),iF=calcIFreq(i);
   const ws=waveState(pair.ida.delta);
-  const isMutedI=!!mutedOscs[pair.ida.id];
-  const isMutedP=!!mutedOscs[pair.pingala.id];
 
   // ── ① BINAURAL (contenu de l'onglet) ────────────────────────────
   const binauralHTML = `
@@ -6189,7 +6120,6 @@ function buildPairHTML(pair, i) {
         <span class="accord-arrow open" id="aa-p${i}">▶</span>
         <span style="font-family:'Cinzel Decorative',serif;font-size:.75rem;letter-spacing:.14em;color:${c};font-weight:bold;">☀ PINGALA (DROIT)</span>
         <span id="pfreq-${i}" style="font-family:'IM Fell English',serif;font-size:1.2rem;color:${c};margin-left:auto;font-weight:bold;">${fmtFreq(pF)}</span>
-        <button class="pair-mute-p${isMutedP?' muted':''}" id="pmute-${i}" onclick="event.stopPropagation();toggleMuteP(${i})">${isMutedP?'Son':'Mute'}</button>
       </div>
       <div class="accord-body open" id="ab-p${i}" style="padding:0 .8rem .8rem;">
         <div class="block-formula">
@@ -6221,7 +6151,6 @@ function buildPairHTML(pair, i) {
         <span class="accord-arrow open" id="aa-i${i}">▶</span>
         <span style="font-family:'Cinzel Decorative',serif;font-size:.75rem;letter-spacing:.14em;color:${c};opacity:.8;font-weight:bold;">☽ IDA (GAUCHE)</span>
         <span id="ifreq-${i}" style="font-family:'IM Fell English',serif;font-size:1.15rem;color:${c};opacity:.8;margin-left:auto;font-weight:bold;">${fmtFreq(iF)}</span>
-        <button id="imute-${i}" class="${isMutedI?'btn-activer':'pair-mute-i muted'}" onclick="event.stopPropagation();toggleMuteI(${i})">${isMutedI?'Activer':'Couper'}</button>
       </div>
       <div class="accord-body open" id="ab-i${i}" style="padding:0 .8rem .8rem;">
         <div class="block-formula">
@@ -7138,31 +7067,41 @@ let DOCK_EXTRA_POS = {};
 // appui long qui ne bouge PAS ouvre l'assignation rapide (bascules + choix
 // d'action) au lieu de re-sauver une position inchangée ; un appui long
 // SUIVI d'un déplacement reste le décrochage/repositionnement existant.
+// #39 : détacher la sphère de son flux flexbox (position:fixed) déformait
+// visiblement la cellule ("elle grossit") dès que le seuil d'appui long
+// était atteint — AVANT même de savoir si l'utilisateur comptait glisser
+// ou juste relâcher sur place pour ouvrir l'assignation rapide. Le
+// détachement n'a maintenant lieu qu'au premier vrai mouvement APRÈS le
+// seuil (holdReady) : un appui long immobile ouvre l'assignation direct,
+// sans jamais toucher au flux ni faire bouger la cellule.
 function _bindExtraDraggable(el, onTap, holdMs, cellKey, slot) {
   if (!el) return;
   holdMs = holdMs || 480;
-  let timer = null, dragging = false, moved = false, sx = 0, sy = 0, startLeft = 0, startTop = 0;
+  let timer = null, holdReady = false, dragging = false, moved = false, sx = 0, sy = 0, startLeft = 0, startTop = 0;
   const clearTimer = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  const startDrag = () => {
+    dragging = true;
+    const r = el.getBoundingClientRect();
+    startLeft = r.left; startTop = r.top;
+    // Décroché du flux flexbox de sa cellule → <body>, seulement MAINTENANT
+    // (au premier vrai déplacement), pas au chargement : tant qu'aucune
+    // position n'est sauvegardée, la sphère reste dans le flux normal.
+    // Référence DOM directe (pas un id) : .dcell-wrap n'a pas d'id propre.
+    if (!el._homeParent && el.parentElement) el._homeParent = el.parentElement;
+    if (el.parentElement !== document.body) document.body.appendChild(el);
+    el.classList.add('dcell-extra-dragging');
+    el.style.position = 'fixed';
+    el.style.left = startLeft + 'px';
+    el.style.top  = startTop + 'px';
+    el.style.right = 'auto'; el.style.transform = 'none';
+    el.style.zIndex = 999;
+  };
   el.addEventListener('pointerdown', e => {
-    moved = false; dragging = false; sx = e.clientX; sy = e.clientY;
+    moved = false; dragging = false; holdReady = false; sx = e.clientX; sy = e.clientY;
     clearTimer();
     timer = setTimeout(() => {
-      dragging = true; timer = null;
+      holdReady = true; timer = null;
       try { navigator.vibrate && navigator.vibrate(20); } catch(_) {}
-      const r = el.getBoundingClientRect();
-      startLeft = r.left; startTop = r.top;
-      // Décroché du flux flexbox de sa cellule → <body>, seulement MAINTENANT
-      // (au premier vrai déplacement), pas au chargement : tant qu'aucune
-      // position n'est sauvegardée, la sphère reste dans le flux normal.
-      // Référence DOM directe (pas un id) : .dcell-wrap n'a pas d'id propre.
-      if (!el._homeParent && el.parentElement) el._homeParent = el.parentElement;
-      if (el.parentElement !== document.body) document.body.appendChild(el);
-      el.classList.add('dcell-extra-dragging');
-      el.style.position = 'fixed';
-      el.style.left = startLeft + 'px';
-      el.style.top  = startTop + 'px';
-      el.style.right = 'auto'; el.style.transform = 'none';
-      el.style.zIndex = 999;
     }, holdMs);
   });
   el.addEventListener('pointermove', e => {
@@ -7171,10 +7110,16 @@ function _bindExtraDraggable(el, onTap, holdMs, cellKey, slot) {
       const nl = Math.max(0, Math.min(window.innerWidth  - w, startLeft + (e.clientX - sx)));
       const nt = Math.max(0, Math.min(window.innerHeight - h, startTop  + (e.clientY - sy)));
       el.style.left = nl + 'px'; el.style.top = nt + 'px';
-      moved = true;
       return;
     }
-    if (timer && (Math.abs(e.clientX - sx) > 12 || Math.abs(e.clientY - sy) > 12)) clearTimer();
+    const dist = Math.max(Math.abs(e.clientX - sx), Math.abs(e.clientY - sy));
+    if (holdReady) {
+      // Appui long déjà validé : un vrai geste de glisser démarre le drag
+      // (détachement du flux) seulement maintenant.
+      if (dist > 8) startDrag();
+      return;
+    }
+    if (timer && dist > 12) { clearTimer(); moved = true; }
   });
   const endDrag = () => {
     clearTimer();
@@ -7182,8 +7127,11 @@ function _bindExtraDraggable(el, onTap, holdMs, cellKey, slot) {
       dragging = false;
       el.classList.remove('dcell-extra-dragging');
       el.style.zIndex = 100; // au-dessus des sphères/fond, sous les panneaux/modals
-      if (moved) { _saveExtraPos(el.id, parseFloat(el.style.left), parseFloat(el.style.top)); }
-      else if (cellKey && slot && typeof _openDockQuickAssign === 'function') { _openDockQuickAssign(cellKey, slot); }
+      _saveExtraPos(el.id, parseFloat(el.style.left), parseFloat(el.style.top));
+      return;
+    }
+    if (holdReady) {
+      if (cellKey && slot && typeof _openDockQuickAssign === 'function') { _openDockQuickAssign(cellKey, slot); }
       return;
     }
     if (!moved && onTap) onTap();

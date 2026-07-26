@@ -393,3 +393,120 @@ sans distorsion additionnelle mesurée.
 Où regarder : `MASTER_GAIN_SCALE` (const, section config, près de
 `masterVol`), chaîne `preMaster→masterGlue→masterFader→masterHPF→
 masterLowCut→limiter→safetyClip→destination` dans `initFXChain()`.
+
+## 8e passe — 4 nouvelles consignes (dock, immersion, fréquence maître, sphères)
+
+### #39 — Bug : la cellule "+" du dock grossissait au lieu d'ouvrir l'assignation rapide
+
+Retour terrain : un appui long sur une sphère raccourci du dock (le "+")
+faisait grossir/déformer sa cellule au lieu d'ouvrir le panneau
+d'assignation rapide (#22). Cause : `_bindExtraDraggable()` détachait la
+sphère de son flux flexbox (`position:fixed`, sortie du `.dcell-wrap`)
+dès que le seuil d'appui long (480ms) était atteint — AVANT même de
+savoir si l'utilisateur comptait vraiment glisser ou juste relâcher sur
+place. Ce détachement fait instantanément grossir/reflow la cellule
+vidée de son contenu (comportement normal du flexbox), et le panneau
+d'assignation ne s'ouvrait qu'au relâchement — la sphère restait
+détachée, flottante, la cellule vide. Corrigé : le détachement n'a
+maintenant lieu qu'au premier vrai mouvement de glisser APRÈS le seuil
+(nouvel état interne `holdReady`) ; un appui long immobile ouvre
+l'assignation directement, sans jamais toucher au flux ni faire bouger
+la cellule. Vérifié (Playwright) : `position`/`parentElement` de la
+sphère restent inchangés (`static`, dans son `.dcell-wrap`) pendant tout
+un appui long immobile jusqu'à l'ouverture du panneau ; le glisser réel
+(appui long + déplacement) détache toujours correctement comme avant.
+
+### #33 — Immersion plein écran : limite technique (non réalisable)
+
+Demande : masquer aussi la barre de navigation Android en plein écran
+(actuellement seule la Fullscreen API web est utilisée, qui ne cache que
+le navigateur/contenu, pas les boutons système). Investigué :
+`classes.dex` contient `androidx.activity.EdgeToEdge` (dessine sous les
+barres système, ne les masque pas) mais aucun appel actif à
+`WindowInsetsControllerCompat.hide(...)` (le vrai mécanisme d'immersive
+mode). Le repo ne contient aucune source Android (Java/Kotlin,
+AndroidManifest.xml) — seulement l'APK pré-construit, repackagé au
+niveau fichiers (substitution de ressources) via un pipeline sans SDK
+Android/aapt2. Masquer la barre de navigation nécessiterait de
+recompiler `resources.arsc` et/ou `classes.dex`, hors de portée de ce
+pipeline sans risquer de casser l'app. **Non implémenté** — signalé
+explicitement plutôt que de simuler un correctif inopérant.
+
+### #40 — Nouvelle cellule VIOLETTE : saisie directe de la fréquence maître
+
+Nouvelle cellule sous la sphère Flux (on/off), même thème visuel que les
+5 cellules existantes (fond translucide + bordure teintée,
+`backdrop-filter`). Contenu, en une seule ligne compacte pour tenir dans
+l'espace très contraint du dock : `[−9] [saisie] [+9] [✓ Valider]`. `✓`
+applique la valeur tapée (`setMasterFreq`, retune en direct si le flux
+joue) ; `−9`/`+9` appliquent immédiatement un pas de 9 Hz. Bornée à
+[F_MIN, 432], entrée vide/invalide sans effet (pas de crash).
+
+Contrainte découverte en implémentant : `#bottom-dock` a une hauteur
+**fixe** (115px desktop / 120px mobile, pas auto), donc empiler une
+sphère Flux (95px) + une nouvelle cellule dessous dépassait largement ce
+budget — la cellule débordait sous l'écran ET chevauchait les colonnes
+voisines (une largeur fixe de 150px ne rentrait pas dans les ~119px
+réellement alloués à la colonne centrale par flexbox). Corrigé : cellule
+en une seule ligne (pas deux) avec `width:100%` (épouse sa colonne, ne la
+dépasse jamais) au lieu d'une largeur fixe ; marge `margin-bottom` de
+Flux réduite (33→8px desktop, 38→8px mobile, la nouvelle cellule reprend
+le rôle d'"élévation" visuelle) ; hauteur du dock relevée (115→148px
+desktop, 120→158px mobile, et toutes les références `calc()`/`bottom`/
+`translateY` associées mises à jour en conséquence). Vérifié
+(Playwright, viewport 393×851) : cellule entièrement dans l'écran,
+aucun chevauchement avec les 4 autres cellules, tous les cas
+fonctionnels (pas, validation, bornage, entrée vide, retune en direct)
+corrects.
+
+### #41 — Refonte des raccourcis tactiles des sphères oscillateurs
+
+Sphère **MAÎTRE** : inchangée (tap court = menu rapide, appui long =
+random global).
+
+Sphères **satellites** — permutées :
+- **Tap court** = mute/unmute Pingala+Ida **ensemble**, d'un coup
+  (`toggleMutePair`, nouvelle fonction). Remplace l'ouverture du menu
+  rapide sur tap court. En conséquence, les 2 boutons séparés
+  `pmute-`/`imute-` du panneau détaillé de l'oscillateur (mute Pingala
+  seul / mute Ida seul) sont retirés — redondants avec ce nouveau
+  raccourci unifié (les fonctions `toggleMuteP`/`toggleMuteI` associées
+  sont supprimées).
+- **Appui long** = ouvre le menu rapide (remplace l'ancien random ciblé
+  sur cette seule paire, `_pairRandomFreq`, qui n'a pas disparu — il est
+  déplacé, cf. ci-dessous).
+
+Menu rapide — simplifié :
+- Arcs Volume et Detune **retirés** (ils restaient un gros widget
+  circulaire coûteux en place ; ils restent réglables "en interne", dans
+  le panneau complet de l'oscillateur — volume `pvol-`/`ivol-` et
+  detune Sinus Duo y sont toujours présents et fonctionnels).
+- Ne reste que 2 cellules (Random ratio, Verrou) + le centre (ouvre le
+  panneau complet) — un widget bien plus petit qu'avant.
+- Le bouton **Verrou** gagne un appui long (`_bindTapHold`, 420ms) :
+  déclenche un random ciblé sur CETTE sphère (`_pairRandomFreq` pour une
+  satellite, `triggerMagicAuto()` pour le maître) — reprend exactement
+  l'ancien comportement de l'appui long sur la sphère elle-même, qui a dû
+  être libéré pour le nouveau mute/unmute. Le verrou continue de
+  bloquer ce random comme avant (`isLocked` vérifié dans
+  `_pairRandomFreq`).
+- Géométrie resserrée au maximum : `.vp-mastermenu` passe de `inset:-1%`
+  à `inset:0` (ne dépasse plus JAMAIS le cadre de sa propre sphère,
+  quelle que soit la densité de la couronne de satellites) ; les 2
+  cellules sont tirées vers l'intérieur du cadre (`top`/`bottom`
+  positifs au lieu de négatifs) et légèrement réduites (64×56→56×48px).
+
+Vérifié (Playwright, viewport 393×851, mode avancé/6 satellites) :
+mute/unmute ensemble sur tap court (les 2 oscillateurs, dans les 2 sens) ;
+appui long ouvre bien le menu rapide sans toucher à la fréquence ; le
+menu rapide ne contient plus ni arc ni référence aux anciens éléments
+(grep sur tout le fichier) ; le verrou bloque bien le random tant qu'il
+est actif et le débloque une fois désactivé ; comportement de la sphère
+maître intégralement inchangé ; les boutons mute internes ont disparu du
+panneau détaillé, volume/detune toujours présents et fonctionnels ;
+**zéro chevauchement** entre le menu rapide et les sphères voisines,
+testé sur les 6 positions satellites une par une.
+
+Où regarder : `toggleMutePair()`, `_vpStart()`/`_vpEnd()` (section
+"04-vesica-ui.js"), `_openQuickMenu()`/`_mmLockLongPress()`,
+`buildPairHTML()` (panneau détaillé, boutons mute retirés).
