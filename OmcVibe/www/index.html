@@ -2277,7 +2277,8 @@ const LS_KEY = 'fbf432_state_cosmic';
 const F_MIN   = 54;
 const F_MAX   = 432;        // plafond du jeu aléatoire (bande haute 288–432)
 const N_MAX   = 8.0;        // n libre : sert à placer le carrier dans sa bande
-const F_SEUIL = 360;        // (conservé pour info — protection auto désactivée v2.x)
+const F_SEUIL = 360;        // #61 : seuil utilisé par densityScheme() (palette de n) — l'ancienne
+                             // "protection auto" (HPF imposé au-dessus, jamais appelée) a été retirée
 
 // Bandes fréquentielles attitrées (boue sub évitée par répartition)
 const FBF_BANDS = [[54, 144], [144, 288], [288, 432]];
@@ -2436,9 +2437,6 @@ function calcIFreq(i) {
   return Math.max(F_MIN, Math.min(hi, calcPFreq(i) + ida.polarity * ida.delta));
 }
 function safeF(f)    { return Math.max(32, Math.min(460, f)); }
-
-// Au-dessus du seuil : protection auto (vol −50% + spatialisation imposée)
-function isAboveSeuil(i) { return calcPFreq(i) > F_SEUIL && i !== MASTER_IDX; }
 
 const HARMONIC_RATIOS = [1, 9/8, 5/4, 4/3, 3/2, 5/3, 16/9, 2];
 function harmonicRandomInit() {
@@ -3066,23 +3064,6 @@ function _applyAntiCrack() {
   if (_lfoGain) _lfoGain.gain.setTargetAtTime(_antiCrackTarget, aNow(), 0.3);
 }
 
-/* ---------- 2.2b · PROTECTION SEUIL 360 Hz (point 9) ----------
-   Au-dessus de 360 Hz : HPF imposé + envoi reverb/delay (spatialisation)
-   + pan élargi (LFO 3D). Le −50% volume est appliqué côté data (vol). */
-function _applySeuilProtect(i) {
-  if (i === MASTER_IDX || typeof isAboveSeuil !== 'function') return;
-  const above = isAboveSeuil(i);
-  const pid = PAIRS[i].pingala.id, iid = PAIRS[i].ida.id;
-  const now = aNow();
-  [[pid, -1], [iid, 1]].forEach(([id, side]) => {
-    const node = nodes[id]; if (!node) return;
-    try {
-      // Au-dessus du seuil : HPF imposé (le −50% volume est géré au random).
-      // On ne touche PLUS au pan → l'éventail stéréo (aération) est préservé.
-      if (node.hpf) node.hpf.frequency.setTargetAtTime(above ? 120 : 20, now, 0.12);
-    } catch(e) {}
-  });
-}
 
 /* ---------- 2.3 · IR DE RÉVERBE GÉNÉRÉE PAR CODE ---------- */
 function _makeIR(decay, preDelay) {
@@ -3458,7 +3439,7 @@ function setPairFilter(i, cutoff, res) { setOscFilter(PAIRS[i].pingala.id, cutof
 // sampleSetFilterMode, appliqué au nœud flt déjà présent dans la chaîne FX
 // de chaque oscillateur (aucun nouveau nœud, juste son .type qui change).
 function _setOscFilterMode(id, mode) {
-  const cur = OSC_FILTER[id] || { cutoff: 6000, res: 0.707 };
+  const cur = OSC_FILTER[id] || { cutoff: 6000, res: 0.707, hp: 20 }; // #61 : hp inclus (évite un NaN plus tard dans setOscHPF)
   cur.mode = mode;
   OSC_FILTER[id] = cur;
   const node = nodes[id]; if (node?.flt) node.flt.type = FILTER_TYPES[mode] || 'lowpass';
@@ -4893,13 +4874,21 @@ function setDeltaCharacter(mode, btn) {
 // case ON/OFF cachée) : chaque tirage pioche une fondamentale CONTINUE dans
 // cette plage — répartition quasi-infinie, plus de pool figé.
 const RAND_OPTS={freqMin:F_MIN,freqMax:432,ratioMode:'random',useFX:false,spread:0.6,lockBinaural:true,
-  filterLFO:false, randomTimbre:true, randomDepth:true, breathRandom:true, deltaVariety:true, polarityVariety:true};
+  filterLFO:false, randomTimbre:true, randomDepth:true, breathRandom:true, deltaVariety:true, polarityVariety:true,
+  randomDualSine:false};
 // filterLFO désactivé par défaut (retour terrain, comparaison avec la
 // version du 01/07 qui ne l'avait pas) : à chaque tirage aléatoire, cette
 // option fait jusqu'à 24 créations/déconnexions de nœuds de modulation
 // (setOscPatch ×2 ids ×2 destinations ×6 paires) — du travail et des
 // coupures de modulation abruptes qui n'existaient pas avant. Reste
 // disponible en option pour qui veut l'effet, mais plus jamais par défaut.
+// #61 : randomDualSine désactivé par défaut (audit "base propre" suite
+// retour terrain) — le détune Sinus Duo était re-tiré au hasard (-72..+72¢)
+// à CHAQUE tirage, pour TOUTES les paires, sans option pour l'empêcher :
+// ça écrasait systématiquement le "détune à 0 par défaut" (#54) dès la
+// première utilisation du jeu aléatoire. Reste disponible pour qui veut la
+// variété, mais plus jamais par défaut — le détune reste à 0 tant que
+// l'utilisateur ne le règle pas lui-même (curseur ou pad tactile).
 
 // Verrouillage du battement binaural (delta) pendant le random
 function setBinauralLock(v){
@@ -5555,15 +5544,19 @@ function triggerMagicAuto(opts) {
     const wavePool = _wavePoolForDraw();
     const wave    = (isSpot && RAND_OPTS.randomTimbre) ? wavePool[Math.floor(Math.random() * wavePool.length)] : curWave;
 
-    // #35 : detune Sinus Duo re-tiré au hasard À CHAQUE TIRAGE, pour CHAQUE
-    // paire (y compris le maître) — remplace la variété qu'apportait un Δ
-    // large, désormais resserré 0.8-1.2 Hz. Application EN DIRECT (aucune
-    // reconstruction d'oscillateur, cf. _applyDualSineDetune), donc jamais
-    // le risque de craquement qui limite le changement de moteur d'onde à
-    // la seule paire vedette.
-    PAIR_DUALSINE[idx] = Math.round((-72 + Math.random() * 144) * 10) / 10;
-    _applyDualSineDetune(pair.pingala.id, PAIR_DUALSINE[idx]);
-    _applyDualSineDetune(pair.ida.id, PAIR_DUALSINE[idx]);
+    // #35/#61 : detune Sinus Duo re-tiré au hasard À CHAQUE TIRAGE, pour
+    // CHAQUE paire (y compris le maître) — remplace la variété qu'apportait
+    // un Δ large, désormais resserré 0.8-1.2 Hz. Application EN DIRECT
+    // (aucune reconstruction d'oscillateur, cf. _applyDualSineDetune), donc
+    // jamais le risque de craquement qui limite le changement de moteur
+    // d'onde à la seule paire vedette. Derrière RAND_OPTS.randomDualSine
+    // (OFF par défaut, #61) : sinon le "détune à 0 par défaut" (#54) était
+    // écrasé dès le premier tirage, pour toutes les paires, sans option.
+    if (RAND_OPTS.randomDualSine) {
+      PAIR_DUALSINE[idx] = Math.round((-72 + Math.random() * 144) * 10) / 10;
+      _applyDualSineDetune(pair.pingala.id, PAIR_DUALSINE[idx]);
+      _applyDualSineDetune(pair.ida.id, PAIR_DUALSINE[idx]);
+    }
 
     if (idx === MASTER_IDX) {
       pair.pingala.ri = 0; pair.pingala.n = 1.0;
@@ -5607,10 +5600,22 @@ function triggerMagicAuto(opts) {
     pair.ida.vol     = Math.min(0.4, isosonicVol(pf, 0.085) * boost);
     if (isSpot && wave !== curWave && typeof setPairEngine === 'function') setPairEngine(idx, wave);
 
-    // Profondeur → timbre plus mat pour les paires lointaines (air absorbé)
+    // Profondeur → timbre plus mat pour les paires lointaines (air absorbé).
+    // #61 : ne modifie QUE cutoff (le seul paramètre lié à la profondeur 3D)
+    // — avant, l'objet OSC_FILTER entier était remplacé, ce qui effaçait
+    // silencieusement le TYPE de filtre (OFF/HPF/BPF/LPF, #53) et la
+    // résonance réglés au pad tactile (#56), sans que l'utilisateur n'ait
+    // touché ni l'un ni l'autre. res/hp sont réparés en repli s'ils
+    // manquent (certains chemins, ex. _setOscFilterMode, ne posent pas hp) —
+    // sinon setOscHPF reçoit hp=undefined → NaN → setTargetAtTime plante.
     const cutoff = Math.round(3200 * (1 - depth * 0.55));
-    OSC_FILTER[pair.pingala.id] = { cutoff, res: 0.707, hp: 20 };
-    OSC_FILTER[pair.ida.id]     = { cutoff, res: 0.707, hp: 20 };
+    [pair.pingala.id, pair.ida.id].forEach(id => {
+      const cur = OSC_FILTER[id] || {};
+      cur.cutoff = cutoff;
+      if (cur.res == null) cur.res = 0.707;
+      if (cur.hp  == null) cur.hp  = 20;
+      OSC_FILTER[id] = cur;
+    });
 
     // Option "LFO Cutoff/Résonance" : respiration lente et douce du filtre
     // (façon pad analogique), rythme très bas pour rester apaisant — jamais

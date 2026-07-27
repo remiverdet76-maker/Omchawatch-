@@ -847,3 +847,61 @@ du long ; remonter le curseur manuellement fonctionne toujours normalement.
 Où regarder : `triggerMagicAuto()` (le bloc "plancher de reverbe" a été
 retiré, juste avant la boucle qui applique volumes/pan/filtres/envoi FX
 par paire).
+
+## 13e passe — #61 : audit complet des incohérences "en fond" (base propre)
+
+Demande explicite : auditer TOUT l'APK pour tout ce qui tourne en fond
+sans interaction directe avec le réglage concerné — pour chaque trouvaille,
+quoi/source/conséquence/action.
+
+**Corrigé :**
+- **Détune Sinus Duo re-tiré au hasard à chaque tirage, sans option.**
+  Source : `triggerMagicAuto()`, `PAIR_DUALSINE[idx] = Math.round((-72 +
+  Math.random()*144)*10)/10;`, inconditionnel. Conséquence : écrasait le
+  "détune à 0 par défaut" (#54) dès le premier tirage aléatoire — l'action
+  la plus utilisée de l'app — pour toutes les paires. Fix : nouveau
+  `RAND_OPTS.randomDualSine` (OFF par défaut, même précédent que
+  `filterLFO`), le tirage ne touche plus au détune sauf activation
+  explicite.
+- **Le filtre par oscillateur (type + résonance) était écrasé en entier à
+  chaque tirage.** Source : `triggerMagicAuto()`,
+  `OSC_FILTER[pair.pingala.id] = { cutoff, res: 0.707, hp: 20 };`.
+  Conséquence : le type (OFF/HPF/BPF/LPF, #53) et la résonance réglés au
+  pad tactile (#56) étaient perdus silencieusement, sans que l'utilisateur
+  n'ait touché ni l'un ni l'autre — invisible jusqu'à la prochaine
+  reconstruction d'oscillateur, qui revenait alors en passe-bas standard.
+  Fix : ne modifie plus que `cutoff` (seul paramètre réellement lié à la
+  profondeur 3D), préserve `.mode`/`.res` existants.
+  **Effet de bord découvert en testant ce fix** : `_setOscFilterMode`
+  (ligne définissant le fallback `{cutoff:6000,res:0.707}`) ne posait
+  jamais `.hp` — sans le forçage total qu'avait l'ancien code, `.hp`
+  pouvait rester `undefined`, et `setOscHPF` plantait
+  (`setTargetAtTime` sur une valeur non-finie). Réparé aux deux endroits
+  (repli défensif `res`/`hp` dans le merge du tirage, `.hp` ajouté au
+  fallback de `_setOscFilterMode`).
+- **Code mort : `_applySeuilProtect()` / `isAboveSeuil()`.** Fonction
+  "Protection seuil 360Hz" complète, jamais appelée nulle part (confirmé
+  par recherche exhaustive) — le commentaire d'origine le disait déjà :
+  "protection auto désactivée v2.x". Supprimée entièrement (fonction +
+  helper `isAboveSeuil` devenu orphelin).
+
+**Recensés, actifs par défaut, documentés et intentionnels (non touchés,
+laissés au choix de l'utilisateur)** : `BREATH_STATE` (respiration
+organique master, on/0.11Hz/18%), `DELTA_DRIFT_STATE` (dérive lente du Δ,
+on/±0.06Hz sur 3-7min), `RAND_OPTS.breathRandom` (respiration aléatoire
+par paire à chaque tirage, togglable dans Options Aléatoire),
+`masterLowCut` (-5dB shelf @120Hz, anti-pompage) + micro-désaccord
+aléatoire ±1.2¢ par voix (anti-addition-constructive, buildOsc),
+`_applyAntiCrack` (réduction de gain automatique jusqu'à -72% selon le
+nombre d'oscillateurs actifs, anti-saturation).
+
+Vérifié par script Playwright : réglage manuel (mode HPF, résonance 4.2)
+posé sur une paire, 6 tirages aléatoires consécutifs, mode et résonance
+restent identiques (`hpf`/`4.2`) tout du long, aucune erreur JS ; le
+détune Sinus Duo reste à sa valeur initiale par défaut à travers les 6
+tirages, puis se randomise correctement une fois `randomDualSine` activé
+manuellement.
+
+Où regarder : `RAND_OPTS.randomDualSine` (déclaration + garde dans
+`triggerMagicAuto()`), le bloc `OSC_FILTER` fusionné (au lieu de remplacé)
+dans `triggerMagicAuto()`, `_setOscFilterMode` (fallback `hp` ajouté).
