@@ -749,3 +749,73 @@ Où regarder (10e passe) : `_openQuickMenu`/`_closeQuickMenu` (z-index),
 pré-remplissage + `DUALSINE_DETUNE` (onde par défaut), `_dualSign`
 (buildOsc), `PAIR_DUALSINE_LFO`/`_attachPairDualSineLFO`/
 `togglePairDualSineLFO` (LFO Δ).
+
+## 11e passe — module tactile ADSR/Cutoff-Rés + BD-2 + automations (point 4)
+
+Avant de coder : avis objectif donné à l'utilisateur sur la faisabilité
+(canevas tactile déjà présent dans l'app — EQ graphique, Matrice —, moteur
+de saturation déjà présent — Grain analogique —, mais 2 contraintes réelles
+signalées : un vrai ADSR 4 étages n'a rien à piloter sur un drone continu
+(l'app n'a que Attaque/Relâche, `OSC_ENV`), et un overdrive appliqué à des
+sinus pures va à l'encontre d'un principe déjà écrit dans le code ("une
+sinus pure doit rester PURE"). L'utilisateur a validé : pad 2 paramètres
+(pas de vrai ADSR), BD-2 expérimental accepté, off par défaut dans tous les
+cas.
+
+### #56 — Pad tactile partagé Cutoff/Résonance ⇄ Attaque/Relâche
+
+Nouveau canvas (`tpad-${i}`, onglet ③ FX) avec 2 onglets commutables. Un
+seul point XY glissé (`initTPad`/`drawTPad`/`_tpadApply`, même schéma
+d'interaction que `initEQ2D` : mousedown/touchstart → drag → mouseup/
+touchend) :
+- Mode **Cutoff/Rés.** : X → cutoff (échelle log 60–6000 Hz, mêmes bornes
+  que l'ancien curseur), Y → résonance (0–6). Appelle `setPairFilter`
+  (fonction déjà existante, aucune nouvelle automation audio).
+- Mode **Attaque/Relâche** : X → attaque (0–4s), Y → relâche (0–6s).
+  Appelle `setPairEnv` (déjà existante).
+
+Le sélecteur de TYPE de filtre (OFF/HPF/BPF/LPF, #53) reste dans l'onglet
+② Oscillo — c'est un choix de topologie, pas une valeur continue, il ne
+fait pas partie du pad.
+
+### #57 — Color FX BD-2 (Blues Driver), expérimental, par paire, OFF par défaut
+
+Étage optionnel `WaveShaperNode` (courbe soft-clip asymétrique
+`_bd2Curve`, façon overdrive à lampe) + filtre de tonalité (`peaking`
+1500 Hz) + gain de sortie, inséré entre le panner et le coupe-bas/filtre
+UNIQUEMENT si activé pour la paire (même stratégie que Grain analogique :
+nœuds construits seulement si nécessaire, `rebuildAllOscs()` au
+basculement on/off pour insérer/retirer proprement). **Drive et Niveau
+plafonnés en dur à 0.5 dans `setPairBD2`** (pas juste visuellement dans
+l'UI) — un dépassement de la borne UI ne peut pas dépasser le plafond
+réel. OFF par défaut, par paire. Persisté dans les presets FX
+(`PAIR_BD2`, `getFXState`/`applyFXState`).
+
+### #58 — Onglet automations rapides (9/18/36/74/144s)
+
+Toggle + sélecteur de période par paire (`PAIR_TPAD_AUTO`). Cible le mode
+actif du pad :
+- Mode Cutoff/Rés. : balayage doux vers une cible aléatoire proche à
+  chaque tick (`setPairFilter`).
+- Mode Attaque/Relâche : swell périodique (mute doux → remontée), utilise
+  les temps Attaque/Relâche RÉELLEMENT réglés au pad pour la forme du
+  swell.
+
+Simple `setInterval` (pas de nœud audio-rate) : aux échelles de temps
+demandées (9 à 144s), la précision audio-thread n'apporte rien. Arrêté
+proprement dans le teardown de `stopFlow()` (même précédent que les autres
+LFO/timers de l'app). OFF par défaut.
+
+### #59 — Nettoyage : anciens curseurs Cutoff/Résonance/Amp EG retirés
+
+Une fois le pad tactile vérifié (tests Playwright : drag réel vers les 4
+coins du canvas, valeurs `OSC_FILTER`/`OSC_ENV` correctement appliquées),
+les curseurs linéaires devenus redondants sont retirés de l'onglet
+② Oscillo, remplacés par un simple renvoi vers l'onglet ③ FX. Fait
+volontairement EN DERNIER, jamais avant que le remplaçant tactile soit
+vérifié fonctionnel.
+
+Où regarder (11e passe) : `initTPad`/`drawTPad`/`_tpadApply`/
+`setPairTPadMode` (pad tactile), `PAIR_BD2`/`_bd2Curve`/`togglePairBD2`/
+`setPairBD2` (BD-2), `PAIR_TPAD_AUTO`/`_tpadAutoTick`/`toggleTPadAuto`/
+`setTPadAutoPeriod` (automations).

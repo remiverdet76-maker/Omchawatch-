@@ -1644,9 +1644,19 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 
 /* Rack de lecture : filtre + EQ 12 bandes + limiter */
 .filt-mode-row{display:flex;gap:.3rem;margin-bottom:.45rem;}
-.filt-mode-btn,.osc-filt-mode-btn{flex:1;padding:.32rem 0;border-radius:8px;font-size:.68rem;letter-spacing:.05em;
+.filt-mode-btn,.osc-filt-mode-btn,.tpad-tab-btn{flex:1;padding:.32rem 0;border-radius:8px;font-size:.68rem;letter-spacing:.05em;
   border:1px solid rgba(200,160,255,.28);background:rgba(12,2,32,.5);color:rgba(200,170,255,.75);cursor:pointer;}
-.filt-mode-btn.active,.osc-filt-mode-btn.active{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#FFD700;}
+.filt-mode-btn.active,.osc-filt-mode-btn.active,.tpad-tab-btn.active{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#FFD700;}
+
+/* #56 : module tactile ADSR/Cutoff-Rés partagé (canvas glisser-déposer) */
+.tpad-wrap{margin:.35rem 0 .5rem;}
+.tpad-canvas{width:100%;height:150px;display:block;border-radius:8px;cursor:crosshair;touch-action:none;
+  background:rgba(8,2,22,.55);border:1px solid rgba(190,130,255,.22);}
+.tpad-auto-row{display:flex;align-items:center;justify-content:space-between;gap:.4rem;margin-top:.35rem;}
+.tpad-auto-periods{display:flex;gap:.25rem;flex-wrap:wrap;}
+.tpad-period-btn{padding:.2rem .45rem;border-radius:6px;font-size:.64rem;
+  border:1px solid rgba(200,160,255,.28);background:rgba(12,2,32,.5);color:rgba(200,170,255,.75);cursor:pointer;}
+.tpad-period-btn.active{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#FFD700;}
 
 .eq12-rack{display:flex;gap:.22rem;align-items:flex-end;height:112px;padding:.3rem .1rem .1rem;margin-bottom:.3rem;}
 .eq12-band{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;height:100%;}
@@ -2732,6 +2742,53 @@ function setGrainDrive(v) {
          Object.values(nodes).forEach(n => { if (n && n.shaper) n.shaper.curve = curve; }); }
   const el = document.getElementById('sv-grain-drive'); if (el) el.textContent = GRAIN_STATE.drive.toFixed(2);
 }
+
+// #57 : Color FX BD-2 (Blues Driver) — étage additionnel PAR PAIRE (distinct
+// du Grain analogique, global). Expérimental : Drive/Niveau bridés en dur à
+// 50% (0.5), pas juste dans l'UI — une sinus pure sature vite, ce plafond
+// limite le risque de bourdonnement/conflit avec le ton pur de l'app.
+// OFF par défaut, par paire.
+const PAIR_BD2 = {}; // pairIdx → {on, drive, tone, level}
+function _bd2Curve(driveNorm) {
+  // Soft-clip asymétrique (tanh + léger biais positif) façon overdrive à
+  // lampe — génère surtout des harmoniques paires, plus doux qu'un clip dur.
+  const n = 2048, curve = new Float32Array(n);
+  const k = 1 + Math.max(0, Math.min(0.5, driveNorm)) * 18;
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * 2 - 1;
+    const biased = x + 0.08 * x * x * Math.sign(x);
+    curve[i] = Math.tanh(k * biased) / Math.tanh(k);
+  }
+  return curve;
+}
+function togglePairBD2(i) {
+  const cur = PAIR_BD2[i] || { on: false, drive: 0.25, tone: 0.5, level: 0.25 };
+  cur.on = !cur.on;
+  PAIR_BD2[i] = cur;
+  const btn = document.getElementById('bd2on-' + i);
+  if (btn) { btn.classList.toggle('on', cur.on); btn.textContent = cur.on ? '● ON' : '○ OFF'; }
+  const row = document.getElementById('bd2-sliders-' + i);
+  if (row) row.style.display = cur.on ? '' : 'none';
+  if (flowing) rebuildAllOscs(); // insère/retire l'étage BD-2 proprement (même schéma que Grain)
+  saveState();
+}
+function setPairBD2(i, drive, tone, level) {
+  const cur = PAIR_BD2[i] || { on: false, drive: 0.25, tone: 0.5, level: 0.25 };
+  if (drive != null) cur.drive = Math.max(0, Math.min(0.5, parseFloat(drive)));
+  if (tone  != null) cur.tone  = Math.max(0, Math.min(1,   parseFloat(tone)));
+  if (level != null) cur.level = Math.max(0, Math.min(0.5, parseFloat(level)));
+  PAIR_BD2[i] = cur;
+  if (cur.on) {
+    const pid = PAIRS[i].pingala.id, iid = PAIRS[i].ida.id;
+    [pid, iid].forEach(id => {
+      const n = nodes[id]; if (!n || !n.bd2Shaper) return;
+      n.bd2Shaper.curve = _bd2Curve(cur.drive);
+      n.bd2Tone.gain.setTargetAtTime((cur.tone - 0.5) * 12, aNow(), 0.05);
+      n.bd2Gain.gain.setTargetAtTime(cur.level, aNow(), 0.05);
+    });
+  }
+  saveState();
+}
 function setGrainDrift(v) {
   GRAIN_STATE.drift = Math.max(0, Math.min(1, parseFloat(v)));
   if (_driftDepth) _driftDepth.gain.setTargetAtTime(GRAIN_STATE.drift * 5, aNow(), 0.1);
@@ -2840,9 +2897,25 @@ function buildOsc(id, freq, vol, pan) {
   const g      = c.createGain(); g.gain.value = 0;
   const hiTrim = c.createGain(); hiTrim.gain.value = 1;
 
+  // #57 : Color FX BD-2 — étage optionnel PAR PAIRE, inséré entre le panner
+  // et le coupe-bas/filtre. Construit UNIQUEMENT si activé pour cette paire
+  // (comme Grain analogique) : trajet 100% inchangé sinon.
+  const _bd2PairIdx = PAIRS.findIndex(p2 => p2.pingala.id === id || p2.ida.id === id);
+  const bd2 = _bd2PairIdx >= 0 ? PAIR_BD2[_bd2PairIdx] : null;
+  const bd2On = !!(bd2 && bd2.on);
+  let bd2Shaper = null, bd2Tone = null, bd2Gain = null;
+  if (bd2On) {
+    bd2Shaper = c.createWaveShaper(); bd2Shaper.oversample = '4x'; bd2Shaper.curve = _bd2Curve(bd2.drive);
+    bd2Tone = c.createBiquadFilter(); bd2Tone.type = 'peaking'; bd2Tone.frequency.value = 1500; bd2Tone.Q.value = 0.8;
+    bd2Tone.gain.value = (bd2.tone - 0.5) * 12;
+    bd2Gain = c.createGain(); bd2Gain.gain.value = bd2.level;
+  }
+
   if (shaper) { signalIn.connect(shaper); shaper.connect(p); }
   else        { signalIn.connect(p); }      // sinus pure → aucun traitement
-  p.connect(hpf); hpf.connect(flt); flt.connect(g); g.connect(hiTrim);
+  if (bd2On) { p.connect(bd2Shaper); bd2Shaper.connect(bd2Tone); bd2Tone.connect(bd2Gain); bd2Gain.connect(hpf); }
+  else       { p.connect(hpf); }
+  hpf.connect(flt); flt.connect(g); g.connect(hiTrim);
   // #11 (roadmap) : en option, Pingala ET Ida d'une même paire convergent
   // vers un bus commun passant par un compresseur TRÈS doux avant le master
   // — absorbe les micro-pics d'enveloppe qu'un Δ élevé + respiration + FX
@@ -2864,7 +2937,7 @@ function buildOsc(id, freq, vol, pan) {
   hiTrim.connect(fxSend);
   if (typeof reverbSendBus !== 'undefined' && reverbSendBus) { try { fxSend.connect(reverbSendBus); } catch(e) {} }
 
-  const node = { _id: id, o: subs[0].osc, subs, signalIn, shaper, g, p, hpf, flt, hiTrim, fxSend };
+  const node = { _id: id, o: subs[0].osc, subs, signalIn, shaper, g, p, hpf, flt, hiTrim, fxSend, bd2Shaper, bd2Tone, bd2Gain };
   applyHiBand(node, f0);
   if (OSC_PATCH[id]) setTimeout(() => _reapplyOscPatch(id), 20);
   if (!mutedOscs[id] && vol > 0) {
@@ -2929,6 +3002,9 @@ function releaseOsc(node) {
       node.g.disconnect(); node.p.disconnect();
       if (node.signalIn) node.signalIn.disconnect();
       if (node.shaper)  node.shaper.disconnect();
+      if (node.bd2Shaper) node.bd2Shaper.disconnect();
+      if (node.bd2Tone)   node.bd2Tone.disconnect();
+      if (node.bd2Gain)   node.bd2Gain.disconnect();
       if (node.hpf)     node.hpf.disconnect();
       if (node.flt)     node.flt.disconnect();
       if (node.hiTrim)  node.hiTrim.disconnect();
@@ -3437,7 +3513,8 @@ function getFXState() {
     waves: { ...OSC_WAVES },
     filters: JSON.parse(JSON.stringify(OSC_FILTER)),
     pairFX: { ...PAIR_FX },
-    pairDualSine: { ...PAIR_DUALSINE } // #10 (roadmap)
+    pairDualSine: { ...PAIR_DUALSINE }, // #10 (roadmap)
+    pairBD2: JSON.parse(JSON.stringify(PAIR_BD2)) // #57
   };
 }
 
@@ -3471,7 +3548,12 @@ function applyFXState(s) {
   if (s.filters) { Object.keys(s.filters).forEach(id => { OSC_FILTER[id] = s.filters[id]; if (nodes[id]) { setOscFilter(id, s.filters[id].cutoff, s.filters[id].res); if (nodes[id].flt) nodes[id].flt.type = FILTER_TYPES[s.filters[id].mode] || 'lowpass'; } }); }
   if (s.pairFX)  { Object.keys(s.pairFX).forEach(id => { PAIR_FX[id] = s.pairFX[id]; const n=nodes[id]; if (n?.fxSend) n.fxSend.gain.setTargetAtTime(s.pairFX[id]!==false?FX_SEND_LEVEL:0, aNow(), 0.08); }); }
   if (s.pairDualSine) { Object.keys(s.pairDualSine).forEach(i => setPairDualSineDetune(i, s.pairDualSine[i])); } // #10 (roadmap)
-  if (wavesChanged) rebuildAllOscs();
+  // #57 : PAIR_BD2.on change la STRUCTURE de la chaîne (nœud inséré ou non),
+  // comme OSC_WAVES — même stratégie : détecter le changement, rebuild une
+  // seule fois à la fin plutôt qu'à chaque paire individuellement.
+  let bd2Changed = false;
+  if (s.pairBD2) { Object.keys(s.pairBD2).forEach(i => { const was = !!(PAIR_BD2[i] && PAIR_BD2[i].on); if (was !== !!s.pairBD2[i].on) bd2Changed = true; PAIR_BD2[i] = s.pairBD2[i]; }); }
+  if (wavesChanged || bd2Changed) rebuildAllOscs();
 }
 
 function rebuildAllOscs() {
@@ -3627,6 +3709,9 @@ async function stopFlow() {
         n.g.disconnect(); n.p.disconnect();
         if (n.signalIn) n.signalIn.disconnect();
         if (n.shaper)  n.shaper.disconnect();
+        if (n.bd2Shaper) n.bd2Shaper.disconnect();
+        if (n.bd2Tone)   n.bd2Tone.disconnect();
+        if (n.bd2Gain)   n.bd2Gain.disconnect();
         if (n.hpf)     n.hpf.disconnect();
         if (n.flt)     n.flt.disconnect();
         if (n.hiTrim)  n.hiTrim.disconnect();
@@ -3644,6 +3729,7 @@ async function stopFlow() {
     // sans ce nettoyage ils continueraient à tourner silencieusement en fond.
     Object.keys(_oscVolLFOs).forEach(id => clearOscVolLFO(id));
     Object.keys(PAIR_DUALSINE_LFO).forEach(i => _clearPairDualSineLFO(i)); // #54
+    Object.keys(PAIR_TPAD_AUTO).forEach(i => _tpadAutoStop(i)); // #58
     PAIRS.forEach((_, i) => clearDeltaDrift(i));
     _clearAllPairComp();
     clearInterval(_breathAnchorTimer); _breathAnchorTimer = null; // #9 (roadmap)
@@ -5779,6 +5865,164 @@ function initEQ2D(cv){
   })();
 }
 
+// ═══════════════════════════════════════════════════════════════════
+//  #56 : MODULE TACTILE PARTAGÉ — Cutoff/Résonance ⇄ Attaque/Relâche
+//  Un seul canvas par paire (onglet ③ FX), 2 modes commutables par onglet.
+//  Réutilise setPairFilter/setPairEnv déjà existants (aucune nouvelle
+//  automation audio) — juste une nouvelle interface tactile XY par-dessus.
+//  Même schéma d'interaction que initEQ2D (mousedown/touchstart → drag →
+//  mouseup/touchend), boucle de dessin gatée sur la visibilité du panneau.
+// ═══════════════════════════════════════════════════════════════════
+const PAIR_TPAD_MODE = {}; // pairIdx → 'cutoff' | 'env'
+const TPAD_CUTOFF_LO = 60, TPAD_CUTOFF_HI = 6000; // même plage que l'ancien curseur Cutoff
+function _tpadX2Cutoff(x, w) { return TPAD_CUTOFF_LO * Math.pow(TPAD_CUTOFF_HI / TPAD_CUTOFF_LO, Math.max(0, Math.min(1, x / w))); }
+function _tpadCutoff2X(f, w) { return w * Math.log(Math.max(TPAD_CUTOFF_LO, f) / TPAD_CUTOFF_LO) / Math.log(TPAD_CUTOFF_HI / TPAD_CUTOFF_LO); }
+function _tpadY2Res(y, h) { return Math.max(0, Math.min(6, (1 - y / h) * 6)); }
+function _tpadRes2Y(r, h) { return h * (1 - Math.max(0, Math.min(6, r)) / 6); }
+function _tpadX2Att(x, w) { return Math.max(0, Math.min(4, (x / w) * 4)); }
+function _tpadAtt2X(a, w) { return w * Math.max(0, Math.min(4, a)) / 4; }
+function _tpadY2Rel(y, h) { return Math.max(0, Math.min(6, (1 - y / h) * 6)); }
+function _tpadRel2Y(r, h) { return h * (1 - Math.max(0, Math.min(6, r)) / 6); }
+
+function setPairTPadMode(i, mode) {
+  PAIR_TPAD_MODE[i] = mode;
+  const bC = document.getElementById('tpadtab-'+i+'-cutoff'); if (bC) bC.classList.toggle('active', mode === 'cutoff');
+  const bE = document.getElementById('tpadtab-'+i+'-env');    if (bE) bE.classList.toggle('active', mode === 'env');
+  drawTPad(document.getElementById('tpad-'+i), i);
+}
+
+function drawTPad(cv, i) {
+  if (!cv || cv.offsetWidth < 10) return;
+  const W = cv.offsetWidth, H = cv.offsetHeight;
+  const dpr = window.devicePixelRatio || 1;
+  if (cv.width !== Math.round(W*dpr) || cv.height !== Math.round(H*dpr)) { cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr); }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  const pair = PAIRS[i]; const c = pair.color;
+  const mode = PAIR_TPAD_MODE[i] || 'cutoff';
+  // grille légère
+  ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = 1;
+  for (let g = 1; g < 4; g++) {
+    const gx = W*g/4, gy = H*g/4;
+    ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke();
+  }
+  let x, y, lx, ly;
+  ctx.font = `${Math.max(8,W*.026)}px monospace`; ctx.fillStyle = 'rgba(255,255,255,.4)';
+  if (mode === 'cutoff') {
+    const f = (OSC_FILTER[pair.pingala.id]||{cutoff:20000}).cutoff;
+    const r = (OSC_FILTER[pair.pingala.id]||{res:0}).res;
+    x = _tpadCutoff2X(f, W); y = _tpadRes2Y(r, H);
+    ctx.fillText('Cutoff → '+Math.round(f)+' Hz', 6, H-6);
+    lx = 'Rés.'; ly = r.toFixed(1);
+  } else {
+    const env = (typeof OSC_ENV!=='undefined' && OSC_ENV[pair.pingala.id]) || {a:0,r:0};
+    x = _tpadAtt2X(env.a, W); y = _tpadRel2Y(env.r, H);
+    ctx.fillText('Attaque → '+env.a.toFixed(2)+'s', 6, H-6);
+    lx = 'Relâche'; ly = env.r.toFixed(2)+'s';
+  }
+  ctx.textAlign = 'right'; ctx.fillText(lx+' → '+ly, W-6, 14); ctx.textAlign = 'left';
+  // croix de repère + point
+  ctx.strokeStyle = c+'55'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  ctx.shadowColor = c; ctx.shadowBlur = 12;
+  ctx.fillStyle = c+'aa'; ctx.beginPath(); ctx.arc(x,y,9,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0; ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
+}
+
+function _tpadApply(i, x, y, W, H) {
+  const mode = PAIR_TPAD_MODE[i] || 'cutoff';
+  if (mode === 'cutoff') setPairFilter(i, _tpadX2Cutoff(x, W), _tpadY2Res(y, H));
+  else setPairEnv(i, _tpadX2Att(x, W), _tpadY2Rel(y, H));
+}
+
+var _tpadDrag = null; // pairIdx en cours de glisser, ou null
+function initTPad(i) {
+  const cv = document.getElementById('tpad-'+i);
+  if (!cv) return;
+  if (cv.offsetWidth < 10) { requestAnimationFrame(() => initTPad(i)); return; }
+  if (!cv._tpadInit) {
+    cv._tpadInit = true;
+    const getXY = (e) => { const r = cv.getBoundingClientRect(); const s = e.touches ? e.touches[0] : e; return { x: s.clientX - r.left, y: s.clientY - r.top }; };
+    let lastDrawAt = 0;
+    const drag = (x, y) => {
+      if (_tpadDrag !== i) return;
+      _tpadApply(i, Math.max(0,Math.min(cv.offsetWidth,x)), Math.max(0,Math.min(cv.offsetHeight,y)), cv.offsetWidth, cv.offsetHeight);
+      const now = performance.now();
+      if (now - lastDrawAt < 32) return;
+      lastDrawAt = now; drawTPad(cv, i);
+    };
+    cv.addEventListener('mousedown', e => { _tpadDrag = i; const {x,y} = getXY(e); drag(x,y); e.preventDefault(); });
+    window.addEventListener('mousemove', e => { if (_tpadDrag !== i) return; const r = cv.getBoundingClientRect(); drag(e.clientX-r.left, e.clientY-r.top); });
+    window.addEventListener('mouseup', () => { if (_tpadDrag === i) drawTPad(cv, i); if (_tpadDrag === i) _tpadDrag = null; });
+    cv.addEventListener('touchstart', e => { _tpadDrag = i; const {x,y} = getXY(e); drag(x,y); e.preventDefault(); }, { passive: false });
+    cv.addEventListener('touchmove', e => { if (_tpadDrag !== i) return; e.preventDefault(); const r = cv.getBoundingClientRect(); drag(e.touches[0].clientX-r.left, e.touches[0].clientY-r.top); }, { passive: false });
+    cv.addEventListener('touchend', () => { if (_tpadDrag === i) { drawTPad(cv, i); _tpadDrag = null; } }, { passive: false });
+  }
+  drawTPad(cv, i);
+  (function loop() {
+    if (!document.body.contains(cv)) { cv._tpadInit = false; return; }
+    const visible = !document.getElementById('opane-'+i+'-3')?.classList.contains('hidden') && document.getElementById('osc-modal')?.classList.contains('open');
+    if (visible) drawTPad(cv, i);
+    setTimeout(() => requestAnimationFrame(loop), visible ? 60 : 400);
+  })();
+}
+
+// #58 : automations rapides — cible le mode actif du pad tactile (balayage
+// doux du cutoff en mode Cutoff/Rés., swell périodique en mode Attaque/
+// Relâche, via l'enveloppe déjà réglée). Un simple setInterval suffit — aux
+// échelles de temps demandées (9 à 144s), pas besoin de précision audio-rate.
+// OFF par défaut, par paire.
+const PAIR_TPAD_AUTO = {}; // pairIdx → {on, period, timer}
+function _tpadAutoStop(i) {
+  const cur = PAIR_TPAD_AUTO[i]; if (!cur || !cur.timer) return;
+  clearInterval(cur.timer); cur.timer = null;
+}
+function _tpadAutoStart(i) {
+  _tpadAutoStop(i);
+  const cur = PAIR_TPAD_AUTO[i]; if (!cur) return;
+  cur.timer = setInterval(() => _tpadAutoTick(i), cur.period * 1000);
+}
+function _tpadAutoTick(i) {
+  if (!flowing || !PAIRS[i]) return;
+  const pair = PAIRS[i];
+  const mode = PAIR_TPAD_MODE[i] || 'cutoff';
+  if (mode === 'cutoff') {
+    const cur = OSC_FILTER[pair.pingala.id] || { cutoff: 1200 };
+    const target = Math.max(TPAD_CUTOFF_LO, Math.min(TPAD_CUTOFF_HI, cur.cutoff * (0.6 + Math.random() * 0.8)));
+    setPairFilter(i, target, null);
+    const cv = document.getElementById('tpad-'+i); if (cv) drawTPad(cv, i);
+  } else {
+    const env = (typeof OSC_ENV!=='undefined' && OSC_ENV[pair.pingala.id]) || { a: 0.3, r: 1 };
+    [pair.pingala, pair.ida].forEach(voice => {
+      const n = nodes[voice.id]; if (!n || mutedOscs[voice.id]) return;
+      const now = aNow(), base = voice.vol;
+      n.g.gain.cancelScheduledValues(now);
+      n.g.gain.setValueAtTime(n.g.gain.value, now);
+      n.g.gain.setTargetAtTime(base * 0.15, now, Math.max(0.15, env.r * 0.4));
+      n.g.gain.setTargetAtTime(base, now + Math.max(0.3, env.r * 0.8), Math.max(0.1, env.a * 0.6 || 0.3));
+    });
+  }
+}
+function toggleTPadAuto(i) {
+  const cur = PAIR_TPAD_AUTO[i] || { on: false, period: 36, timer: null };
+  cur.on = !cur.on;
+  PAIR_TPAD_AUTO[i] = cur;
+  const btn = document.getElementById('tpadauto-'+i);
+  if (btn) { btn.classList.toggle('on', cur.on); btn.textContent = cur.on ? '● Auto ON' : '○ Auto OFF'; }
+  if (cur.on) _tpadAutoStart(i); else _tpadAutoStop(i);
+  saveState();
+}
+function setTPadAutoPeriod(i, p) {
+  const cur = PAIR_TPAD_AUTO[i] || { on: false, period: 36, timer: null };
+  cur.period = p;
+  PAIR_TPAD_AUTO[i] = cur;
+  [9,18,36,74,144].forEach(pp => { const b = document.getElementById('tpadperiod-'+i+'-'+pp); if (b) b.classList.toggle('active', pp === p); });
+  if (cur.on) _tpadAutoStart(i); // relance avec la nouvelle période
+  saveState();
+}
+
 // ── Mini frequency table (bottom left) ───────────────────────────
 function buildFreqMini() {
   const wrap = document.getElementById('freq-mini');
@@ -6387,10 +6631,10 @@ function buildPairHTML(pair, i) {
 
   // ── ② OSCILLO (façon FL MiniSynth) ──────────────────────────────
   const curEng = OSC_WAVES[PAIRS[i].pingala.id] || 'sine';
-  const fcut = (OSC_FILTER[PAIRS[i].pingala.id]||{cutoff:20000}).cutoff;
-  const fres = (OSC_FILTER[PAIRS[i].pingala.id]||{res:0}).res;
+  // #59 : fcut/fres/env retirés d'ici — Cutoff/Résonance/Attaque/Relâche se
+  // règlent désormais au pad tactile (onglet ③ FX, cf. #56). fmode reste
+  // utile ici (sélecteur de TYPE de filtre, pas couvert par le pad).
   const fmode = (OSC_FILTER[PAIRS[i].pingala.id]||{}).mode || 'lpf'; // #53 : 'lpf' = comportement historique par défaut
-  const env  = (typeof OSC_ENV!=='undefined' && OSC_ENV[PAIRS[i].pingala.id]) || {a:0,r:0};
   const oscTabHTML = `
     <div class="osc-sec-t" style="color:${c}aa;">Moteur d'onde</div>
     <div class="eng-grid">
@@ -6407,30 +6651,12 @@ function buildPairHTML(pair, i) {
       <button id="btn-dslfo-${i}" onclick="togglePairDualSineLFO(${i})"
         style="font-size:.68rem;padding:.18rem .5rem;background:transparent;border:1px solid ${c}44;color:${c}88;border-radius:6px;cursor:pointer;">〜 Activer</button>
     </div>
-    <div class="osc-sec-t" style="color:${c}aa;">Filtre · Type / Cutoff / Résonance</div>
+    <div class="osc-sec-t" style="color:${c}aa;">Filtre · Type</div>
     <div class="filt-mode-row">
       ${['off','hpf','bpf','lpf'].map(m=>`<button class="osc-filt-mode-btn${fmode===m?' active':''}" data-pair="${i}" data-filt="${m}"
         onclick="setPairFilterMode(${i},'${m}')">${m.toUpperCase()}</button>`).join('')}
     </div>
-    <div id="osc-filtcutoff-row-${i}" style="${fmode==='off'?'display:none;':''}">
-    <div class="ctl-row"><span class="ctl-l">Cutoff</span>
-      <input type="range" min="60" max="6000" step="5" value="${Math.min(6000,fcut)}" style="color:${c};"
-        oninput="setPairFilter(${i},this.value,null);this.nextElementSibling.textContent=Math.round(this.value)+' Hz'">
-      <span class="ctl-v">${Math.round(Math.min(6000,fcut))} Hz</span></div>
-    <div class="ctl-row"><span class="ctl-l">Réson.</span>
-      <input type="range" min="0" max="6" step="0.1" value="${Math.min(6,fres)}" style="color:${c}aa;"
-        oninput="setPairFilter(${i},null,this.value);this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
-      <span class="ctl-v">${Math.min(6,fres).toFixed(1)}</span></div>
-    </div>
-    <div class="osc-sec-t" style="color:${c}aa;">Amp EG · Attaque / Relâche</div>
-    <div class="ctl-row"><span class="ctl-l">Attaque</span>
-      <input type="range" min="0" max="4" step="0.05" value="${env.a}" style="color:${c};"
-        oninput="setPairEnv(${i},this.value,null);this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)+'s'">
-      <span class="ctl-v">${env.a.toFixed(2)}s</span></div>
-    <div class="ctl-row"><span class="ctl-l">Relâche</span>
-      <input type="range" min="0" max="6" step="0.05" value="${env.r}" style="color:${c}aa;"
-        oninput="setPairEnv(${i},null,this.value);this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)+'s'">
-      <span class="ctl-v">${env.r.toFixed(2)}s</span></div>
+    <div class="osc-hint">Cutoff / Résonance / Attaque / Relâche : réglage tactile 2D dans l'onglet ③ FX</div>
     <div class="osc-sec-t" style="color:${c}aa;">LFO · Rythme</div>
     <div class="ctl-row"><span class="ctl-l">Rythme</span>
       <input type="range" min="0.02" max="12" step="0.02" value="0.4" style="color:${c};"
@@ -6440,6 +6666,9 @@ function buildPairHTML(pair, i) {
 
   // ── ③ FX (on/off par paire → bus FX global du maître) ──────────
   const fxOn = (typeof isPairFX === 'function') ? isPairFX(i) : true;
+  const bd2 = PAIR_BD2[i] || { on:false, drive:0.25, tone:0.5, level:0.25 };
+  const tpadMode = PAIR_TPAD_MODE[i] || 'cutoff';
+  const tpadAuto = PAIR_TPAD_AUTO[i] || { on:false, period:36 };
   const fxTabHTML = `
     <div class="osc-sec-t" style="color:${c}aa;">Bus FX global (maître)</div>
     <div class="fx-onoff-row">
@@ -6448,6 +6677,41 @@ function buildPairHTML(pair, i) {
         onclick="togglePairFX(${i})">${fxOn?'● ON':'○ OFF'}</button>
     </div>
     <div class="osc-hint">ON = la paire entre dans Reverb/Delay/Ping-Pong du maître · OFF = 100% sèche</div>
+    <div class="osc-sec-t" style="color:${c}aa;">Color FX · BOSS Blues Driver (expérimental)</div>
+    <div class="fx-onoff-row">
+      <span class="ctl-l">BD-2</span>
+      <button class="fx-onoff${bd2.on?' on':''}" id="bd2on-${i}" style="--ec:${c};"
+        onclick="togglePairBD2(${i})">${bd2.on?'● ON':'○ OFF'}</button>
+    </div>
+    <div id="bd2-sliders-${i}" style="${bd2.on?'':'display:none;'}">
+      <div class="ctl-row"><span class="ctl-l">Drive</span>
+        <input type="range" min="0" max="50" step="1" value="${Math.round(bd2.drive*100)}" style="color:${c};"
+          oninput="setPairBD2(${i},this.value/100,null,null);this.nextElementSibling.textContent=this.value+'%'">
+        <span class="ctl-v">${Math.round(bd2.drive*100)}%</span></div>
+      <div class="ctl-row"><span class="ctl-l">Tonalité</span>
+        <input type="range" min="0" max="100" step="1" value="${Math.round(bd2.tone*100)}" style="color:${c}aa;"
+          oninput="setPairBD2(${i},null,this.value/100,null);this.nextElementSibling.textContent=this.value+'%'">
+        <span class="ctl-v">${Math.round(bd2.tone*100)}%</span></div>
+      <div class="ctl-row"><span class="ctl-l">Niveau</span>
+        <input type="range" min="0" max="50" step="1" value="${Math.round(bd2.level*100)}" style="color:${c}aa;"
+          oninput="setPairBD2(${i},null,null,this.value/100);this.nextElementSibling.textContent=this.value+'%'">
+        <span class="ctl-v">${Math.round(bd2.level*100)}%</span></div>
+      <div class="osc-hint">Drive/Niveau bridés à 50% — expérimental, une sinus pure sature vite</div>
+    </div>
+    <div class="osc-sec-t" style="color:${c}aa;">Réglages tactiles (glisser sur le graphique)</div>
+    <div class="filt-mode-row">
+      <button class="tpad-tab-btn${tpadMode==='cutoff'?' active':''}" id="tpadtab-${i}-cutoff" onclick="setPairTPadMode(${i},'cutoff')">Cutoff/Rés.</button>
+      <button class="tpad-tab-btn${tpadMode==='env'?' active':''}" id="tpadtab-${i}-env" onclick="setPairTPadMode(${i},'env')">Attaque/Relâche</button>
+    </div>
+    <div class="tpad-wrap"><canvas class="tpad-canvas" id="tpad-${i}"></canvas></div>
+    <div class="tpad-auto-row">
+      <button class="fx-onoff${tpadAuto.on?' on':''}" id="tpadauto-${i}" style="--ec:${c};font-size:.62rem;padding:.2rem .5rem;"
+        onclick="toggleTPadAuto(${i})">${tpadAuto.on?'● Auto ON':'○ Auto OFF'}</button>
+      <div class="tpad-auto-periods">
+        ${[9,18,36,74,144].map(p=>`<button class="tpad-period-btn${tpadAuto.period===p?' active':''}" id="tpadperiod-${i}-${p}" onclick="setTPadAutoPeriod(${i},${p})">${p}s</button>`).join('')}
+      </div>
+    </div>
+    <div class="osc-hint">Balaie doucement le Cutoff (mode Cutoff/Rés.) ou déclenche un swell périodique (mode Attaque/Relâche) — OFF par défaut</div>
     <div class="osc-sec-t" style="color:${c}aa;">EQ · Coupe-bas</div>
     <div class="ctl-row"><span class="ctl-l">Low cut</span>
       <input type="range" min="20" max="400" step="2" value="20" style="color:${c};"
@@ -6582,6 +6846,9 @@ function oscTab(i, n) {
     if (pane) pane.classList.toggle('hidden', t !== n);
     if (tab)  tab.classList.toggle('on', t === n);
   }
+  // #56 : le pad tactile est un canvas, il a besoin de son init (liaison des
+  // évènements + première passe de dessin) une fois affiché et mesurable.
+  if (n === 3 && typeof initTPad === 'function') requestAnimationFrame(() => initTPad(i));
 }
 
 // Sélection du moteur d'onde (les deux oscillateurs de la paire)
