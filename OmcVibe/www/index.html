@@ -1210,7 +1210,8 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
 .block-formula{
   display:flex;align-items:baseline;gap:.35rem;flex-wrap:wrap;
   font-family:'IM Fell English',serif;font-style:italic;font-size:1.1rem;
-  padding:.35rem .55rem;background:rgba(0,0,0,.28);border-radius:8px;
+  padding:.35rem .55rem;border-radius:8px;
+  background:color-mix(in srgb,var(--ec,#888) 20%,transparent); /* #50 : jamais de noir, teinté par paire */
   border:1.1px solid rgba(255,255,255,.06);
 }
 .bf-sym{color:rgba(210,190,255,.5);font-style:normal;font-size:.95rem;margin:0 .1rem;}
@@ -6230,7 +6231,7 @@ function buildPairHTML(pair, i) {
 
   // ── ① BINAURAL (contenu de l'onglet) ────────────────────────────
   const binauralHTML = `
-    <div style="background:rgba(0,0,0,.2);border-radius:10px;border-left:4px solid ${c}88;margin-bottom:.8rem;">
+    <div style="background:${c}26;border-radius:10px;border-left:4px solid ${c}88;margin-bottom:.8rem;">
       <div class="accord-header" onclick="toggleAccord('p${i}')">
         <span class="accord-arrow open" id="aa-p${i}">▶</span>
         <span style="font-family:'Cinzel Decorative',serif;font-size:.75rem;letter-spacing:.14em;color:${c};font-weight:bold;">☀ PINGALA (DROIT)</span>
@@ -6268,7 +6269,7 @@ function buildPairHTML(pair, i) {
         </div>
       </div>
     </div>
-    <div style="background:rgba(0,0,0,.14);border-radius:10px;border-left:4px dashed ${c}55;">
+    <div style="background:${c}1a;border-radius:10px;border-left:4px dashed ${c}55;">
       <div class="accord-header" onclick="toggleAccord('i${i}')">
         <span class="accord-arrow open" id="aa-i${i}">▶</span>
         <span style="font-family:'Cinzel Decorative',serif;font-size:.75rem;letter-spacing:.14em;color:${c};opacity:.8;font-weight:bold;">☽ IDA (GAUCHE)</span>
@@ -6299,7 +6300,7 @@ function buildPairHTML(pair, i) {
         </div>
       </div>
     </div>
-    <div style="margin-top:.5rem;padding:.3rem .5rem;background:rgba(0,0,0,.15);border-radius:7px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="margin-top:.5rem;padding:.3rem .5rem;background:${c}1c;border-radius:7px;display:flex;align-items:center;justify-content:space-between;">
       <span style="font-size:.7rem;color:rgba(200,170,255,.55);letter-spacing:.06em;">LFO doux</span>
       <button id="btn-lfo-${i}" onclick="toggleOscVolLFO(${i})"
         style="font-size:.68rem;padding:.18rem .5rem;background:transparent;border:1px solid ${c}44;color:${c}88;border-radius:6px;cursor:pointer;">〜 Activer</button>
@@ -6854,6 +6855,15 @@ function updateInfobar() {
 // ── Oscillator modal ───────────────────────────────────────────────
 let _oscModalIdx = -1;
 
+// #50 : assombrit une couleur hex en préservant sa teinte (jamais vers le
+// noir neutre) — utilisé pour la base sombre du fond du panneau oscillateur.
+function _darkenHex(hex, factor) {
+  const p = parseInt(hex.slice(1), 16);
+  const r = Math.max(10, Math.round(((p >> 16) & 255) * factor));
+  const g = Math.max(6,  Math.round(((p >> 8)  & 255) * factor));
+  const b = Math.max(14, Math.round((p & 255) * factor));
+  return `rgb(${r},${g},${b})`;
+}
 function openOscModal(i) {
   _oscModalIdx = i;
   const modal    = document.getElementById('osc-modal');
@@ -6866,14 +6876,15 @@ function openOscModal(i) {
   if (title) title.textContent = i===MASTER_IDX ? '✦ Oscillateur Maître' : `✦ Canal ${i+1} — ${pair.label}`;
   body.innerHTML = buildPairHTML(pair, i);
 
-  // #49 : fond dégradé doux propre à CETTE paire (jamais noir) — 7
-  // oscillateurs, 7 palettes (cf. pair.grad, déjà défini dans PAIRS mais
-  // jusqu'ici inutilisé pour l'ambiance du panneau, qui restait uniformément
-  // sombre). Dégradé discret (bas alpha) sur une base sombre neutre, pour
-  // rester lisible tout en apportant la couleur propre à chaque sphère.
+  // #49/#50 : fond dégradé propre à CETTE paire, du bord au bord — plus
+  // AUCUN noir (ni gris neutre faisant illusion de noir) : la base sombre
+  // elle-même est une version assombrie des 2 couleurs du dégradé de la
+  // paire (_darkenHex), pas une teinte neutre générique. 7 oscillateurs,
+  // 7 palettes bien distinctes même dans leurs tons les plus sombres.
   const inner = document.getElementById('osc-modal-inner');
   if (inner && pair.grad) {
-    inner.style.background = `linear-gradient(160deg, ${pair.grad[0]}30 0%, rgba(14,6,30,.95) 42%, rgba(14,6,30,.95) 62%, ${pair.grad[1]}26 100%)`;
+    const d0 = _darkenHex(pair.grad[0], 0.26), d1 = _darkenHex(pair.grad[1], 0.26);
+    inner.style.background = `linear-gradient(160deg, ${pair.grad[0]}4a 0%, ${d0} 35%, ${d1} 65%, ${pair.grad[1]}4a 100%)`;
   }
 
   modal.classList.add('open');

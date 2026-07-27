@@ -602,9 +602,36 @@ propre à la couleur de CHAQUE oscillateur. Vérifié visuellement sur 3
 paires (rouge, cyan, rose du maître) : teinte bien visible et distincte,
 texte toujours lisible.
 
+### #50 — Correctif #49 : il restait du noir (retour direct de l'utilisateur)
+
+Retour terrain sur le point #49 : *"ok sauf que le fond noir doit
+disparaitre complètement"*. Diagnostic : le point d'ancrage sombre du
+dégradé était une couleur fixe `rgba(14,6,30,.95)` (violet très foncé,
+visuellement quasi-noir), et plusieurs boîtes imbriquées dans le panneau
+(Pingala, Ida, ligne "LFO doux", `.block-formula`) utilisaient encore un
+noir semi-transparent (`rgba(0,0,0,X)`) posé par-dessus — donc du noir
+réapparaissait localement même là où le fond du panneau était coloré.
+
+Correctif :
+- Nouvelle fonction `_darkenHex(hex, factor)` : assombrit une couleur hex
+  tout en préservant sa teinte (jamais vers le neutre — planchers non nuls
+  sur chaque canal RGB), utilisée pour calculer les 2 points d'ancrage
+  sombres du dégradé à partir des 2 couleurs propres de `pair.grad`, au
+  lieu d'une teinte violette générique fixe.
+- Boîtes Pingala / Ida / "LFO doux" : fond recalculé à partir de la couleur
+  de la paire (`${c}26` / `${c}1a` / `${c}1c`) au lieu de noir semi-transparent.
+- `.block-formula` (classe CSS partagée) : fond passé à
+  `color-mix(in srgb, var(--ec,#888) 20%, transparent)`, teinté par la
+  couleur de la paire courante via la variable CSS déjà posée sur
+  `.pair-panel`.
+- Vérifié par script Playwright : le fond calculé (`getComputedStyle`) sur
+  3 paires distinctes (rouge, vert, violet) donne des couleurs sombres mais
+  clairement teintées (ex. `rgb(66, 28, 28)`, `rgb(22, 66, 46)`,
+  `rgb(66, 46, 66)`) — plus aucune valeur proche du noir neutre.
+
 Où regarder (9e passe) : `breathToggle`/`breathSet` (section 2.6),
 `EQ_BANDS`/`eqBands`/`_eqApply`/`initEQ2D` (section "EQ Graphique"),
 `VOL_UI_SCALE`/`_defaultVolUIForFreq`/`setVolP`/`setVolI`, `soloPair`/
 `_mmToggleSolo`/`_mmToggleFX` (section quick menu), `_nMaxFor`/`setN`/
 `stepN`, `_matrixHTML`/`_matrixAssign`/`_matrixReshuffle`/`openMatrixTab`,
-`openOscModal()` (fond dégradé).
+`openOscModal()`/`_darkenHex()` (fond dégradé, jamais noir).
