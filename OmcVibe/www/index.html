@@ -381,18 +381,32 @@ body{
 }
 .mm-cell{
   position:absolute;left:50%;transform:translateX(-50%);
-  display:flex;flex-direction:column;align-items:center;gap:.1rem;
-  width:56px;height:48px;border-radius:12px;border:2px solid;
+  display:flex;flex-direction:column;align-items:center;gap:.05rem;
+  width:42px;height:36px;border-radius:10px;border:1.5px solid;
   background:rgba(10,4,30,.92);backdrop-filter:blur(8px);
-  color:#D7DAE0;font-size:1.15rem;cursor:pointer;transition:all .18s;
-  box-shadow:0 0 14px rgba(0,0,0,.6);
+  color:#D7DAE0;font-size:.92rem;cursor:pointer;transition:all .18s;
+  box-shadow:0 0 12px rgba(0,0,0,.6);
 }
-.mm-cell span{ font-size:.46rem;font-family:'Cinzel Decorative',serif;letter-spacing:.02em;color:rgba(230,220,255,.75); }
+.mm-cell span{ font-size:.4rem;font-family:'Cinzel Decorative',serif;letter-spacing:.02em;color:rgba(230,220,255,.75); }
 .mm-cell:hover{ transform:translateX(-50%) scale(1.08); }
 .mm-cell:active{ transform:translateX(-50%) scale(.94); }
-.mm-cell-top{ top:6%; }
-.mm-cell-bottom{ bottom:6%; }
+.mm-cell-top{ top:14%; }
+.mm-cell-bottom{ bottom:14%; }
 .mm-cell-bottom.locked{ border-color:#FFD060 !important;background:rgba(255,208,96,.18);box-shadow:0 0 18px rgba(255,208,96,.5); }
+/* #45/#46 : cellules gauche (Solo/All) et droite (FX on/off) — même style
+   que haut/bas, tournées de 90° (left/right au lieu de top/bottom).
+   Décalage plus prononcé que top/bottom (14%→18%) : dans la couronne de
+   satellites (disposition hexagonale), les voisines directes sont plus
+   proches latéralement que radialement — il faut se serrer davantage ici
+   pour ne jamais les chevaucher. */
+.mm-cell-left{ left:18%; top:50%; transform:translateY(-50%); }
+.mm-cell-left:hover{ transform:translateY(-50%) scale(1.08); }
+.mm-cell-left:active{ transform:translateY(-50%) scale(.94); }
+.mm-cell-left.soloed{ border-color:#63E6FF !important;background:rgba(99,230,255,.18);box-shadow:0 0 18px rgba(99,230,255,.5); }
+.mm-cell-right{ left:auto;right:18%;top:50%;transform:translateY(-50%); }
+.mm-cell-right:hover{ transform:translateY(-50%) scale(1.08); }
+.mm-cell-right:active{ transform:translateY(-50%) scale(.94); }
+.mm-cell-right.fx-off{ opacity:.4; }
 
 
 </style>
@@ -648,6 +662,15 @@ body{
   border-radius:7px;padding:.15rem .2rem;outline:none;-moz-appearance:textfield; }
 .fxq-num::-webkit-inner-spin-button,.fxq-num::-webkit-outer-spin-button{-webkit-appearance:none;}
 .fxq-unit{ font-size:.7rem;color:rgba(200,180,255,.5);font-style:italic; }
+/* #47 : bouton 🌀 — ouvre directement l'onglet Matrice depuis le contrôle n */
+.n-matrix-btn{
+  width:30px;height:30px;flex-shrink:0;border-radius:50%;
+  border:1.5px solid rgba(200,140,255,.55);background:rgba(20,8,40,.7);
+  font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.n-matrix-btn:hover{ border-color:#F3D9FF;box-shadow:0 0 10px rgba(200,120,255,.5);transform:scale(1.1); }
+.n-matrix-btn:active{ transform:scale(.9); }
 .fxq-wave{ font-family:'IM Fell English',serif;font-style:italic;font-weight:bold;
   font-size:.82rem;color:#63CCFF;min-width:48px;text-align:center; }
 .fxq-sep{ height:1px;background:rgba(200,160,255,.16);margin:.15rem 0; }
@@ -1340,6 +1363,20 @@ input.param-input{
 .patch-cell.jack.lvl2{border-color:var(--ec,#888);color:#D7DAE0;background:color-mix(in srgb,var(--ec,#888) 18%,transparent);}
 .patch-cell.jack.lvl3{border-color:var(--ec,#888);color:#FFD700;background:color-mix(in srgb,var(--ec,#888) 34%,transparent);
   box-shadow:0 0 12px color-mix(in srgb,var(--ec,#888) 50%,transparent);}
+
+/* #48 : Matrice 🌀 — 6 lignes (une par ratio) × 6 cellules (n aléatoire) */
+.mx-grid{display:flex;flex-direction:column;gap:.35rem;}
+.mx-row{display:flex;align-items:center;gap:.3rem;}
+.mx-ratio-label{min-width:38px;font-size:.68rem;font-family:'IM Fell English',serif;font-weight:bold;flex-shrink:0;}
+.mx-row-cells{display:grid;grid-template-columns:repeat(6,1fr);gap:.22rem;flex:1;}
+.mx-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:36px;border-radius:7px;cursor:pointer;padding:.1rem;
+  background:rgba(255,255,255,.03);border:1px solid color-mix(in srgb,var(--ec,#888) 26%,transparent);transition:all .16s;}
+.mx-cell .mx-hz{font-size:.62rem;font-family:'IM Fell English',serif;color:rgba(225,205,255,.75);}
+.mx-cell .mx-n{font-size:.5rem;color:color-mix(in srgb,var(--ec,#888) 75%,white);}
+.mx-cell.on{background:color-mix(in srgb,var(--ec,#888) 30%,transparent);border-color:var(--ec,#888);
+  box-shadow:0 0 10px color-mix(in srgb,var(--ec,#888) 45%,transparent);}
+.mx-cell:active{transform:scale(.92);}
 
 /* Verrou dans l'en-tête du modal */
 .osc-lockbtn{margin-left:auto;background:transparent;border:1px solid rgba(200,170,255,.25);
@@ -2262,21 +2299,34 @@ const RATIO_OPTS = [
 const DELTA_MIN = 0.8, DELTA_MAX = 1.2;
 const DELTA_DEFAULT = 1.0;
 
+// #44 : volume UI 0-1 <-> volume interne (gain réel appliqué au node) —
+// l'échelle interne reste 0-VOL_UI_SCALE (aucun changement de gain réel,
+// seul l'affichage/la saisie passe en 0-1 "contraction max / expansion max").
+const VOL_UI_SCALE = 0.45;
+// Volumes par défaut PAR BANDE DE FRÉQUENCE (grave = priorité, cf. demande) :
+// 36-108Hz→72% · 108-216Hz→66% · 216-324Hz→54% · 324-432Hz→36% du volume UI max.
+function _defaultVolUIForFreq(freq) {
+  if (freq <= 108) return 0.72;
+  if (freq <= 216) return 0.66;
+  if (freq <= 324) return 0.54;
+  return 0.36;
+}
+// vol ci-dessous = _defaultVolUIForFreq(freq par défaut de la paire à masterFreq=144) * VOL_UI_SCALE
 const PAIRS = [
-  { label:'Paire 1', color:'#FF6B6B', grad:['#FF6B6B','#FF9A8B'],
-    pingala:{id:'p0', ri:0, n:1.0, vol:.10}, ida:{id:'i0', delta:DELTA_DEFAULT, polarity:1,  vol:.10} },
-  { label:'Paire 2', color:'#FFB347', grad:['#FFB347','#FFD080'],
-    pingala:{id:'p1', ri:1, n:1.0, vol:.10}, ida:{id:'i1', delta:DELTA_DEFAULT, polarity:-1, vol:.10} },
-  { label:'Paire 3', color:'#E8FF60', grad:['#E8FF60','#C8FF80'],
-    pingala:{id:'p2', ri:2, n:2.0, vol:.10}, ida:{id:'i2', delta:DELTA_DEFAULT, polarity:1,  vol:.10} },
-  { label:'Paire 4', color:'#56FFB0', grad:['#56FFB0','#80FFD0'],
-    pingala:{id:'p3', ri:3, n:2.0, vol:.10}, ida:{id:'i3', delta:DELTA_DEFAULT, polarity:-1, vol:.10} },
-  { label:'Paire 5', color:'#60D8FF', grad:['#60D8FF','#80B0FF'],
-    pingala:{id:'p4', ri:4, n:0.5, vol:.10}, ida:{id:'i4', delta:DELTA_DEFAULT, polarity:1,  vol:.10} },
-  { label:'Paire 6', color:'#C080FF', grad:['#C080FF','#E080FF'],
-    pingala:{id:'p5', ri:5, n:0.5, vol:.10}, ida:{id:'i5', delta:DELTA_DEFAULT, polarity:-1, vol:.10} },
-  { label:'Maître',  color:'#FFB0FF', grad:['#FFB0FF','#FF80C0'],
-    pingala:{id:'p6', ri:0, n:1.0, vol:.12}, ida:{id:'i6', delta:DELTA_DEFAULT, polarity:1,  vol:.12} },
+  { label:'Paire 1', color:'#FF6B6B', grad:['#FF6B6B','#FF9A8B'],   // 144×11/10×1.0 ≈158Hz → 66%
+    pingala:{id:'p0', ri:0, n:1.0, vol:.297}, ida:{id:'i0', delta:DELTA_DEFAULT, polarity:1,  vol:.297} },
+  { label:'Paire 2', color:'#FFB347', grad:['#FFB347','#FFD080'],   // 144×10/11×1.0 ≈131Hz → 66%
+    pingala:{id:'p1', ri:1, n:1.0, vol:.297}, ida:{id:'i1', delta:DELTA_DEFAULT, polarity:-1, vol:.297} },
+  { label:'Paire 3', color:'#E8FF60', grad:['#E8FF60','#C8FF80'],   // 144×12/11×2.0 ≈314Hz → 54%
+    pingala:{id:'p2', ri:2, n:2.0, vol:.243}, ida:{id:'i2', delta:DELTA_DEFAULT, polarity:1,  vol:.243} },
+  { label:'Paire 4', color:'#56FFB0', grad:['#56FFB0','#80FFD0'],   // 144×11/12×2.0 =264Hz → 54%
+    pingala:{id:'p3', ri:3, n:2.0, vol:.243}, ida:{id:'i3', delta:DELTA_DEFAULT, polarity:-1, vol:.243} },
+  { label:'Paire 5', color:'#60D8FF', grad:['#60D8FF','#80B0FF'],   // 144×12/10×0.5 =86.4Hz → 72%
+    pingala:{id:'p4', ri:4, n:0.5, vol:.324}, ida:{id:'i4', delta:DELTA_DEFAULT, polarity:1,  vol:.324} },
+  { label:'Paire 6', color:'#C080FF', grad:['#C080FF','#E080FF'],   // 144×10/12×0.5 =60.0Hz → 72%
+    pingala:{id:'p5', ri:5, n:0.5, vol:.324}, ida:{id:'i5', delta:DELTA_DEFAULT, polarity:-1, vol:.324} },
+  { label:'Maître',  color:'#FFB0FF', grad:['#FFB0FF','#FF80C0'],   // 144×11/10×1.0 ≈158Hz → 66%
+    pingala:{id:'p6', ri:0, n:1.0, vol:.297}, ida:{id:'i6', delta:DELTA_DEFAULT, polarity:1,  vol:.297} },
 ];
 
 // Panoramique stéréo — éventail : chaque paire a un CENTRE distinct (gauche→droite),
@@ -2430,7 +2480,7 @@ const swapTimers = {};
 let nodes = {}, masterGain = null, analyser = null;
 
 let limiter = null, safetyClip = null;
-let eqLow = null, eqMid = null, eqHigh = null;
+let eqBands = []; // #43 : 6 filtres à fréquence fixe (remplace eqLow/eqMid/eqHigh, cf. EQ_BANDS)
 let masterDelay = null, masterDelayFb = null;
 let masterReverb = null, reverbWetGain = null, reverbDryGain = null;
 let pingPongDelay = null, ppL = null, ppR = null, ppFb = null, ppWet = null;
@@ -2446,7 +2496,7 @@ let AUDIO_QUALITY_TIER = 'full';
 // FX par paire : envoi unique (fxSend) vers les 3 tanks. OFF = 100% sec.
 const PAIR_FX = {};           // id oscillateur → bool (défaut true)
 const FX_SEND_LEVEL = 0.3;    // niveau d'envoi quand FX ON
-let busTrim = null, mEqLow = null, mEqMid = null, mEqHigh = null, masterGlue = null, masterFader = null;
+let busTrim = null, masterGlue = null, masterFader = null;
 let preMaster = null, fxSendG = null;   // FX globaux fin de chaîne + fader d'intensité
 let _fxInput = null;
 let _stereo3D = false;
@@ -2460,7 +2510,10 @@ const HEX_3D_POS = [
   [ 0.5, 0, -0.9],  // Paire 6 → droite avant-proche
   [ 0.0, 0,  0.0],  // Maître  → centre
 ];
-const LFO_STATE    = {on:false, rate:.25,  depth:.08};
+// #42 : l'ancien "LFO — Trémolo organique" (LFO_STATE) est retiré — trop
+// sec/mécanique en usage réel. BREATH_STATE (respiration) existait déjà en
+// interne, actif par défaut, mais sans aucun contrôle exposé ; il prend
+// maintenant la place du trémolo dans l'UI (même emplacement du panneau FX).
 const BREATH_STATE = {on:true, rate:0.11, depth:0.18};  // respiration douce par défaut = le souffle de vie
 // #7 (roadmap) : dérive lente du battement — le Δ affiché ne bouge pas,
 // mais le battement RÉEL ondule très légèrement (± amount Hz, cycle de
@@ -2471,7 +2524,7 @@ const BREATH_STATE = {on:true, rate:0.11, depth:0.18};  // respiration douce par
 // amplitude aurait pu faire sortir le battement réel de la bande Delta.
 const DELTA_DRIFT_STATE = { on: true, amount: 0.06 }; // Hz
 const _deltaDriftLFOs = {}; // pairIdx → { lfo, depthGain }
-let _lfoNode = null, _lfoGain = null, _lfoDepthGain = null;
+let _lfoGain = null; // #42 : ne sert plus qu'à l'anti-crack (cf. _applyAntiCrack), plus de LFO trémolo dessus
 let _breathLFO = null, _breathGain = null, _breathDepthGain = null;
 let _btKeepalive = null;
 let _fadeDur = 2;
@@ -2934,13 +2987,20 @@ function _makeIR(decay, preDelay) {
 
 /* ---------- 2.4 · FX CHAIN NATIVE (créée une seule fois) ---------- */
 function initFXChain() {
-  if (eqLow) return;
+  if (eqBands.length) return;
   const c = audioCtx();
 
-  // EQ unique (2D) — bandes : Bass 54-144 · Médium 144-288 · Haut 288-432
-  eqLow  = c.createBiquadFilter(); eqLow.type='lowshelf';  eqLow.frequency.value=96;  eqLow.gain.value=0;
-  eqMid  = c.createBiquadFilter(); eqMid.type='peaking';   eqMid.frequency.value=216; eqMid.Q.value=1; eqMid.gain.value=0;
-  eqHigh = c.createBiquadFilter(); eqHigh.type='highshelf';eqHigh.frequency.value=427; eqHigh.gain.value=0;
+  // #43 : EQ à 6 bandes FIXES (36-475 Hz), remplace l'ancien EQ 2D à 3
+  // nœuds librement déplaçables (fréquence ET gain). Seul le gain reste
+  // réglable par bande — la fréquence de chacune est désormais fixe,
+  // cf. EQ_BANDS plus bas (section "EQ Graphique").
+  eqBands = EQ_BANDS.map(b => {
+    const f = c.createBiquadFilter();
+    f.type = b.type; f.frequency.value = b.freq; f.gain.value = b.gain;
+    if (b.type === 'peaking') f.Q.value = 1.4;
+    return f;
+  });
+  for (let bi = 0; bi < eqBands.length - 1; bi++) eqBands[bi].connect(eqBands[bi + 1]);
 
   // ═══ FX GLOBAUX façon DB4 : tanks partagés, alimentés UNIQUEMENT par les
   //     envois de paires (fxSend). Une paire FX-off n'envoie rien → 100% sèche.
@@ -2993,10 +3053,6 @@ function initFXChain() {
   ppL = ppDelL; ppR = ppDelR; // legacy refs
 
   busTrim = c.createGain(); busTrim.gain.value = 1;
-
-  mEqLow  = c.createBiquadFilter(); mEqLow.type='lowshelf';  mEqLow.frequency.value=54;   mEqLow.gain.value=0;
-  mEqMid  = c.createBiquadFilter(); mEqMid.type='peaking';   mEqMid.frequency.value=216;  mEqMid.Q.value=0.9; mEqMid.gain.value=0;
-  mEqHigh = c.createBiquadFilter(); mEqHigh.type='highshelf';mEqHigh.frequency.value=432; mEqHigh.gain.value=0;
 
   // Glue doux (un seul vrai compresseur léger)
   masterGlue = c.createDynamicsCompressor();
@@ -3059,10 +3115,10 @@ function initFXChain() {
   limiter.connect(safetyClip); safetyClip.connect(c.destination);
 
   // Mix sec : channel insert → busTrim (dynamique libre, glue+limiteur seuls)
-  eqLow.connect(eqMid); eqMid.connect(eqHigh); eqHigh.connect(busTrim);
+  eqBands[eqBands.length - 1].connect(busTrim);
 
   // Retours FX → preMaster, NON connectés tant que wet=0 (CPU, #29)
-  _fxInput = eqLow;
+  _fxInput = eqBands[0];
   _fxRefs = { delayWet };
 }
 let _fxRefs = {};
@@ -3132,27 +3188,11 @@ function setFadeDur(v) {
   const el = document.getElementById('sv-fade'); if (el) el.textContent = _fadeDur.toFixed(1) + 's';
 }
 
-/* ---------- 2.6 · LFO & BREATH ---------- */
-function lfoToggle(on) {
-  LFO_STATE.on = on;
-  if (!_lfoNode || !_lfoDepthGain || !_lfoGain) return;
-  // Rampe dans les deux sens (avant : activation en saut brut .value=,
-  // désactivation seule en douceur — asymétrie source de clic à l'activation).
-  _lfoDepthGain.gain.setTargetAtTime(on ? LFO_STATE.depth : 0, aNow(), 0.1);
-}
-function lfoSet(param, v) {
-  LFO_STATE[param] = parseFloat(v);
-  if (_lfoNode) {
-    if (param === 'rate')  _lfoNode.frequency.setTargetAtTime(LFO_STATE.rate, aNow(), 0.05);
-    if (param === 'depth' && LFO_STATE.on) _lfoDepthGain.gain.setTargetAtTime(LFO_STATE.depth, aNow(), 0.05);
-  }
-  const el = document.getElementById('sv-lfo-' + param); if (el) el.textContent = parseFloat(v).toFixed(2);
-}
-
+/* ---------- 2.6 · BREATH (respiration organique globale) ---------- */
 function breathToggle(on) {
   BREATH_STATE.on = on;
   if (!_breathLFO || !_breathDepthGain || !_breathGain) return;
-  // Même correctif que lfoToggle : rampe symétrique dans les deux sens.
+  // Rampe symétrique dans les deux sens (évite un clic à l'activation).
   _breathDepthGain.gain.setTargetAtTime(on ? BREATH_STATE.depth : 0, aNow(), 0.5);
 }
 function breathSet(param, v) {
@@ -3161,7 +3201,10 @@ function breathSet(param, v) {
     if (param === 'rate')  _breathLFO.frequency.setTargetAtTime(BREATH_STATE.rate, aNow(), 0.05);
     if (param === 'depth' && BREATH_STATE.on) _breathDepthGain.gain.setTargetAtTime(BREATH_STATE.depth, aNow(), 0.05);
   }
-  const el = document.getElementById('sv-breath-' + param);
+  // #42 : préfixe "gbreath" (global) — "sv-breath-depth" est déjà pris par
+  // l'affichage de PAIR_BREATH_OPTS (respiration aléatoire PAR PAIRE, un
+  // réglage différent, dans le panneau Options Aléatoire).
+  const el = document.getElementById('sv-gbreath-' + param);
   if (el) el.textContent = param === 'rate'
     ? (BREATH_STATE.rate * 60).toFixed(1) + ' /min'
     : parseFloat(v).toFixed(2);
@@ -3309,9 +3352,7 @@ function setPingPongWet(v) {
 /* ---------- 2.6d · SNAPSHOT / RESTORE FX (pour ❤️ presets) ---------- */
 function getFXState() {
   return {
-    eq: eqLow ? { lf:eqLow.frequency.value, lg:eqLow.gain.value,
-                  mf:eqMid.frequency.value, mg:eqMid.gain.value,
-                  hf:eqHigh.frequency.value, hg:eqHigh.gain.value } : null,
+    eq: eqBands.length ? eqBands.map(f => f.gain.value) : null, // #43 : 6 gains, fréquences fixes
     delay: masterDelay ? { t:masterDelay.delayTime.value,
                            fb:masterDelayFb ? masterDelayFb.gain.value : 0,
                            wet:_fxRefs.delayWet ? _fxRefs.delayWet.gain.value : 0 } : null,
@@ -3320,7 +3361,7 @@ function getFXState() {
                           fb:pingPongDelay._fbLR.gain.value,
                           wet:ppWet ? ppWet.gain.value : 0 } : null,
     fxInt: fxSendG ? fxSendG.gain.value : 0.3,
-    lfo: { ...LFO_STATE }, breath: { ...BREATH_STATE }, grain: { ...GRAIN_STATE },
+    breath: { ...BREATH_STATE }, grain: { ...GRAIN_STATE },
     waves: { ...OSC_WAVES },
     filters: JSON.parse(JSON.stringify(OSC_FILTER)),
     pairFX: { ...PAIR_FX },
@@ -3332,9 +3373,13 @@ function applyFXState(s) {
   if (!s) return;
   initFXChain();
   const setSl = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
-  if (s.eq) {
-    [['eqLowFreq',s.eq.lf],['eqLowGain',s.eq.lg],['eqMidFreq',s.eq.mf],['eqMidGain',s.eq.mg],
-     ['eqHighFreq',s.eq.hf],['eqHighGain',s.eq.hg]].forEach(([id,v]) => { setSl(id,v); if (typeof updateFX==='function') updateFX(id,v); });
+  // #43 : nouveau format = tableau de 6 gains (fréquences fixes, rien à
+  // restaurer sur ce point). Un ancien preset (objet {lf,lg,mf,mg,hf,hg},
+  // 3 bandes à fréquence libre) est silencieusement ignoré ici — tout le
+  // reste du preset se restaure normalement, seul son réglage EQ est perdu.
+  if (Array.isArray(s.eq)) {
+    s.eq.forEach((g, bi) => { if (EQ_BANDS[bi] && typeof g === 'number') { EQ_BANDS[bi].gain = g; _eqApply(bi); } });
+    if (typeof drawEQ2D === 'function') drawEQ2D(document.getElementById('eq2d-canvas'));
   }
   if (s.delay) { [['delayTime',s.delay.t],['delayFeedback',s.delay.fb],['delayWet',s.delay.wet]]
     .forEach(([id,v]) => { setSl(id,v); if (typeof updateFX==='function') updateFX(id,v); }); }
@@ -3344,9 +3389,10 @@ function applyFXState(s) {
     setSl('ppTime',s.pp.t); setSl('ppFb',s.pp.fb); setSl('ppWetSlider', s.pp.wet || 0);
   }
   if (s.fxInt != null && typeof setFXIntensity === 'function') { setFXIntensity(s.fxInt); setSl('fxIntensity', s.fxInt); }
-  if (s.lfo)    { LFO_STATE.rate=s.lfo.rate; LFO_STATE.depth=s.lfo.depth; lfoToggle(!!s.lfo.on);
-                  const c=document.getElementById('lfo-on'); if (c) c.checked=!!s.lfo.on; }
-  if (s.breath) { BREATH_STATE.rate=s.breath.rate; BREATH_STATE.depth=s.breath.depth; breathToggle(!!s.breath.on); }
+  // #42 : s.lfo (ancien trémolo) ignoré si présent dans un vieux preset —
+  // plus aucun état à restaurer, ce champ n'existe plus.
+  if (s.breath) { BREATH_STATE.rate=s.breath.rate; BREATH_STATE.depth=s.breath.depth; breathToggle(!!s.breath.on);
+                  const c=document.getElementById('gbreath-on'); if (c) c.checked=!!s.breath.on; }
   if (s.grain)  { GRAIN_STATE.on=s.grain.on!==false; setGrainDrive(s.grain.drive); setGrainDrift(s.grain.drift); }
   let wavesChanged = false;
   if (s.waves)   { if (JSON.stringify(OSC_WAVES) !== JSON.stringify(s.waves)) wavesChanged = true; Object.assign(OSC_WAVES, s.waves); }
@@ -3370,12 +3416,6 @@ function setMasterTrim(v) {
 }
 function setMasterFader(v) {
   if (masterFader) masterFader.gain.setTargetAtTime(Math.max(0, Math.min(1.2, parseFloat(v))), aNow(), 0.05);
-}
-function setMasterEQ(band, dB) {
-  const g = Math.max(-12, Math.min(12, parseFloat(dB)));
-  if (band === 'low'  && mEqLow)  mEqLow.gain.setTargetAtTime(g, aNow(), 0.05);
-  if (band === 'mid'  && mEqMid)  mEqMid.gain.setTargetAtTime(g, aNow(), 0.05);
-  if (band === 'high' && mEqHigh) mEqHigh.gain.setTargetAtTime(g, aNow(), 0.05);
 }
 function setMasterGlue(amount) {
   if (!masterGlue) return;
@@ -3449,14 +3489,13 @@ async function startFlow() {
     masterGain.gain.setValueAtTime(0, now);
     masterGain.gain.setTargetAtTime(masterVol * MASTER_GAIN_SCALE, now, _fadeDur / 3);
 
+    // #42 : _lfoGain n'est plus modulé par un LFO trémolo — il ne sert plus
+    // qu'à recevoir la cible anti-crack (cf. _applyAntiCrack), en amont de
+    // _breathGain (respiration organique, seule modulation restante ici).
     _lfoGain = c.createGain(); _lfoGain.gain.value = 1;
     _breathGain = c.createGain(); _breathGain.gain.value = 1;
     masterGain.connect(_lfoGain); _lfoGain.connect(_breathGain); _breathGain.connect(_fxInput);
     masterGain.connect(_rawAnalyser);
-
-    _lfoNode = c.createOscillator(); _lfoNode.type='sine'; _lfoNode.frequency.value=LFO_STATE.rate;
-    _lfoDepthGain = c.createGain(); _lfoDepthGain.gain.value = LFO_STATE.on ? LFO_STATE.depth : 0;
-    _lfoNode.connect(_lfoDepthGain); _lfoDepthGain.connect(_lfoGain.gain); _lfoNode.start();
 
     _breathLFO = c.createOscillator(); _breathLFO.type='sine'; _breathLFO.frequency.value=BREATH_STATE.rate;
     _breathDepthGain = c.createGain(); _breathDepthGain.gain.value = BREATH_STATE.on ? BREATH_STATE.depth : 0;
@@ -3524,8 +3563,8 @@ async function stopFlow() {
     }, 500);
   });
   setTimeout(() => {
-    [_lfoNode, _breathLFO, _driftLFO].forEach(x => { try { x?.stop(); } catch(e){} });
-    [_lfoNode, _lfoGain, _lfoDepthGain, _breathLFO, _breathGain, _breathDepthGain, _driftLFO, _driftDepth, masterGain]
+    [_breathLFO, _driftLFO].forEach(x => { try { x?.stop(); } catch(e){} });
+    [_lfoGain, _breathLFO, _breathGain, _breathDepthGain, _driftLFO, _driftDepth, masterGain]
       .forEach(x => { try { x?.disconnect(); } catch(e){} });
     if (analyser) { try { analyser.disconnect(); } catch(e){} }
     // #2/#3 respiration + dérive par paire : oscillateurs indépendants qui ne
@@ -3537,7 +3576,7 @@ async function stopFlow() {
     clearInterval(_breathAnchorTimer); _breathAnchorTimer = null; // #9 (roadmap)
     clearInterval(_audioWatchdogTimer); _audioWatchdogTimer = null; // #33 (perf)
     _stopSubDrone(); // #16 (roadmap)
-    _lfoNode=_lfoGain=_lfoDepthGain=_breathLFO=_breathGain=_breathDepthGain=_driftLFO=_driftDepth=masterGain=analyser=null;
+    _lfoGain=_breathLFO=_breathGain=_breathDepthGain=_driftLFO=_driftDepth=masterGain=analyser=null;
     PAIRS.forEach((_, i) => updateOrbUI(i));
     const mc = document.getElementById('vpc-p' + MASTER_IDX);
     if (mc) mc.style.boxShadow = '';
@@ -4452,6 +4491,8 @@ function _openQuickMenu(i) {
   const isMaster = i === MASTER_IDX;
   const pair = PAIRS[i];
   const locked = (typeof isLocked === 'function') && isLocked(i);
+  const soloed = isPairSoloed(i);
+  const fxOn = isPairFX(i);
   const mc = isMaster
     ? ((typeof freqColor === 'function') ? freqColor(masterFreq, 70) : '#F3D9FF')
     : pair.color;
@@ -4465,6 +4506,12 @@ function _openQuickMenu(i) {
     </button>
     <button class="mm-cell mm-cell-bottom${locked?' locked':''}" id="mm-lock-btn" style="border-color:${mc}" title="${isMaster?'Verrouiller la fréquence maître · Appui long : random ciblé':'Verrouiller cette fréquence · Appui long : random ciblé'}">
       ${locked?'◉':'◎'}<span>${locked?'Verrouillé':'Verrouiller'}</span>
+    </button>
+    <button class="mm-cell mm-cell-left${soloed?' soloed':''}" id="mm-solo-btn" style="border-color:${mc}" onclick="event.stopPropagation();_mmToggleSolo()" title="${soloed?'Retour au jeu global':'Solo cette fréquence'}">
+      ${soloed?'◈':'⦿'}<span>${soloed?'Solo':'All'}</span>
+    </button>
+    <button class="mm-cell mm-cell-right${fxOn?'':' fx-off'}" id="mm-fx-btn" style="border-color:${mc}" onclick="event.stopPropagation();_mmToggleFX()" title="${fxOn?'Couper les FX pour cette sphère':'Activer les FX pour cette sphère'}">
+      ${fxOn?'✦':'✧'}<span>FX</span>
     </button>`;
   wrap.appendChild(mm);
   const lockBtn = document.getElementById('mm-lock-btn');
@@ -4496,6 +4543,21 @@ function _mmToggleLock() {
 function _mmLockLongPress() {
   if (_qmIdx === MASTER_IDX) triggerMagicAuto();
   else _pairRandomFreq(_qmIdx);
+}
+// #45 : bouton gauche — tap = solo cette fréquence, retap = retour au jeu
+// global (soloPair interroge l'état courant, pas besoin de mémoriser).
+function _mmToggleSolo() {
+  const solo = soloPair(_qmIdx);
+  const b = document.getElementById('mm-solo-btn');
+  if (b) { b.classList.toggle('soloed', solo); b.innerHTML = (solo?'◈':'⦿') + '<span>' + (solo?'Solo':'All') + '</span>'; }
+}
+// #46 : bouton droit — FX on/off pour cette sphère (envoi vers les tanks
+// reverb/delay/ping-pong globaux, cf. setPairFX/PAIR_FX déjà existants).
+function _mmToggleFX() {
+  const on = !isPairFX(_qmIdx);
+  setPairFX(_qmIdx, on);
+  const b = document.getElementById('mm-fx-btn');
+  if (b) { b.classList.toggle('fx-off', !on); b.innerHTML = (on?'✦':'✧') + '<span>FX</span>'; }
 }
 
 function buildVesicaPairs() {
@@ -4820,8 +4882,15 @@ function triggerRandomFXQuick(){
   triggerRandomFX(0.72);
 }
 
+// #47 : n plafonné pour que masterFreq × ratio × n ne dépasse jamais 432 Hz
+// ("la valeur de n s'arrête quand fréquence = 432").
+function _nMaxFor(i) {
+  const r = RATIO_OPTS[PAIRS[i].pingala.ri].r;
+  return Math.max(0.1, Math.floor((432 / (masterFreq * r)) * 10) / 10);
+}
 function setN(i, raw) {
-  const n = Math.round(Math.max(0.1, parseFloat(raw)) * 10) / 10;
+  const nMax = _nMaxFor(i);
+  const n = Math.round(Math.max(0.1, Math.min(nMax, parseFloat(raw))) * 10) / 10;
   if (isNaN(n)) return;
   PAIRS[i].pingala.n = n;
   updatePairUI(i);
@@ -4830,6 +4899,10 @@ function setN(i, raw) {
     tuneOsc(PAIRS[i].ida.id,     calcIFreq(i));
   }
   saveState();
+}
+// #47 : +/- 0.1 par tap (bouton dédié à côté de la saisie n).
+function stepN(i, delta) {
+  setN(i, Math.round((PAIRS[i].pingala.n + delta) * 10) / 10);
 }
 function setRatio(i, ri) {
   PAIRS[i].pingala.ri = ri;
@@ -4889,17 +4962,47 @@ function soloMaster() {
   return solo;
 }
 
-function setVolP(i, vol) {
+// #45 : solo générique — coupe tout SAUF la paire i (peut être le maître).
+// Même logique que soloMaster (état interrogé, pas mémorisé à part : un
+// second appel avec le même i restaure tout le monde). Utilisé par le
+// bouton gauche du menu rapide de chaque sphère (Solo / All).
+function soloPair(i) {
+  const currentlySoloed = PAIRS.every((p, j) =>
+    j === i || (mutedOscs[p.pingala.id] && mutedOscs[p.ida.id]));
+  const solo = !currentlySoloed;
+  PAIRS.forEach((p, j) => {
+    if (j === i) return;
+    mutedOscs[p.pingala.id] = solo;
+    mutedOscs[p.ida.id]     = solo;
+    const np = nodes[p.pingala.id], ni = nodes[p.ida.id];
+    if (np) safeRamp(np.g.gain, solo ? 0 : p.pingala.vol, 0.4);
+    if (ni) safeRamp(ni.g.gain, solo ? 0 : p.ida.vol, 0.4);
+    updatePairUI(j);
+  });
+  updateMasterState();
+  saveState();
+  return solo;
+}
+function isPairSoloed(i) {
+  return PAIRS.every((p, j) => j === i || (mutedOscs[p.pingala.id] && mutedOscs[p.ida.id]));
+}
+
+// #44 : volUI = valeur du slider (0-1, "contraction max / expansion max").
+// Convertie en interne vers l'échelle réelle du gain (0-VOL_UI_SCALE) —
+// aucune amplification, seule la façon de saisir/afficher la valeur change.
+function setVolP(i, volUI) {
+  const vol = Math.max(0, Math.min(1, volUI)) * VOL_UI_SCALE;
   PAIRS[i].pingala.vol = vol;
   const pid = PAIRS[i].pingala.id;
-  const d = document.getElementById('o-pvol-'+i); if (d) d.textContent = vol.toFixed(2);
+  const d = document.getElementById('o-pvol-'+i); if (d) d.textContent = (vol / VOL_UI_SCALE).toFixed(2);
   const node = nodes[pid]; if (node && !mutedOscs[pid]) safeRamp(node.g.gain, vol, 0.3);
   saveState();
 }
-function setVolI(i, vol) {
+function setVolI(i, volUI) {
+  const vol = Math.max(0, Math.min(1, volUI)) * VOL_UI_SCALE;
   PAIRS[i].ida.vol = vol;
   const iid = PAIRS[i].ida.id;
-  const d = document.getElementById('o-ivol-'+i); if (d) d.textContent = vol.toFixed(2);
+  const d = document.getElementById('o-ivol-'+i); if (d) d.textContent = (vol / VOL_UI_SCALE).toFixed(2);
   const node = nodes[iid]; if (node && !mutedOscs[iid]) safeRamp(node.g.gain, vol, 0.3);
   saveState();
 }
@@ -5450,15 +5553,17 @@ function resetAll() {
   PAIRS.forEach((p, i) => {
     p.pingala.ri = i % RATIO_OPTS.length;
     p.pingala.n  = (i === MASTER_IDX) ? 1.0 : 0.2 + (i*0.5);
-    p.pingala.vol = .12;
+    // #44 : volume par défaut selon la bande de fréquence réellement
+    // atteinte par cette paire (grave = priorité), pas une valeur fixe.
+    const f = Math.min(432, masterFreq * RATIO_OPTS[p.pingala.ri].r * p.pingala.n);
+    const vol = _defaultVolUIForFreq(f) * VOL_UI_SCALE;
+    p.pingala.vol = vol;
     p.ida.delta   = DELTA_DEFAULT;       // battement binaural doux, unique
     p.ida.polarity = (i % 2 === 0) ? 1 : -1;
-    p.ida.vol     = .12;
+    p.ida.vol     = vol;
     mutedOscs[p.pingala.id] = false;
     mutedOscs[p.ida.id]     = false;
   });
-  PAIRS[MASTER_IDX].pingala.vol = .14;
-  PAIRS[MASTER_IDX].ida.vol     = .14;
   try { localStorage.removeItem(LS_KEY); } catch(e) {}
   const mvs = document.getElementById('mvol-slider'); if (mvs) mvs.value = 0.85;
   const mvv = document.getElementById('mvol-val');    if (mvv) mvv.textContent = '85%';
@@ -5472,18 +5577,24 @@ function resetAll() {
    06-ui-builders.js — HTML builders & affichage
    ═══════════════════════════════════════════ */
 
-// ── EQ 2D Parametric Canvas ───────────────────────────────────────
-// Bandes recalées sur le jeu FBF : Bass 54-144 · Médium 144-288 · Haut 288-432
+// ── EQ Graphique — 6 bandes FIXES ──────────────────────────────────
+// #43 : remplace l'ancien EQ 2D à 3 nœuds librement déplaçables
+// (fréquence ET gain) par un EQ graphique classique — 6 fréquences
+// fixes calées sur la gamme du jeu FBF (36-432 Hz), seul le gain se
+// règle (glisser verticalement). Couleurs reprises de la palette des
+// 6 paires (PAIRS) pour une cohérence visuelle avec le reste de l'app.
 const EQ_BANDS=[
-  {id:'low', freq:96, gain:0,color:'#60D8FF',type:'lowshelf', fMin:54,  fMax:144, label:'BAS'},
-  {id:'mid', freq:216,gain:0,color:'#FFD060',type:'peak',     fMin:144, fMax:288, label:'MED'},
-  {id:'high',freq:427,gain:0,color:'#FF8EFF',type:'highshelf',fMin:288, fMax:432, label:'HAUT'},
+  {id:'b54', freq:54, gain:0,color:'#FF6B6B',type:'lowshelf'},
+  {id:'b144',freq:144,gain:0,color:'#FFB347',type:'peaking'},
+  {id:'b216',freq:216,gain:0,color:'#E8FF60',type:'peaking'},
+  {id:'b288',freq:288,gain:0,color:'#56FFB0',type:'peaking'},
+  {id:'b360',freq:360,gain:0,color:'#60D8FF',type:'peaking'},
+  {id:'b432',freq:432,gain:0,color:'#C080FF',type:'highshelf'},
 ];
-// Axe fréquentiel borné : 40 → 1296 Hz (ne monte jamais plus haut)
-const EQ_FLO=40, EQ_FHI=1296;
+// Axe fréquentiel borné : 36 → 475 Hz (couvre toute la gamme du jeu, plus une petite marge)
+const EQ_FLO=36, EQ_FHI=475;
 var _eqDrag=null;
 function _f2x(f,w){return w*Math.log(f/EQ_FLO)/Math.log(EQ_FHI/EQ_FLO);}
-function _x2f(x,w){return EQ_FLO*Math.pow(EQ_FHI/EQ_FLO,x/w);}
 function _g2y(g,h){return h*(1-(g+18)/36);}
 function _y2g(y,h){return(1-y/h)*36-18;}
 function _eqCurveY(f){
@@ -5491,7 +5602,7 @@ function _eqCurveY(f){
   EQ_BANDS.forEach(b=>{
     if(b.type==='lowshelf')s+=b.gain*(1-Math.min(1,Math.max(0,Math.log(f/b.freq)/Math.log(4))));
     else if(b.type==='highshelf')s+=b.gain*Math.min(1,Math.max(0,Math.log(f/b.freq)/Math.log(4)));
-    else s+=b.gain*Math.exp(-0.5*Math.pow(Math.log(f/b.freq)/1.5,2));
+    else s+=b.gain*Math.exp(-0.5*Math.pow(Math.log(f/b.freq)/1.1,2));
   });
   return Math.max(-18,Math.min(18,s));
 }
@@ -5502,15 +5613,15 @@ function drawEQ2D(cv){
   const ctx=cv.getContext('2d');
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle='rgba(4,2,16,.9)';ctx.fillRect(0,0,W,H);
-  // Grid (bornes 54 · 144 · 288 · 432 · 566 · 1296)
-  [54,144,288,432,566,864,1296].forEach(f=>{
-    if(f>EQ_FHI)return;
-    const x=_f2x(f,W);
-    ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;
+  // Grid — une ligne par bande (fréquence fixe)
+  EQ_BANDS.forEach(b=>{
+    const x=_f2x(b.freq,W);
+    ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,.2)';ctx.font=`${Math.max(7,W*.028)}px monospace`;
-    ctx.fillText(f>=1000?(f/1000).toFixed(1)+'k':f,x+2,H-3);
+    ctx.fillStyle='rgba(255,255,255,.25)';ctx.font=`${Math.max(7,W*.026)}px monospace`;
+    ctx.textAlign='center';ctx.fillText(Math.round(b.freq),x,H-3);
   });
+  ctx.textAlign='left';
   // 0 dB line
   const y0=_g2y(0,H);
   ctx.strokeStyle='rgba(255,255,255,.1)';ctx.setLineDash([3,4]);
@@ -5522,50 +5633,60 @@ function drawEQ2D(cv){
   ctx.strokeStyle='rgba(160,210,255,.6)';ctx.lineWidth=1.5;ctx.stroke();
   ctx.lineTo(W,y0);ctx.lineTo(0,y0);ctx.closePath();
   ctx.fillStyle='rgba(80,150,255,.06)';ctx.fill();
-  // Band nodes
+  // Faders — un par bande, à sa fréquence FIXE (X ne bouge jamais)
   EQ_BANDS.forEach(b=>{
     const x=_f2x(b.freq,W),y=_g2y(b.gain,H);
+    ctx.strokeStyle=b.color+'55';ctx.lineWidth=3;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y);ctx.stroke();
     ctx.shadowColor=b.color;ctx.shadowBlur=10;
     ctx.fillStyle=b.color+'99';ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill();
     ctx.shadowBlur=0;ctx.fillStyle=b.color;ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle=b.color;ctx.font=`bold ${Math.max(7,W*.03)}px monospace`;ctx.fillText(b.label,x+8,y-5);
-    ctx.fillStyle='rgba(255,255,255,.5)';ctx.font=`${Math.max(6,W*.026)}px monospace`;
-    ctx.fillText(b.freq>=1000?(b.freq/1000).toFixed(1)+'k':Math.round(b.freq),x+8,y+7);
-    ctx.fillText((b.gain>=0?'+':'')+b.gain.toFixed(1)+'dB',x+8,y+16);
+    ctx.fillStyle='rgba(255,255,255,.55)';ctx.font=`${Math.max(6,W*.024)}px monospace`;ctx.textAlign='center';
+    ctx.fillText((b.gain>=0?'+':'')+b.gain.toFixed(1),x,y<H/2?y+18:y-11);
+    ctx.textAlign='left';
   });
 }
 function _eqApply(bi){
   const b=EQ_BANDS[bi];
-  // setTargetAtTime plutôt qu'un .value= brut : un saut instantané de
-  // fréquence/gain sur un filtre EQ EN COURS DE TRAITEMENT du signal produit
-  // un "zip" audible (craquement), surtout quand le gain est poussé fort.
+  const f=eqBands[bi]; if(!f)return;
+  // setTargetAtTime plutôt qu'un .value= brut : un saut instantané de gain
+  // sur un filtre EQ EN COURS DE TRAITEMENT du signal produit un "zip"
+  // audible (craquement), surtout quand le gain est poussé fort.
   const now=(typeof aNow==='function')?aNow():audioCtx().currentTime;
-  if(bi===0&&typeof eqLow!=='undefined'&&eqLow){eqLow.frequency.setTargetAtTime(b.freq,now,0.02);eqLow.gain.setTargetAtTime(b.gain,now,0.02);}
-  if(bi===1&&typeof eqMid!=='undefined'&&eqMid){eqMid.frequency.setTargetAtTime(b.freq,now,0.02);eqMid.gain.setTargetAtTime(b.gain,now,0.02);}
-  if(bi===2&&typeof eqHigh!=='undefined'&&eqHigh){eqHigh.frequency.setTargetAtTime(b.freq,now,0.02);eqHigh.gain.setTargetAtTime(b.gain,now,0.02);}
+  f.gain.setTargetAtTime(b.gain,now,0.02);
+}
+function resetEQ(){
+  EQ_BANDS.forEach((b,i)=>{ b.gain=0; _eqApply(i); });
+  drawEQ2D(document.getElementById('eq2d-canvas'));
 }
 function initEQ2D(cv){
   if(!cv)return;
   if(cv.offsetWidth<10){requestAnimationFrame(()=>initEQ2D(cv));return;}
   if(cv._eq2d)return;cv._eq2d=true;
   const getXY=(e)=>{const r=cv.getBoundingClientRect();const s=e.touches?e.touches[0]:e;return{x:s.clientX-r.left,y:s.clientY-r.top};};
-  const findBand=(x,y)=>EQ_BANDS.findIndex(b=>{const W=cv.offsetWidth,H=cv.offsetHeight;return Math.hypot(x-_f2x(b.freq,W),y-_g2y(b.gain,H))<18;});
+  // Fréquence fixe par bande : on choisit juste la bande dont la position X
+  // (fixe) est la plus proche du doigt — la coordonnée Y n'entre pas dans
+  // le choix de la bande (tolérance verticale totale, comme un vrai fader).
+  const findBand=(x,W)=>{
+    let best=-1,bestD=Infinity;
+    EQ_BANDS.forEach((b,i)=>{const d=Math.abs(x-_f2x(b.freq,W));if(d<bestD){bestD=d;best=i;}});
+    return bestD<28?best:-1;
+  };
   let _eqLastDrawAt=0;
   const drag=(x,y)=>{
     if(_eqDrag===null||_eqDrag<0)return;
-    const b=EQ_BANDS[_eqDrag],W=cv.offsetWidth,H=cv.offsetHeight;
-    b.freq=Math.max(b.fMin,Math.min(b.fMax,_x2f(x,W)));
-    b.gain=Math.max(-18,Math.min(18,_y2g(y,H)));
+    const b=EQ_BANDS[_eqDrag],H=cv.offsetHeight;
+    b.gain=Math.max(-18,Math.min(18,_y2g(y,H))); // fréquence jamais modifiée, seul le gain bouge
     _eqApply(_eqDrag);
     const now=performance.now();
     if(now-_eqLastDrawAt<32)return;
     _eqLastDrawAt=now;
     drawEQ2D(cv);
   };
-  cv.addEventListener('mousedown',e=>{const{x,y}=getXY(e);_eqDrag=findBand(x,y);if(_eqDrag>=0)e.preventDefault();});
+  cv.addEventListener('mousedown',e=>{const{x,y}=getXY(e);_eqDrag=findBand(x,cv.offsetWidth);if(_eqDrag>=0){drag(x,y);e.preventDefault();}});
   window.addEventListener('mousemove',e=>{if(_eqDrag===null||_eqDrag<0)return;const r=cv.getBoundingClientRect();drag(e.clientX-r.left,e.clientY-r.top);});
   window.addEventListener('mouseup',()=>{if(_eqDrag!==null&&_eqDrag>=0)drawEQ2D(cv);_eqDrag=null;});
-  cv.addEventListener('touchstart',e=>{const{x,y}=getXY(e);_eqDrag=findBand(x,y);if(_eqDrag>=0)e.preventDefault();},{passive:false});
+  cv.addEventListener('touchstart',e=>{const{x,y}=getXY(e);_eqDrag=findBand(x,cv.offsetWidth);if(_eqDrag>=0){drag(x,y);e.preventDefault();}},{passive:false});
   cv.addEventListener('touchmove',e=>{if(_eqDrag===null||_eqDrag<0)return;e.preventDefault();const r=cv.getBoundingClientRect();drag(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top);},{passive:false});
   cv.addEventListener('touchend',()=>{if(_eqDrag!==null&&_eqDrag>=0)drawEQ2D(cv);_eqDrag=null;});
   // Boucle gatée : ne dessine QUE si le panneau FX est visible (sinon poll léger).
@@ -5732,23 +5853,27 @@ function buildMasterFXHTML() {
         <span class="fx-val-disp" id="mvol-val">85%</span>
         <button class="btn-reset sm" onclick="resetAll()" title="Réinitialiser">↺</button>
       </div>
-      <!-- Réglages avancés du Gain : fondu d'entrée/sortie + LFO trémolo -->
+      <!-- Réglages avancés du Gain : fondu d'entrée/sortie + respiration organique -->
       <div class="fx-row"><div class="fx-control-group" style="flex:1">
         <span class="fx-label">Fondu</span>
         <input type="range" class="fx-slider" id="fadeDur" min="0.5" max="15" step="0.5" value="2" oninput="setFadeDur(this.value)">
         <span class="fx-val-disp" id="sv-fade">2.0s</span>
       </div></div>
+      <!-- #42 : remplace l'ancien "LFO — Trémolo organique" — trop sec/mécanique
+           à l'usage. La respiration organique (BREATH_STATE) existait déjà en
+           interne, active par défaut, mais sans aucun contrôle visible ; elle
+           prend maintenant cette place, plus douce et agréable. -->
       <div class="fx-row" style="justify-content:space-between;align-items:center;">
-        <span class="fx-label">LFO — Trémolo organique</span>
-        <label class="fx-toggle"><input type="checkbox" id="lfo-on" onchange="lfoToggle(this.checked)"><span class="fx-tog-track"></span></label>
+        <span class="fx-label">Respiration organique</span>
+        <label class="fx-toggle"><input type="checkbox" id="gbreath-on" checked onchange="breathToggle(this.checked)"><span class="fx-tog-track"></span></label>
       </div>
       <div class="fx-row">
         <div class="fx-control-group"><span class="fx-label">Rythme</span>
-          <input type="range" class="fx-slider" id="lfo-rate" min="0.02" max="2" step="0.01" value="0.25" oninput="lfoSet('rate',this.value)">
-          <span class="fx-val-disp" id="sv-lfo-rate">0.25</span></div>
+          <input type="range" class="fx-slider" id="gbreath-rate" min="0.02" max="0.5" step="0.01" value="0.11" oninput="breathSet('rate',this.value)">
+          <span class="fx-val-disp" id="sv-gbreath-rate">6.6 /min</span></div>
         <div class="fx-control-group"><span class="fx-label">Profond.</span>
-          <input type="range" class="fx-slider" id="lfo-depth" min="0.01" max="0.5" step="0.01" value="0.08" oninput="lfoSet('depth',this.value)">
-          <span class="fx-val-disp" id="sv-lfo-depth">0.08</span></div>
+          <input type="range" class="fx-slider" id="gbreath-depth" min="0.01" max="0.5" step="0.01" value="0.18" oninput="breathSet('depth',this.value)">
+          <span class="fx-val-disp" id="sv-gbreath-depth">0.18</span></div>
       </div>
       <!-- #3 : Détune Sinus Duo (moteur "sine2") — écart -72..+72 ¢ entre les 2 voix -->
       <div class="fxq-row"><span class="fxq-lbl">Sinus Duo</span>
@@ -5847,17 +5972,9 @@ function buildMasterFXHTML() {
 
     <!-- EQ 2D compact -->
     <div class="fx-block">
-      <div class="fx-title">EQ Paramétrique 2D <span style="font-size:.66rem;font-weight:400;color:rgba(200,180,255,.5);">· glisser</span></div>
-      <canvas id="eq2d-canvas" style="width:100%;height:100px;display:block;border-radius:8px;cursor:crosshair;touch-action:none;"></canvas>
-      <input type="range" id="eqLowFreq"  min="20"   max="600"   value="200"  style="display:none" oninput="updateFX('eqLowFreq',this.value)">
-      <input type="range" id="eqLowGain"  min="-18"  max="18"    value="0"    style="display:none" oninput="updateFX('eqLowGain',this.value)">
-      <input type="range" id="eqMidFreq"  min="200"  max="6000"  value="1000" style="display:none" oninput="updateFX('eqMidFreq',this.value)">
-      <input type="range" id="eqMidGain"  min="-18"  max="18"    value="0"    style="display:none" oninput="updateFX('eqMidGain',this.value)">
-      <input type="range" id="eqHighFreq" min="2000" max="20000" value="5000" style="display:none" oninput="updateFX('eqHighFreq',this.value)">
-      <input type="range" id="eqHighGain" min="-18"  max="18"    value="0"    style="display:none" oninput="updateFX('eqHighGain',this.value)">
-      <span id="eqLowFreq-val" style="display:none">200 Hz</span><span id="eqLowGain-val" style="display:none">0 dB</span>
-      <span id="eqMidFreq-val" style="display:none">1000 Hz</span><span id="eqMidGain-val" style="display:none">0 dB</span>
-      <span id="eqHighFreq-val" style="display:none">5000 Hz</span><span id="eqHighGain-val" style="display:none">0 dB</span>
+      <div class="fx-title">EQ Graphique 6 bandes <span style="font-size:.66rem;font-weight:400;color:rgba(200,180,255,.5);">· glisser verticalement</span></div>
+      <canvas id="eq2d-canvas" style="width:100%;height:100px;display:block;border-radius:8px;cursor:ns-resize;touch-action:none;"></canvas>
+      <button class="btn-reset sm" style="margin-top:.3rem;" onclick="resetEQ()" title="Réinitialiser l'EQ (0 dB partout)">↺ Réinitialiser l'EQ</button>
     </div>
 
     <div class="fx-block" style="text-align:center;">
@@ -6000,13 +6117,7 @@ function updateFX(paramId, value) {
   // setTargetAtTime plutôt qu'un .value= brut sur ces AudioParam : un saut
   // instantané pendant que le signal traverse le filtre/delay produit un
   // "zip" audible (craquement), d'autant plus fort que le réglage est poussé.
-  if (paramId==='eqLowFreq')  { if(valDisp)valDisp.textContent=Math.round(v)+' Hz'; if(eqLow)eqLow.frequency.setTargetAtTime(v,now,0.02); EQ_BANDS[0].freq=v; }
-  else if(paramId==='eqLowGain')  { if(valDisp)valDisp.textContent=v.toFixed(1)+' dB'; if(eqLow)eqLow.gain.setTargetAtTime(v,now,0.02); EQ_BANDS[0].gain=v; }
-  else if(paramId==='eqMidFreq')  { if(valDisp)valDisp.textContent=Math.round(v)+' Hz'; if(eqMid)eqMid.frequency.setTargetAtTime(v,now,0.02); EQ_BANDS[1].freq=v; }
-  else if(paramId==='eqMidGain')  { if(valDisp)valDisp.textContent=v.toFixed(1)+' dB'; if(eqMid)eqMid.gain.setTargetAtTime(v,now,0.02); EQ_BANDS[1].gain=v; }
-  else if(paramId==='eqHighFreq') { if(valDisp)valDisp.textContent=Math.round(v)+' Hz'; if(eqHigh)eqHigh.frequency.setTargetAtTime(v,now,0.02); EQ_BANDS[2].freq=v; }
-  else if(paramId==='eqHighGain') { if(valDisp)valDisp.textContent=v.toFixed(1)+' dB'; if(eqHigh)eqHigh.gain.setTargetAtTime(v,now,0.02); EQ_BANDS[2].gain=v; }
-  else if(paramId==='delayTime')     { if(valDisp)valDisp.textContent=v.toFixed(2)+'s'; try{if(masterDelay)masterDelay.delayTime.setTargetAtTime(v,now,0.05);}catch(e){} }
+  if (paramId==='delayTime')     { if(valDisp)valDisp.textContent=v.toFixed(2)+'s'; try{if(masterDelay)masterDelay.delayTime.setTargetAtTime(v,now,0.05);}catch(e){} }
   else if(paramId==='delayFeedback') { if(valDisp)valDisp.textContent=Math.round(v*100)+'%'; try{if(masterDelayFb)masterDelayFb.gain.setTargetAtTime(v,aNow(),.05);}catch(e){} }
   else if(paramId==='delayWet')  { if(valDisp)valDisp.textContent=Math.round(v*100)+'%';
     // #33 (perf) : délai porté à 450ms — à timeConstant .05, un wet parti de
@@ -6076,7 +6187,11 @@ function updatePairUI(i) {
   const bfr  =document.getElementById('bfr-'+i);   if(bfr)   bfr.textContent  =fmtFreq(pF);
   const brs  =document.getElementById('brat-'+i);  if(brs)   brs.value        =pair.pingala.ri;
   const bn   =document.getElementById('bn-'+i);
-  if(bn&&document.activeElement!==bn) bn.value=pair.pingala.n;
+  const nMax = _nMaxFor(i);
+  if(bn){ bn.max=nMax; if(document.activeElement!==bn) bn.value=pair.pingala.n; }
+  const bnFader=document.getElementById('bnFader-'+i);
+  if(bnFader){ bnFader.max=nMax; if(document.activeElement!==bnFader) bnFader.value=pair.pingala.n; }
+  const bnFaderMax=document.getElementById('bnFader-max-'+i); if(bnFaderMax) bnFaderMax.textContent='max '+nMax;
 
   const ibp=document.getElementById('ibf-p-'+i); if(ibp) ibp.textContent=fmtShort(pF);
   const ipol=document.getElementById('ipol-'+i);
@@ -6130,8 +6245,8 @@ function buildPairHTML(pair, i) {
         </div>
         <div style="display:flex;align-items:center;gap:.4rem;padding:.4rem 0;">
           <span style="font-size:.75rem;font-style:italic;color:rgba(220,190,255,.6);min-width:50px;font-weight:bold;">Vol P</span>
-          <input type="range" class="brange" id="pvol-${i}" min="0" max="0.45" step="0.01" value="${pair.pingala.vol}" style="flex:1;color:${c};" oninput="setVolP(${i},parseFloat(this.value))">
-          <span style="font-family:'IM Fell English',serif;font-size:.85rem;color:rgba(225,200,255,.85);min-width:36px;text-align:right;font-weight:bold;" id="o-pvol-${i}">${pair.pingala.vol.toFixed(2)}</span>
+          <input type="range" class="brange" id="pvol-${i}" min="0" max="1" step="0.01" value="${(pair.pingala.vol/VOL_UI_SCALE).toFixed(2)}" style="flex:1;color:${c};" oninput="setVolP(${i},parseFloat(this.value))">
+          <span style="font-family:'IM Fell English',serif;font-size:.85rem;color:rgba(225,200,255,.85);min-width:36px;text-align:right;font-weight:bold;" id="o-pvol-${i}">${(pair.pingala.vol/VOL_UI_SCALE).toFixed(2)}</span>
         </div>
         <div class="bctrl">
           <div class="bctrl-row"><span class="bctrl-label">Ratio harmonique</span></div>
@@ -6141,8 +6256,15 @@ function buildPairHTML(pair, i) {
         </div>
         <div class="param-row" style="margin-top:.4rem;">
           <span class="param-label">n =</span>
-          <input type="number" class="param-input" id="bn-${i}" min="0.1" step="0.1" value="${pair.pingala.n}" oninput="setN(${i},this.value)">
-          <span class="param-hint">Multiplier n</span>
+          <button class="fxq-step" onclick="stepN(${i},-0.1)" title="n -0.1">−</button>
+          <input type="number" class="param-input" id="bn-${i}" min="0.1" max="${_nMaxFor(i)}" step="0.1" value="${pair.pingala.n}" oninput="setN(${i},this.value)">
+          <button class="fxq-step" onclick="stepN(${i},0.1)" title="n +0.1">+</button>
+          <button class="n-matrix-btn" onclick="event.stopPropagation();openMatrixTab(${i})" title="Ouvrir la Matrice">🌀</button>
+        </div>
+        <!-- #47 : fader précis (pas 0.1), plafonné dynamiquement (masterFreq×ratio×n ≤ 432Hz) -->
+        <div class="param-row">
+          <input type="range" class="brange" id="bnFader-${i}" min="0.1" max="${_nMaxFor(i)}" step="0.1" value="${pair.pingala.n}" style="flex:1;color:${c};" oninput="setN(${i},this.value)">
+          <span class="param-hint" id="bnFader-max-${i}">max ${_nMaxFor(i)}</span>
         </div>
       </div>
     </div>
@@ -6161,8 +6283,8 @@ function buildPairHTML(pair, i) {
         </div>
         <div style="display:flex;align-items:center;gap:.4rem;padding:.4rem 0;">
           <span style="font-size:.75rem;font-style:italic;color:rgba(220,190,255,.6);min-width:50px;font-weight:bold;">Vol I</span>
-          <input type="range" class="brange" id="ivol-${i}" min="0" max="0.45" step="0.01" value="${pair.ida.vol}" style="flex:1;color:${c}88;" oninput="setVolI(${i},parseFloat(this.value))">
-          <span style="font-family:'IM Fell English',serif;font-size:.85rem;color:rgba(225,200,255,.85);min-width:36px;text-align:right;font-weight:bold;" id="o-ivol-${i}">${pair.ida.vol.toFixed(2)}</span>
+          <input type="range" class="brange" id="ivol-${i}" min="0" max="1" step="0.01" value="${(pair.ida.vol/VOL_UI_SCALE).toFixed(2)}" style="flex:1;color:${c}88;" oninput="setVolI(${i},parseFloat(this.value))">
+          <span style="font-family:'IM Fell English',serif;font-size:.85rem;color:rgba(225,200,255,.85);min-width:36px;text-align:right;font-weight:bold;" id="o-ivol-${i}">${(pair.ida.vol/VOL_UI_SCALE).toFixed(2)}</span>
         </div>
         <div class="bctrl">
           <div class="bctrl-row">
@@ -6266,6 +6388,9 @@ function buildPairHTML(pair, i) {
     </div>
     <div class="osc-hint">○ off · ● faible · ●● moyen · ●●● fort</div>`;
 
+  // ── ⑤ MATRICE 🌀 (36 assignations rapides ratio × n) ────────────
+  const matrixTabHTML = _matrixHTML(i, c);
+
   return `<div class="pair-panel" style="border-left-color:${c};--ec:${c};">
     <div class="pair-head">
       <span class="pair-dot" style="background:${c}"></span>
@@ -6277,12 +6402,72 @@ function buildPairHTML(pair, i) {
       <button class="osc-tab"    id="otab-${i}-2" onclick="oscTab(${i},2)" style="--ec:${c};">② Oscillo</button>
       <button class="osc-tab"    id="otab-${i}-3" onclick="oscTab(${i},3)" style="--ec:${c};">③ FX</button>
       <button class="osc-tab"    id="otab-${i}-4" onclick="oscTab(${i},4)" style="--ec:${c};">④ Patch</button>
+      <button class="osc-tab"    id="otab-${i}-5" onclick="oscTab(${i},5)" style="--ec:${c};">⑤ Matrice 🌀</button>
     </div>
     <div class="osc-pane" id="opane-${i}-1">${binauralHTML}</div>
     <div class="osc-pane hidden" id="opane-${i}-2">${oscTabHTML}</div>
     <div class="osc-pane hidden" id="opane-${i}-3">${fxTabHTML}</div>
     <div class="osc-pane hidden" id="opane-${i}-4">${patchTabHTML}</div>
+    <div class="osc-pane hidden" id="opane-${i}-5">${matrixTabHTML}</div>
   </div>`;
+}
+
+// #48 : Matrice 🌀 — 36 cellules d'assignation rapide (6 ratios × 6 n
+// aléatoires chacun), plafonnées à 432 Hz. Cache par paire (régénérée par
+// le bouton "Nouveau tirage", pas à chaque ouverture d'onglet — sinon les
+// valeurs sauteraient dans tous les sens à chaque clic).
+let _matrixCache = {};
+function _genMatrixFor(i) {
+  const cache = {};
+  RATIO_OPTS.forEach((r, ri) => {
+    const nMax = Math.max(0.1, Math.floor((432 / (masterFreq * r.r)) * 10) / 10);
+    const vals = [];
+    for (let k = 0; k < 6; k++) {
+      const n = Math.round((0.1 + Math.random() * Math.max(0, nMax - 0.1)) * 10) / 10;
+      vals.push(Math.max(0.1, Math.min(nMax, n)));
+    }
+    cache[ri] = vals;
+  });
+  _matrixCache[i] = cache;
+  return cache;
+}
+function _matrixHTML(i, c) {
+  const cache = _matrixCache[i] || _genMatrixFor(i);
+  const rows = RATIO_OPTS.map((r, ri) => {
+    const cells = cache[ri].map(n => {
+      const f = Math.max(F_MIN, Math.min(432, masterFreq * r.r * n));
+      const on = ri === PAIRS[i].pingala.ri && n === PAIRS[i].pingala.n;
+      return `<button class="mx-cell${on?' on':''}" style="--ec:${c};" onclick="_matrixAssign(${i},${ri},${n})">
+        <span class="mx-hz">${f.toFixed(0)}</span><span class="mx-n">n=${n.toFixed(1)}</span></button>`;
+    }).join('');
+    return `<div class="mx-row"><span class="mx-ratio-label" style="color:${c};">${r.l}</span><div class="mx-row-cells">${cells}</div></div>`;
+  }).join('');
+  return `<div class="osc-sec-t" style="color:${c}aa;">🌀 Matrice — 36 assignations rapides (ratio × n), plafonnées à 432 Hz</div>
+    <div class="mx-grid">${rows}</div>
+    <button class="btn-flow" style="width:100%;margin-top:.5rem;border-color:${c}88;color:${c};background:${c}18;" onclick="_matrixReshuffle(${i})">⚄ Nouveau tirage</button>
+    <div class="osc-hint">Tap une cellule : assigne ratio + n à cette sphère, en direct</div>`;
+}
+function _matrixRefresh(i) {
+  const pane = document.getElementById('opane-'+i+'-5');
+  if (pane) pane.innerHTML = _matrixHTML(i, PAIRS[i].color);
+}
+function _matrixAssign(i, ri, n) {
+  PAIRS[i].pingala.ri = ri;
+  PAIRS[i].pingala.n  = n;
+  if (flowing) swapPingala(i); else updatePairUI(i);
+  saveState();
+  _matrixRefresh(i);
+}
+function _matrixReshuffle(i) {
+  _genMatrixFor(i);
+  _matrixRefresh(i);
+}
+// #47 : bouton 🌀 du contrôle n — ouvre le modal complet (si besoin) puis
+// bascule directement sur l'onglet Matrice.
+function openMatrixTab(i) {
+  const modal = document.getElementById('osc-modal');
+  if (!modal || !modal.classList.contains('open') || _oscModalIdx !== i) openOscModal(i);
+  oscTab(i, 5);
 }
 
 // Tableau Hz par ratio — sélection rapide (54 → 396)
@@ -6300,7 +6485,7 @@ function _ratioTableHTML(i, c) {
 
 // Switch d'onglet du modal oscillateur
 function oscTab(i, n) {
-  for (let t = 1; t <= 4; t++) {
+  for (let t = 1; t <= 5; t++) {
     const pane = document.getElementById('opane-'+i+'-'+t);
     const tab  = document.getElementById('otab-'+i+'-'+t);
     if (pane) pane.classList.toggle('hidden', t !== n);
@@ -6680,6 +6865,16 @@ function openOscModal(i) {
   const pair = PAIRS[i];
   if (title) title.textContent = i===MASTER_IDX ? '✦ Oscillateur Maître' : `✦ Canal ${i+1} — ${pair.label}`;
   body.innerHTML = buildPairHTML(pair, i);
+
+  // #49 : fond dégradé doux propre à CETTE paire (jamais noir) — 7
+  // oscillateurs, 7 palettes (cf. pair.grad, déjà défini dans PAIRS mais
+  // jusqu'ici inutilisé pour l'ambiance du panneau, qui restait uniformément
+  // sombre). Dégradé discret (bas alpha) sur une base sombre neutre, pour
+  // rester lisible tout en apportant la couleur propre à chaque sphère.
+  const inner = document.getElementById('osc-modal-inner');
+  if (inner && pair.grad) {
+    inner.style.background = `linear-gradient(160deg, ${pair.grad[0]}30 0%, rgba(14,6,30,.95) 42%, rgba(14,6,30,.95) 62%, ${pair.grad[1]}26 100%)`;
+  }
 
   modal.classList.add('open');
   if (backdrop) backdrop.classList.add('open');
@@ -7744,7 +7939,7 @@ const Bowl = (() => {
   // Branche la sortie bol dans la chaîne FX partagée si dispo, sinon destination.
   function _route() {
     try {
-      if (typeof eqLow !== 'undefined' && eqLow) { outGain.connect(eqLow); return; }
+      if (typeof eqBands !== 'undefined' && eqBands.length) { outGain.connect(eqBands[0]); return; }
     } catch (e) {}
     outGain.connect(ctx.destination);
   }

@@ -510,3 +510,101 @@ testé sur les 6 positions satellites une par une.
 Où regarder : `toggleMutePair()`, `_vpStart()`/`_vpEnd()` (section
 "04-vesica-ui.js"), `_openQuickMenu()`/`_mmLockLongPress()`,
 `buildPairHTML()` (panneau détaillé, boutons mute retirés).
+
+## 9e passe — 10 réglages fins (trémolo, EQ, volumes, menu rapide, matrice, couleurs)
+
+### #42 — Trémolo retiré, respiration organique exposée
+
+`LFO_STATE` (toggle "LFO — Trémolo organique", désactivé par défaut,
+modulation sèche/mécanique) supprimé entièrement — code (`lfoToggle`,
+`lfoSet`, `_lfoNode`, `_lfoDepthGain`) et UI. `BREATH_STATE` (respiration
+organique, actif par défaut, `on:true, rate:0.11, depth:0.18`) existait
+déjà côté moteur audio (chaîne `masterGain→_lfoGain→_breathGain→_fxInput`)
+mais n'avait jamais eu de contrôle visible — il prend maintenant la même
+place dans le panneau FX (`breathToggle`/`breathSet`, ids `gbreath-*` pour
+éviter la collision avec `sv-breath-depth`, déjà pris par la respiration
+PAR PAIRE dans le panneau Options Aléatoire, un réglage différent).
+`_lfoGain` conservé tel quel : il sert uniquement de cible pour
+l'anti-crack (`_applyAntiCrack`), indépendant du trémolo retiré.
+Vérifié : `LFO_STATE`/`lfoToggle` bien supprimés, `BREATH_STATE.on` actif
+par défaut, `breathToggle`/`breathSet` pilotent bien le gain réel du node.
+
+### #43 — EQ Master : 3 nœuds libres → 6 bandes fixes (36-432 Hz)
+
+L'"EQ Paramétrique 2D" (3 filtres `eqLow/eqMid/eqHigh`, fréquence ET gain
+librement déplaçables à la souris) remplacé par un EQ graphique classique
+à **6 bandes fixes** : 54 / 144 / 216 / 288 / 360 / 432 Hz (lowshelf,
+peaking×4, highshelf), couleurs reprises de la palette des 6 paires. Seul
+le gain se règle désormais (glisser verticalement, la fréquence de chaque
+bande ne bouge plus) — `findBand()` sélectionne la bande la plus proche en
+X avec une tolérance large (comme un vrai fader), la coordonnée Y n'entre
+plus dans le choix de la bande. Nettoyage au passage : `mEqLow/mEqMid/
+mEqHigh` et `setMasterEQ()`, du code mort jamais connecté au graphe audio
+depuis leur création, supprimés. Format de sauvegarde (`getFXState`)
+simplifié en tableau de 6 gains ; un ancien preset 3-bandes est ignoré
+proprement sans faire planter la restauration du reste. Vérifié : 6 nœuds
+`BiquadFilterNode` créés aux bonnes fréquences, application/reset/
+sauvegarde/restauration du gain par bande, rendu visuel du fader.
+
+### #44 — Volumes oscillateurs : affichage 0-1 + défauts par bande de fréquence
+
+Sliders `pvol-`/`ivol-` : plage interne réelle (0-0.45, le gain appliqué
+au node) inchangée, mais **affichée/saisie en 0-1** ("contraction max /
+expansion max" demandé) — remap pur à la frontière UI
+(`setVolP`/`setVolI` multiplient par `VOL_UI_SCALE=0.45`), aucune
+amplification (vérifié : slider à 1.0 ⇒ gain réel 0.45, identique à
+l'ancien maximum). Valeurs par défaut recalculées par bande de fréquence
+de la paire (grave = priorité, demande explicite) : 36-108 Hz → 72%,
+108-216 Hz → 66%, 216-324 Hz → 54%, 324-432 Hz → 36% du volume UI max —
+appliqué à la déclaration initiale de `PAIRS` et dans `resetAll()` (calcul
+live selon la fréquence réellement atteinte après réassignation
+ratio/n, pas une valeur figée). Vérifié : les 7 défauts correspondent
+exactement à leur bande attendue, `resetAll()` recalcule correctement
+même avec des fréquences dépassant 432 Hz (plafonnées avant le calcul de
+tier).
+
+### #45/#46 — Menu rapide : boutons Solo (gauche) et FX on/off (droite)
+
+Le menu rapide (2 cellules haut/bas déjà en place) gagne 2 cellules
+gauche/droite : **Solo** (`soloPair(i)`, généralisation de `soloMaster()`
+à n'importe quelle sphère — coupe tout sauf celle-ci, retap = restaure
+tout le monde, état interrogé plutôt que mémorisé séparément) et **FX
+on/off** (réutilise `setPairFX`/`isPairFX`, déjà existants). Avec 4
+cellules au lieu de 2, l'ancien resserrement (#41, `top:6%`/`bottom:6%`,
+cellules 56×48) chevauchait les sphères voisines sur les côtés gauche/
+droite (la couronne hexagonale de satellites est plus dense
+latéralement que radialement) — resserré à nouveau (cellules 42×36,
+offsets 14%/18%) jusqu'à zéro chevauchement mesuré sur les 6 positions.
+
+### #47/#48 — Contrôle n enrichi (+/-0.1, fader, plafond 432 Hz) + Matrice 🌀
+
+Le contrôle `n` (panneau détaillé, onglet Binaural) gagne des boutons
++/-0.1, un fader précis (pas 0.1, max dynamique affiché), et un bouton
+🌀 ouvrant directement le nouvel onglet **⑤ Matrice**. `setN()` plafonne
+désormais `n` pour que `masterFreq × ratio × n` ne dépasse jamais 432 Hz
+(`_nMaxFor(i)`, recalculé à chaque changement de ratio/fréquence maître
+via `updatePairUI`). La Matrice affiche 36 cellules : les 6 ratios de
+`RATIO_OPTS` (il n'y en a que 6 au total, donc "6 ratios" = tous, pas de
+sélection à faire) × 6 valeurs de `n` aléatoires chacun (plafonnées à
+432 Hz, mises en cache par paire pour ne pas sauter à chaque re-rendu),
++ un bouton "Nouveau tirage" qui régénère les 36 valeurs. Tap une cellule
+= assigne ratio+n à cette sphère instantanément (retune en direct si le
+flux joue). Vérifié : 36 cellules (6×6), toutes sous le plafond 432 Hz,
+assignation + retune en direct corrects, plafonnage du fader/stepper.
+
+### #49 — Fond du panneau oscillateur : dégradé harmonieux par paire
+
+`pair.grad` (dégradé 2 couleurs déjà défini dans `PAIRS` pour chacune des
+7 sphères, jusqu'ici jamais utilisé) appliqué en fond du panneau détaillé
+(`#osc-modal-inner`, style inline posé par `openOscModal()`) — dégradé
+doux et à faible opacité sur une base sombre neutre (jamais noir pur),
+propre à la couleur de CHAQUE oscillateur. Vérifié visuellement sur 3
+paires (rouge, cyan, rose du maître) : teinte bien visible et distincte,
+texte toujours lisible.
+
+Où regarder (9e passe) : `breathToggle`/`breathSet` (section 2.6),
+`EQ_BANDS`/`eqBands`/`_eqApply`/`initEQ2D` (section "EQ Graphique"),
+`VOL_UI_SCALE`/`_defaultVolUIForFreq`/`setVolP`/`setVolI`, `soloPair`/
+`_mmToggleSolo`/`_mmToggleFX` (section quick menu), `_nMaxFor`/`setN`/
+`stepN`, `_matrixHTML`/`_matrixAssign`/`_matrixReshuffle`/`openMatrixTab`,
+`openOscModal()` (fond dégradé).
