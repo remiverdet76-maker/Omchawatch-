@@ -5482,10 +5482,6 @@ function triggerMagicAuto(opts) {
   // #12 (roadmap) : snapshot PRÉ-tirage pour le retour arrière (undoLastRandom)
   _pushGameHistory();
 
-  // Valeur AVANT le fondu (le plancher de reverbe ambiante plus bas doit
-  // comparer l'état d'origine, pas la valeur juste ramenée à 0 par le duck).
-  const preReverbWet = (typeof reverbWetGain !== 'undefined' && reverbWetGain) ? reverbWetGain.gain.value : 0;
-
   const keepMaster = !!(opts && opts.keepMaster);
   // keepIdx : conserve une paire satellite précise intacte pour ce tirage
   // (généralise "garder le maître" à n'importe quelle sphère — menu rapide).
@@ -5670,14 +5666,14 @@ function triggerMagicAuto(opts) {
     tuneOsc(pair.ida.id, calcIFreq(i), 2.2);
   });
 
-  // Plancher de reverbe ambiante : sans un minimum de reverbe, les paires
-  // lointaines n'ont que le filtre pour se distinguer (profondeur perceptible
-  // mais discrète). Ce plancher rend la 3D audible dès le premier tirage —
-  // il ne touche rien si l'écoute a déjà une reverbe volontairement montée.
-  if (flowing && typeof reverbWetGain !== 'undefined' && reverbWetGain && preReverbWet < 0.05) {
-    const sl = document.getElementById('reverbWet'); if (sl) sl.value = 0.12;
-    if (typeof updateFX === 'function') updateFX('reverbWet', 0.12);
-  }
+  // #60 : l'ancien "plancher de reverbe ambiante" forçait reverbWet à 0.12
+  // dès le premier tirage aléatoire (dès que le curseur était <0.05), et ne
+  // redescendait plus jamais tout seul — combiné à l'envoi par paire selon
+  // la profondeur 3D (jusqu'à 30%, cf. drawDepth ci-dessous), ça créait une
+  // reverbe permanente perçue comme un "effet echo tunnel" qui dénaturait le
+  // son (retour utilisateur direct). Retiré : la reverbe reste à 0 par
+  // défaut, exactement comme le curseur l'indique, jusqu'à ce que
+  // l'utilisateur la monte lui-même.
 
   // Applique volumes + pan + filtres sur les nœuds vivants
   if (flowing) PAIRS.forEach((pair, i) => {

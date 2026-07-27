@@ -819,3 +819,31 @@ Où regarder (11e passe) : `initTPad`/`drawTPad`/`_tpadApply`/
 `setPairTPadMode` (pad tactile), `PAIR_BD2`/`_bd2Curve`/`togglePairBD2`/
 `setPairBD2` (BD-2), `PAIR_TPAD_AUTO`/`_tpadAutoTick`/`toggleTPadAuto`/
 `setTPadAutoPeriod` (automations).
+
+## 12e passe — #60 : effet "echo tunnel" permanent (retour terrain enceintes)
+
+Retour utilisateur après écoute sur enceintes réelles : "il y a un effet
+echo tunnel activé en permanence qui dénature complètement le son".
+
+Cause trouvée dans `triggerMagicAuto()` : un "plancher de reverbe
+ambiante" forçait le curseur Reverbe à 12% dès le premier tirage aléatoire
+si sa valeur était sous 5% — et ne redescendait plus jamais tout seul.
+Combiné à l'envoi par paire vers la reverbe selon sa "profondeur 3D"
+(jusqu'à 30% du signal par paire, `drawDepth[i] * FX_SEND_LEVEL`), ce
+plancher rendait une reverbe permanente et cumulative dès qu'un jeu
+aléatoire avait été lancé une seule fois — perçue comme un echo/tunnel
+qui ne s'arrête plus. Ce comportement était volontaire à l'origine (rendre
+la profondeur 3D audible), mais le retour direct de l'utilisateur montre
+qu'il dénature le son plus qu'il ne l'enrichit.
+
+Correctif : le bloc qui forçait `reverbWet` à 0.12 est retiré. Le curseur
+Reverbe reste fidèle à ce qu'il affiche (0% par défaut) tant que
+l'utilisateur ne le monte pas lui-même. Le mécanisme d'envoi par
+profondeur 3D reste en place (inoffensif tant que la reverbe est à 0) —
+seul le forçage automatique disparaît. Vérifié par script Playwright : 5
+tirages aléatoires consécutifs, `reverbWetGain.gain.value` reste à 0 tout
+du long ; remonter le curseur manuellement fonctionne toujours normalement.
+
+Où regarder : `triggerMagicAuto()` (le bloc "plancher de reverbe" a été
+retiré, juste avant la boucle qui applique volumes/pan/filtres/envoi FX
+par paire).
