@@ -749,7 +749,7 @@ body{
 
 .dcell{
   display:flex;align-items:center;justify-content:center;gap:.35rem;
-  flex:1 1 0;min-width:0;width:auto;height:43px;padding:0 .4rem; /* #32 : +25% vs origine (34px→43px) */
+  flex:1 1 0;min-width:0;width:auto;height:58px;padding:0 .4rem; /* #52 : +36% vs #32 (43px→58px), le texte tenait pas dans les cellules */
   border-radius:11px;border:1.5px solid;
   cursor:pointer;user-select:none;-webkit-user-select:none;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
@@ -760,10 +760,10 @@ body{
 .dcell:active{ transform:scale(.96); }
 .dcell.dc-hold{ transform:scale(1.05); box-shadow:0 0 22px currentColor; }
 .dcell-txt{ display:flex;flex-direction:column;align-items:center;line-height:1.05;min-width:0;overflow:hidden; }
-.dcell-name{ font-family:'Cinzel Decorative',serif;font-size:.72rem;letter-spacing:.06em;font-weight:700;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%; }
-.dcell-sub{ font-family:'IM Fell English',serif;font-size:.86rem;font-weight:bold;opacity:.85;white-space:nowrap; }
-.dcell-ico{ font-size:1.15rem;flex-shrink:0; }
+.dcell-name{ font-family:'Cinzel Decorative',serif;font-size:.98rem;letter-spacing:.06em;font-weight:700; /* #52 : +36% */
+  white-space:normal;overflow:hidden;max-width:100%;text-align:center;overflow-wrap:break-word; } /* #52 : le texte passe sur 2 lignes (et coupe un mot long type "Paramètres" si besoin) plutôt que d'être coupé — la cellule est maintenant assez haute */
+.dcell-sub{ font-family:'IM Fell English',serif;font-size:1.17rem;font-weight:bold;opacity:.85;white-space:nowrap; } /* #52 : +36% */
+.dcell-ico{ font-size:1.56rem;flex-shrink:0; } /* #52 : +36% */
 
 /* ROUGE translucide — Option Jeu aléatoire */
 .dcell-red{ background:rgba(255,70,70,.14);border-color:rgba(255,90,90,.5);color:#FF8E8E; }
@@ -794,7 +794,7 @@ body{
 .dcell-wrap{ display:flex;align-items:center;gap:0;width:100%; }
 .dcell-extra{
   position:static;z-index:2;
-  width:53px;height:53px;border-radius:50%;flex-shrink:0; /* #32 : +25% vs origine (42px→53px) */
+  width:34px;height:34px;border-radius:50%;flex-shrink:0; /* #52 : -36% vs #32 (53px→34px), place faite aux cellules */
   display:flex;align-items:center;justify-content:center;
   font-size:1.5rem;line-height:1;font-weight:400;
   border:1.5px solid rgba(255,215,0,.65);
@@ -830,7 +830,7 @@ body{
 .dcell-extra-flux:hover{ transform:scale(1.12); }
 .dcell-extra-flux:active{ transform:scale(.88); }
 .dcell-flux{
-  flex-shrink:0;width:95px;height:95px;margin-bottom:8px; /* #32 : +25% vs origine (76px→95px) ; #40 : réduit (33→8px), la cellule violette sous Flux reprend le rôle d'"élévation" visuelle */
+  flex-shrink:0;width:61px;height:61px;margin-bottom:8px; /* #52 : -36% vs #32 (95px→61px) */
   border-radius:50%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.05rem;
   background:radial-gradient(circle at 40% 34%,rgba(255,222,120,.34),rgba(40,28,4,.9));
@@ -878,31 +878,23 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
    sur les colonnes voisines si cette largeur est plus étroite que prévu. */
 .dock-col-center{ display:flex;flex-direction:column;align-items:center;gap:.3rem;flex-shrink:0; }
 .dcell-purple{
-  display:flex;align-items:center;justify-content:center;gap:.22rem;
-  width:100%;max-width:150px;padding:.22rem .3rem;border-radius:10px;border:1.5px solid rgba(190,110,255,.5);
+  display:flex;align-items:center;justify-content:center;gap:.3rem;
+  width:100%;max-width:204px;padding:.3rem .41rem;border-radius:10px;border:1.5px solid rgba(190,110,255,.5); /* #52 : +36% */
   background:rgba(150,60,255,.14);backdrop-filter:blur(10px);
 }
 .dcell-purple-step{
-  width:22px;height:22px;border-radius:6px;border:1.5px solid rgba(190,110,255,.5);
-  background:rgba(150,60,255,.2);color:#D9B3FF;font-size:.62rem;font-weight:700;
+  width:30px;height:30px;border-radius:6px;border:1.5px solid rgba(190,110,255,.5); /* #52 : +36% */
+  background:rgba(150,60,255,.2);color:#D9B3FF;font-size:.84rem;font-weight:700;
   display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .12s;
 }
 .dcell-purple-step:active{ transform:scale(.9); }
 .dcell-purple-input{
-  width:38px;min-width:0;flex:1 1 auto;background:rgba(0,0,0,.32);border:1.5px solid rgba(190,110,255,.4);border-radius:6px;
-  color:#F0DCFF;font-family:'IM Fell English',serif;font-size:.82rem;text-align:center;
+  width:52px;min-width:0;flex:1 1 auto;background:rgba(0,0,0,.32);border:1.5px solid rgba(190,110,255,.4);border-radius:6px; /* #52 : +36% */
+  color:#F0DCFF;font-family:'IM Fell English',serif;font-size:1.12rem;text-align:center;
   padding:.15rem 0;outline:none;-moz-appearance:textfield;
 }
 .dcell-purple-input::-webkit-inner-spin-button,.dcell-purple-input::-webkit-outer-spin-button{-webkit-appearance:none;}
-.dcell-purple-validate{
-  width:22px;height:22px;flex-shrink:0;border-radius:6px;border:1.5px solid rgba(190,110,255,.55);
-  background:rgba(150,60,255,.22);color:#F0DCFF;font-size:.7rem;font-weight:700;line-height:1;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;
-  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-}
-.dcell-purple-validate:active{ transform:scale(.9); }
-.dcell-purple-validate.applied{ background:rgba(90,255,160,.28);border-color:#5AFFA0;color:#8CFFC0; }
 
 /* ─── Navigation — ligne dans #bottom-dock ─── */
 #tab-nav{
@@ -1537,11 +1529,11 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   #bottom-dock.collapsed { transform: translateY(158px) !important; }
   #spectroid-bar { bottom: 158px !important; width: 80vw !important; }
 
-  .dcell { height: 45px !important; }
-  .dcell-name { font-size: .66rem !important; }
-  .dcell-sub  { font-size: .84rem !important; }
-  .dcell-extra { width: 53px !important; height: 53px !important; }
-  .dcell-flux { width: 93px !important; height: 93px !important; margin-bottom: 8px !important; } /* #40 : réduit (38→8px), la cellule violette sous Flux reprend le rôle d'"élévation" */
+  .dcell { height: 61px !important; } /* #52 : +36% vs #32 (45px→61px) */
+  .dcell-name { font-size: .9rem !important; } /* #52 : +36% */
+  .dcell-sub  { font-size: 1.14rem !important; } /* #52 : +36% */
+  .dcell-extra { width: 34px !important; height: 34px !important; } /* #52 : -36% vs #32 (53px→34px) */
+  .dcell-flux { width: 60px !important; height: 60px !important; margin-bottom: 8px !important; } /* #52 : -36% vs #32 (93px→60px) */
 
   /* Panneaux : plein écran (largeur) pour la lisibilité, déroulement haut → bas,
      hauteur toujours réservée au-dessus du dock (158px sur smartphone, dock agrandi) */
@@ -1652,9 +1644,9 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 
 /* Rack de lecture : filtre + EQ 12 bandes + limiter */
 .filt-mode-row{display:flex;gap:.3rem;margin-bottom:.45rem;}
-.filt-mode-btn{flex:1;padding:.32rem 0;border-radius:8px;font-size:.68rem;letter-spacing:.05em;
+.filt-mode-btn,.osc-filt-mode-btn{flex:1;padding:.32rem 0;border-radius:8px;font-size:.68rem;letter-spacing:.05em;
   border:1px solid rgba(200,160,255,.28);background:rgba(12,2,32,.5);color:rgba(200,170,255,.75);cursor:pointer;}
-.filt-mode-btn.active{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#FFD700;}
+.filt-mode-btn.active,.osc-filt-mode-btn.active{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#FFD700;}
 
 .eq12-rack{display:flex;gap:.22rem;align-items:flex-end;height:112px;padding:.3rem .1rem .1rem;margin-bottom:.3rem;}
 .eq12-band{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;height:100%;}
@@ -1694,14 +1686,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <div class="dcell-wrap" data-html-import-id="html-import-16">
       <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Afficher / masquer les oscillateurs">+</button>
       <button class="dcell dcell-red canva-button" id="dcRed" title="Tap : Options Aléatoire · Appui long : Solo fréquence maître" data-html-import-id="html-import-17" data-template-id="button-8" style="background: rgba(255, 70, 70, 0.14); color: rgb(255, 142, 142);">
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">Option Jeu</b><span class="dcell-sub canva-text" data-html-import-id="html-import-21" data-template-id="span-12" style="color: rgb(255, 142, 142); font-family: &quot;IM Fell English&quot;; font-weight: 700; font-size: 12px;">Aléatoire</span></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Option Jeu</b><span class="dcell-sub canva-text" data-html-import-id="html-import-21" data-template-id="span-12" style="color: rgb(255, 142, 142); font-family: &quot;IM Fell English&quot;; font-weight: 700; font-size: 16px;">Aléatoire</span></span>
       </button>
     </div>
     <!-- ORANGE — Samples : tap=ouvrir · long=jeu aléatoire sur fréquence du sample · sphère=raccourci -->
     <div class="dcell-wrap" data-html-import-id="html-import-22">
       <button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra" title="Solo sample + fréquence maître">+</button>
       <button class="dcell dcell-orange canva-button" id="dcOrange" title="Tap : Samples · Appui long : jeu aléatoire sur fréquence du sample" data-html-import-id="html-import-23" data-template-id="button-13" style="background: rgba(255, 150, 40, 0.14); color: rgb(255, 192, 112);">
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-24" data-template-id="span-14" style="color: rgb(255, 192, 112);"><b class="dcell-name canva-text" data-html-import-id="html-import-25" data-template-id="b-15" style="color: rgb(255, 192, 112); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">Samples</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-24" data-template-id="span-14" style="color: rgb(255, 192, 112);"><b class="dcell-name canva-text" data-html-import-id="html-import-25" data-template-id="b-15" style="color: rgb(255, 192, 112); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Samples</b></span>
       </button>
     </div>
   </div>
@@ -1714,12 +1706,13 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
         <span class="flux-state canva-text" id="flux-state-side" data-html-import-id="html-import-29" data-template-id="span-18" style="color: rgb(255, 222, 120); font-weight: 700; font-size: 8px;">OFF</span>
       </button>
     </div>
-    <!-- #40 : VIOLET — saisie directe de la fréquence maître (+9/-9, Valider) -->
+    <!-- #40/#52 : VIOLET — saisie directe de la fréquence maître (+9/-9). Bouton
+         "Valider" retiré (#52) : Entrée applique déjà la saisie clavier, les
+         pas -9/+9 s'appliquent immédiatement, ce bouton ne servait plus. -->
     <div class="dcell-purple" id="dcPurple" title="Fréquence maître directe">
       <button class="dcell-purple-step" onclick="_purpleFreqStep(-9)" title="-9 Hz">−9</button>
-      <input type="number" id="dcell-purple-input" class="dcell-purple-input" inputmode="numeric" autocomplete="off" onkeydown="_purpleFreqKey(event)">
+      <input type="number" id="dcell-purple-input" class="dcell-purple-input" inputmode="numeric" autocomplete="off" onkeydown="_purpleFreqKey(event)" onblur="_purpleFreqValidate()">
       <button class="dcell-purple-step" onclick="_purpleFreqStep(9)" title="+9 Hz">+9</button>
-      <button class="dcell-purple-validate" id="dcell-purple-validate" onclick="_purpleFreqValidate()" title="Valider">✓</button>
     </div>
   </div>
 
@@ -1728,14 +1721,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <!-- VERT — Effet Audio : tap=ouvrir Effet · long=Effet Aléatoire (≤72%) · sphères=raccourcis -->
     <div class="dcell-wrap" data-html-import-id="html-import-31">
       <button class="dcell dcell-green canva-button" id="dcGreen" title="Tap : Effet · Appui long : Effet Aléatoire (≤72%)" data-html-import-id="html-import-32" data-template-id="button-19" style="background: rgba(90, 255, 160, 0.13); color: rgb(140, 255, 192);">
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-33" data-template-id="span-20" style="color: rgb(140, 255, 192);"><b class="dcell-name canva-text" data-html-import-id="html-import-34" data-template-id="b-21" style="color: rgb(140, 255, 192); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">Effet Audio</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-33" data-template-id="span-20" style="color: rgb(140, 255, 192);"><b class="dcell-name canva-text" data-html-import-id="html-import-34" data-template-id="b-21" style="color: rgb(140, 255, 192); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Effet Audio</b></span>
       </button>
       <button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra" title="Ouvre le menu FX géométrie">+</button>
     </div>
     <!-- BLEU — Paramètres : tap=ouvrir · long=ouvrir Preset · sphère=raccourci -->
     <div class="dcell-wrap" data-html-import-id="html-import-35">
       <button class="dcell dcell-blue canva-button" id="dcBlue" title="Tap : Paramètres · Appui long : Preset" data-html-import-id="html-import-36" data-template-id="button-22" style="background: rgba(60, 170, 255, 0.14); color: rgb(120, 198, 255);">
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-37" data-template-id="span-23" style="color: rgb(120, 198, 255);"><b class="dcell-name canva-text" data-html-import-id="html-import-38" data-template-id="b-24" style="color: rgb(120, 198, 255); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 9px;">Paramètres</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-37" data-template-id="span-23" style="color: rgb(120, 198, 255);"><b class="dcell-name canva-text" data-html-import-id="html-import-38" data-template-id="b-24" style="color: rgb(120, 198, 255); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Paramètres</b></span>
       </button>
       <button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra" title="Ajouter le jeu au preset">+</button>
     </div>
@@ -2533,6 +2526,8 @@ let metaAngle = 0, masterRAF = null;
 let _waveBuf = null;
 let _spectroidBuf = null;
 const OSC_WAVES  = {}; // id → clé de OSC_ENGINES
+// #54 : onde par défaut = double sinusoïdale (Sin×2) sur tous les oscillateurs
+PAIRS.forEach(p => { OSC_WAVES[p.pingala.id] = 'sine2'; OSC_WAVES[p.ida.id] = 'sine2'; });
 const OSC_FILTER = {}; // id → {cutoff:Hz, res:Q}
 const OSC_ENV    = {}; // id → {a:attack s, r:release s}
 
@@ -2568,7 +2563,7 @@ const OSC_ENGINE_LABELS = {
 // fondamentale). Ici l'écart devient un réglage global -72..+72 ¢ (7 ¢ =
 // valeur d'origine, conservée par défaut) : proche de 0, quasi mono/pur ;
 // large, un chorus doux et large qui épaissit le timbre sans dureté.
-let DUALSINE_DETUNE = 7; // cents, plage -72..72 (réglage global par défaut)
+let DUALSINE_DETUNE = 0; // #54 : cents, plage -72..72 (défaut à 0 — quasi mono/pur)
 // #10 (roadmap) : réglage PAR PAIRE, en plus du global — pairIdx → cents
 // (-72..72). Absent = la paire suit le réglage global ci-dessus.
 const PAIR_DUALSINE = {};
@@ -2617,6 +2612,49 @@ function setPairDualSineDetune(i, v) {
   _applyDualSineDetune(PAIRS[i].pingala.id, PAIR_DUALSINE[i]);
   _applyDualSineDetune(PAIRS[i].ida.id, PAIR_DUALSINE[i]);
   saveState();
+}
+
+// #54/#55 : LFO d'INTENSITÉ du détune Sinus Duo — fait respirer l'écart
+// entre les 2 voix (moteur ≈≈ Sin×2) au lieu d'une valeur figée. Nœud LFO
+// natif (comme attachOscVolLFO) connecté ADDITIVEMENT sur le detune de
+// chaque voix, scindé par _dualSign (−1/+1, jamais 0 — cf. buildOsc) : la
+// base réglée via le curseur Détune (_applyDualSineDetune) n'est jamais
+// touchée, seule une oscillation douce s'ajoute par-dessus. Par paire,
+// OFF par défaut.
+const PAIR_DUALSINE_LFO = {}; // pairIdx → {lfo, gains:[GainNode...]}
+function _attachPairDualSineLFO(i, rate, depth) {
+  _clearPairDualSineLFO(i);
+  const pid = PAIRS[i].pingala.id, iid = PAIRS[i].ida.id;
+  const c = audioCtx();
+  const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = rate;
+  const gains = [];
+  [pid, iid].forEach(id => {
+    const node = nodes[id]; if (!node || !node.subs) return;
+    node.subs.forEach(s => {
+      if (!s._dualSign) return;
+      const dg = c.createGain(); dg.gain.value = depth * s._dualSign;
+      lfo.connect(dg); dg.connect(s.osc.detune);
+      gains.push(dg);
+    });
+  });
+  lfo.start();
+  PAIR_DUALSINE_LFO[i] = { lfo, gains };
+}
+function _clearPairDualSineLFO(i) {
+  const l = PAIR_DUALSINE_LFO[i]; if (!l) return;
+  try { l.lfo.stop(); l.lfo.disconnect(); l.gains.forEach(g => g.disconnect()); } catch(e) {}
+  delete PAIR_DUALSINE_LFO[i];
+}
+function togglePairDualSineLFO(i) {
+  const btn = document.getElementById('btn-dslfo-' + i);
+  if (PAIR_DUALSINE_LFO[i]) {
+    _clearPairDualSineLFO(i);
+    if (btn) { btn.textContent = '〜 Activer'; btn.style.opacity = ''; }
+  } else {
+    const rate = 0.05 + Math.random() * 0.18; // très lent, doux
+    _attachPairDualSineLFO(i, rate, 10); // ±10 ¢ d'amplitude autour de la base
+    if (btn) { btn.textContent = '〜 Actif'; btn.style.opacity = '0.55'; }
+  }
 }
 
 // ── Grain analogique (waveshaper doux + drift de pitch) ───────────
@@ -2750,7 +2788,7 @@ function buildOsc(id, freq, vol, pan) {
     // Coupé en qualité audio "Légère" (retour à 1 voix/partiel, cf. #33).
     const isSine2 = OSC_WAVES[id] === 'sine2';
     const dualMag = (!isSine2 && AUDIO_QUALITY_TIER !== 'light') ? _dualSineMagFor(id) : 0;
-    engine.forEach(part => {
+    engine.forEach((part, partIdx) => {
       const ratio = part.r || 1;
       const baseFreq = Math.max(1, f0 * ratio);
       const baseDetune = part.d || 0;
@@ -2768,7 +2806,13 @@ function buildOsc(id, freq, vol, pan) {
         osc.connect(pg); pg.connect(signalIn);
         if (sharedDrift) { try { sharedDrift.connect(osc.detune); } catch(e) {} }
         osc.start();
-        const dualSign = isSine2 ? Math.sign(baseDetune) : (doDouble ? Math.sign(off) : 0);
+        // #54 : pour sine2, le signe vient de la POSITION structurelle du
+        // partiel (sine2Engine renvoie toujours [voix "-", voix "+"], dans cet
+        // ordre) — jamais de Math.sign(baseDetune), qui dégénère à 0/-0 (donc
+        // faux) quand le détune de la paire vaut 0 (nouveau défaut, cf. #54) :
+        // sans ça, _dualSign resterait figé à 0 pour toujours, même après que
+        // l'utilisateur remonte le curseur Détune.
+        const dualSign = isSine2 ? (partIdx === 0 ? -1 : 1) : (doDouble ? Math.sign(off) : 0);
         const dualBase = isSine2 ? 0 : baseDetune;
         subs.push({ osc, ratio, _driftDelay: sharedDrift, _baseDetune: dualBase, _dualSign: dualSign });
       });
@@ -2786,7 +2830,11 @@ function buildOsc(id, freq, vol, pan) {
 
   const p   = c.createStereoPanner(); p.pan.value = pan;
   const hpf = c.createBiquadFilter(); hpf.type = 'highpass'; hpf.frequency.value = fs.hp || 20; hpf.Q.value = 0.707;
-  const flt = c.createBiquadFilter(); flt.type = 'lowpass';
+  // #53 : type de filtre commutable (Off/HPF/BPF/LPF), même moteur que le
+  // filtre des samples (FILTER_TYPES/sampleSetFilterMode) — remplacement de
+  // l'ancien filtre passe-bas figé, pas de changement audio par défaut
+  // (fs.mode absent → 'lowpass', comportement identique à avant).
+  const flt = c.createBiquadFilter(); flt.type = FILTER_TYPES[fs.mode] || 'lowpass';
   flt.frequency.value = Math.max(20, Math.min(20000, fs.cutoff));
   flt.Q.value = Math.max(0, Math.min(30, fs.res));
   const g      = c.createGain(); g.gain.value = 0;
@@ -2859,6 +2907,11 @@ function releaseOsc(node) {
     // nœuds fantômes à chaque reconstruction (rebuildAllOscs, changement de
     // moteur d'onde, annuler un tirage…) jusqu'à saturer le thread audio.
     clearOscVolLFO(node._id);
+    // #54 : même fuite possible pour le LFO Δ (intensité du détune Sinus
+    // Duo) — ses gains sont connectés au .detune des sub-oscillateurs de
+    // CET oscillateur ; on l'arrête avant que le nœud ne soit détruit.
+    const _dsPairIdx = PAIRS.findIndex(p => p.pingala.id === node._id || p.ida.id === node._id);
+    if (_dsPairIdx >= 0 && typeof _clearPairDualSineLFO === 'function') _clearPairDualSineLFO(_dsPairIdx);
   }
   const _relPairIdx = PAIRS.findIndex(p => p.ida.id === node._id);
   if (_relPairIdx >= 0) clearDeltaDrift(_relPairIdx);
@@ -3325,6 +3378,24 @@ function setPair3DWidth(i, w) {
 }
 function setPairFilter(i, cutoff, res) { setOscFilter(PAIRS[i].pingala.id, cutoff, res); setOscFilter(PAIRS[i].ida.id, cutoff, res); }
 
+// #53 : type de filtre par paire (Off/HPF/BPF/LPF) — même logique que
+// sampleSetFilterMode, appliqué au nœud flt déjà présent dans la chaîne FX
+// de chaque oscillateur (aucun nouveau nœud, juste son .type qui change).
+function _setOscFilterMode(id, mode) {
+  const cur = OSC_FILTER[id] || { cutoff: 6000, res: 0.707 };
+  cur.mode = mode;
+  OSC_FILTER[id] = cur;
+  const node = nodes[id]; if (node?.flt) node.flt.type = FILTER_TYPES[mode] || 'lowpass';
+}
+function setPairFilterMode(i, mode) {
+  _setOscFilterMode(PAIRS[i].pingala.id, mode);
+  _setOscFilterMode(PAIRS[i].ida.id, mode);
+  document.querySelectorAll(`.osc-filt-mode-btn[data-pair="${i}"]`).forEach(b => b.classList.toggle('active', b.dataset.filt === mode));
+  const row = document.getElementById('osc-filtcutoff-row-' + i);
+  if (row) row.style.display = (mode === 'off') ? 'none' : '';
+  saveState();
+}
+
 function setPingPongTime(t) {
   if (!pingPongDelay) return;
   const time = Math.max(0.04, Math.min(1.5, parseFloat(t)));
@@ -3397,7 +3468,7 @@ function applyFXState(s) {
   if (s.grain)  { GRAIN_STATE.on=s.grain.on!==false; setGrainDrive(s.grain.drive); setGrainDrift(s.grain.drift); }
   let wavesChanged = false;
   if (s.waves)   { if (JSON.stringify(OSC_WAVES) !== JSON.stringify(s.waves)) wavesChanged = true; Object.assign(OSC_WAVES, s.waves); }
-  if (s.filters) { Object.keys(s.filters).forEach(id => { OSC_FILTER[id] = s.filters[id]; if (nodes[id]) setOscFilter(id, s.filters[id].cutoff, s.filters[id].res); }); }
+  if (s.filters) { Object.keys(s.filters).forEach(id => { OSC_FILTER[id] = s.filters[id]; if (nodes[id]) { setOscFilter(id, s.filters[id].cutoff, s.filters[id].res); if (nodes[id].flt) nodes[id].flt.type = FILTER_TYPES[s.filters[id].mode] || 'lowpass'; } }); }
   if (s.pairFX)  { Object.keys(s.pairFX).forEach(id => { PAIR_FX[id] = s.pairFX[id]; const n=nodes[id]; if (n?.fxSend) n.fxSend.gain.setTargetAtTime(s.pairFX[id]!==false?FX_SEND_LEVEL:0, aNow(), 0.08); }); }
   if (s.pairDualSine) { Object.keys(s.pairDualSine).forEach(i => setPairDualSineDetune(i, s.pairDualSine[i])); } // #10 (roadmap)
   if (wavesChanged) rebuildAllOscs();
@@ -3572,6 +3643,7 @@ async function stopFlow() {
     // sont sinon jamais arrêtés (pas de rebuild systématique au Dissoudre) —
     // sans ce nettoyage ils continueraient à tourner silencieusement en fond.
     Object.keys(_oscVolLFOs).forEach(id => clearOscVolLFO(id));
+    Object.keys(PAIR_DUALSINE_LFO).forEach(i => _clearPairDualSineLFO(i)); // #54
     PAIRS.forEach((_, i) => clearDeltaDrift(i));
     _clearAllPairComp();
     clearInterval(_breathAnchorTimer); _breathAnchorTimer = null; // #9 (roadmap)
@@ -4470,6 +4542,8 @@ function _quickMenuOutside(e){
 }
 function _closeQuickMenu(){
   document.querySelectorAll('.vp-mastermenu').forEach(n=>n.remove());
+  // #51 : retire le z-index temporaire posé par _openQuickMenu
+  document.querySelectorAll('.vp-wrap,.vp-center-wrap').forEach(n=>{ if(n.style.zIndex) n.style.zIndex=''; });
   document.removeEventListener('pointerdown',_quickMenuOutside,{capture:true});
 }
 
@@ -4489,6 +4563,13 @@ function _openQuickMenu(i) {
   _closeQuickMenu();
   _qmIdx = i;
   const wrap = document.getElementById('vp' + i); if (!wrap) return;
+  // #51 : le maître (#vp+MASTER_IDX) est toujours ajouté en DERNIER dans le DOM
+  // (cf. buildVesicaPairs), donc sans z-index explicite il peint PAR-DESSUS
+  // toutes les autres sphères — y compris le menu rapide ouvert sur une
+  // satellite, ce qui rendait les cellules gauche/droite (Solo/FX) injoignables
+  // au toucher (interceptées par le maître). On fait passer la sphère qui
+  // possède le menu ouvert au-dessus de tout le reste le temps qu'il est affiché.
+  wrap.style.zIndex = '60';
   const isMaster = i === MASTER_IDX;
   const pair = PAIRS[i];
   const locked = (typeof isLocked === 'function') && isLocked(i);
@@ -5025,28 +5106,22 @@ function setMasterFreq(f) {
   saveState();
 }
 
-// #40 : cellule violette du dock — saisie directe de la fréquence maître.
-function _purpleFlashValidate() {
-  const btn = document.getElementById('dcell-purple-validate');
-  if (!btn) return;
-  btn.classList.add('applied');
-  clearTimeout(btn._flashT);
-  btn._flashT = setTimeout(() => { btn.classList.remove('applied'); }, 500);
-}
+// #40/#52 : cellule violette du dock — saisie directe de la fréquence maître.
+// Le bouton "Valider" a été retiré (#52) : Entrée (clavier) ou perte de focus
+// appliquent déjà la saisie via _purpleFreqValidate, les pas -9/+9 s'appliquent
+// immédiatement — ce bouton était redondant.
 function _purpleFreqStep(delta) {
   const inp = document.getElementById('dcell-purple-input');
   const cur = inp && inp.value !== '' && !isNaN(parseFloat(inp.value)) ? parseFloat(inp.value) : masterFreq;
   const next = Math.round(Math.max(F_MIN, Math.min(432, cur + delta)));
   setMasterFreq(next);
   if (inp) inp.value = masterFreq;
-  _purpleFlashValidate();
 }
 function _purpleFreqValidate() {
   const inp = document.getElementById('dcell-purple-input');
   if (!inp || inp.value === '' || isNaN(parseFloat(inp.value))) { if (inp) inp.value = masterFreq; return; }
   setMasterFreq(Math.round(parseFloat(inp.value)));
   inp.value = masterFreq;
-  _purpleFlashValidate();
 }
 function _purpleFreqKey(e) {
   if (e.key === 'Enter') { e.preventDefault(); _purpleFreqValidate(); e.target.blur(); }
@@ -5282,7 +5357,10 @@ function undoLastRandom() {
   Object.assign(OSC_WAVES, snap.waves);
   Object.keys(snap.filters).forEach(id => {
     OSC_FILTER[id] = snap.filters[id];
-    if (nodes[id]) setOscFilter(id, snap.filters[id].cutoff, snap.filters[id].res);
+    if (nodes[id]) {
+      setOscFilter(id, snap.filters[id].cutoff, snap.filters[id].res);
+      if (nodes[id].flt) nodes[id].flt.type = FILTER_TYPES[snap.filters[id].mode] || 'lowpass';
+    }
   });
   if (snap.dualSine) { // #35
     Object.keys(PAIR_DUALSINE).forEach(k => delete PAIR_DUALSINE[k]);
@@ -6311,6 +6389,7 @@ function buildPairHTML(pair, i) {
   const curEng = OSC_WAVES[PAIRS[i].pingala.id] || 'sine';
   const fcut = (OSC_FILTER[PAIRS[i].pingala.id]||{cutoff:20000}).cutoff;
   const fres = (OSC_FILTER[PAIRS[i].pingala.id]||{res:0}).res;
+  const fmode = (OSC_FILTER[PAIRS[i].pingala.id]||{}).mode || 'lpf'; // #53 : 'lpf' = comportement historique par défaut
   const env  = (typeof OSC_ENV!=='undefined' && OSC_ENV[PAIRS[i].pingala.id]) || {a:0,r:0};
   const oscTabHTML = `
     <div class="osc-sec-t" style="color:${c}aa;">Moteur d'onde</div>
@@ -6323,7 +6402,17 @@ function buildPairHTML(pair, i) {
       <input type="range" min="-72" max="72" step="1" value="${typeof PAIR_DUALSINE[i]==='number'?PAIR_DUALSINE[i]:DUALSINE_DETUNE}" style="color:${c};"
         oninput="setPairDualSineDetune(${i},this.value);this.nextElementSibling.textContent=(this.value<0?'−':'±')+Math.abs(this.value)+' ¢'">
       <span class="ctl-v">${(()=>{const m=typeof PAIR_DUALSINE[i]==='number'?PAIR_DUALSINE[i]:DUALSINE_DETUNE;return (m<0?'−':'±')+Math.abs(m)+' ¢';})()}</span></div>
-    <div class="osc-sec-t" style="color:${c}aa;">Filtre · Cutoff / Résonance</div>
+    <div style="margin-top:.3rem;padding:.3rem .5rem;background:${c}1c;border-radius:7px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:.7rem;color:rgba(200,170,255,.55);letter-spacing:.06em;">LFO Δ · intensité du détune</span>
+      <button id="btn-dslfo-${i}" onclick="togglePairDualSineLFO(${i})"
+        style="font-size:.68rem;padding:.18rem .5rem;background:transparent;border:1px solid ${c}44;color:${c}88;border-radius:6px;cursor:pointer;">〜 Activer</button>
+    </div>
+    <div class="osc-sec-t" style="color:${c}aa;">Filtre · Type / Cutoff / Résonance</div>
+    <div class="filt-mode-row">
+      ${['off','hpf','bpf','lpf'].map(m=>`<button class="osc-filt-mode-btn${fmode===m?' active':''}" data-pair="${i}" data-filt="${m}"
+        onclick="setPairFilterMode(${i},'${m}')">${m.toUpperCase()}</button>`).join('')}
+    </div>
+    <div id="osc-filtcutoff-row-${i}" style="${fmode==='off'?'display:none;':''}">
     <div class="ctl-row"><span class="ctl-l">Cutoff</span>
       <input type="range" min="60" max="6000" step="5" value="${Math.min(6000,fcut)}" style="color:${c};"
         oninput="setPairFilter(${i},this.value,null);this.nextElementSibling.textContent=Math.round(this.value)+' Hz'">
@@ -6332,6 +6421,7 @@ function buildPairHTML(pair, i) {
       <input type="range" min="0" max="6" step="0.1" value="${Math.min(6,fres)}" style="color:${c}aa;"
         oninput="setPairFilter(${i},null,this.value);this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
       <span class="ctl-v">${Math.min(6,fres).toFixed(1)}</span></div>
+    </div>
     <div class="osc-sec-t" style="color:${c}aa;">Amp EG · Attaque / Relâche</div>
     <div class="ctl-row"><span class="ctl-l">Attaque</span>
       <input type="range" min="0" max="4" step="0.05" value="${env.a}" style="color:${c};"

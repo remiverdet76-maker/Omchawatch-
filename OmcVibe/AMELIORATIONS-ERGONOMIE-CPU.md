@@ -635,3 +635,117 @@ Où regarder (9e passe) : `breathToggle`/`breathSet` (section 2.6),
 `_mmToggleSolo`/`_mmToggleFX` (section quick menu), `_nMaxFor`/`setN`/
 `stepN`, `_matrixHTML`/`_matrixAssign`/`_matrixReshuffle`/`openMatrixTab`,
 `openOscModal()`/`_darkenHex()` (fond dégradé, jamais noir).
+
+## 10e passe — retours terrain (Solo/All, dock, filtre, onde par défaut, LFO Δ)
+
+### #51 — Bug : boutons Solo/FX du menu rapide injoignables au toucher
+
+Retour utilisateur (capture d'écran) : le bouton Solo/All du menu rapide
+"ne fonctionne pas". Cause réelle (pas l'hypothèse de l'utilisateur sur le
+tap long) : la sphère MAÎTRE (`#vp+MASTER_IDX`) est toujours ajoutée en
+DERNIER dans le DOM par `buildVesicaPairs()`, donc sans z-index explicite
+elle peint PAR-DESSUS toutes les satellites — y compris le menu rapide
+ouvert sur une satellite, dont les cellules gauche/droite (Solo, FX,
+ajoutées en #45/#46) se retrouvaient sous la zone cliquable du maître.
+Confirmé par un test Playwright utilisant un VRAI clic DOM (pas un appel
+direct de fonction) : Playwright rapportait explicitement
+`<div id="vp6" class="vp-center-wrap"> intercepts pointer events`.
+
+Correctif : `_openQuickMenu(i)` pose un `z-index:60` inline sur la sphère
+qui possède le menu ouvert (au-dessus de tout le reste) ; `_closeQuickMenu()`
+le retire de toutes les sphères à la fermeture. Revérifié par le même test
+avec 2 clics DOM réels consécutifs : les deux bascules Solo↔All
+fonctionnent, le menu reste ouvert.
+
+### #52 — Dock : sphères -36%, cellules +36%, retrait du bouton "Valider" violet
+
+Retour utilisateur : "les cellules du menu bas sont trop petites, on ne
+voit même pas le texte entier" (captures : "Option ...", "Effet A...",
+"Param..." tronqués).
+
+- `.dcell-extra` (sphères raccourci rouge/orange/vert/bleu) et `.dcell-flux`
+  (sphère Flux on/off) réduites de 36% (53px→34px, 95px→61px, desktop et
+  mobile).
+- `.dcell` (les 4 cellules) agrandie de 36% (43px→58px / 45px→61px selon
+  breakpoint), polices `.dcell-name`/`.dcell-sub` +36%.
+- Simplement agrandir la police ne suffisait pas (le mot restait tronqué
+  en un seul, ex. "Paramètres") : `.dcell-name` passe de
+  `white-space:nowrap` + ellipsis à un retour à la ligne normal
+  (`white-space:normal`) avec `overflow-wrap:break-word` pour couper un
+  mot long si besoin — la cellule est maintenant assez haute pour 2 lignes.
+- Cellule violette agrandie de 36% également (`.dcell-purple`/`-step`/
+  `-input`, max-width 150px→204px).
+- Bouton "✓ Valider" retiré (HTML + CSS `.dcell-purple-validate` +
+  fonction `_purpleFlashValidate`) : Entrée (clavier) validait déjà la
+  saisie via `_purpleFreqValidate`, les pas −9/+9 s'appliquent
+  immédiatement — ce bouton ne servait plus. `onblur` ajouté sur le champ
+  pour appliquer aussi la saisie tapée si l'utilisateur tape ailleurs sans
+  passer par Entrée (clavier mobile).
+- Vérifié géométriquement (Playwright) : dock 158px de haut, toutes les
+  cellules/sphères tiennent dans les bornes sans chevauchement ; vérifié
+  visuellement : "Option Jeu / Aléatoire", "Effet Audio", "Param/ètres"
+  s'affichent en entier.
+
+### #53 — Filtre oscillateur : Cutoff/Résonance figé → HPF/BPF/LPF commutable
+
+Demande : réutiliser le filtre HPF/LPF/BPF déjà existant pour les samples
+(`FILTER_TYPES`/`sampleSetFilterMode`) et le brancher sur le filtre de
+chaque oscillateur — un remplacement, pas un changement audio.
+
+Le nœud `flt` (BiquadFilterNode) existait déjà dans la chaîne FX de chaque
+oscillateur mais avait `.type` figé à `'lowpass'`. Il prend maintenant
+`FILTER_TYPES[mode]` avec `mode` par défaut absent → `'lowpass'` : audio
+strictement identique tant que l'utilisateur ne touche pas au nouveau
+sélecteur. Nouveau bloc de 4 boutons OFF/HPF/BPF/LPF (`.osc-filt-mode-btn`,
+même style que `.filt-mode-btn` des samples mais classe séparée pour ne
+pas interférer avec les boutons globaux du panneau samples) au-dessus des
+curseurs Cutoff/Résonance existants (masqués sur OFF, comme pour le
+filtre samples). `setPairFilterMode(i, mode)` met à jour le `.type` des
+nœuds vivants ET la persistance (`OSC_FILTER[id].mode`, inclus
+automatiquement dans les snapshots JSON existants) ; les 2 points de
+restauration (chargement d'état, annulation d'un tirage) ont été corrigés
+pour réappliquer aussi `.type` au nœud vivant (ils ne réappliquaient avant
+que cutoff/résonance, jamais le type — un oubli existant, pas introduit
+ici, mais qui n'avait aucune conséquence tant que le type ne pouvait pas
+changer).
+
+### #54 — Onde par défaut = double sinusoïdale, détune à 0
+
+`OSC_WAVES` est maintenant pré-rempli à `'sine2'` (≈≈ Sin×2) pour les 14
+oscillateurs au chargement, et `DUALSINE_DETUNE` par défaut passe de 7 ¢
+à 0 ¢ (quasi mono/pur, l'utilisateur ouvre l'écart lui-même).
+
+Effet de bord détecté et corrigé pendant le test : le signe de chaque
+voix du Sinus Duo (`_dualSign`, ±1) était jusqu'ici calculé via
+`Math.sign(baseDetune)` — qui dégénère à `0`/`-0` (donc **faux**, la
+fonction `_applyDualSineDetune` ignore alors silencieusement la voix)
+quand le détune de la paire vaut `0` à la construction de l'oscillateur.
+Comme le nouveau défaut est justement `0`, cela aurait rendu le curseur
+Détune inopérant sur toute paire fraîchement créée : le déplacer n'aurait
+plus eu aucun effet audible. Corrigé en dérivant `_dualSign` de la
+POSITION structurelle du partiel dans `sine2Engine()` (qui renvoie
+toujours `[voix "−", voix "+"]` dans cet ordre, quelle que soit la valeur
+du détune) plutôt que du signe de sa valeur courante — `_dualSign` vaut
+maintenant toujours ±1, jamais 0, pour les voix du moteur Sin×2.
+
+### #55 — Nouveau LFO d'intensité du détune Sinus Duo (par paire, OFF par défaut)
+
+Nouveau bouton "LFO Δ · intensité du détune" dans l'onglet ② Oscillo,
+sous le curseur Détune. Même principe que le LFO doux existant
+(`attachOscVolLFO`, §2.10) mais appliqué au `.detune` de chaque voix du
+moteur Sin×2 au lieu du gain : un `OscillatorNode` lent (0,05–0,23 Hz,
+tirage aléatoire à chaque activation) connecté à 2 `GainNode` (un par
+voix, signe ±1 via `_dualSign`) eux-mêmes connectés en ADDITIF sur
+`osc.detune` — la base réglée au curseur n'est jamais touchée, seule une
+respiration douce (±10 ¢) s'ajoute par-dessus. Nettoyage ajouté dans
+`releaseOsc()` (même fuite déjà corrigée une fois pour le LFO de volume :
+sans arrêt explicite, le LFO continue de tourner indéfiniment après la
+destruction de l'oscillateur qu'il modulait) et dans le teardown de
+`stopFlow()`. OFF par défaut, par paire.
+
+Où regarder (10e passe) : `_openQuickMenu`/`_closeQuickMenu` (z-index),
+`.dcell`/`.dcell-extra`/`.dcell-flux`/`.dcell-purple*` (dock), `flt.type`/
+`setPairFilterMode`/`_setOscFilterMode` (filtre oscillateur), `OSC_WAVES`
+pré-remplissage + `DUALSINE_DETUNE` (onde par défaut), `_dualSign`
+(buildOsc), `PAIR_DUALSINE_LFO`/`_attachPairDualSineLFO`/
+`togglePairDualSineLFO` (LFO Δ).
