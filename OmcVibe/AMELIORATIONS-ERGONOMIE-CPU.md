@@ -1050,3 +1050,30 @@ dédié plutôt que précipité ici.
 Où regarder : `#omc-launcher`/`_launcherGo()` (index.html), `NEW_FILES`
 dans `repack.py`, `chaharmony.html` (nouveau fichier autonome),
 `sphere-flux.html` (placeholder), `branding/icons/` (icône régénérée).
+
+## 16e passe — #66 : entrée manuelle des fréquences (Chaharmony)
+
+Chaharmony n'avait que le curseur 54-864Hz pour régler la fréquence de
+chaque oscillateur, contrairement à OmcVibe qui a déjà une saisie
+manuelle pour la fréquence maître. Ajouté le même principe : tap sur
+la valeur (`.freq-num`) → un champ numérique apparaît, focus + valeur
+pré-sélectionnée, Entrée applique (`setOscFreq`, live + état), Échap
+annule sans rien changer. `openOscFreqEdit`/`handleOscFreqKey`/
+`exitOscFreqEdit`, calqués sur `openFreqEdit`/`handleFreqKey`/
+`exitEditMaster` d'index.html. Testé par script Playwright (ouverture,
+application, annulation, clamp) : tout passe, 0 erreur JS.
+
+## #65 : nom d'app peu sérieux ("OmcVibe432 · 181")
+
+Signalé : "OmchaVibe 181 c'est nul comme numéro sérieux". Cause trouvée
+dans `updateDisplay()` (index.html) : `document.title` était réécrit à
+chaque mise à jour d'affichage avec `'OmcVibe432 · '+masterFreq` — donc
+le titre de la page changeait en permanence selon la fréquence maître
+courante (ex: "OmcVibe432 · 181" après un tirage aléatoire tombé sur
+181Hz). Si ce WebView-shell utilise `document.title` comme libellé
+affiché (switcher Android, notification, etc.), l'app apparaissait avec
+un numéro aléatoire greffé au nom. Corrigé : titre figé, plus jamais
+réécrit dynamiquement. Vérifié par ailleurs que le nom du fichier APK
+livré est bien `OmcVibe432-debug.apk` (pas de "181" dans le nom du
+fichier non plus — l'éventuel ancien fichier "OmcVibe181-…" qui traînait
+dans le dossier de build local n'a jamais été livré).

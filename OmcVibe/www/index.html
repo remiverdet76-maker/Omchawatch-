@@ -6575,7 +6575,7 @@ function updateDisplay() {
   if (mi && document.activeElement!==mi) mi.value = masterFreq;
   const pmi = document.getElementById('dcell-purple-input'); // #40
   if (pmi && document.activeElement!==pmi) pmi.value = masterFreq;
-  document.title = 'OmcVibe432 · '+masterFreq;
+  // #65 : nom d'app figé (plus de suffixe fréquence, illisible en switcher/notif)
   PAIRS.forEach((_,i) => updatePairUI(i));
   updateMasterState();
   patchRandomTable();
