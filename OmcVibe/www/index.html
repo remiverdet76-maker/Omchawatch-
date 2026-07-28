@@ -3824,7 +3824,7 @@ function _perfAutoAdapt(ts) {
   }
 }
 
-/* ---------- 2.8b · QUALITÉ AUDIO ADAPTATIVE (#33 — détecteur + limiteur) ----------
+/* ---------- 2.8b · QUALITÉ AUDIO ADAPTATIVE (#33/#67 — détecteur + limiteur) ----------
    Le détecteur visuel ci-dessus (_perfAutoAdapt) surveille le thread de
    RENDU — sur Android/Chromium le thread AUDIO est séparé et prioritaire,
    un appareil peut donc saturer l'audio sans jamais ralentir visiblement.
@@ -3832,12 +3832,22 @@ function _perfAutoAdapt(ts) {
    AudioContext.outputLatency (grandit quand le moteur peine à tenir le
    temps réel — signal standard du Web Audio API, indépendant du visuel) et
    réagit en coupant progressivement le superflu : d'abord la reverb
+   #67 : outputLatency/baseLatency ne sont pas fiablement implémentés sur
+   beaucoup de WebView Android (souvent bloqués à 0) — dans ce cas le test
+   ci-dessous ne se déclenche JAMAIS, watchdog inerte en silence sur
+   exactement les appareils qui en ont le plus besoin (craquements signalés
+   par un utilisateur alors que rien ne s'est jamais dégradé). Ajout d'un
+   second signal indépendant de cette API : la dérive du setInterval
+   lui-même (3000ms nominal) — si le thread JS principal a été bloqué assez
+   longtemps pour retarder son propre timer de façon significative, c'est
+   un signe fiable et universel de saturation, quelle que soit la cause
+   (rendu, GC, charge CPU générale). Les deux signaux sont combinés en OU.
    (convolveur, le calcul le plus lourd de la chaîne FX), puis les moteurs
    d'onde complexes du tirage aléatoire. Comme "Visuel léger" : ne descend
    qu'en mode Auto, jamais si l'utilisateur a lui-même choisi un réglage
    fixe, et ne remonte jamais tout seul (redémarrer le Flux repart propre). */
 const AUDIO_QUALITY_KEY = 'fbf432-audioQuality';
-let _audioWatchdogTimer = null, _audioStrainCount = 0;
+let _audioWatchdogTimer = null, _audioStrainCount = 0, _wdLastCheckTs = 0; // #67
 function _loadAudioQuality() {
   try { AUDIO_QUALITY_MODE = localStorage.getItem(AUDIO_QUALITY_KEY) || 'auto'; } catch(e) { AUDIO_QUALITY_MODE = 'auto'; }
   AUDIO_QUALITY_TIER = AUDIO_QUALITY_MODE === 'light' ? 'light' : 'full';
@@ -3863,12 +3873,22 @@ function _syncAudioQualityUI() {
 function _armAudioWatchdog() {
   clearInterval(_audioWatchdogTimer); _audioWatchdogTimer = null;
   _audioStrainCount = 0;
+  _wdLastCheckTs = 0; // #67 : évite un faux positif de dérive au premier passage après (ré)armement
   if (AUDIO_QUALITY_MODE !== 'auto' || AUDIO_QUALITY_TIER === 'light') return;
   _audioWatchdogTimer = setInterval(_audioWatchdogCheck, 3000);
 }
 function _audioWatchdogCheck() {
   if (!flowing || AUDIO_QUALITY_MODE !== 'auto') return;
+  const now = (typeof performance !== 'undefined') ? performance.now() : Date.now();
   let strained = false;
+  // #67 : signal 1, dérive du timer lui-même — détecte un thread JS principal
+  // saturé indépendamment de tout support de l'API Latency (souvent absente
+  // ou figée à 0 sur WebView Android, cf. commentaire plus haut).
+  if (_wdLastCheckTs) {
+    if ((now - _wdLastCheckTs) - 3000 > 600) strained = true;
+  }
+  _wdLastCheckTs = now;
+  // Signal 2 : API Web Audio Latency, quand réellement supportée/non nulle.
   try {
     const c = audioCtx();
     if (typeof c.outputLatency === 'number' && typeof c.baseLatency === 'number' && c.baseLatency > 0.001) {
@@ -3877,7 +3897,7 @@ function _audioWatchdogCheck() {
   } catch(e) {}
   if (strained) {
     _audioStrainCount++;
-    if (_audioStrainCount >= 3) _degradeAudioQuality(); // ~9s de tension soutenue avant de réagir
+    if (_audioStrainCount >= 2) _degradeAudioQuality(); // #67 : ~6s de tension soutenue (réduit de 3 à 2 échantillons)
   } else {
     _audioStrainCount = 0;
   }

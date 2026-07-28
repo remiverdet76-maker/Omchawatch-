@@ -1077,3 +1077,51 @@ réécrit dynamiquement. Vérifié par ailleurs que le nom du fichier APK
 livré est bien `OmcVibe432-debug.apk` (pas de "181" dans le nom du
 fichier non plus — l'éventuel ancien fichier "OmcVibe181-…" qui traînait
 dans le dossier de build local n'a jamais été livré).
+
+## #67 : craquements sur oscillateur sinusoïdal — watchdog audio inerte
+
+Signalé : craquements sur une sinusoïdale, même en solo. Un `OscillatorNode`
+natif `type:'sine'` ne peut pas "mal sonner" — c'est un signal mathématique
+pur, sans harmoniques ni distorsion possible côté génération. Un craquement
+sur du sinus est donc quasi toujours un problème de plomberie temps réel
+(le thread audio rate son rendez-vous), pas de qualité d'onde. C'est
+exactement le sujet déjà traité en tête de ce document (Redmi 2021, rendu
+visuel qui se bat avec l'audio pour le CPU).
+
+Le point #33 (plus haut) avait déjà mis en place un filet de sécurité :
+un watchdog qui surveille `AudioContext.outputLatency` et bascule l'app en
+qualité "Légère" (coupe la reverb, l'onde la plus coûteuse du tirage
+aléatoire) après ~9s de tension audio soutenue. Problème trouvé en
+l'auditant : `outputLatency`/`baseLatency` ne sont pas fiablement
+implémentés sur beaucoup de WebView Android (souvent bloqués à 0) — sur un
+appareil où c'est le cas, la condition `baseLatency > 0.001` n'est jamais
+vraie, donc `strained` ne passe jamais à `true`, et le watchdog reste
+inerte en silence, précisément sur les appareils qui en auraient le plus
+besoin. C'est la cause la plus probable des craquements signalés.
+
+Corrigé (`_audioWatchdogCheck`, index.html) : ajout d'un second signal
+totalement indépendant de cette API — la dérive du `setInterval` du
+watchdog lui-même (nominal 3000ms). Si le thread JS principal a été
+bloqué assez longtemps pour retarder son propre timer de façon
+significative (>600ms), c'est un signe fiable et universel de saturation,
+quelle que soit la cause exacte (rendu visuel, garbage collection, charge
+CPU générale) — indépendant du support ou non de l'API Latency. Les deux
+signaux sont combinés en OU. Réaction aussi accélérée : 2 échantillons
+consécutifs de tension déclenchent la dégradation au lieu de 3 (~6s au
+lieu de ~9s).
+
+Testé par script Playwright (simulation d'une dérive de timer + vérif que
+`AUDIO_QUALITY_TIER` bascule bien sur 'light' et que le watchdog s'arrête
+proprement une fois au plancher) : passe, 0 erreur JS.
+
+**Si les craquements persistent malgré ça** (l'auto-adaptation réagit
+après coup, elle ne les empêche pas from-the-start) : le vrai fond du
+problème reste le nombre de nœuds actifs simultanés vs. la puissance du
+téléphone — chaque oscillateur "Double sinus" (le moteur par défaut)
+utilise en réalité 2 `OscillatorNode`, soit jusqu'à 28 oscillateurs réels
+avec les 7 paires + filtres/gains/panners/FX par voix + bus master (EQ 6
+bandes, reverb, 2 delays avec feedback). Pistes si besoin d'aller plus
+loin : passer manuellement en qualité "Légère" (bouton dédié) avant même
+que les craquements apparaissent plutôt que d'attendre l'auto-détection,
+ou couper "Visuel léger" ; réduire le nombre de paires actives (mute) en
+solo prolongé.
