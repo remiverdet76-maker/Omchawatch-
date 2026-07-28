@@ -1397,3 +1397,55 @@ haut/bas. Régénéré : toutes les densités d'icône (mdpi→xxxhdpi, legacy +
 round + adaptive foreground), tous les splashscreens, et le logo web
 (`img/omcvibe432-logo.jpg`, utilisé par l'écran de démarrage `#splash-36`
 dans l'app elle-même).
+
+## #75 : audit 18 points anti-craquement — vague de correctifs
+
+Suite à l'audit approfondi des causes de craquement/déchirement/claquement
+du moteur audio, passe de correctifs sur `OmcVibe/www/index.html` et
+`OmcVibe/www/chaharmony.html` :
+
+- **Module Bowl (bols tibétains) supprimé entièrement** — AudioWorklet
+  orphelin, plus utilisé depuis plusieurs versions, seul point d'entrée
+  jamais appelé nulle part (`window.Bowl`), risquait de créer un second
+  `AudioContext` dupliqué si jamais déclenché.
+- **Module Reverb maître supprimé entièrement** (Sec/Grotte/Cathédrale/
+  Cosmos) — convolveur jusqu'à 14s d'IR, calcul le plus lourd de toute la
+  chaîne FX ; retiré avec tout ce qui en dépendait exclusivement (envoi
+  FX par paire/`PAIR_FX`, bouton FX du menu rapide, presets, FX aléatoire,
+  fondu solo/master, envoi par profondeur 3D). Delay et Ping-Pong globaux
+  restent inchangés. **La reverb propre à chaque échantillon dans
+  l'éditeur de samples n'est PAS concernée** (moteur indépendant, conservé
+  tel quel), pas plus que la reverb par oscillateur de Chaharmony.
+- **Timer/modules "méditation" inutilisés** — le raccourci "Minuteur 20'
+  rapide" n'existait déjà plus dans le registre d'actions du dock (mort
+  depuis un nettoyage précédent) ; les dernières traces (options de menu
+  déroulant dupliquées 15 fois dans un bloc HTML statique jamais affiché,
+  remplacé au chargement) ont été retirées.
+- **Chaîne de sécurité audio portée à Chaharmony** — ce module n'avait
+  strictement aucune protection anti-clip (`master.connect(destination)`
+  direct, jusqu'à 7 oscillateurs pouvant s'additionner). Ajout du même
+  étage qu'OmcVibe : compresseur "glue" doux → limiteur brickwall → soft-
+  clip tanh sans latence, plus un watchdog qualité audio (dérive de timer)
+  qui coupe reverb/delay de tous les oscillateurs en cas de tension
+  soutenue. Au passage, le convolveur/tank delay de chaque oscillateur
+  n'est plus connecté en continu quel que soit son wet (même correctif
+  que le #33 d'OmcVibe) — 7 convolveurs qui tournaient pour rien à 0%.
+- **Watchdog qualité audio (OmcVibe)** retargeté : dégradait la reverb
+  (maintenant supprimée) → dégrade désormais le Ping-Pong (nouveau poste
+  le plus lourd de la chaîne FX restante).
+- **Résonance de filtre plafonnée à 18 (était 30)** — un Q aussi extrême
+  frôle l'auto-oscillation du filtre (pic de gain énorme à la coupure),
+  contributeur plausible aux dépassements que le limiteur devait rattraper
+  en urgence. Le pad tactile ne dépassait déjà jamais 6 en usage normal ;
+  ce plafond est une protection défensive (presets, valeurs importées…).
+  18 reste une résonance très marquée à l'oreille.
+- **Bascule Overdrive Halogène par paire** (`togglePairBD2`) reconstruisait
+  les **14 oscillateurs** (`rebuildAllOscs`) pour un changement qui ne
+  concerne qu'**une seule paire** (2 oscillateurs) — les 6 autres paires en
+  train de jouer normalement retombaient et rejouaient pour rien à chaque
+  bascule. Nouvelle fonction `_rebuildPair(i)` : ne touche plus que la
+  paire concernée, les autres continuent sans interruption.
+
+Vérifié par une suite de tests Playwright (suppression Bowl/Reverb/Timer,
+chaîne de sécurité Chaharmony, gating reverb/delay, non-régression du
+rebuild ciblé par paire, plafond de résonance) : 0 erreur JS sur l'ensemble.

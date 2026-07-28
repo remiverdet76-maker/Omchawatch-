@@ -409,10 +409,6 @@ body{
 .mm-cell-left:hover{ transform:translateY(-50%) scale(1.08); }
 .mm-cell-left:active{ transform:translateY(-50%) scale(.94); }
 .mm-cell-left.soloed{ border-color:#63E6FF !important;background:rgba(99,230,255,.18);box-shadow:0 0 18px rgba(99,230,255,.5); }
-.mm-cell-right{ left:auto;right:18%;top:50%;transform:translateY(-50%); }
-.mm-cell-right:hover{ transform:translateY(-50%) scale(1.08); }
-.mm-cell-right:active{ transform:translateY(-50%) scale(.94); }
-.mm-cell-right.fx-off{ opacity:.4; }
 
 
 </style>
@@ -1163,18 +1159,6 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
   box-shadow:0 0 8px rgba(200,100,255,.6);
 }
 
-/* Réverbe spatiale */
-.fx-space-btns{display:flex;gap:.35rem;flex-wrap:wrap;}
-.fx-space-btn{
-  flex:1;padding:.38rem .3rem;border-radius:8px;
-  background:rgba(255,255,255,.04);border:1px solid rgba(200,160,255,.25);
-  font-family:'IM Fell English',serif;font-size:.78rem;font-style:italic;
-  color:rgba(230,200,255,.75);cursor:pointer;transition:.18s;
-  letter-spacing:.04em;text-align:center;
-}
-.fx-space-btn:hover{background:rgba(200,100,255,.18);border-color:#C0AAFF;color:#F3D9FF;}
-.fx-space-btn.active{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#FFD700;}
-
 /* Presets sessions */
 .fx-presets-list{display:flex;flex-direction:column;gap:.35rem;}
 .fx-preset-row{
@@ -1865,91 +1849,91 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <div class="cust-slot" data-html-import-id="html-import-67">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-68" data-template-id="span-60" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Tap</span>
         <select class="cust-select canva-input" onchange="setDockMapping('red','tap',this.value)" data-html-import-id="html-import-69" data-template-id="select-61" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-70" data-template-id="option-62" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" selected="" data-html-import-id="html-import-71" data-template-id="option-63" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-72" data-template-id="option-64" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-73" data-template-id="option-65" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-74" data-template-id="option-66" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-75" data-template-id="option-67" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-76" data-template-id="option-68" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-77" data-template-id="option-69" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-78" data-template-id="option-70" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-79" data-template-id="option-71" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-80" data-template-id="option-72" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-81" data-template-id="option-73" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-82" data-template-id="option-74" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-83" data-template-id="option-75" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-84" data-template-id="option-76" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-85" data-template-id="option-77" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-86" data-template-id="option-78" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-87" data-template-id="option-79" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-88" data-template-id="option-80" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-70" data-template-id="option-62" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" selected="" data-html-import-id="html-import-71" data-template-id="option-63" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-72" data-template-id="option-64" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-73" data-template-id="option-65" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-74" data-template-id="option-66" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-75" data-template-id="option-67" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-76" data-template-id="option-68" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-77" data-template-id="option-69" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-78" data-template-id="option-70" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-80" data-template-id="option-72" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-81" data-template-id="option-73" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-82" data-template-id="option-74" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-83" data-template-id="option-75" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-84" data-template-id="option-76" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-85" data-template-id="option-77" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-86" data-template-id="option-78" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-87" data-template-id="option-79" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-88" data-template-id="option-80" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-89">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-90" data-template-id="span-81" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Appui long</span>
         <select class="cust-select canva-input" onchange="setDockMapping('red','hold',this.value)" data-html-import-id="html-import-91" data-template-id="select-82" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-92" data-template-id="option-83" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-93" data-template-id="option-84" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" selected="" data-html-import-id="html-import-94" data-template-id="option-85" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-95" data-template-id="option-86" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-96" data-template-id="option-87" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-97" data-template-id="option-88" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-98" data-template-id="option-89" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-99" data-template-id="option-90" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-100" data-template-id="option-91" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-101" data-template-id="option-92" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-102" data-template-id="option-93" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-103" data-template-id="option-94" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-104" data-template-id="option-95" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-105" data-template-id="option-96" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-106" data-template-id="option-97" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-107" data-template-id="option-98" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-108" data-template-id="option-99" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-109" data-template-id="option-100" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-110" data-template-id="option-101" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-92" data-template-id="option-83" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-93" data-template-id="option-84" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" selected="" data-html-import-id="html-import-94" data-template-id="option-85" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-95" data-template-id="option-86" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-96" data-template-id="option-87" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-97" data-template-id="option-88" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-98" data-template-id="option-89" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-99" data-template-id="option-90" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-100" data-template-id="option-91" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-102" data-template-id="option-93" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-103" data-template-id="option-94" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-104" data-template-id="option-95" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-105" data-template-id="option-96" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-106" data-template-id="option-97" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-107" data-template-id="option-98" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-108" data-template-id="option-99" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-109" data-template-id="option-100" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-110" data-template-id="option-101" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-111">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-112" data-template-id="span-102" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Bouton extra</span>
         <select class="cust-select canva-input" onchange="setDockMapping('red','extra',this.value)" data-html-import-id="html-import-113" data-template-id="select-103" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-114" data-template-id="option-104" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-115" data-template-id="option-105" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-116" data-template-id="option-106" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" selected="" data-html-import-id="html-import-117" data-template-id="option-107" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-118" data-template-id="option-108" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-119" data-template-id="option-109" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-120" data-template-id="option-110" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-121" data-template-id="option-111" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-122" data-template-id="option-112" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-123" data-template-id="option-113" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-124" data-template-id="option-114" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-125" data-template-id="option-115" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-126" data-template-id="option-116" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-127" data-template-id="option-117" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-128" data-template-id="option-118" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-129" data-template-id="option-119" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-130" data-template-id="option-120" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-131" data-template-id="option-121" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-132" data-template-id="option-122" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-114" data-template-id="option-104" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-115" data-template-id="option-105" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-116" data-template-id="option-106" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" selected="" data-html-import-id="html-import-117" data-template-id="option-107" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-118" data-template-id="option-108" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-119" data-template-id="option-109" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-120" data-template-id="option-110" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-121" data-template-id="option-111" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-122" data-template-id="option-112" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-124" data-template-id="option-114" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-125" data-template-id="option-115" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-126" data-template-id="option-116" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-127" data-template-id="option-117" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-128" data-template-id="option-118" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-129" data-template-id="option-119" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-130" data-template-id="option-120" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-131" data-template-id="option-121" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-132" data-template-id="option-122" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div></div><div class="cust-cell-block canva-container" data-html-import-id="html-import-133" data-template-id="div-123" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-134" data-template-id="div-124" style="color: rgb(255, 208, 96); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Orange</div>
       <div class="cust-slot" data-html-import-id="html-import-135">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-136" data-template-id="span-125" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Tap</span>
         <select class="cust-select canva-input" onchange="setDockMapping('orange','tap',this.value)" data-html-import-id="html-import-137" data-template-id="select-126" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-138" data-template-id="option-127" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-139" data-template-id="option-128" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-140" data-template-id="option-129" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-141" data-template-id="option-130" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-142" data-template-id="option-131" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" selected="" data-html-import-id="html-import-143" data-template-id="option-132" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-144" data-template-id="option-133" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-145" data-template-id="option-134" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-146" data-template-id="option-135" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-147" data-template-id="option-136" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-148" data-template-id="option-137" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-149" data-template-id="option-138" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-150" data-template-id="option-139" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-151" data-template-id="option-140" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-152" data-template-id="option-141" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-153" data-template-id="option-142" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-154" data-template-id="option-143" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-155" data-template-id="option-144" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-156" data-template-id="option-145" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-138" data-template-id="option-127" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-139" data-template-id="option-128" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-140" data-template-id="option-129" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-141" data-template-id="option-130" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-142" data-template-id="option-131" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" selected="" data-html-import-id="html-import-143" data-template-id="option-132" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-144" data-template-id="option-133" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-145" data-template-id="option-134" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-146" data-template-id="option-135" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-148" data-template-id="option-137" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-149" data-template-id="option-138" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-150" data-template-id="option-139" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-151" data-template-id="option-140" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-152" data-template-id="option-141" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-153" data-template-id="option-142" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-154" data-template-id="option-143" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-155" data-template-id="option-144" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-156" data-template-id="option-145" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-157">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-158" data-template-id="span-146" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Appui long</span>
         <select class="cust-select canva-input" onchange="setDockMapping('orange','hold',this.value)" data-html-import-id="html-import-159" data-template-id="select-147" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-160" data-template-id="option-148" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-161" data-template-id="option-149" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-162" data-template-id="option-150" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-163" data-template-id="option-151" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-164" data-template-id="option-152" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-165" data-template-id="option-153" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" selected="" data-html-import-id="html-import-166" data-template-id="option-154" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-167" data-template-id="option-155" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-168" data-template-id="option-156" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-169" data-template-id="option-157" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-170" data-template-id="option-158" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-171" data-template-id="option-159" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-172" data-template-id="option-160" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-173" data-template-id="option-161" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-174" data-template-id="option-162" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-175" data-template-id="option-163" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-176" data-template-id="option-164" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-177" data-template-id="option-165" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-178" data-template-id="option-166" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-160" data-template-id="option-148" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-161" data-template-id="option-149" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-162" data-template-id="option-150" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-163" data-template-id="option-151" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-164" data-template-id="option-152" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-165" data-template-id="option-153" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" selected="" data-html-import-id="html-import-166" data-template-id="option-154" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-167" data-template-id="option-155" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-168" data-template-id="option-156" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-170" data-template-id="option-158" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-171" data-template-id="option-159" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-172" data-template-id="option-160" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-173" data-template-id="option-161" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-174" data-template-id="option-162" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-175" data-template-id="option-163" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-176" data-template-id="option-164" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-177" data-template-id="option-165" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-178" data-template-id="option-166" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-179">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-180" data-template-id="span-167" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Bouton extra</span>
         <select class="cust-select canva-input" onchange="setDockMapping('orange','extra',this.value)" data-html-import-id="html-import-181" data-template-id="select-168" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-182" data-template-id="option-169" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-183" data-template-id="option-170" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-184" data-template-id="option-171" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-185" data-template-id="option-172" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-186" data-template-id="option-173" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-187" data-template-id="option-174" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-188" data-template-id="option-175" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" selected="" data-html-import-id="html-import-189" data-template-id="option-176" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-190" data-template-id="option-177" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-191" data-template-id="option-178" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-192" data-template-id="option-179" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-193" data-template-id="option-180" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-194" data-template-id="option-181" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-195" data-template-id="option-182" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-196" data-template-id="option-183" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-197" data-template-id="option-184" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-198" data-template-id="option-185" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-199" data-template-id="option-186" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-200" data-template-id="option-187" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-182" data-template-id="option-169" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-183" data-template-id="option-170" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-184" data-template-id="option-171" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-185" data-template-id="option-172" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-186" data-template-id="option-173" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-187" data-template-id="option-174" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-188" data-template-id="option-175" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" selected="" data-html-import-id="html-import-189" data-template-id="option-176" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-190" data-template-id="option-177" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-192" data-template-id="option-179" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-193" data-template-id="option-180" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-194" data-template-id="option-181" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-195" data-template-id="option-182" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-196" data-template-id="option-183" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-197" data-template-id="option-184" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-198" data-template-id="option-185" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-199" data-template-id="option-186" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-200" data-template-id="option-187" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div></div><div class="cust-cell-block canva-container" data-html-import-id="html-import-201" data-template-id="div-188" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-202" data-template-id="div-189" style="color: rgb(255, 208, 96); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Jaune (Flux)</div>
       <div class="cust-slot" data-html-import-id="html-import-203">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-204" data-template-id="span-190" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Tap</span>
         <select class="cust-select canva-input" onchange="setDockMapping('flux','tap',this.value)" data-html-import-id="html-import-205" data-template-id="select-191" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-206" data-template-id="option-192" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-207" data-template-id="option-193" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-208" data-template-id="option-194" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-209" data-template-id="option-195" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-210" data-template-id="option-196" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-211" data-template-id="option-197" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-212" data-template-id="option-198" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-213" data-template-id="option-199" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" selected="" data-html-import-id="html-import-214" data-template-id="option-200" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-215" data-template-id="option-201" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-216" data-template-id="option-202" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-217" data-template-id="option-203" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-218" data-template-id="option-204" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-219" data-template-id="option-205" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-220" data-template-id="option-206" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-221" data-template-id="option-207" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-222" data-template-id="option-208" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-223" data-template-id="option-209" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-224" data-template-id="option-210" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-206" data-template-id="option-192" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-207" data-template-id="option-193" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-208" data-template-id="option-194" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-209" data-template-id="option-195" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-210" data-template-id="option-196" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-211" data-template-id="option-197" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-212" data-template-id="option-198" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-213" data-template-id="option-199" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" selected="" data-html-import-id="html-import-214" data-template-id="option-200" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-216" data-template-id="option-202" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-217" data-template-id="option-203" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-218" data-template-id="option-204" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-219" data-template-id="option-205" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-220" data-template-id="option-206" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-221" data-template-id="option-207" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-222" data-template-id="option-208" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-223" data-template-id="option-209" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-224" data-template-id="option-210" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-225">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-226" data-template-id="span-211" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Appui long</span>
         <select class="cust-select canva-input" onchange="setDockMapping('flux','hold',this.value)" data-html-import-id="html-import-227" data-template-id="select-212" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-228" data-template-id="option-213" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-229" data-template-id="option-214" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-230" data-template-id="option-215" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-231" data-template-id="option-216" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-232" data-template-id="option-217" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-233" data-template-id="option-218" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-234" data-template-id="option-219" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-235" data-template-id="option-220" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-236" data-template-id="option-221" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" selected="" data-html-import-id="html-import-237" data-template-id="option-222" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-238" data-template-id="option-223" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-239" data-template-id="option-224" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-240" data-template-id="option-225" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-241" data-template-id="option-226" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-242" data-template-id="option-227" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-243" data-template-id="option-228" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-244" data-template-id="option-229" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-245" data-template-id="option-230" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-246" data-template-id="option-231" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-228" data-template-id="option-213" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-229" data-template-id="option-214" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-230" data-template-id="option-215" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-231" data-template-id="option-216" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-232" data-template-id="option-217" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-233" data-template-id="option-218" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-234" data-template-id="option-219" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-235" data-template-id="option-220" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-236" data-template-id="option-221" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-238" data-template-id="option-223" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-239" data-template-id="option-224" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-240" data-template-id="option-225" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-241" data-template-id="option-226" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-242" data-template-id="option-227" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-243" data-template-id="option-228" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-244" data-template-id="option-229" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-245" data-template-id="option-230" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-246" data-template-id="option-231" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-247">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-248" data-template-id="span-232" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Bouton extra</span>
         <select class="cust-select canva-input" onchange="setDockMapping('flux','extra',this.value)" data-html-import-id="html-import-249" data-template-id="select-233" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-250" data-template-id="option-234" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-251" data-template-id="option-235" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-252" data-template-id="option-236" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-253" data-template-id="option-237" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-254" data-template-id="option-238" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-255" data-template-id="option-239" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-256" data-template-id="option-240" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-257" data-template-id="option-241" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-258" data-template-id="option-242" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-259" data-template-id="option-243" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" selected="" data-html-import-id="html-import-260" data-template-id="option-244" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-261" data-template-id="option-245" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-262" data-template-id="option-246" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-263" data-template-id="option-247" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-264" data-template-id="option-248" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-265" data-template-id="option-249" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-266" data-template-id="option-250" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-267" data-template-id="option-251" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-268" data-template-id="option-252" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-250" data-template-id="option-234" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-251" data-template-id="option-235" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-252" data-template-id="option-236" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-253" data-template-id="option-237" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-254" data-template-id="option-238" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-255" data-template-id="option-239" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-256" data-template-id="option-240" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-257" data-template-id="option-241" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-258" data-template-id="option-242" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" selected="" data-html-import-id="html-import-260" data-template-id="option-244" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-261" data-template-id="option-245" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-262" data-template-id="option-246" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-263" data-template-id="option-247" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-264" data-template-id="option-248" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-265" data-template-id="option-249" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-266" data-template-id="option-250" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-267" data-template-id="option-251" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-268" data-template-id="option-252" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div></div><div class="cust-cell-block canva-container" data-html-import-id="html-import-269" data-template-id="div-253" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-270" data-template-id="div-254" style="color: rgb(255, 208, 96); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Vert</div>
       <div class="cust-slot" data-html-import-id="html-import-271">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-272" data-template-id="span-255" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Tap</span>
         <select class="cust-select canva-input" onchange="setDockMapping('green','tap',this.value)" data-html-import-id="html-import-273" data-template-id="select-256" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-274" data-template-id="option-257" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-275" data-template-id="option-258" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-276" data-template-id="option-259" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-277" data-template-id="option-260" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-278" data-template-id="option-261" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-279" data-template-id="option-262" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-280" data-template-id="option-263" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-281" data-template-id="option-264" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-282" data-template-id="option-265" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-283" data-template-id="option-266" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-284" data-template-id="option-267" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" selected="" data-html-import-id="html-import-285" data-template-id="option-268" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-286" data-template-id="option-269" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-287" data-template-id="option-270" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-288" data-template-id="option-271" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-289" data-template-id="option-272" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-290" data-template-id="option-273" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-291" data-template-id="option-274" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-292" data-template-id="option-275" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-274" data-template-id="option-257" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-275" data-template-id="option-258" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-276" data-template-id="option-259" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-277" data-template-id="option-260" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-278" data-template-id="option-261" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-279" data-template-id="option-262" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-280" data-template-id="option-263" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-281" data-template-id="option-264" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-282" data-template-id="option-265" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-284" data-template-id="option-267" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" selected="" data-html-import-id="html-import-285" data-template-id="option-268" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-286" data-template-id="option-269" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-287" data-template-id="option-270" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-288" data-template-id="option-271" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-289" data-template-id="option-272" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-290" data-template-id="option-273" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-291" data-template-id="option-274" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-292" data-template-id="option-275" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-293">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-294" data-template-id="span-276" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Appui long</span>
         <select class="cust-select canva-input" onchange="setDockMapping('green','hold',this.value)" data-html-import-id="html-import-295" data-template-id="select-277" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-296" data-template-id="option-278" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-297" data-template-id="option-279" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-298" data-template-id="option-280" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-299" data-template-id="option-281" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-300" data-template-id="option-282" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-301" data-template-id="option-283" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-302" data-template-id="option-284" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-303" data-template-id="option-285" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-304" data-template-id="option-286" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-305" data-template-id="option-287" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-306" data-template-id="option-288" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-307" data-template-id="option-289" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" selected="" data-html-import-id="html-import-308" data-template-id="option-290" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-309" data-template-id="option-291" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-310" data-template-id="option-292" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-311" data-template-id="option-293" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-312" data-template-id="option-294" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-313" data-template-id="option-295" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-314" data-template-id="option-296" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-296" data-template-id="option-278" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-297" data-template-id="option-279" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-298" data-template-id="option-280" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-299" data-template-id="option-281" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-300" data-template-id="option-282" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-301" data-template-id="option-283" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-302" data-template-id="option-284" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-303" data-template-id="option-285" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-304" data-template-id="option-286" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-306" data-template-id="option-288" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-307" data-template-id="option-289" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" selected="" data-html-import-id="html-import-308" data-template-id="option-290" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-309" data-template-id="option-291" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-310" data-template-id="option-292" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-311" data-template-id="option-293" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-312" data-template-id="option-294" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-313" data-template-id="option-295" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-314" data-template-id="option-296" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-315">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-316" data-template-id="span-297" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Bouton extra</span>
         <select class="cust-select canva-input" onchange="setDockMapping('green','extra',this.value)" data-html-import-id="html-import-317" data-template-id="select-298" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-318" data-template-id="option-299" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-319" data-template-id="option-300" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-320" data-template-id="option-301" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-321" data-template-id="option-302" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-322" data-template-id="option-303" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-323" data-template-id="option-304" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-324" data-template-id="option-305" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-325" data-template-id="option-306" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-326" data-template-id="option-307" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-327" data-template-id="option-308" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-328" data-template-id="option-309" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-329" data-template-id="option-310" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-330" data-template-id="option-311" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" selected="" data-html-import-id="html-import-331" data-template-id="option-312" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-332" data-template-id="option-313" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-333" data-template-id="option-314" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-334" data-template-id="option-315" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-335" data-template-id="option-316" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-336" data-template-id="option-317" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-318" data-template-id="option-299" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-319" data-template-id="option-300" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-320" data-template-id="option-301" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-321" data-template-id="option-302" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-322" data-template-id="option-303" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-323" data-template-id="option-304" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-324" data-template-id="option-305" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-325" data-template-id="option-306" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-326" data-template-id="option-307" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-328" data-template-id="option-309" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-329" data-template-id="option-310" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-330" data-template-id="option-311" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" selected="" data-html-import-id="html-import-331" data-template-id="option-312" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-332" data-template-id="option-313" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-333" data-template-id="option-314" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-334" data-template-id="option-315" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-335" data-template-id="option-316" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-336" data-template-id="option-317" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div></div><div class="cust-cell-block canva-container" data-html-import-id="html-import-337" data-template-id="div-318" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-338" data-template-id="div-319" style="color: rgb(255, 208, 96); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Bleu</div>
       <div class="cust-slot" data-html-import-id="html-import-339">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-340" data-template-id="span-320" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Tap</span>
         <select class="cust-select canva-input" onchange="setDockMapping('blue','tap',this.value)" data-html-import-id="html-import-341" data-template-id="select-321" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-342" data-template-id="option-322" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-343" data-template-id="option-323" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-344" data-template-id="option-324" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-345" data-template-id="option-325" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-346" data-template-id="option-326" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-347" data-template-id="option-327" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-348" data-template-id="option-328" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-349" data-template-id="option-329" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-350" data-template-id="option-330" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-351" data-template-id="option-331" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-352" data-template-id="option-332" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-353" data-template-id="option-333" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-354" data-template-id="option-334" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-355" data-template-id="option-335" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-356" data-template-id="option-336" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" selected="" data-html-import-id="html-import-357" data-template-id="option-337" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-358" data-template-id="option-338" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-359" data-template-id="option-339" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-360" data-template-id="option-340" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-342" data-template-id="option-322" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-343" data-template-id="option-323" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-344" data-template-id="option-324" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-345" data-template-id="option-325" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-346" data-template-id="option-326" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-347" data-template-id="option-327" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-348" data-template-id="option-328" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-349" data-template-id="option-329" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-350" data-template-id="option-330" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-352" data-template-id="option-332" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-353" data-template-id="option-333" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-354" data-template-id="option-334" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-355" data-template-id="option-335" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-356" data-template-id="option-336" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" selected="" data-html-import-id="html-import-357" data-template-id="option-337" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-358" data-template-id="option-338" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-359" data-template-id="option-339" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-360" data-template-id="option-340" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-361">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-362" data-template-id="span-341" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Appui long</span>
         <select class="cust-select canva-input" onchange="setDockMapping('blue','hold',this.value)" data-html-import-id="html-import-363" data-template-id="select-342" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-364" data-template-id="option-343" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-365" data-template-id="option-344" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-366" data-template-id="option-345" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-367" data-template-id="option-346" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-368" data-template-id="option-347" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-369" data-template-id="option-348" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-370" data-template-id="option-349" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-371" data-template-id="option-350" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-372" data-template-id="option-351" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-373" data-template-id="option-352" style="color: rgb(243, 217, 255);">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-374" data-template-id="option-353" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-375" data-template-id="option-354" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-376" data-template-id="option-355" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-377" data-template-id="option-356" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-378" data-template-id="option-357" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-379" data-template-id="option-358" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-380" data-template-id="option-359" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" selected="" data-html-import-id="html-import-381" data-template-id="option-360" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-382" data-template-id="option-361" style="color: rgb(243, 217, 255);">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-364" data-template-id="option-343" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-365" data-template-id="option-344" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-366" data-template-id="option-345" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-367" data-template-id="option-346" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-368" data-template-id="option-347" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-369" data-template-id="option-348" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-370" data-template-id="option-349" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-371" data-template-id="option-350" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-372" data-template-id="option-351" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-374" data-template-id="option-353" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-375" data-template-id="option-354" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-376" data-template-id="option-355" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-377" data-template-id="option-356" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-378" data-template-id="option-357" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-379" data-template-id="option-358" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-380" data-template-id="option-359" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" selected="" data-html-import-id="html-import-381" data-template-id="option-360" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-382" data-template-id="option-361" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-383">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-384" data-template-id="span-362" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Bouton extra</span>
         <select class="cust-select canva-input" onchange="setDockMapping('blue','extra',this.value)" data-html-import-id="html-import-385" data-template-id="select-363" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
-          <option value="none" data-html-import-id="html-import-386" data-template-id="option-364" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-387" data-template-id="option-365" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-388" data-template-id="option-366" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-389" data-template-id="option-367" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-390" data-template-id="option-368" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-391" data-template-id="option-369" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-392" data-template-id="option-370" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-393" data-template-id="option-371" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-394" data-template-id="option-372" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="quickTimer20" data-html-import-id="html-import-395" data-template-id="option-373">Minuteur 20' rapide</option><option value="recToggle" data-html-import-id="html-import-396" data-template-id="option-374">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-397" data-template-id="option-375">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-398" data-template-id="option-376">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-399" data-template-id="option-377">Random FX</option><option value="openGeo" data-html-import-id="html-import-400" data-template-id="option-378">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-401" data-template-id="option-379">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-402" data-template-id="option-380">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-403" data-template-id="option-381">Réinitialiser tout</option><option value="toggleFullscreen" selected="" data-html-import-id="html-import-404" data-template-id="option-382">Plein écran</option>
+          <option value="none" data-html-import-id="html-import-386" data-template-id="option-364" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-387" data-template-id="option-365" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-388" data-template-id="option-366" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-389" data-template-id="option-367" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-390" data-template-id="option-368" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-391" data-template-id="option-369" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-392" data-template-id="option-370" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-393" data-template-id="option-371" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-394" data-template-id="option-372" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-396" data-template-id="option-374">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-397" data-template-id="option-375">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-398" data-template-id="option-376">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-399" data-template-id="option-377">Random FX</option><option value="openGeo" data-html-import-id="html-import-400" data-template-id="option-378">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-401" data-template-id="option-379">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-402" data-template-id="option-380">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-403" data-template-id="option-381">Réinitialiser tout</option><option value="toggleFullscreen" selected="" data-html-import-id="html-import-404" data-template-id="option-382">Plein écran</option>
         </select>
       </div></div>
     <button class="btn-reset-wide canva-button" onclick="resetDockMap()" data-html-import-id="html-import-405" data-template-id="button-383">↺ Raccourcis par défaut</button>
@@ -2070,7 +2054,7 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
     <div class="sw-row canva-container" style="font-size:.7rem;padding:.1rem 0 .35rem;" data-html-import-id="html-import-505" data-template-id="div-485"><canva-inline-text data-template-id="canva-inline-text-486" class="canva-text">Timbre aléatoire </canva-inline-text><input type="checkbox" class="sw canva-input" id="ck-rand-timbre" checked="" onchange="setRandTimbre(this.checked)" data-html-import-id="html-import-506" data-template-id="input-487"></div>
     <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;" data-html-import-id="html-import-507" data-template-id="div-488" class="canva-container">La paire vedette change de forme d'onde à chaque tirage. Décoche pour garder le timbre actuel.</div>
     <div class="sw-row canva-container" style="font-size:.7rem;padding:.1rem 0 .35rem;" data-html-import-id="html-import-508" data-template-id="div-489"><canva-inline-text data-template-id="canva-inline-text-490" class="canva-text">Profondeur 3D </canva-inline-text><input type="checkbox" class="sw canva-input" id="ck-rand-depth" checked="" onchange="setRandDepth(this.checked)" data-html-import-id="html-import-509" data-template-id="input-491"></div>
-    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;" data-html-import-id="html-import-510" data-template-id="div-492" class="canva-container">Certaines paires reculent (plus mates, plus de reverbe) pour une sensation d'espace. Décoche pour un mix uniforme.</div>
+    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;" data-html-import-id="html-import-510" data-template-id="div-492" class="canva-container">Certaines paires reculent (plus mates, moins présentes) pour une sensation d'espace. Décoche pour un mix uniforme.</div>
     <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Respiration par paire (aléatoire) </span><input type="checkbox" class="sw" id="ck-rand-breath" checked onchange="setRandBreath(this.checked)"></div>
     <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;">Chaque paire respire (volume) à son propre rythme, déphasée des autres — souffle vivant, jamais un pompage synchrone. Décoche pour un volume stable.</div>
     <div class="sl-row">
@@ -2562,7 +2546,7 @@ function freqHue(f) {
 function freqColor(f, l)  { return `hsl(${freqHue(f)},72%,${l != null ? l : 60}%)`; }
 function freqColorA(f, l, a) { return `hsla(${freqHue(f)},72%,${l != null ? l : 60}%,${a})`; }
 
-// AudioContext natif — exposé via window.AC (partagé par 08-bowl-engine)
+// AudioContext natif — exposé via window.AC
 let AC = null;
 
 </script>
@@ -2591,9 +2575,8 @@ let nodes = {}, masterGain = null, analyser = null;
 let limiter = null, safetyClip = null;
 let eqBands = []; // #43 : 6 filtres à fréquence fixe (remplace eqLow/eqMid/eqHigh, cf. EQ_BANDS)
 let masterDelay = null, masterDelayFb = null;
-let masterReverb = null, reverbWetGain = null, reverbDryGain = null;
 let pingPongDelay = null, ppL = null, ppR = null, ppFb = null, ppWet = null;
-let ppSendBus = null, reverbSendBus = null, delayInBus = null;
+let ppSendBus = null, delayInBus = null;
 // #33 (perf) : "Qualité audio" — détecteur de charge + limiteur de
 // complexité (cf. _armAudioWatchdog / _applyAudioQualityTier, §2.5b).
 // AUDIO_QUALITY_MODE = choix utilisateur ('auto'|'full'|'light') persisté.
@@ -2602,9 +2585,6 @@ let ppSendBus = null, reverbSendBus = null, delayInBus = null;
 // jamais automatiquement (même logique que le mode Visuel léger existant).
 let AUDIO_QUALITY_MODE = 'auto';
 let AUDIO_QUALITY_TIER = 'full';
-// FX par paire : envoi unique (fxSend) vers les 3 tanks. OFF = 100% sec.
-const PAIR_FX = {};           // id oscillateur → bool (défaut true)
-const FX_SEND_LEVEL = 0.3;    // niveau d'envoi quand FX ON
 let busTrim = null, masterGlue = null, masterFader = null;
 let preMaster = null, fxSendG = null;   // FX globaux fin de chaîne + fader d'intensité
 let _fxInput = null;
@@ -2886,7 +2866,10 @@ function togglePairBD2(i) {
   if (btn) { btn.classList.toggle('on', cur.on); btn.textContent = cur.on ? '● ON' : '○ OFF'; }
   const row = document.getElementById('bd2-sliders-' + i);
   if (row) row.style.display = cur.on ? '' : 'none';
-  if (flowing) rebuildAllOscs(); // insère/retire l'étage BD-2 proprement (même schéma que Grain)
+  // #75 : seule CETTE paire a besoin d'être reconstruite (étage BD-2 par
+  // paire) — rebuildAllOscs() ici aurait fait retomber/rejouer les 6 autres
+  // paires en train de jouer normalement pour rien (risque de craquement).
+  if (flowing) _rebuildPair(i);
   saveState();
 }
 function setPairBD2(i, drive, tone, level) {
@@ -3010,7 +2993,12 @@ function buildOsc(id, freq, vol, pan) {
   // (fs.mode absent → 'lowpass', comportement identique à avant).
   const flt = c.createBiquadFilter(); flt.type = FILTER_TYPES[fs.mode] || 'lowpass';
   flt.frequency.value = Math.max(20, Math.min(20000, fs.cutoff));
-  flt.Q.value = Math.max(0, Math.min(30, fs.res));
+  // #75 (audit anti-craquement, pt.6) : Q plafonné à 18 (était 30) — une
+  // résonance aussi extrême frôle l'auto-oscillation du filtre (gain de
+  // pic énorme à la fréquence de coupure), un contributeur plausible aux
+  // craquements/dépassements que le limiteur/safetyClip doivent ensuite
+  // rattraper en urgence. 18 reste une résonance très marquée à l'oreille.
+  flt.Q.value = Math.max(0, Math.min(18, fs.res));
   const g      = c.createGain(); g.gain.value = 0;
   const hiTrim = c.createGain(); hiTrim.gain.value = 1;
 
@@ -3052,15 +3040,7 @@ function buildOsc(id, freq, vol, pan) {
     hiTrim.connect(masterGain);
   }
 
-  // Envoi reverbe PAR PAIRE — profondeur 3D : une paire "lointaine" envoie
-  // plus dans la reverbe (et moins de dry), une paire "proche" reste sèche.
-  // Le retour reste géré par le curseur Reverbe du panneau FX (aucune boucle,
-  // aucun nœud supplémentaire créé/détruit — juste un gain modulé en douceur).
-  const fxSend = c.createGain(); fxSend.gain.value = 0;
-  hiTrim.connect(fxSend);
-  if (typeof reverbSendBus !== 'undefined' && reverbSendBus) { try { fxSend.connect(reverbSendBus); } catch(e) {} }
-
-  const node = { _id: id, o: subs[0].osc, subs, signalIn, shaper, g, p, hpf, flt, hiTrim, fxSend, bd2Shaper, bd2Tone, bd2Gain };
+  const node = { _id: id, o: subs[0].osc, subs, signalIn, shaper, g, p, hpf, flt, hiTrim, bd2Shaper, bd2Tone, bd2Gain };
   applyHiBand(node, f0);
   if (OSC_PATCH[id]) setTimeout(() => _reapplyOscPatch(id), 20);
   if (!mutedOscs[id] && vol > 0) {
@@ -3131,7 +3111,6 @@ function releaseOsc(node) {
       if (node.hpf)     node.hpf.disconnect();
       if (node.flt)     node.flt.disconnect();
       if (node.hiTrim)  node.hiTrim.disconnect();
-      if (node.fxSend)  node.fxSend.disconnect();
     } catch(e){}
   }, (FADE + 0.4) * 1000);
 }
@@ -3238,11 +3217,11 @@ function initFXChain() {
   });
   for (let bi = 0; bi < eqBands.length - 1; bi++) eqBands[bi].connect(eqBands[bi + 1]);
 
-  // ═══ FX GLOBAUX façon DB4 : tanks partagés, alimentés UNIQUEMENT par les
-  //     envois de paires (fxSend). Une paire FX-off n'envoie rien → 100% sèche.
-  //     Le maître (panneau FX) règle les RETOURS (wet) et les paramètres. ═══
+  // ═══ FX GLOBAUX façon DB4 : tanks partagés, alimentés par fxSendG (fader
+  //     d'intensité, fin de chaîne). Le maître (panneau FX) règle les
+  //     RETOURS (wet) et les paramètres. ═══
 
-  // Delay — entrée = ppSendBus/reverbSendBus pattern ; ici delayInBus
+  // Delay — entrée delayInBus
   masterDelay   = c.createDelay(1.0); masterDelay.delayTime.value=0.3;
   masterDelayFb = c.createGain(); masterDelayFb.gain.value=0.2;   // #13 : feedback réduit
   const dFbLP = c.createBiquadFilter(); dFbLP.type='lowpass'; dFbLP.frequency.value=3200; // amortissement HF
@@ -3250,14 +3229,6 @@ function initFXChain() {
   delayInBus = c.createGain(); delayInBus.gain.value = 0.5;   // bus d'entrée (envois de paires, headroom)
   const delayWet = c.createGain(); delayWet.gain.value = 0; // retour (curseur master)
   masterDelay.connect(delayWet);
-
-  // Reverb — entrée reverbSendBus → convolver → retour reverbWetGain
-  masterReverb  = c.createConvolver();
-  masterReverb.buffer = _makeIR(1.5, 0.05);
-  reverbSendBus = c.createGain(); reverbSendBus.gain.value = 0.5; // entrée (envois de paires, headroom)
-  reverbWetGain = c.createGain(); reverbWetGain.gain.value = 0; // retour (curseur master)
-  reverbDryGain = c.createGain(); reverbDryGain.gain.value = 1; // compat (inutilisé)
-  masterReverb.connect(reverbWetGain);
 
   // Ping-pong stéréo cross-feedback — entrée ppSendBus → tank → retour ppWet
   const ppDelL = c.createDelay(2.0); ppDelL.delayTime.value = 0.25;
@@ -3271,14 +3242,12 @@ function initFXChain() {
   ppWet    = c.createGain(); ppWet.gain.value = 0;   // retour (curseur master)
   ppSendBus = c.createGain(); ppSendBus.gain.value = 0.5; // entrée (envois de paires, headroom)
 
-  // #34 (perf) : delayInBus→masterDelay / reverbSendBus→masterReverb /
-  // ppSendBus→ppDelL étaient connectés ICI, sans condition, à CHAQUE
-  // démarrage du Flux — alors que _gRev/_gDel/_gPP démarrent à false (donc
-  // "attendu déconnecté"). Résultat : le convolveur de reverb (jusqu'à 14s
-  // d'IR) et les tanks delay/ping-pong tournaient dès le lancement, sur le
-  // vrai signal envoyé par les paires (FX activé par défaut), et ce
-  // jusqu'à ce que l'utilisateur touche un curseur wet au moins une fois.
-  // _gateReverb(true)/_gateDelay(true)/_gatePP(true) (appelés par les
+  // #34 (perf) : delayInBus→masterDelay / ppSendBus→ppDelL étaient connectés
+  // ICI, sans condition, à CHAQUE démarrage du Flux — alors que _gDel/_gPP
+  // démarrent à false (donc "attendu déconnecté"). Résultat : les tanks
+  // delay/ping-pong tournaient dès le lancement, sur le vrai signal envoyé
+  // par les paires, et ce jusqu'à ce que l'utilisateur touche un curseur
+  // wet au moins une fois. _gateDelay(true)/_gatePP(true) (appelés par les
   // curseurs wet dès qu'ils dépassent 0, y compris au chargement d'un
   // preset) sont maintenant les SEULS à établir ces connexions d'entrée.
   ppDelL.connect(ppFbLR); ppFbLR.connect(ppLP1); ppLP1.connect(ppDelR);
@@ -3342,7 +3311,6 @@ function initFXChain() {
 
   busTrim.connect(preMaster);                              // SEC
   busTrim.connect(fxSendG);                                // départ FX (fin de chaîne)
-  if (reverbSendBus) fxSendG.connect(reverbSendBus);
   if (delayInBus)    fxSendG.connect(delayInBus);
   if (ppSendBus)     fxSendG.connect(ppSendBus);
 
@@ -3360,23 +3328,13 @@ function initFXChain() {
 let _fxRefs = {};
 
 /* ---------- 2.4b · GATING DES TANKS FX (#29 — CPU), retours → preMaster ---------- */
-// #33 (perf) : ce gating ne coupait que la SORTIE (reverbWetGain→preMaster) —
-// le convolveur de reverb (jusqu'à 14s d'IR sur l'espace "Cosmos") et les
-// bus delay/ping-pong continuaient de calculer en continu même à wet=0,
-// juste rendus inaudibles en aval. On coupe maintenant AUSSI l'ENTRÉE
+// #33 (perf) : ce gating ne coupait que la SORTIE (wet→preMaster) — les bus
+// delay/ping-pong continuaient de calculer en continu même à wet=0, juste
+// rendus inaudibles en aval. On coupe maintenant AUSSI l'ENTRÉE
 // (sendBus→tank), au même moment (le retour est déjà à ~0 à cet instant,
 // donc aucune coupure audible) — élimine le vrai coût de calcul, pas
 // seulement le résultat.
-let _gRev = false, _gDel = false, _gPP = false;
-function _gateReverb(on) {
-  if (AUDIO_QUALITY_TIER === 'light') on = false; // #33 : reverb coupée en qualité "Légère"
-  if (on === _gRev || !reverbWetGain || !preMaster) return;
-  try {
-    on ? reverbWetGain.connect(preMaster) : reverbWetGain.disconnect(preMaster);
-    if (reverbSendBus && masterReverb) { on ? reverbSendBus.connect(masterReverb) : reverbSendBus.disconnect(masterReverb); }
-    _gRev = on;
-  } catch(e) {}
-}
+let _gDel = false, _gPP = false;
 function _gateDelay(on) {
   if (on === _gDel || !_fxRefs.delayWet || !preMaster) return;
   try {
@@ -3397,26 +3355,6 @@ function _gatePP(on) {
 function setFXIntensity(v) {
   if (fxSendG) fxSendG.gain.setTargetAtTime(Math.max(0, Math.min(1, parseFloat(v))), aNow(), 0.05);
   const el = document.getElementById('sv-fxint'); if (el) el.textContent = Math.round(parseFloat(v)*100)+'%';
-}
-
-/* ---------- 2.5 · REVERB ---------- */
-let _reverbActive = false;
-function _setReverbActive(on) {
-  // no-op: reverb always connected — reverbWetGain.gain controls wet level (no crackling)
-  _reverbActive = on;
-}
-
-const REVERB_SPACES = {
-  sec:        { decay: 0.4,  preDelay: 0.01 },
-  grotte:     { decay: 2.8,  preDelay: 0.08 },
-  cathedrale: { decay: 5.5,  preDelay: 0.15 },
-  cosmos:     { decay: 14.0, preDelay: 0.40 }
-};
-async function setReverbSpace(name) {
-  const s = REVERB_SPACES[name]; if (!s || !masterReverb) return;
-  masterReverb.buffer = _makeIR(s.decay, s.preDelay);
-  const sl = document.getElementById('reverbWet');
-  if (sl && parseFloat(sl.value) < 0.05) { sl.value = 0.32; updateFX('reverbWet', 0.32); }
 }
 
 function setFadeDur(v) {
@@ -3527,7 +3465,7 @@ function cycleOscWave(id) {
 function setOscFilter(id, cutoff, res) {
   const cur = OSC_FILTER[id] || { cutoff: 20000, res: 0 };
   if (cutoff !== null && cutoff !== undefined) cur.cutoff = Math.max(20, Math.min(20000, parseFloat(cutoff)));
-  if (res    !== null && res    !== undefined) cur.res    = Math.max(0,  Math.min(30,    parseFloat(res)));
+  if (res    !== null && res    !== undefined) cur.res    = Math.max(0,  Math.min(18,    parseFloat(res)));
   OSC_FILTER[id] = cur;
   const node = nodes[id]; if (!node?.flt) return;
   const now = aNow();
@@ -3535,17 +3473,6 @@ function setOscFilter(id, cutoff, res) {
   node.flt.Q.setTargetAtTime(cur.res, now, 0.2);
 }
 
-// FX on/off par oscillateur (envoi unique vers les 3 tanks)
-function setOscFX(id, on) {
-  PAIR_FX[id] = !!on;
-  const node = nodes[id]; if (!node?.fxSend) return;
-  node.fxSend.gain.setTargetAtTime(on ? FX_SEND_LEVEL : 0, aNow(), 0.08);
-}
-function setPairFX(i, on) {
-  setOscFX(PAIRS[i].pingala.id, on);
-  setOscFX(PAIRS[i].ida.id, on);
-}
-function isPairFX(i) { return PAIR_FX[PAIRS[i].pingala.id] !== false; }
 function setOscHPF(id, hz) {
   const node = nodes[id]; if (!node?.hpf) return;
   node.hpf.frequency.setTargetAtTime(Math.max(20, Math.min(2000, parseFloat(hz))), aNow(), 0.05);
@@ -3610,7 +3537,6 @@ function getFXState() {
     delay: masterDelay ? { t:masterDelay.delayTime.value,
                            fb:masterDelayFb ? masterDelayFb.gain.value : 0,
                            wet:_fxRefs.delayWet ? _fxRefs.delayWet.gain.value : 0 } : null,
-    reverb: reverbWetGain ? reverbWetGain.gain.value : 0,
     pp: pingPongDelay ? { t:pingPongDelay.delayL.delayTime.value,
                           fb:pingPongDelay._fbLR.gain.value,
                           wet:ppWet ? ppWet.gain.value : 0 } : null,
@@ -3618,7 +3544,6 @@ function getFXState() {
     breath: { ...BREATH_STATE }, grain: { ...GRAIN_STATE },
     waves: { ...OSC_WAVES },
     filters: JSON.parse(JSON.stringify(OSC_FILTER)),
-    pairFX: { ...PAIR_FX },
     pairDualSine: { ...PAIR_DUALSINE }, // #10 (roadmap)
     pairBD2: JSON.parse(JSON.stringify(PAIR_BD2)) // #57
   };
@@ -3638,7 +3563,6 @@ function applyFXState(s) {
   }
   if (s.delay) { [['delayTime',s.delay.t],['delayFeedback',s.delay.fb],['delayWet',s.delay.wet]]
     .forEach(([id,v]) => { setSl(id,v); if (typeof updateFX==='function') updateFX(id,v); }); }
-  if (s.reverb != null) { setSl('reverbWet',s.reverb); if (typeof updateFX==='function') updateFX('reverbWet',s.reverb); }
   if (s.pp) {
     setPingPongTime(s.pp.t); setPingPongFb(s.pp.fb); setPingPongWet(s.pp.wet || 0);
     setSl('ppTime',s.pp.t); setSl('ppFb',s.pp.fb); setSl('ppWetSlider', s.pp.wet || 0);
@@ -3652,7 +3576,6 @@ function applyFXState(s) {
   let wavesChanged = false;
   if (s.waves)   { if (JSON.stringify(OSC_WAVES) !== JSON.stringify(s.waves)) wavesChanged = true; Object.assign(OSC_WAVES, s.waves); }
   if (s.filters) { Object.keys(s.filters).forEach(id => { OSC_FILTER[id] = s.filters[id]; if (nodes[id]) { setOscFilter(id, s.filters[id].cutoff, s.filters[id].res); if (nodes[id].flt) nodes[id].flt.type = FILTER_TYPES[s.filters[id].mode] || 'lowpass'; } }); }
-  if (s.pairFX)  { Object.keys(s.pairFX).forEach(id => { PAIR_FX[id] = s.pairFX[id]; const n=nodes[id]; if (n?.fxSend) n.fxSend.gain.setTargetAtTime(s.pairFX[id]!==false?FX_SEND_LEVEL:0, aNow(), 0.08); }); }
   if (s.pairDualSine) { Object.keys(s.pairDualSine).forEach(i => setPairDualSineDetune(i, s.pairDualSine[i])); } // #10 (roadmap)
   // #57 : PAIR_BD2.on change la STRUCTURE de la chaîne (nœud inséré ou non),
   // comme OSC_WAVES — même stratégie : détecter le changement, rebuild une
@@ -3668,6 +3591,19 @@ function rebuildAllOscs() {
   nodes = {};
   Object.values(old).forEach(n => { try { releaseOsc(n); } catch(e) {} });
   PAIRS.forEach((_, i) => setTimeout(() => { if (flowing && masterGain) swapPingala(i); }, 50 + i * 50));
+}
+// #75 (audit anti-craquement, pt.4) : reconstruit UNE SEULE paire (2
+// oscillateurs) au lieu des 14 de rebuildAllOscs() — utilisé par les bascules
+// PAR PAIRE (ex. togglePairBD2) qui n'ont aucune raison de faire retomber le
+// gain/reconstruire les 6 autres paires en train de jouer normalement.
+function _rebuildPair(i) {
+  if (!flowing) return;
+  const { pingala, ida } = PAIRS[i];
+  [pingala.id, ida.id].forEach(id => {
+    const n = nodes[id];
+    if (n) { delete nodes[id]; try { releaseOsc(n); } catch(e) {} }
+  });
+  setTimeout(() => { if (flowing && masterGain) swapPingala(i); }, 50);
 }
 
 /* ---------- 2.6b · CONTRÔLES RACK MASTER ---------- */
@@ -3821,7 +3757,6 @@ async function stopFlow() {
         if (n.hpf)     n.hpf.disconnect();
         if (n.flt)     n.flt.disconnect();
         if (n.hiTrim)  n.hiTrim.disconnect();
-        if (n.fxSend)  n.fxSend.disconnect();
       } catch(e){}
     }, 500);
   });
@@ -3899,7 +3834,7 @@ function _perfAutoAdapt(ts) {
    Ce watchdog surveille directement la santé du thread audio via
    AudioContext.outputLatency (grandit quand le moteur peine à tenir le
    temps réel — signal standard du Web Audio API, indépendant du visuel) et
-   réagit en coupant progressivement le superflu : d'abord la reverb
+   réagit en coupant progressivement le superflu : d'abord le ping-pong delay
    #67 : outputLatency/baseLatency ne sont pas fiablement implémentés sur
    beaucoup de WebView Android (souvent bloqués à 0) — dans ce cas le test
    ci-dessous ne se déclenche JAMAIS, watchdog inerte en silence sur
@@ -3910,8 +3845,8 @@ function _perfAutoAdapt(ts) {
    longtemps pour retarder son propre timer de façon significative, c'est
    un signe fiable et universel de saturation, quelle que soit la cause
    (rendu, GC, charge CPU générale). Les deux signaux sont combinés en OU.
-   (convolveur, le calcul le plus lourd de la chaîne FX), puis les moteurs
-   d'onde complexes du tirage aléatoire. Comme "Visuel léger" : ne descend
+   (tank ping-pong, le calcul le plus lourd de la chaîne FX restante), puis
+   les moteurs d'onde complexes du tirage aléatoire. Comme "Visuel léger" : ne descend
    qu'en mode Auto, jamais si l'utilisateur a lui-même choisi un réglage
    fixe, et ne remonte jamais tout seul (redémarrer le Flux repart propre). */
 const AUDIO_QUALITY_KEY = 'fbf432-audioQuality';
@@ -3927,8 +3862,8 @@ function setAudioQuality(mode) {
   const wasLight = AUDIO_QUALITY_TIER === 'light';
   AUDIO_QUALITY_TIER = AUDIO_QUALITY_MODE === 'light' ? 'light' : 'full';
   _audioStrainCount = 0;
-  if (wasLight && AUDIO_QUALITY_TIER === 'full' && reverbWetGain && reverbWetGain.gain.value > 0.001) _gateReverb(true);
-  if (AUDIO_QUALITY_TIER === 'light') _gateReverb(false);
+  if (wasLight && AUDIO_QUALITY_TIER === 'full' && ppWet && ppWet.gain.value > 0.001) _gatePP(true);
+  if (AUDIO_QUALITY_TIER === 'light') _gatePP(false);
   _armAudioWatchdog();
   _syncAudioQualityUI();
 }
@@ -3974,7 +3909,7 @@ function _degradeAudioQuality() {
   _audioStrainCount = 0;
   if (AUDIO_QUALITY_TIER === 'light') return;
   AUDIO_QUALITY_TIER = 'light';
-  _gateReverb(false);
+  _gatePP(false);
   clearInterval(_audioWatchdogTimer); _audioWatchdogTimer = null; // déjà au plancher, plus rien à surveiller
   _syncAudioQualityUI();
   ui('live', '☾ Qualité audio réduite (appareil en tension)');
@@ -4786,7 +4721,6 @@ function _openQuickMenu(i) {
   const pair = PAIRS[i];
   const locked = (typeof isLocked === 'function') && isLocked(i);
   const soloed = isPairSoloed(i);
-  const fxOn = isPairFX(i);
   const mc = isMaster
     ? ((typeof freqColor === 'function') ? freqColor(masterFreq, 70) : '#F3D9FF')
     : pair.color;
@@ -4803,9 +4737,6 @@ function _openQuickMenu(i) {
     </button>
     <button class="mm-cell mm-cell-left${soloed?' soloed':''}" id="mm-solo-btn" style="border-color:${mc}" onclick="event.stopPropagation();_mmToggleSolo()" title="${soloed?'Retour au jeu global':'Solo cette fréquence'}">
       ${soloed?'◈':'⦿'}<span>${soloed?'Solo':'All'}</span>
-    </button>
-    <button class="mm-cell mm-cell-right${fxOn?'':' fx-off'}" id="mm-fx-btn" style="border-color:${mc}" onclick="event.stopPropagation();_mmToggleFX()" title="${fxOn?'Couper les FX pour cette sphère':'Activer les FX pour cette sphère'}">
-      ${fxOn?'✦':'✧'}<span>FX</span>
     </button>`;
   wrap.appendChild(mm);
   const lockBtn = document.getElementById('mm-lock-btn');
@@ -4845,15 +4776,6 @@ function _mmToggleSolo() {
   const b = document.getElementById('mm-solo-btn');
   if (b) { b.classList.toggle('soloed', solo); b.innerHTML = (solo?'◈':'⦿') + '<span>' + (solo?'Solo':'All') + '</span>'; }
 }
-// #46 : bouton droit — FX on/off pour cette sphère (envoi vers les tanks
-// reverb/delay/ping-pong globaux, cf. setPairFX/PAIR_FX déjà existants).
-function _mmToggleFX() {
-  const on = !isPairFX(_qmIdx);
-  setPairFX(_qmIdx, on);
-  const b = document.getElementById('mm-fx-btn');
-  if (b) { b.classList.toggle('fx-off', !on); b.innerHTML = (on?'✦':'✧') + '<span>FX</span>'; }
-}
-
 function buildVesicaPairs() {
   const layer = document.getElementById('sphere-layer');
   if (!layer) return;
@@ -4980,20 +4902,20 @@ const TUTO_CONTENT = {
     { h: "Δ (delta), le battement", b: "Réglable, resserré par défaut entre 0.8 et 1.2Hz pour rester dans une plage douce à l'écoute. Chaque paire peut avoir son propre Δ indépendant, avec une dérive lente en option (\"respiration du battement\")." },
     { h: "Les ratios harmoniques", b: "Chaque paire satellite est accordée sur une fraction (n/n+1, n+1/n…) de la fréquence maître — des intervalles proches de l'accordage harmonique traditionnel. Le sélecteur de ratio, dans le panneau de chaque oscillateur, permet de choisir laquelle." },
     { h: "Les gestes sur les sphères", b: "<ul><li><b>Tap</b> sur une satellite : mute/unmute (coupe ou réactive son son).</li><li><b>Tap</b> sur la sphère maître : ouvre son menu rapide.</li><li><b>Appui long</b> sur une satellite : ouvre le menu rapide de cette sphère.</li><li><b>Appui long</b> sur la maître : tire un nouveau jeu aléatoire complet.</li></ul>" },
-    { h: "Le menu rapide (4 boutons autour d'une sphère)", b: "<ul><li><b>Haut</b> — Random ratio : change le timbre de cette sphère sans toucher au reste.</li><li><b>Bas</b> — Verrouiller : empêche cette fréquence de changer aux tirages aléatoires (appui long dessus = random ciblé même verrouillée).</li><li><b>Gauche</b> — Solo : coupe tout sauf cette sphère (retap pour revenir en arrière).</li><li><b>Droite</b> — FX : active/coupe les envois reverb/delay/ping-pong pour cette sphère.</li></ul>" },
+    { h: "Le menu rapide (3 boutons autour d'une sphère)", b: "<ul><li><b>Haut</b> — Random ratio : change le timbre de cette sphère sans toucher au reste.</li><li><b>Bas</b> — Verrouiller : empêche cette fréquence de changer aux tirages aléatoires (appui long dessus = random ciblé même verrouillée).</li><li><b>Gauche</b> — Solo : coupe tout sauf cette sphère (retap pour revenir en arrière).</li></ul>" },
     { h: "Solo maître", b: "Appui long sur la case rouge du dock isole la fréquence maître (coupe toutes les satellites). Un seul oscillateur est déjà actif par défaut au premier lancement — le solo maître mémorise et restaure exactement ce qui jouait avant, pas besoin de tout réactiver à la main." },
     { h: "Le dock du bas", b: "5 cases — Rouge (Aléatoire), Orange (Samples), Centre (Flux), Vert (Effets), Bleu (Paramètres) — chacune personnalisable (tap / appui long / bouton \"+\") depuis Paramètres → Personnaliser l'interface." },
-    { h: "FX", b: "Reverb, Delay et Ping-Pong globaux, plus un envoi par paire (bouton FX du menu rapide). Filtre par oscillateur : HPF/BPF/LPF avec cutoff et résonance réglables." },
+    { h: "FX", b: "Delay et Ping-Pong globaux. Filtre par oscillateur : HPF/BPF/LPF avec cutoff et résonance réglables." },
   ],
   cosmique: [
     { h: "Architecture", b: "7 paires (Pingala grave / Ida aiguë), 2 oscillateurs Web Audio chacune. Onde par défaut : <b>double sinus</b> (deux voix sinus détunées de quelques cents) — plus doux qu'une sinusoïdale simple, sans harmoniques dures." },
     { h: "Binaural — le détail", b: "Δ resserré par défaut à 0.8-1.2Hz. Mode <b>casque strict</b> disponible : routage 100% isolé gauche/droite sans aucune fuite. Polarité indépendante par paire même Δ verrouillé, décorrélation du drift analogique (chaque oscillateur \"respire\" indépendamment)." },
     { h: "Ratios & fréquences", b: "Fréquence maître 36-432Hz. Chaque satellite = maître × ratio (n/(n+1) ou (n+1)/n), n réglable finement par pas de 0.1 (stepper dédié). Matrice 🌀 : 36 cellules d'assignation rapide ratio × n." },
     { h: "Filtre par oscillateur", b: "HPF/BPF/LPF, cutoff 20Hz-8kHz, résonance 0-30. Modulable par LFO (patch) ou pad tactile XY (mode Cutoff/Résonance ou Attaque/Relâche)." },
-    { h: "FX par paire vs FX global", b: "Chaque paire a un bouton FX (envoi vers Reverb/Delay/Ping-Pong globaux). <b>Overdrive Halogène</b> (par paire, expérimental) : mélange additif — le son sec ne disparaît jamais, la saturation s'ajoute par-dessus (drive/intensité bridés à 50%)." },
+    { h: "Overdrive Halogène", b: "Par paire, expérimental : mélange additif — le son sec ne disparaît jamais, la saturation s'ajoute par-dessus (drive/intensité bridés à 50%)." },
     { h: "Compression & mastering", b: "Compresseur doux optionnel par paire (seuil haut, ratio faible, anti-pompage), limiteur de sécurité sur le bus master, EQ graphique 6 bandes fixes (36-432Hz)." },
     { h: "Options avancées", b: "Sub-drone d'ancrage (fréquence grave continue), ancre respiratoire périodique, dérive lente du Δ, historique des tirages aléatoires avec retour arrière (undo)." },
-    { h: "Watchdog qualité audio", b: "Surveille la tension du thread audio (dérive de timer + API Web Audio Latency) et bascule automatiquement en qualité \"Légère\" (coupe la reverb, force sine simple) après ~6s de tension soutenue — réglable manuellement dans le panneau Effet." },
+    { h: "Watchdog qualité audio", b: "Surveille la tension du thread audio (dérive de timer + API Web Audio Latency) et bascule automatiquement en qualité \"Légère\" (coupe le ping-pong, force sine simple) après ~6s de tension soutenue — réglable manuellement dans le panneau Effet." },
     { h: "Presets & personnalisation", b: "Sauvegarde du jeu complet (fréquence, binaural, FX) en banques illimitées. Dock entièrement réassignable (tap/appui long/bouton extra) depuis Personnaliser l'interface." },
   ],
 };
@@ -5203,7 +5125,7 @@ function setRandRatioMode(m,btn){
 }
 function setRandUseFX(v){RAND_OPTS.useFX=!!v;}
 
-// FX aléatoire — randomise delay, reverb, EQ
+// FX aléatoire — randomise delay, ping-pong, EQ
 // Random FX — INDÉPENDANT du random fréquence. FX globaux en fin de chaîne.
 function randomizeFX(cap){
   // Valeurs franches → changement CLAIREMENT audible (avant : trop timide)
@@ -5214,13 +5136,12 @@ function randomizeFX(cap){
   const delT  = +(0.18 + Math.random() * 0.6).toFixed(2);
   const delFB = +(0.15 + Math.random() * 0.4).toFixed(2);
   const delW  = +clampWet(0.25 + Math.random() * 0.45).toFixed(2);
-  const revW  = +clampWet(0.35 + Math.random() * 0.5).toFixed(2);
   const ppT   = +(0.15 + Math.random() * 0.45).toFixed(2);
   const ppFb  = +(0.2 + Math.random() * 0.4).toFixed(2);
   const ppW   = +clampWet(0.25 + Math.random() * 0.45).toFixed(2);
   const fxInt = +clampWet(0.55 + Math.random() * 0.4).toFixed(2);
-  // Delay + Reverb (via sliders + updateFX → gating auto)
-  [['delayTime',delT],['delayFeedback',delFB],['delayWet',delW],['reverbWet',revW]].forEach(([id,val])=>{
+  // Delay (via sliders + updateFX → gating auto)
+  [['delayTime',delT],['delayFeedback',delFB],['delayWet',delW]].forEach(([id,val])=>{
     const sl = document.getElementById(id); if (sl) sl.value = val;
     if (typeof updateFX === 'function') updateFX(id, val);
   });
@@ -5582,7 +5503,7 @@ let _lastMagicAt = 0;
 // Le fader "Fondu" (_fadeDur) ne servait qu'au démarrage/arrêt du flux — or
 // c'est à CHAQUE nouveau tirage (changement de timbre/filtre/fréquences en
 // direct) que se produisent les craquements. On descend maintenant le volume
-// ET les retours FX (reverb/delay/ping-pong) ensemble avant d'appliquer le
+// ET les retours FX (delay/ping-pong) ensemble avant d'appliquer le
 // changement, puis on remonte : toute discontinuité est masquée par un vrai
 // fondu au lieu d'une coupure nette, calée sur la même durée que le fader.
 function _duckAndApply(applyFn) {
@@ -5590,13 +5511,11 @@ function _duckAndApply(applyFn) {
   const now = aNow();
   const downT = Math.max(0.15, _fadeDur / 6);
   const upT   = Math.max(0.2,  _fadeDur / 4);
-  const savedReverb = (typeof reverbWetGain !== 'undefined' && reverbWetGain) ? reverbWetGain.gain.value : null;
   const savedDelay  = (typeof _fxRefs !== 'undefined' && _fxRefs && _fxRefs.delayWet) ? _fxRefs.delayWet.gain.value : null;
   const savedPP     = (typeof ppWet !== 'undefined' && ppWet) ? ppWet.gain.value : null;
 
   masterGain.gain.cancelScheduledValues(now);
   masterGain.gain.setTargetAtTime(0, now, downT / 3);
-  if (savedReverb != null) reverbWetGain.gain.setTargetAtTime(0, now, downT / 3);
   if (savedDelay  != null) _fxRefs.delayWet.gain.setTargetAtTime(0, now, downT / 3);
   if (savedPP     != null) ppWet.gain.setTargetAtTime(0, now, downT / 3);
 
@@ -5604,7 +5523,6 @@ function _duckAndApply(applyFn) {
     applyFn();
     const now2 = aNow();
     if (masterGain) masterGain.gain.setTargetAtTime(masterVol * MASTER_GAIN_SCALE, now2, upT / 3);
-    if (savedReverb != null) reverbWetGain.gain.setTargetAtTime(savedReverb, now2, upT / 3);
     if (savedDelay  != null) _fxRefs.delayWet.gain.setTargetAtTime(savedDelay, now2, upT / 3);
     if (savedPP     != null) ppWet.gain.setTargetAtTime(savedPP, now2, upT / 3);
   }, downT * 1000 + 30);
@@ -5764,11 +5682,10 @@ function triggerMagicAuto(opts) {
 
   // ── Profondeur 3D : une paire « vedette » est proche (sèche, brillante,
   // devant), les autres reculent à des distances variables (plus mates,
-  // plus de reverbe) — vraie sensation de volume/espace, pas juste un
+  // moins présentes) — vraie sensation de volume/espace, pas juste un
   // panoramique gauche-droite. Le panning binaural lui-même n'est jamais
   // touché (précision du battement préservée).
   const spotlight = Math.floor(Math.random() * 7); // 0-5 satellites, 6 = maître
-  const drawDepth = []; // 0 = proche, 1 = lointain — réutilisé plus bas pour l'envoi reverbe
 
   _duckAndApply(() => {
   PAIRS.forEach((pair, idx) => {
@@ -5777,9 +5694,8 @@ function triggerMagicAuto(opts) {
 
     const isSpot = idx === spotlight;
     // Option "Profondeur 3D" décochée → tout le monde reste proche/neutre
-    // (pas de dimming ni d'envoi reverbe variable d'une paire à l'autre).
+    // (pas de dimming d'une paire à l'autre).
     const depth  = (isSpot || !RAND_OPTS.randomDepth) ? 0 : (0.25 + Math.random() * 0.65);
-    drawDepth[idx] = depth;
     const boost  = 1.5 - depth * 0.85;   // proche = plus present, lointain = plus discret
 
     // Anti-craquement : le moteur d'onde ne change QUE pour la paire vedette
@@ -5919,15 +5835,6 @@ function triggerMagicAuto(opts) {
     tuneOsc(pair.ida.id, calcIFreq(i), 2.2);
   });
 
-  // #60 : l'ancien "plancher de reverbe ambiante" forçait reverbWet à 0.12
-  // dès le premier tirage aléatoire (dès que le curseur était <0.05), et ne
-  // redescendait plus jamais tout seul — combiné à l'envoi par paire selon
-  // la profondeur 3D (jusqu'à 30%, cf. drawDepth ci-dessous), ça créait une
-  // reverbe permanente perçue comme un "effet echo tunnel" qui dénaturait le
-  // son (retour utilisateur direct). Retiré : la reverbe reste à 0 par
-  // défaut, exactement comme le curseur l'indique, jusqu'à ce que
-  // l'utilisateur la monte lui-même.
-
   // Applique volumes + pan + filtres sur les nœuds vivants
   if (flowing) PAIRS.forEach((pair, i) => {
     const pid = pair.pingala.id, iid = pair.ida.id;
@@ -5939,14 +5846,6 @@ function triggerMagicAuto(opts) {
       setOscFilter(pid, OSC_FILTER[pid].cutoff, OSC_FILTER[pid].res);
       setOscFilter(iid, OSC_FILTER[iid].cutoff, OSC_FILTER[iid].res);
       if (typeof setOscHPF === 'function') { setOscHPF(pid, OSC_FILTER[pid].hp); setOscHPF(iid, OSC_FILTER[iid].hp); }
-      // Profondeur → envoi reverbe (0 = sec/proche, 1 = noyé/lointain).
-      // Respecte le verrou FX manuel de la paire (menu oscillateur, onglet FX).
-      if (drawDepth[i] != null) {
-        const on = (typeof isPairFX !== 'function') || isPairFX(i);
-        const sendGain = on ? drawDepth[i] * FX_SEND_LEVEL : 0;
-        if (nodes[pid]?.fxSend) nodes[pid].fxSend.gain.setTargetAtTime(sendGain, aNow(), 0.3);
-        if (nodes[iid]?.fxSend) nodes[iid].fxSend.gain.setTargetAtTime(sendGain, aNow(), 0.3);
-      }
     }
   });
   // Random FX DÉCOUPLÉ : le random fréquence ne déclenche plus les FX
@@ -6505,9 +6404,6 @@ function buildMasterFXHTML() {
       <div class="fxq-row"><span class="fxq-lbl">Intensité FX</span>
         <input type="range" class="fx-slider" id="fxIntensity" min="0" max="1" step="0.02" value="0.3" oninput="setFXIntensity(this.value)">
         <span class="fx-val-disp" id="sv-fxint">30%</span></div>
-      <div class="fxq-row"><span class="fxq-lbl">Réverbe</span>
-        <input type="range" class="fx-slider" id="reverbWet" min="0" max="1" step="0.02" value="0" oninput="updateFX('reverbWet',this.value)">
-        <span class="fx-val-disp" id="reverbWet-val">0%</span></div>
       <div class="fxq-row"><span class="fxq-lbl">Delay</span>
         <input type="range" class="fx-slider" id="delayWet" min="0" max="1" step="0.02" value="0" oninput="updateFX('delayWet',this.value)">
         <span class="fx-val-disp" id="delayWet-val">0%</span></div>
@@ -6535,12 +6431,6 @@ function buildMasterFXHTML() {
       <div class="fxq-row"><span class="fxq-lbl">Espace</span>
         <input type="range" class="fx-slider" id="randSpread" min="0" max="1" step="0.02" value="0.6" oninput="setRandSpread(this.value)">
         <span class="fx-val-disp" id="sv-spread">60%</span></div>
-      <div class="fx-space-btns" style="margin-top:.15rem;">
-        <button class="fx-space-btn" onclick="setReverbSpace('sec')">Sec</button>
-        <button class="fx-space-btn" onclick="setReverbSpace('grotte')">Grotte</button>
-        <button class="fx-space-btn" onclick="setReverbSpace('cathedrale')">Cathéd.</button>
-        <button class="fx-space-btn" onclick="setReverbSpace('cosmos')">Cosmos</button>
-      </div>
       <button class="btn-flow" style="width:100%;margin-top:.4rem;border-color:rgba(255,208,96,.5);color:#FFD060;background:rgba(255,208,96,.07);" onclick="triggerRandomFX()">✦ Random FX</button>
     </div>
 
@@ -6601,7 +6491,7 @@ function buildCustomizeHTML() {
     <button class="btn-reset-wide" onclick="resetExtraPos()">↺ Position des boutons "+" par défaut</button>
 
     <div class="pct" style="margin-top:1.1rem">Qualité audio</div>
-    <div class="cust-hint">"Auto" détecte seul un appareil en tension (reverb coupée, moteurs d'onde simplifiés) — jamais en cours de lecture sans raison, jamais s'il n'y a pas besoin.</div>
+    <div class="cust-hint">"Auto" détecte seul un appareil en tension (ping-pong coupé, moteurs d'onde simplifiés) — jamais en cours de lecture sans raison, jamais s'il n'y a pas besoin.</div>
     <div class="cust-bg-grid" style="grid-template-columns:repeat(3,1fr);">
       <button class="cust-bg-btn" id="aq-btn-auto"  onclick="setAudioQuality('auto')">Auto</button>
       <button class="cust-bg-btn" id="aq-btn-full"  onclick="setAudioQuality('full')">Complète</button>
@@ -6698,18 +6588,10 @@ function updateFX(paramId, value) {
     // 1.0 (curseur au max) met ~310ms à repasser sous 0.002 ; l'ancien délai
     // de 300ms vérifiait parfois TROP TÔT (valeur encore ~0.006-0.008) et,
     // comme le contrôle est un coup unique (pas de nouvelle tentative), le
-    // bus restait connecté indéfiniment — le vrai coût de calcul (delay +,
-    // depuis ce correctif, reverb) continuait de tourner malgré le wet à 0.
+    // bus restait connecté indéfiniment — le vrai coût de calcul (delay)
+    // continuait de tourner malgré le wet à 0.
     try{ if(v>0.001){ if(typeof _gateDelay==='function')_gateDelay(true); _fxRefs.delayWet.gain.setTargetAtTime(v,aNow(),.05); }
          else { _fxRefs.delayWet.gain.setTargetAtTime(0,aNow(),.05); setTimeout(()=>{if(typeof _gateDelay==='function'&&_fxRefs.delayWet.gain.value<0.002)_gateDelay(false);},450); } }catch(e){} }
-  else if(paramId==='reverbWet') { if(valDisp)valDisp.textContent=Math.round(v*100)+'%';
-    // #33 (perf) : même correctif, délai porté à 550ms (timeConstant .08 →
-    // ~500ms nécessaires depuis un wet à 1.0) — c'est CE contrôle qui coupe
-    // maintenant aussi l'entrée du convolveur (cf. _gateReverb), le calcul
-    // le plus lourd de la chaîne FX ; s'il ne se déclenchait jamais, le
-    // convolveur restait allumé en permanence même reverb à 0%.
-    try{ if(v>0.001){ if(typeof _gateReverb==='function')_gateReverb(true); reverbWetGain.gain.setTargetAtTime(v,aNow(),.08); }
-         else { reverbWetGain.gain.setTargetAtTime(0,aNow(),.08); setTimeout(()=>{if(typeof _gateReverb==='function'&&reverbWetGain.gain.value<0.002)_gateReverb(false);},550); } }catch(e){} }
 }
 
 // ── updateMasterState ─────────────────────────────────────────────
@@ -6915,19 +6797,11 @@ function buildPairHTML(pair, i) {
       <span class="ctl-v">0.40 Hz</span></div>
     <div class="osc-hint">Routage du LFO → onglet ④ Patch</div>`;
 
-  // ── ③ FX (on/off par paire → bus FX global du maître) ──────────
-  const fxOn = (typeof isPairFX === 'function') ? isPairFX(i) : true;
+  // ── ③ FX ─────────────────────────────────────────────────────────
   const bd2 = PAIR_BD2[i] || { on:false, drive:0.25, tone:0.5, level:0.25 };
   const tpadMode = PAIR_TPAD_MODE[i] || 'cutoff';
   const tpadAuto = PAIR_TPAD_AUTO[i] || { on:false, period:36 };
   const fxTabHTML = `
-    <div class="osc-sec-t" style="color:${c}aa;">Bus FX global (maître)</div>
-    <div class="fx-onoff-row">
-      <span class="ctl-l">Envoi FX</span>
-      <button class="fx-onoff${fxOn?' on':''}" id="fxon-${i}" style="--ec:${c};"
-        onclick="togglePairFX(${i})">${fxOn?'● ON':'○ OFF'}</button>
-    </div>
-    <div class="osc-hint">ON = la paire entre dans Reverb/Delay/Ping-Pong du maître · OFF = 100% sèche</div>
     <div class="osc-sec-t" style="color:${c}aa;">Color FX · Overdrive Halogène (chaud, rond)</div>
     <div class="fx-onoff-row">
       <span class="ctl-l">Overdrive</span>
@@ -7109,14 +6983,6 @@ function pickEngine(i, key) {
     const b = document.getElementById('eng-'+i+'-'+k);
     if (b) b.classList.toggle('on', k === key);
   });
-}
-
-// Bascule FX on/off d'une paire (bus FX global du maître)
-function togglePairFX(i) {
-  const on = !isPairFX(i);
-  setPairFX(i, on);
-  const b = document.getElementById('fxon-' + i);
-  if (b) { b.classList.toggle('on', on); b.textContent = on ? '● ON' : '○ OFF'; }
 }
 
 // Cycle d'un jack de la patchbay (0→1→2→3→0)
@@ -8379,300 +8245,7 @@ window.addEventListener('message', async function(e) {
 });
 
 </script>
-<script data-html-import-id="html-import-874">
-/* ═══════════════════════════════════════════════════════════════
-   08-bowl-engine.js — Mode « Bol Tibétain »
-   ───────────────────────────────────────────────────────────────
-   Moteur de lecture d'échantillons + synthèse placeholder, tournant
-   ENTIÈREMENT sur le thread audio (AudioWorklet). Aucune mutation de
-   graphe en jeu, aucune pression GC → zéro craquement par conception.
 
-   Structure « next level », prête à recevoir :
-     • plusieurs MB de samples .wav 32-bit float / 48 kHz (lazy-load)
-     • un jeu aléatoire (note longue / courte / frottée / silence)
-     • les FX et visuels 3D existants
-
-   API publique (globale) :
-     Bowl.init()            → prépare le worklet (idempotent, async)
-     Bowl.start()           → lance le jeu aléatoire
-     Bowl.stop()            → arrête (release des voix en cours)
-     Bowl.strike(opts)      → déclenche un coup unique (test)
-     Bowl.loadSample(id,url)→ charge + décode un .wav (lazy)
-     Bowl.setParams(p)      → règle densité / gammes / proba gestes
-     Bowl.ready             → bool, worklet prêt
-
-   Tant qu'aucun sample n'est chargé, le moteur SYNTHÉTISE un bol
-   (partiels inharmoniques) pour valider l'archi offline immédiatement.
-   ═══════════════════════════════════════════════════════════════ */
-
-const Bowl = (() => {
-  'use strict';
-
-  // ── Code du processeur AudioWorklet (chargé via Blob → offline/APK OK) ──
-  const PROCESSOR_SRC = `
-  class BowlProcessor extends AudioWorkletProcessor {
-    constructor() {
-      super();
-      this.voices = [];          // voix actives (polyphonie)
-      this.samples = {};         // { id: { chans:[Float32Array], len, sr } }
-      this.maxVoices = 24;
-      this.port.onmessage = (e) => {
-        const m = e.data;
-        if (m.type === 'loadSample') {
-          this.samples[m.id] = { chans: m.chans, len: m.chans[0].length, sr: m.sr };
-        } else if (m.type === 'trigger') {
-          this._spawn(m.v);
-        } else if (m.type === 'releaseAll') {
-          for (const v of this.voices) v.releasing = true;
-        }
-      };
-    }
-
-    _spawn(v) {
-      if (this.voices.length >= this.maxVoices) this.voices.shift();
-      const SR = sampleRate;
-      const voice = {
-        kind: v.kind,                       // 'strike' | 'bowed' | 'sample'
-        gain: v.gain ?? 0.5,
-        pan: v.pan ?? 0,                    // -1..1
-        age: 0,
-        durSamp: Math.max(1, (v.dur ?? 6) * SR),
-        releasing: false,
-        relSamp: 0,
-        relDur: (v.kind === 'bowed' ? 1.2 : 0.4) * SR,
-      };
-      if (v.sampleId && this.samples[v.sampleId]) {
-        voice.kind = 'sample';
-        voice.smp = this.samples[v.sampleId];
-        voice.pos = 0;
-        voice.rate = v.rate ?? 1;
-      } else {
-        // Synthèse bol : partiels inharmoniques mesurés sur bols chantants.
-        const f0 = v.freq ?? 216;
-        const ratios = [1, 2.71, 5.18, 8.51, 12.4];
-        const decays = [v.dur ?? 6, (v.dur ?? 6) * 0.55, (v.dur ?? 6) * 0.32,
-                        (v.dur ?? 6) * 0.2, (v.dur ?? 6) * 0.12];
-        const amps = [1, 0.5, 0.32, 0.18, 0.1];
-        voice.partials = ratios.map((r, k) => ({
-          ph: 0,
-          inc: (2 * Math.PI * f0 * r) / SR,
-          amp: amps[k],
-          decK: 1 / (decays[k] * SR),       // décroissance exponentielle
-        }));
-        voice.bowed = v.kind === 'bowed';
-        voice.swellPh = 0;
-        voice.swellInc = (2 * Math.PI * 0.18) / SR;   // swell lent du frottement
-        voice.attack = (v.kind === 'bowed' ? 0.6 : 0.004) * SR;
-      }
-      this.voices.push(voice);
-    }
-
-    process(_inputs, outputs) {
-      const out = outputs[0];
-      const L = out[0], R = out[1] || out[0];
-      const N = L.length;
-      for (let i = 0; i < N; i++) { L[i] = 0; if (R !== L) R[i] = 0; }
-
-      for (let vi = this.voices.length - 1; vi >= 0; vi--) {
-        const v = this.voices[vi];
-        // panoramique puissance constante
-        const pa = (v.pan + 1) * 0.25 * Math.PI;     // 0..PI/2
-        const gL = Math.cos(pa), gR = Math.sin(pa);
-
-        for (let i = 0; i < N; i++) {
-          let s = 0;
-          if (v.kind === 'sample') {
-            const p = v.pos | 0;
-            if (p >= v.smp.len) { v.done = true; break; }
-            const c0 = v.smp.chans[0][p];
-            s = c0;
-            // (stéréo sample : géré plus bas si 2 canaux)
-            v.pos += v.rate;
-          } else {
-            // attaque
-            let env = v.age < v.attack ? v.age / v.attack : 1;
-            if (v.bowed) {
-              // frottement : entretien + léger swell d'amplitude
-              env *= 0.75 + 0.25 * Math.sin(v.swellPh);
-              v.swellPh += v.swellInc;
-            }
-            for (let k = 0; k < v.partials.length; k++) {
-              const pt = v.partials[k];
-              const decay = v.bowed ? 1 : Math.exp(-pt.decK * v.age);
-              s += Math.sin(pt.ph) * pt.amp * decay;
-              pt.ph += pt.inc;
-            }
-            s *= env * 0.22;
-          }
-          // release
-          let rg = 1;
-          if (v.releasing) { rg = 1 - v.relSamp / v.relDur; if (rg <= 0) { v.done = true; } v.relSamp++; }
-          const o = s * v.gain * rg;
-          L[i] += o * gL;
-          if (R !== L) R[i] += o * gR;
-          v.age++;
-          if (!v.bowed && v.kind !== 'sample' && v.age > v.durSamp) v.releasing = true;
-          if (v.done) break;
-        }
-        if (v.done) this.voices.splice(vi, 1);
-      }
-      return true;
-    }
-  }
-  registerProcessor('bowl-processor', BowlProcessor);
-  `;
-
-  // ── État module ──────────────────────────────────────────────
-  let ctx = null, node = null, outGain = null;
-  let ready = false, initing = null;
-  let playing = false, schedTimer = null;
-  let lastGesture = 'rest';
-
-  // gammes de fondamentales (Hz) — base 432, pentatonique douce
-  const SCALES = {
-    base432: [108, 144, 162, 192, 216, 288, 324, 432],
-  };
-
-  const params = {
-    density: 1.0,                 // multiplicateur de fréquence des gestes
-    scale: 'base432',
-    sampleIds: [],                // si vide → synthèse placeholder
-    // proba de transition entre gestes (Markov léger)
-    weights: { long: 0.32, short: 0.30, bowed: 0.20, rest: 0.18 },
-  };
-
-  function _ctx() {
-    // réutilise le contexte natif partagé (window.AC, créé par 02-audio.js)
-    return window.AC || (ctx ||= new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' }));
-  }
-
-  async function init() {
-    if (ready) return true;
-    if (initing) return initing;
-    initing = (async () => {
-      ctx = _ctx();
-      if (ctx.state !== 'running') { try { await ctx.resume(); } catch (e) {} }
-      const url = URL.createObjectURL(new Blob([PROCESSOR_SRC], { type: 'application/javascript' }));
-      await ctx.audioWorklet.addModule(url);
-      URL.revokeObjectURL(url);
-      node = new AudioWorkletNode(ctx, 'bowl-processor', {
-        numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2],
-      });
-      outGain = ctx.createGain();
-      outGain.gain.value = 0.9;
-      node.connect(outGain);
-      _route();
-      ready = true;
-      return true;
-    })();
-    return initing;
-  }
-
-  // Branche la sortie bol dans la chaîne FX partagée si dispo, sinon destination.
-  function _route() {
-    try {
-      if (typeof eqBands !== 'undefined' && eqBands.length) { outGain.connect(eqBands[0]); return; }
-    } catch (e) {}
-    outGain.connect(ctx.destination);
-  }
-
-  // ── Chargement de samples (lazy, décodé une fois) ────────────
-  async function loadSample(id, url) {
-    await init();
-    const res = await fetch(url);
-    const buf = await res.arrayBuffer();
-    const audio = await ctx.decodeAudioData(buf);
-    const chans = [];
-    for (let c = 0; c < audio.numberOfChannels; c++) chans.push(audio.getChannelData(c).slice());
-    node.port.postMessage({ type: 'loadSample', id, chans, sr: audio.sampleRate },
-      chans.map((a) => a.buffer));
-    if (!params.sampleIds.includes(id)) params.sampleIds.push(id);
-    return true;
-  }
-
-  // ── Déclenchement d'une voix ─────────────────────────────────
-  function strike(opts = {}) {
-    if (!ready) { init().then(() => strike(opts)); return; }
-    const scale = SCALES[params.scale] || SCALES.base432;
-    const freq = opts.freq ?? scale[(Math.random() * scale.length) | 0] * (opts.octave ?? 1);
-    const useSample = params.sampleIds.length && !opts.forceSynth;
-    node.port.postMessage({
-      type: 'trigger',
-      v: {
-        kind: opts.kind || 'strike',
-        freq,
-        dur: opts.dur ?? 6,
-        gain: opts.gain ?? 0.5,
-        pan: opts.pan ?? (Math.random() * 1.6 - 0.8),
-        sampleId: useSample ? params.sampleIds[(Math.random() * params.sampleIds.length) | 0] : null,
-        rate: opts.rate ?? 1,
-      },
-    });
-  }
-
-  // ── Jeu aléatoire (scheduler thread principal, jitter inaudible) ──
-  function _pickGesture() {
-    const w = params.weights;
-    // favorise la variété : réduit la proba de répéter le même geste
-    const adj = { ...w };
-    if (adj[lastGesture] !== undefined) adj[lastGesture] *= 0.4;
-    const total = Object.values(adj).reduce((a, b) => a + b, 0);
-    let r = Math.random() * total;
-    for (const k in adj) { if ((r -= adj[k]) <= 0) return (lastGesture = k); }
-    return (lastGesture = 'rest');
-  }
-
-  function _next() {
-    if (!playing) return;
-    const g = _pickGesture();
-    let wait;   // ms avant le prochain geste
-    switch (g) {
-      case 'long':
-        strike({ kind: 'strike', dur: 9 + Math.random() * 6, gain: 0.55 });
-        wait = (3 + Math.random() * 4) * 1000; break;
-      case 'short':
-        strike({ kind: 'strike', dur: 1.5 + Math.random() * 1.8, gain: 0.45, octave: Math.random() < 0.4 ? 2 : 1 });
-        wait = (0.8 + Math.random() * 1.8) * 1000; break;
-      case 'bowed':
-        strike({ kind: 'bowed', dur: 4 + Math.random() * 5, gain: 0.4 });
-        wait = (4 + Math.random() * 4) * 1000; break;
-      default: // rest
-        wait = (1.2 + Math.random() * 3) * 1000; break;
-    }
-    wait /= params.density;
-    schedTimer = setTimeout(_next, wait);
-  }
-
-  async function start() {
-    await init();
-    if (playing) return;
-    playing = true;
-    lastGesture = 'rest';
-    _next();
-  }
-
-  function stop() {
-    playing = false;
-    clearTimeout(schedTimer); schedTimer = null;
-    if (node) node.port.postMessage({ type: 'releaseAll' });
-  }
-
-  function setParams(p = {}) {
-    Object.assign(params, p);
-    if (p.weights) params.weights = { ...params.weights, ...p.weights };
-  }
-
-  return {
-    init, start, stop, strike, loadSample, setParams,
-    get ready() { return ready; },
-    get playing() { return playing; },
-    _params: params,
-  };
-})();
-
-if (typeof window !== 'undefined') window.Bowl = Bowl;
-
-</script>
 <script data-html-import-id="html-import-875">
 /* ═══════════════════════════════════════════
    09-samples.js — Moteur de samples (v3)

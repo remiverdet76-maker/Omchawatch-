@@ -112,7 +112,7 @@ input[type=range].pink::-webkit-slider-thumb{background:#FF6FA8;box-shadow:0 0 8
 // séparés + Δ) commutable par oscillateur. ──────────────────────────────
 const N_OSC = 7;
 const FILTER_TYPES = { off:'allpass', hpf:'highpass', bpf:'bandpass', lpf:'lowpass' };
-let AC = null, master = null, flowing = false, silenced = false;
+let AC = null, master = null, masterGlue = null, limiter = null, safetyClip = null, flowing = false, silenced = false;
 
 // #69 : un seul oscillateur actif par défaut (OSC 1) — les 6 autres
 // démarrent coupés (bouton mute déjà existant pour les réactiver un par un).
@@ -128,10 +128,70 @@ for (let i = 0; i < N_OSC; i++) {
 }
 let curOsc = 0;
 
+// #74 : watchdog qualité audio (portée d'OmcVibe/index.html §2.8b) — surveille
+// la dérive du setInterval (signal universel de thread JS saturé, fiable même
+// quand AudioContext.outputLatency est absent/figé sur WebView Android) et,
+// en cas de tension soutenue, coupe reverb/delay de tous les oscillateurs
+// (le calcul le plus lourd de ce module) pour soulager le thread audio.
+let AUDIO_QUALITY_TIER = 'full';
+let _audioWatchdogTimer = null, _audioStrainCount = 0, _wdLastCheckTs = 0;
+function _armAudioWatchdog() {
+  clearInterval(_audioWatchdogTimer); _audioWatchdogTimer = null;
+  _audioStrainCount = 0; _wdLastCheckTs = 0;
+  if (AUDIO_QUALITY_TIER === 'light') return;
+  _audioWatchdogTimer = setInterval(_audioWatchdogCheck, 3000);
+}
+function _audioWatchdogCheck() {
+  if (!flowing) return;
+  const now = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+  let strained = false;
+  if (_wdLastCheckTs && (now - _wdLastCheckTs) - 3000 > 600) strained = true;
+  _wdLastCheckTs = now;
+  try {
+    if (AC && typeof AC.outputLatency === 'number' && typeof AC.baseLatency === 'number' && AC.baseLatency > 0.001) {
+      if (AC.outputLatency > AC.baseLatency * 2.2) strained = true;
+    }
+  } catch(e) {}
+  if (strained) {
+    _audioStrainCount++;
+    if (_audioStrainCount >= 2) _degradeAudioQuality();
+  } else {
+    _audioStrainCount = 0;
+  }
+}
+function _degradeAudioQuality() {
+  _audioStrainCount = 0;
+  if (AUDIO_QUALITY_TIER === 'light') return;
+  AUDIO_QUALITY_TIER = 'light';
+  for (let i = 0; i < N_OSC; i++) { _gateOscRev(i, false); _gateOscDel(i, false); }
+  clearInterval(_audioWatchdogTimer); _audioWatchdogTimer = null;
+}
+
 function ensureAC() {
   if (AC) return;
-  AC = new (window.AudioContext || window.webkitAudioContext)();
-  master = AC.createGain(); master.gain.value = 0.8; master.connect(AC.destination);
+  AC = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 0.22 });
+  master = AC.createGain(); master.gain.value = 0.8;
+  // Chaîne de sécurité (portée d'OmcVibe/index.html, #74) : ce module n'avait
+  // AUCUNE protection anti-clip (master→destination direct) — jusqu'à 7
+  // oscillateurs (dont certains en binaural = 2 partiels) pouvaient s'additionner
+  // et dépasser 0dBFS, source probable de craquements/déchirements audibles.
+  // Glue doux (compresseur léger, seuil haut, ratio faible) → limiteur
+  // brickwall (dernier filet réglable) → soft-clip tanh SANS latence (garantie
+  // "jamais de dépassement" quoi qu'il arrive en amont, cf. index.html §2.4).
+  masterGlue = AC.createDynamicsCompressor();
+  masterGlue.threshold.value = -14; masterGlue.knee.value = 8; masterGlue.ratio.value = 1.5;
+  masterGlue.attack.value = 0.03; masterGlue.release.value = 0.25;
+  limiter = AC.createDynamicsCompressor();
+  limiter.threshold.value = -3.6; limiter.knee.value = 0; limiter.ratio.value = 20;
+  limiter.attack.value = 0.006; limiter.release.value = 0.18;
+  safetyClip = AC.createWaveShaper();
+  safetyClip.oversample = '4x';
+  { const n = 2048, curve = new Float32Array(n), k = 1.2, ceiling = 0.95;
+    for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; curve[i] = ceiling * Math.tanh(k * x) / Math.tanh(k); }
+    safetyClip.curve = curve; }
+  master.connect(masterGlue); masterGlue.connect(limiter);
+  limiter.connect(safetyClip); safetyClip.connect(AC.destination);
+  _armAudioWatchdog();
 }
 function _makeIR(c, decay) {
   const sr = c.sampleRate, len = Math.max(1, Math.floor(sr * decay));
@@ -148,7 +208,11 @@ function _buildOscNodes(o) {
   filt.type = FILTER_TYPES[o.filtMode] || 'allpass';
   filt.frequency.value = o.cutoff; filt.Q.value = o.res;
   const g = c.createGain(); g.gain.value = o.muted ? 0 : o.vol;
-  // Moteur FX PROPRE à cet oscillateur (pas de bus partagé) :
+  // Moteur FX PROPRE à cet oscillateur (pas de bus partagé) : #74 (perf) —
+  // le convolveur (reverb) et le tank delay ne sont connectés QUE si leur
+  // wet est réellement > 0 (comme index.html §2.4b) ; avant, les 7
+  // oscillateurs faisaient tourner 7 convolveurs en continu même à 0%,
+  // seul le RETOUR étant inaudible — vrai coût de calcul pour rien.
   const rev = c.createConvolver(); rev.buffer = _makeIR(c, 1.6);
   const revGain = c.createGain(); revGain.gain.value = o.revWet;
   const del = c.createDelay(1.2); del.delayTime.value = 0.28;
@@ -157,8 +221,11 @@ function _buildOscNodes(o) {
   del.connect(delFb); delFb.connect(del);
   g.connect(filt);
   filt.connect(master);
-  filt.connect(rev); rev.connect(revGain); revGain.connect(master);
-  filt.connect(del); del.connect(delGain); delGain.connect(master);
+  rev.connect(revGain); revGain.connect(master);
+  del.connect(delGain); delGain.connect(master);
+  let _revOn = false, _delOn = false;
+  if (o.revWet > 0.001 && AUDIO_QUALITY_TIER !== 'light') { filt.connect(rev); _revOn = true; }
+  if (o.delWet > 0.001 && AUDIO_QUALITY_TIER !== 'light') { filt.connect(del); _delOn = true; }
   let oscL = null, oscR = null, p = null, merge = null, lfo = null, lfoGain = null;
   if (o.bin) {
     merge = c.createChannelMerger(2);
@@ -179,7 +246,19 @@ function _buildOscNodes(o) {
     lfoGain = c.createGain(); lfoGain.gain.value = o.lfoDepth * o.vol;
     lfo.connect(lfoGain); lfoGain.connect(g.gain); lfo.start();
   }
-  return { filt, g, rev, revGain, del, delFb, delGain, oscL, oscR, merge, lfo, lfoGain };
+  return { filt, g, rev, revGain, del, delFb, delGain, oscL, oscR, merge, lfo, lfoGain, _revOn, _delOn };
+}
+// #74 (perf) : (re)connecte/déconnecte l'entrée du convolveur/tank d'un
+// oscillateur — appelé au changement de wet (0↔>0) et par le watchdog.
+function _gateOscRev(i, on) {
+  const n = OSC[i] && OSC[i].nodes; if (!n || !n.filt || !n.rev) return;
+  if (on === n._revOn) return;
+  try { on ? n.filt.connect(n.rev) : n.filt.disconnect(n.rev); n._revOn = on; } catch(e) {}
+}
+function _gateOscDel(i, on) {
+  const n = OSC[i] && OSC[i].nodes; if (!n || !n.filt || !n.del) return;
+  if (on === n._delOn) return;
+  try { on ? n.filt.connect(n.del) : n.filt.disconnect(n.del); n._delOn = on; } catch(e) {}
 }
 function _teardownOscNodes(o) {
   if (!o.nodes) return;
@@ -295,12 +374,20 @@ function setOscLfo(i, v) {
 }
 function setOscRevWet(i, v) {
   const o = OSC[i]; o.revWet = Math.max(0, Math.min(1, parseFloat(v)));
-  if (o.nodes) o.nodes.revGain.gain.setTargetAtTime(o.revWet, AC.currentTime, 0.08);
+  if (o.nodes) {
+    if (o.revWet > 0.001 && AUDIO_QUALITY_TIER !== 'light') _gateOscRev(i, true);
+    o.nodes.revGain.gain.setTargetAtTime(o.revWet, AC.currentTime, 0.08);
+    if (o.revWet <= 0.001) setTimeout(() => { if (OSC[i].revWet <= 0.001) _gateOscRev(i, false); }, 550);
+  }
   renderOsc(i);
 }
 function setOscDelWet(i, v) {
   const o = OSC[i]; o.delWet = Math.max(0, Math.min(1, parseFloat(v)));
-  if (o.nodes) o.nodes.delGain.gain.setTargetAtTime(o.delWet, AC.currentTime, 0.08);
+  if (o.nodes) {
+    if (o.delWet > 0.001 && AUDIO_QUALITY_TIER !== 'light') _gateOscDel(i, true);
+    o.nodes.delGain.gain.setTargetAtTime(o.delWet, AC.currentTime, 0.08);
+    if (o.delWet <= 0.001) setTimeout(() => { if (OSC[i].delWet <= 0.001) _gateOscDel(i, false); }, 450);
+  }
   renderOsc(i);
 }
 function oscReset(i) {
