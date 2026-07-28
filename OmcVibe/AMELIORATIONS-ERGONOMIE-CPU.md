@@ -1289,3 +1289,43 @@ du tiroir, bascule entre tous les onglets, respiration on/off (change
 bien la géométrie/projection), bouton retour → chooser, aucune régression
 sur les fonctions existantes (modes, expansion maximale, BPM, ping-pong,
 binaural). 0 erreur JS, syntaxe vérifiée (`node --check`).
+
+## #71 : sphère coupée qui "disparaît" + solo maître cassé
+
+Deux signalements liés au défaut #69 (1 seul oscillateur actif au
+démarrage) :
+
+**1/ Visuel — sphère coupée illisible.** `.vp-p.vp-muted` était à
+`opacity:.12` — quasi invisible sur le fond sombre. Comme #69 fait
+démarrer 6 des 7 sphères dans cet état, l'écran de départ semblait
+presque vide. Corrigé : les sphères coupées restent bien visibles,
+rendues en quartz blanc plat (dégradé radial pâle, bordure claire) et
+**sans halo** (`box-shadow:none`), au lieu de disparaître.
+
+**2/ Bug réel — solo maître (et le solo générique du menu rapide,
+utilisé aussi par la sphère maître) cassés.** `soloMaster()`/`soloPair()`
+déduisaient "est-on déjà en solo ?" en vérifiant si toutes les autres
+paires sont actuellement coupées — un raccourci qui marchait tant que
+l'état de départ normal était "tout actif". Depuis #69, l'état de départ
+EST déjà "tout coupé sauf le maître", donc cette déduction est fausse dès
+le premier appui : `currentlySoloed` valait déjà `true` par défaut, donc
+`solo = !currentlySoloed` valait `false` — le premier appui sur "Solo
+maître" RÉACTIVAIT tout au lieu d'isoler le maître (l'inverse de l'effet
+voulu). Le commentaire du code documentait même explicitement cette
+hypothèse ("soloPair interroge l'état courant, pas besoin de mémoriser")
+— exactement l'hypothèse invalidée par #69.
+
+Corrigé en remplaçant la déduction par un état explicite (`_soloedIdx` +
+`_soloSnapshot`) : fiable quel que soit l'état de départ, et qui en
+prime restaure maintenant l'état RÉEL d'avant le solo au lieu de tout
+réactiver aveuglément (si seules 2 paires jouaient avant le solo, seules
+ces 2 paires reviennent — pas les 6). `soloMaster()` devient un simple
+raccourci vers `soloPair(MASTER_IDX)` (les deux étaient déjà le même
+code dupliqué).
+
+Testé par script Playwright : scénario "jam réel" (2 satellites actifs,
+solo isole bien le maître puis restaure exactement les 2 satellites
+d'origine) et scénario "démarrage vierge" (le tout premier appui isole
+correctement, ne réactive plus tout par erreur) — les deux passent.
+Sphère coupée : `opacity:.62`, `box-shadow:none`, dégradé quartz blanc
+confirmés par style calculé + capture d'écran. 0 erreur JS.

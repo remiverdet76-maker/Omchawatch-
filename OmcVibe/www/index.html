@@ -309,7 +309,13 @@ body{
 .vp-p:hover{filter:brightness(1.5);transform:scale(1.1);}
 .vp-p:active{animation:tap-flash .25s ease-out;}
 @keyframes tap-flash{0%{filter:brightness(2.2);transform:scale(1.15);}100%{filter:brightness(1);transform:scale(1);}}
-.vp-p.vp-muted{opacity:.12;filter:saturate(.06);}
+/* #71 : coupée ≠ invisible — quartz blanc plat, sans halo, toujours repérable */
+.vp-p.vp-muted{
+  opacity:.62;filter:none;
+  background:radial-gradient(circle,rgba(232,228,240,.24) 0%,rgba(232,228,240,.09) 58%,rgba(20,5,38,.55) 100%) !important;
+  border-color:rgba(236,232,244,.4) !important;
+  box-shadow:none !important;
+}
 .vp-p.vp-live{animation:vplive 8s ease-in-out infinite;}
 @keyframes vplive{0%,100%{filter:brightness(1);}50%{filter:brightness(1.38);}}
 .vp-type{font-family:'Cinzel Decorative',serif;font-size:.65rem;letter-spacing:.06em;opacity:.7;}
@@ -5198,50 +5204,56 @@ function toggleMutePair(i) {
   try { navigator.vibrate && navigator.vibrate(12); } catch(x) {}
   updatePairUI(i); updateMasterState(); saveState();
 }
-// Solo maître : coupe toutes les paires satellites, ne garde que la fréquence
-// maître. Bascule (rappel = restaure les volumes précédents des satellites).
-let _soloedBeforeMute = null;
-function soloMaster() {
-  const currentlySoloed = PAIRS.every((p, i) =>
-    i === MASTER_IDX || (mutedOscs[p.pingala.id] && mutedOscs[p.ida.id]));
-  const solo = !currentlySoloed;
-  PAIRS.forEach((p, i) => {
-    if (i === MASTER_IDX) return;
-    mutedOscs[p.pingala.id] = solo;
-    mutedOscs[p.ida.id]     = solo;
-    const np = nodes[p.pingala.id], ni = nodes[p.ida.id];
-    if (np) safeRamp(np.g.gain, solo ? 0 : p.pingala.vol, 0.4);
-    if (ni) safeRamp(ni.g.gain, solo ? 0 : p.ida.vol, 0.4);
-    updatePairUI(i);
-  });
-  updateMasterState();
-  saveState();
-  return solo;
-}
-
-// #45 : solo générique — coupe tout SAUF la paire i (peut être le maître).
-// Même logique que soloMaster (état interrogé, pas mémorisé à part : un
-// second appel avec le même i restaure tout le monde). Utilisé par le
-// bouton gauche du menu rapide de chaque sphère (Solo / All).
+// #45/#71 : solo générique — coupe tout SAUF la paire i (peut être le maître).
+// #71 : l'ancienne version interrogeait l'état courant ("toutes les autres
+// paires sont-elles mute ?") pour déduire si on est déjà en solo — cassé
+// par #69 (une seule paire active par défaut au démarrage = ressemble déjà
+// à un solo maître avant même d'y toucher). Remplacé par un état explicite
+// (_soloedIdx) : fiable quel que soit l'état de départ, et restaure
+// maintenant l'état RÉEL d'avant le solo (pas un "tout réactiver" aveugle).
+let _soloedIdx = null;
+let _soloSnapshot = null;
 function soloPair(i) {
-  const currentlySoloed = PAIRS.every((p, j) =>
-    j === i || (mutedOscs[p.pingala.id] && mutedOscs[p.ida.id]));
-  const solo = !currentlySoloed;
+  if (_soloedIdx === i) {
+    // Se désengage : restaure l'état de chaque paire tel qu'il était avant le solo.
+    PAIRS.forEach((p, j) => {
+      if (j === i) return;
+      const wasMutedP = _soloSnapshot ? !!_soloSnapshot[p.pingala.id] : false;
+      const wasMutedI = _soloSnapshot ? !!_soloSnapshot[p.ida.id]     : false;
+      mutedOscs[p.pingala.id] = wasMutedP;
+      mutedOscs[p.ida.id]     = wasMutedI;
+      const np = nodes[p.pingala.id], ni = nodes[p.ida.id];
+      if (np) safeRamp(np.g.gain, wasMutedP ? 0 : p.pingala.vol, 0.4);
+      if (ni) safeRamp(ni.g.gain, wasMutedI ? 0 : p.ida.vol, 0.4);
+      updatePairUI(j);
+    });
+    _soloedIdx = null; _soloSnapshot = null;
+    updateMasterState(); saveState();
+    return false;
+  }
+  // S'engage sur i : mémorise l'état actuel de chaque autre paire avant de tout couper.
+  _soloSnapshot = {};
   PAIRS.forEach((p, j) => {
     if (j === i) return;
-    mutedOscs[p.pingala.id] = solo;
-    mutedOscs[p.ida.id]     = solo;
+    _soloSnapshot[p.pingala.id] = !!mutedOscs[p.pingala.id];
+    _soloSnapshot[p.ida.id]     = !!mutedOscs[p.ida.id];
+    mutedOscs[p.pingala.id] = true;
+    mutedOscs[p.ida.id]     = true;
     const np = nodes[p.pingala.id], ni = nodes[p.ida.id];
-    if (np) safeRamp(np.g.gain, solo ? 0 : p.pingala.vol, 0.4);
-    if (ni) safeRamp(ni.g.gain, solo ? 0 : p.ida.vol, 0.4);
+    if (np) safeRamp(np.g.gain, 0, 0.4);
+    if (ni) safeRamp(ni.g.gain, 0, 0.4);
     updatePairUI(j);
   });
-  updateMasterState();
-  saveState();
-  return solo;
+  _soloedIdx = i;
+  updateMasterState(); saveState();
+  return true;
 }
 function isPairSoloed(i) {
-  return PAIRS.every((p, j) => j === i || (mutedOscs[p.pingala.id] && mutedOscs[p.ida.id]));
+  return _soloedIdx === i;
+}
+// Solo maître : raccourci de soloPair(MASTER_IDX), utilisé par le dock (appui long ROUGE).
+function soloMaster() {
+  return soloPair(MASTER_IDX);
 }
 
 // #44 : volUI = valeur du slider (0-1, "contraction max / expansion max").
