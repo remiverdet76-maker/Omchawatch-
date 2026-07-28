@@ -1,0 +1,1944 @@
+<!doctype html>
+<html lang="fr"><head>
+<script>
+/* OmCha396 — audio centralise : ce module reste muet quand il est embarque
+   (le binaural d'Omcha396 est la seule source). En page autonome : inchange. */
+(function(){
+  if (window.self === window.top) return;
+  try {
+    var P = window.AudioNode && AudioNode.prototype;
+    if (P && P.connect) {
+      var _c = P.connect;
+      P.connect = function(dest){
+        try {
+          if (dest && ((window.AudioDestinationNode && dest instanceof window.AudioDestinationNode) ||
+              (dest.constructor && dest.constructor.name === "AudioDestinationNode"))) {
+            return dest;
+          }
+        } catch(e){}
+        return _c.apply(this, arguments);
+      };
+    }
+  } catch(e){}
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPHÈRE 432</title>
+<style>
+
+:root{
+  --void:#010306;
+  --c432:#00ccff;
+  --cexp:#00ff88;
+  --ccont:#ff6600;
+  --cflux:#ff0066;
+  --cbpm:#ffcc00;
+  --cbeat:#ff0066;
+  --cgold:#e8a020;
+  --cviolet:#8855ff;
+  --text:#7a9ab0;
+  --bright:#ddeeff;
+  --mono:'Share Tech Mono',monospace;
+  --orb:'Orbitron',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--void);color:var(--text);font-family:var(--mono);}
+
+/* CANVAS STACK */
+#cvUniverse{position:fixed;inset:0;z-index:0;pointer-events:none;}
+#cvSphere{position:fixed;inset:0;z-index:1;}
+#ui{position:fixed;inset:0;z-index:10;pointer-events:none;}
+
+/* ── HEADER ── */
+#hdr{
+  position:absolute;top:18px;left:24px;pointer-events:auto;
+}
+#hdr-title{
+  font-family:var(--orb);font-size:28px;font-weight:700;
+  color:var(--c432);letter-spacing:.08em;line-height:1;
+  text-shadow:0 0 30px rgba(0,204,255,.5),0 0 60px rgba(0,204,255,.2);
+}
+#hdr-sub{font-size:9px;letter-spacing:.35em;opacity:.45;text-transform:uppercase;margin-top:4px;}
+#hdr-ratio{font-size:11px;color:var(--c432);opacity:.7;margin-top:2px;letter-spacing:.05em;}
+
+/* ── TOP RIGHT TOOLBAR ── */
+#toolbar{
+  position:absolute;top:18px;right:18px;
+  display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;
+  pointer-events:auto;max-width:600px;
+}
+.tbtn{
+  font-family:var(--mono);font-size:9px;letter-spacing:.15em;
+  padding:7px 12px;cursor:pointer;text-transform:uppercase;
+  border-radius:2px;transition:all .18s;
+  background:rgba(1,3,6,.9);
+  border:1px solid rgba(0,204,255,.2);
+  color:var(--c432);
+  backdrop-filter:blur(10px);
+  white-space:nowrap;
+}
+.tbtn:hover{background:rgba(0,204,255,.1);border-color:rgba(0,204,255,.5);}
+.tbtn.on{background:rgba(0,204,255,.15);border-color:rgba(0,204,255,.7);color:#fff;}
+.tbtn.exp{border-color:rgba(0,255,136,.3);color:var(--cexp);}
+.tbtn.exp.on{background:rgba(0,255,136,.12);}
+.tbtn.cont{border-color:rgba(255,102,0,.3);color:var(--ccont);}
+.tbtn.cont.on{background:rgba(255,102,0,.12);}
+.tbtn.flux-c{border-color:rgba(255,0,102,.3);color:var(--cflux);}
+.tbtn.flux-c.on{background:rgba(255,0,102,.12);}
+.tbtn.bpm-c{border-color:rgba(255,204,0,.3);color:var(--cbpm);}
+.tbtn.bpm-c.on{background:rgba(255,204,0,.12);}
+.tbtn.pp-c{border-color:rgba(136,85,255,.3);color:var(--cviolet);}
+.tbtn.pp-c.on{background:rgba(136,85,255,.12);}
+
+/* ── LEFT PANEL (modes) ── */
+#panModes{
+  position:absolute;top:66px;left:18px;width:190px;
+  background:rgba(1,3,6,.93);border:1px solid rgba(0,204,255,.12);
+  border-radius:3px;padding:14px;pointer-events:auto;
+  backdrop-filter:blur(12px);display:none;
+}
+#panModes.open{display:block;}
+.psec-title{
+  font-size:8px;letter-spacing:.3em;text-transform:uppercase;
+  margin-bottom:8px;padding-bottom:5px;
+  border-bottom:1px solid rgba(0,204,255,.08);
+}
+.psec-title.exp{color:var(--cexp);}
+.psec-title.cont{color:var(--ccont);}
+.psec-title.spec{color:var(--c432);}
+.mrow{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 8px;margin-bottom:4px;cursor:pointer;
+  border:1px solid rgba(0,204,255,.08);border-radius:2px;
+  font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  transition:all .15s;
+}
+.mrow:hover{border-color:rgba(0,204,255,.3);background:rgba(0,204,255,.04);}
+.mrow.on{border-color:var(--c432);background:rgba(0,204,255,.1);color:var(--bright);}
+.mrow.exp{color:var(--cexp);border-color:rgba(0,255,136,.08);}
+.mrow.exp:hover{border-color:var(--cexp);}
+.mrow.exp.on{border-color:var(--cexp);background:rgba(0,255,136,.08);}
+.mrow.cont{color:var(--ccont);border-color:rgba(255,102,0,.08);}
+.mrow.cont:hover{border-color:var(--ccont);}
+.mrow.cont.on{border-color:var(--ccont);background:rgba(255,102,0,.08);}
+.mrow.flux{color:var(--cflux);border-color:rgba(255,0,102,.08);}
+.mrow.flux:hover,.mrow.flux.on{border-color:var(--cflux);background:rgba(255,0,102,.06);}
+.mrow.pp{color:var(--cviolet);border-color:rgba(136,85,255,.08);}
+.mrow.pp:hover,.mrow.pp.on{border-color:var(--cviolet);background:rgba(136,85,255,.06);}
+.mrow.maxexp{color:#ffd700;border-color:rgba(255,215,0,.15);background:rgba(255,215,0,.02);}
+.mrow.maxexp:hover{border-color:rgba(255,215,0,.5);background:rgba(255,215,0,.06);}
+.mrow.maxexp.on{border-color:#ffd700;background:rgba(255,215,0,.1);color:#fff8dc;box-shadow:0 0 12px rgba(255,215,0,.15);}
+.mrow-ratio{font-size:8px;opacity:.5;}
+.psec-gap{height:10px;}
+
+/* ── MODE EXPANSION MAXIMALE ── */
+#maxExpOverlay{
+  position:fixed;inset:0;pointer-events:none;z-index:3;
+  opacity:0;transition:opacity 2s ease;
+}
+#maxExpOverlay.on{opacity:1;}
+.maxexp-ring{
+  position:absolute;border-radius:50%;border-style:solid;
+  left:50%;top:50%;transform:translate(-50%,-50%);
+  animation:maxring 0s linear infinite;
+  opacity:0;
+}
+@keyframes maxring{
+  0%  {transform:translate(-50%,-50%) scale(0.4);opacity:.7;}
+  100%{transform:translate(-50%,-50%) scale(3.5);opacity:0;}
+}
+#maxExpLabel{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:var(--orb);font-size:11px;font-weight:300;
+  color:#ffd700;letter-spacing:.4em;text-transform:uppercase;
+  opacity:0;transition:opacity 1.5s ease;pointer-events:none;
+  text-shadow:0 0 30px rgba(255,215,0,.6),0 0 60px rgba(255,215,0,.3);
+  z-index:25;text-align:center;line-height:1.8;
+}
+#maxExpLabel.on{opacity:.85;}
+.tbtn.maxexp-c{border-color:rgba(255,215,0,.3);color:#ffd700;}
+.tbtn.maxexp-c.on{background:rgba(255,215,0,.12);border-color:rgba(255,215,0,.7);}
+
+/* ── RIGHT PANEL (params) ── */
+#panParams{
+  position:absolute;top:66px;right:18px;width:240px;
+  max-height:calc(100vh - 100px);overflow-y:auto;scrollbar-width:none;
+  pointer-events:auto;display:block;
+}
+#panParams::-webkit-scrollbar{display:none;}
+.pcard{
+  background:rgba(1,3,6,.92);border:1px solid rgba(0,204,255,.1);
+  border-radius:2px;padding:13px;margin-bottom:7px;
+  backdrop-filter:blur(10px);
+}
+.pcard-title{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--c432);opacity:.6;margin-bottom:11px;}
+.pr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+.pl{font-size:9px;opacity:.65;}
+.pv{font-size:10px;color:var(--bright);min-width:55px;text-align:right;}
+input[type=range]{
+  width:100%;-webkit-appearance:none;height:2px;
+  background:rgba(0,204,255,.12);border-radius:1px;outline:none;margin-top:3px;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:9px;height:9px;border-radius:50%;
+  background:var(--c432);cursor:pointer;box-shadow:0 0 6px rgba(0,204,255,.6);
+}
+input[type=range].rexp::-webkit-slider-thumb{background:var(--cexp);box-shadow:0 0 6px rgba(0,255,136,.5);}
+input[type=range].rcont::-webkit-slider-thumb{background:var(--ccont);box-shadow:0 0 6px rgba(255,102,0,.5);}
+input[type=range].rgold::-webkit-slider-thumb{background:var(--cgold);}
+input[type=range].rviolet::-webkit-slider-thumb{background:var(--cviolet);}
+input[type=checkbox]{accent-color:var(--c432);width:13px;height:13px;cursor:pointer;}
+select{
+  background:rgba(0,204,255,.07);border:1px solid rgba(0,204,255,.18);
+  color:var(--bright);font-family:var(--mono);font-size:9px;
+  padding:3px 5px;border-radius:1px;outline:none;cursor:pointer;
+}
+.btn{
+  width:100%;font-family:var(--mono);font-size:9px;letter-spacing:.15em;
+  padding:6px;cursor:pointer;text-transform:uppercase;border-radius:1px;
+  background:rgba(0,204,255,.07);border:1px solid rgba(0,204,255,.18);
+  color:var(--c432);transition:all .18s;margin-top:5px;
+}
+.btn:hover{background:rgba(0,204,255,.15);border-color:rgba(0,204,255,.4);}
+.sphere-list{display:flex;flex-direction:column;gap:4px;}
+.si{display:flex;align-items:center;gap:7px;padding:4px;border-radius:2px;cursor:pointer;transition:background .15s;}
+.si:hover{background:rgba(0,204,255,.05);}
+.si-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.si-name{font-size:9px;flex:1;}
+.si-freq{font-size:9px;color:var(--bright);opacity:.6;}
+
+/* ── OSC CARDS ── */
+.osc-card{
+  border:1px solid rgba(0,204,255,.09);border-radius:2px;
+  padding:10px;margin-bottom:7px;background:rgba(1,3,6,.6);
+}
+.osc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+.osc-label{font-size:8px;letter-spacing:.2em;text-transform:uppercase;}
+.osc-dot{
+  width:9px;height:9px;border-radius:50%;cursor:pointer;
+  border:1px solid rgba(0,204,255,.3);transition:all .2s;
+}
+.osc-dot.on{background:var(--c432);box-shadow:0 0 8px rgba(0,204,255,.7);border-color:var(--c432);}
+
+/* ── BPM PANEL ── */
+#panBpm{
+  position:absolute;bottom:88px;left:50%;transform:translateX(-50%);
+  background:rgba(1,3,6,.95);border:1px solid rgba(255,204,0,.2);
+  border-radius:3px;padding:16px 24px;pointer-events:auto;
+  backdrop-filter:blur(14px);text-align:center;display:none;min-width:180px;
+}
+#panBpm.open{display:block;}
+#bpmVal{font-family:var(--orb);font-size:48px;font-weight:300;color:var(--cbpm);line-height:1;text-shadow:0 0 20px rgba(255,204,0,.4);}
+#bpmLabel{font-size:8px;letter-spacing:.35em;opacity:.4;text-transform:uppercase;margin-top:3px;}
+#bpmDot{width:12px;height:12px;border-radius:50%;background:var(--cbpm);margin:9px auto 0;opacity:0;box-shadow:0 0 10px var(--cbpm);}
+.bpm-ctrl{display:flex;align-items:center;gap:9px;margin-top:10px;justify-content:center;}
+.bpmB{
+  background:rgba(255,204,0,.1);border:1px solid rgba(255,204,0,.25);
+  color:var(--cbpm);font-family:var(--mono);font-size:16px;
+  padding:3px 13px;cursor:pointer;border-radius:1px;line-height:1;
+}
+.bpmB:hover{background:rgba(255,204,0,.2);}
+input[type=range].rbpm{width:100px;}
+input[type=range].rbpm::-webkit-slider-thumb{background:var(--cbpm);box-shadow:0 0 6px rgba(255,204,0,.5);}
+
+/* ── BINAURAL PANEL ── */
+#panBin{
+  position:absolute;bottom:78px;left:50%;transform:translateX(-50%);
+  width:560px;max-width:calc(100vw - 30px);
+  background:rgba(1,3,6,.97);border:1px solid rgba(0,204,255,.2);
+  border-radius:3px;padding:18px;pointer-events:auto;
+  backdrop-filter:blur(16px);display:none;
+}
+#panBin.open{display:block;}
+.bin-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.bin-title{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--c432);}
+.bin-x{font-size:15px;cursor:pointer;opacity:.4;background:none;border:none;color:var(--text);}
+.bin-x:hover{opacity:1;}
+.bin-freqs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;}
+.bfl{font-size:8px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:4px;}
+.bfl.L{color:#0099ff;}.bfl.R{color:#ff6600;}
+.bfv{font-family:var(--orb);font-size:20px;color:var(--bright);letter-spacing:.04em;}
+.bin-beat-lbl{font-size:10px;color:var(--cbeat);text-align:center;letter-spacing:.2em;margin-bottom:10px;text-shadow:0 0 10px rgba(255,0,102,.4);}
+#cvWave{width:100%;height:36px;margin-bottom:10px;border-radius:2px;}
+.bin-row{margin-bottom:9px;}
+.bin-rl{display:flex;justify-content:space-between;font-size:8px;opacity:.55;margin-bottom:3px;letter-spacing:.12em;text-transform:uppercase;}
+.bin-rv{color:var(--bright);opacity:1;}
+.bin-finput{display:flex;gap:7px;align-items:center;margin-bottom:5px;}
+input[type=number]{
+  background:rgba(0,204,255,.07);border:1px solid rgba(0,204,255,.2);
+  color:var(--bright);font-family:var(--mono);font-size:10px;
+  padding:3px 6px;border-radius:1px;outline:none;width:88px;text-align:right;
+}
+input[type=range].rL::-webkit-slider-thumb{background:#0099ff;box-shadow:0 0 6px rgba(0,153,255,.6);}
+input[type=range].rR::-webkit-slider-thumb{background:#ff6600;box-shadow:0 0 6px rgba(255,102,0,.6);}
+input[type=range].rBeat::-webkit-slider-thumb{background:var(--cbeat);}
+.bin-presets{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.pre{
+  font-size:7px;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 9px;border:1px solid rgba(0,204,255,.12);
+  background:rgba(0,204,255,.03);color:var(--text);cursor:pointer;border-radius:1px;transition:all .15s;
+}
+.pre:hover{border-color:rgba(0,204,255,.35);color:var(--bright);}
+.pre.on{border-color:var(--c432);color:var(--c432);background:rgba(0,204,255,.1);}
+.bin-foot{display:flex;gap:7px;align-items:center;}
+.bin-pp-row{display:flex;align-items:center;gap:6px;font-size:9px;opacity:.7;}
+.binPlay{
+  flex:1;font-family:var(--mono);font-size:9px;letter-spacing:.2em;
+  padding:9px;cursor:pointer;text-transform:uppercase;border-radius:1px;
+  background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.25);color:var(--c432);transition:all .2s;
+}
+.binPlay:hover{background:rgba(0,204,255,.18);}
+.binPlay.on{background:rgba(255,0,102,.1);border-color:rgba(255,0,102,.35);color:var(--cflux);animation:ppls 1.2s ease-in-out infinite;}
+@keyframes ppls{0%,100%{box-shadow:0 0 0 rgba(255,0,102,0);}50%{box-shadow:0 0 14px rgba(255,0,102,.3);}}
+.vubar{height:2px;background:linear-gradient(90deg,var(--c432),var(--cbeat));margin-top:7px;transform-origin:left;transform:scaleX(0);transition:transform .1s;}
+
+/* ── MASTER PANEL ── */
+#panMaster{
+  position:absolute;bottom:78px;right:18px;width:210px;
+  background:rgba(1,3,6,.97);border:1px solid rgba(232,160,32,.2);
+  border-radius:3px;padding:14px;pointer-events:auto;
+  backdrop-filter:blur(14px);display:none;
+}
+#panMaster.open{display:block;}
+.mast-title{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--cgold);opacity:.65;margin-bottom:12px;}
+.mast-row{margin-bottom:9px;}
+.mast-lbl{display:flex;justify-content:space-between;font-size:8px;opacity:.55;margin-bottom:3px;letter-spacing:.1em;}
+.mast-v{color:var(--bright);opacity:1;}
+input[type=range].rm{background:rgba(232,160,32,.1);}
+input[type=range].rm::-webkit-slider-thumb{background:var(--cgold);box-shadow:0 0 5px rgba(232,160,32,.5);}
+.meter-track{height:4px;background:rgba(232,160,32,.08);border-radius:2px;margin-top:7px;overflow:hidden;}
+.meter-fill{height:100%;background:linear-gradient(90deg,#00ff88,#e8a020,#ff0066);border-radius:2px;width:60%;transition:width .07s;}
+
+/* ── PP PANEL ── */
+#panPP{
+  position:absolute;bottom:78px;left:18px;width:190px;
+  background:rgba(1,3,6,.95);border:1px solid rgba(136,85,255,.2);
+  border-radius:3px;padding:14px;pointer-events:auto;
+  backdrop-filter:blur(14px);display:none;
+}
+#panPP.open{display:block;}
+.pp-title{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--cviolet);opacity:.65;margin-bottom:12px;}
+
+/* ── INFO BAR ── */
+#infobar{
+  position:absolute;bottom:18px;left:18px;right:18px;
+  display:flex;justify-content:space-between;align-items:flex-end;
+  pointer-events:none;
+}
+.ib{background:rgba(1,3,6,.82);border:1px solid rgba(0,204,255,.08);padding:8px 13px;border-radius:2px;backdrop-filter:blur(8px);}
+.ib-k{font-size:7px;letter-spacing:.25em;opacity:.4;text-transform:uppercase;}
+.ib-v{font-size:12px;color:var(--bright);margin-top:2px;}
+.ib-v.rose{color:var(--cbeat);text-shadow:0 0 8px rgba(255,0,102,.4);}
+.ib-v.gold{color:var(--cgold);}
+.ib-v.exp{color:var(--cexp);}
+.ib-v.cont{color:var(--ccont);}
+
+/* ── MODE FLASH ── */
+#mflash{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  pointer-events:none;font-family:var(--orb);font-size:13px;font-weight:700;
+  letter-spacing:.35em;text-transform:uppercase;
+  padding:5px 18px;border-radius:2px;
+  opacity:0;transition:opacity .4s;z-index:20;
+}
+#mflash.show{opacity:1;}
+
+/* ── KBD HINT ── */
+#kbdhint{
+  position:absolute;bottom:72px;left:50%;transform:translateX(-50%);
+  font-size:8px;letter-spacing:.18em;opacity:.18;text-transform:uppercase;
+  pointer-events:none;white-space:nowrap;
+}
+#draghint{
+  position:absolute;bottom:72px;left:50%;transform:translateX(-50%);
+  font-size:8px;letter-spacing:.25em;opacity:.2;text-transform:uppercase;
+  pointer-events:none;white-space:nowrap;
+  animation:fhint 4s ease-out forwards;
+}
+@keyframes fhint{0%{opacity:.2;}75%{opacity:.2;}100%{opacity:0;pointer-events:none;}}
+</style>
+<style id="cosmic-bg-override">
+  html,body{background:transparent !important;}
+  #cvUniverse,#cvSphere{mix-blend-mode:screen;}
+</style>
+</head>
+<body data-html-import-id="html-import-0" data-template-id="__page-root" style="background: rgb(1, 3, 6);">
+<canvas id="cvUniverse" width="1280" height="1024" data-html-import-id="html-import-1"></canvas>
+<canvas id="cvSphere" width="1280" height="1024" data-html-import-id="html-import-2"></canvas>
+<div id="ui" data-html-import-id="html-import-3">
+
+<!-- HEADER -->
+<div id="hdr" data-html-import-id="html-import-4">
+  <div id="hdr-title" data-html-import-id="html-import-5" data-template-id="div-0" class="canva-container" style="font-family: Orbitron; font-weight: 700; font-size: 28px;">SPHÈRE 432</div>
+  <div id="hdr-sub" data-html-import-id="html-import-6" data-template-id="div-1" class="canva-container" style="color: rgb(122, 154, 176); font-size: 9px;">Expansion Fractale · Centre 432</div>
+  <div id="hdr-ratio" data-html-import-id="html-import-7" data-template-id="div-2" class="canva-container" style="color: rgb(0, 204, 255); font-size: 11px;">432 / 360 = 6/5 → n+1/n</div>
+</div>
+
+<!-- TOOLBAR -->
+<div id="toolbar" data-html-import-id="html-import-8">
+  <button class="tbtn" onclick="location.href='sphere-flux.html'" style="background:rgba(1,3,6,.9);color:rgb(232,160,32);font-family:'Share Tech Mono';font-size:9px;">← Retour</button>
+  <button class="tbtn canva-button" id="tModes" data-html-import-id="html-import-9" data-template-id="button-3" style="background: rgba(1, 3, 6, 0.9); color: rgb(0, 204, 255); font-family: &quot;Share Tech Mono&quot;; font-size: 9px;">⊞ MODES</button>
+  <button class="tbtn maxexp-c canva-button" id="tMaxExp" onclick="toggleMaxExp()" data-html-import-id="html-import-10" data-template-id="button-4" style="background: rgba(1, 3, 6, 0.9); color: rgb(255, 215, 0); font-family: &quot;Share Tech Mono&quot;; font-size: 9px;">✦ 360×432^(432×432)</button>
+  <button class="tbtn canva-button" id="tBin" data-html-import-id="html-import-11" data-template-id="button-5" style="background: rgba(1, 3, 6, 0.9); color: rgb(0, 204, 255); font-family: &quot;Share Tech Mono&quot;; font-size: 9px;">⬡ BINAURAL</button>
+  <button class="tbtn bpm-c canva-button" id="tBpm" data-html-import-id="html-import-12" data-template-id="button-6" style="background: rgba(1, 3, 6, 0.9); color: rgb(255, 204, 0); font-family: &quot;Share Tech Mono&quot;; font-size: 9px;">◉ BPM</button>
+  <button class="tbtn pp-c canva-button" id="tPP" data-html-import-id="html-import-13" data-template-id="button-7" style="background: rgba(1, 3, 6, 0.9); color: rgb(136, 85, 255); font-family: &quot;Share Tech Mono&quot;; font-size: 9px;">⇄ PING-PONG</button>
+  <button class="tbtn canva-button" id="tMaster" data-html-import-id="html-import-14" data-template-id="button-8" style="background: rgba(1, 3, 6, 0.9); color: rgb(0, 204, 255); font-family: &quot;Share Tech Mono&quot;; font-size: 9px;">◈ MASTER</button>
+  <button class="tbtn canva-button" id="tParams" data-html-import-id="html-import-15" data-template-id="button-9" style="background: rgba(1, 3, 6, 0.9); color: rgb(0, 204, 255); font-family: &quot;Share Tech Mono&quot;; font-size: 9px;">≡ PARAMS</button>
+  <button class="tbtn canva-button" id="tFS" data-html-import-id="html-import-16" data-template-id="button-10" style="background: rgba(1, 3, 6, 0.9); color: rgb(0, 204, 255); font-family: &quot;Share Tech Mono&quot;; font-size: 9px;">⤢ PLEIN ÉCRAN</button>
+</div>
+
+<!-- MODES PANEL -->
+<div id="panModes" data-html-import-id="html-import-17" data-template-id="div-11" class="canva-container" style="background: rgba(1, 3, 6, 0.93);">
+  <div class="psec-title exp canva-container" data-html-import-id="html-import-18" data-template-id="div-12" style="color: rgb(0, 255, 136); font-size: 8px;">Expansion</div>
+  <div class="mrow exp canva-container" data-mode="exp1" data-html-import-id="html-import-19" data-template-id="div-13" style="color: rgb(0, 255, 136); font-size: 9px;"><canva-inline-text data-template-id="canva-inline-text-14" class="canva-text" style="color: rgb(0, 255, 136); font-size: 9px;">432 / 360 </canva-inline-text><span class="mrow-ratio canva-text" data-html-import-id="html-import-20" data-template-id="span-15" style="color: rgb(0, 255, 136); font-size: 8px;">×1.200</span></div>
+  <div class="mrow exp canva-container" data-mode="exp2" data-html-import-id="html-import-21" data-template-id="div-16" style="color: rgb(0, 255, 136); font-size: 9px;"><canva-inline-text data-template-id="canva-inline-text-17" class="canva-text" style="color: rgb(0, 255, 136); font-size: 9px;">864 / 360 </canva-inline-text><span class="mrow-ratio canva-text" data-html-import-id="html-import-22" data-template-id="span-18" style="color: rgb(0, 255, 136); font-size: 8px;">×2.400</span></div>
+  <div class="mrow exp canva-container" data-mode="exp3" data-html-import-id="html-import-23" data-template-id="div-19" style="color: rgb(0, 255, 136); font-size: 9px;"><canva-inline-text data-template-id="canva-inline-text-20" class="canva-text" style="color: rgb(0, 255, 136); font-size: 9px;">1296 / 360 </canva-inline-text><span class="mrow-ratio canva-text" data-html-import-id="html-import-24" data-template-id="span-21" style="color: rgb(0, 255, 136); font-size: 8px;">×3.600</span></div>
+  <div class="psec-gap" data-html-import-id="html-import-25"></div>
+  <div class="psec-title cont canva-container" data-html-import-id="html-import-26" data-template-id="div-22" style="color: rgb(255, 102, 0); font-size: 8px;">Contraction</div>
+  <div class="mrow cont canva-container" data-mode="cnt1" data-html-import-id="html-import-27" data-template-id="div-23" style="color: rgb(255, 102, 0); font-size: 9px;"><canva-inline-text data-template-id="canva-inline-text-24" class="canva-text" style="color: rgb(255, 102, 0); font-size: 9px;">360 / 432 </canva-inline-text><span class="mrow-ratio canva-text" data-html-import-id="html-import-28" data-template-id="span-25" style="color: rgb(255, 102, 0); font-size: 8px;">×0.833</span></div>
+  <div class="mrow cont canva-container" data-mode="cnt2" data-html-import-id="html-import-29" data-template-id="div-26" style="color: rgb(255, 102, 0); font-size: 9px;"><canva-inline-text data-template-id="canva-inline-text-27" class="canva-text" style="color: rgb(255, 102, 0); font-size: 9px;">360 / 864 </canva-inline-text><span class="mrow-ratio canva-text" data-html-import-id="html-import-30" data-template-id="span-28" style="color: rgb(255, 102, 0); font-size: 8px;">×0.417</span></div>
+  <div class="mrow cont canva-container" data-mode="cnt3" data-html-import-id="html-import-31" data-template-id="div-29" style="color: rgb(255, 102, 0); font-size: 9px;"><canva-inline-text data-template-id="canva-inline-text-30" class="canva-text" style="color: rgb(255, 102, 0); font-size: 9px;">360 / 1296 </canva-inline-text><span class="mrow-ratio canva-text" data-html-import-id="html-import-32" data-template-id="span-31" style="color: rgb(255, 102, 0); font-size: 8px;">×0.278</span></div>
+  <div class="psec-gap" data-html-import-id="html-import-33"></div>
+  <div class="psec-title spec canva-container" data-html-import-id="html-import-34" data-template-id="div-32" style="color: rgb(0, 204, 255); font-size: 8px;">Spéciaux</div>
+  <div class="mrow flux canva-container" data-mode="flux" data-html-import-id="html-import-35" data-template-id="div-33" style="color: rgb(255, 0, 102); font-size: 9px;">Flux énergétique</div>
+  <div class="mrow pp canva-container" data-mode="pp" data-html-import-id="html-import-36" data-template-id="div-34" style="color: rgb(136, 85, 255); font-size: 9px;">Ping-Pong</div>
+  <div class="mrow canva-container" data-mode="bpm" data-html-import-id="html-import-37" data-template-id="div-35" style="color: rgb(122, 154, 176); font-size: 9px;">BPM Pulsation</div>
+  <div class="psec-gap" data-html-import-id="html-import-38"></div>
+  <div class="psec-title canva-container" style="color: rgb(255, 215, 0); font-size: 8px;" data-html-import-id="html-import-39" data-template-id="div-36">Expansion Maximale</div>
+  <div class="mrow maxexp canva-container" data-mode="maxexp" onclick="setMode('maxexp')" style="flex-direction: column; align-items: flex-start; gap: 3px; background: rgba(255, 215, 0, 0.02); color: rgb(255, 215, 0); font-size: 9px;" data-html-import-id="html-import-40" data-template-id="div-37">
+    <div style="display:flex;justify-content:space-between;width:100%;" data-html-import-id="html-import-41">
+      <span data-html-import-id="html-import-42" data-template-id="span-38" class="canva-text" style="color: rgb(255, 215, 0);">360 × 432^(432×432)</span>
+      <span class="mrow-ratio canva-text" data-html-import-id="html-import-43" data-template-id="span-39" style="color: rgb(255, 215, 0); font-size: 8px;">∞</span>
+    </div>
+    <div style="font-size: 7px; opacity: 0.4; letter-spacing: 0.1em; color: rgb(255, 215, 0);" data-html-import-id="html-import-44" data-template-id="div-40" class="canva-container">champ total · centres partout</div>
+  </div>
+</div>
+
+<!-- PARAMS PANEL -->
+<div id="panParams" data-html-import-id="html-import-45">
+  <div class="pcard canva-container" data-html-import-id="html-import-46" data-template-id="div-41" style="background: rgba(1, 3, 6, 0.92);">
+    <div class="pcard-title canva-container" data-html-import-id="html-import-47" data-template-id="div-42" style="color: rgb(0, 204, 255); font-size: 8px;">Sphère — Visuel</div>
+    <div class="pr" data-html-import-id="html-import-48"><div class="pl canva-container" data-html-import-id="html-import-49" data-template-id="div-43" style="color: rgb(122, 154, 176); font-size: 9px;">Sphères actives</div><div class="pv canva-container" id="pvSph" data-html-import-id="html-import-50" data-template-id="div-44" style="color: rgb(221, 238, 255); font-size: 10px;">6</div></div>
+    <input type="range" id="rSph" min="2" max="9" value="6" data-html-import-id="html-import-51" data-template-id="input-45" class="canva-input" style="background: rgba(0, 204, 255, 0.12);">
+    <div style="height:8px" data-html-import-id="html-import-52"></div>
+    <div class="pr" data-html-import-id="html-import-53"><div class="pl canva-container" data-html-import-id="html-import-54" data-template-id="div-46" style="color: rgb(122, 154, 176); font-size: 9px;">Base Ω</div><div class="pv canva-container" id="pvBase" data-html-import-id="html-import-55" data-template-id="div-47" style="color: rgb(221, 238, 255); font-size: 10px;">360</div></div>
+    <input type="range" id="rBase" min="180" max="1296" value="360" data-html-import-id="html-import-56" data-template-id="input-48" class="canva-input" style="background: rgba(0, 204, 255, 0.12);">
+    <div style="height:8px" data-html-import-id="html-import-57"></div>
+    <div class="pr" data-html-import-id="html-import-58"><div class="pl canva-container" data-html-import-id="html-import-59" data-template-id="div-49" style="color: rgb(122, 154, 176); font-size: 9px;">Vitesse</div><div class="pv canva-container" id="pvSpd" data-html-import-id="html-import-60" data-template-id="div-50" style="color: rgb(221, 238, 255); font-size: 10px;">1.0×</div></div>
+    <input type="range" id="rSpd" min="0" max="30" value="10" data-html-import-id="html-import-61" data-template-id="input-51" class="canva-input" style="background: rgba(0, 204, 255, 0.12);">
+    <div style="height:8px" data-html-import-id="html-import-62"></div>
+    <div class="pr" data-html-import-id="html-import-63"><div class="pl canva-container" data-html-import-id="html-import-64" data-template-id="div-52" style="color: rgb(122, 154, 176); font-size: 9px;">Rotation auto</div><input type="checkbox" id="ckRot" checked="" data-html-import-id="html-import-65"></div>
+    <div class="pr" data-html-import-id="html-import-66"><div class="pl canva-container" data-html-import-id="html-import-67" data-template-id="div-53" style="color: rgb(122, 154, 176); font-size: 9px;">Lignes harm.</div><input type="checkbox" id="ckLines" checked="" data-html-import-id="html-import-68"></div>
+    <div class="pr" data-html-import-id="html-import-69"><div class="pl canva-container" data-html-import-id="html-import-70" data-template-id="div-54" style="color: rgb(122, 154, 176); font-size: 9px;">Anneaux 72Ω</div><input type="checkbox" id="ckBeat" checked="" data-html-import-id="html-import-71"></div>
+    <div class="pr" data-html-import-id="html-import-72"><div class="pl canva-container" data-html-import-id="html-import-73" data-template-id="div-55" style="color: rgb(122, 154, 176); font-size: 9px;">Particules</div><input type="checkbox" id="ckParts" checked="" data-html-import-id="html-import-74"></div>
+    <div class="pr" data-html-import-id="html-import-75"><div class="pl canva-container" data-html-import-id="html-import-76" data-template-id="div-56" style="color: rgb(122, 154, 176); font-size: 9px;">Univers fond</div><input type="checkbox" id="ckUniv" checked="" data-html-import-id="html-import-77"></div>
+    <button class="btn canva-button" id="btnReset" data-html-import-id="html-import-78" data-template-id="button-57" style="background: rgba(0, 204, 255, 0.07); color: rgb(0, 204, 255); font-family: &quot;Share Tech Mono&quot;; font-size: 9px;">↺ RÉINITIALISER VUE</button>
+  </div>
+  <div class="pcard canva-container" data-html-import-id="html-import-79" data-template-id="div-58" style="background: rgba(1, 3, 6, 0.92);">
+    <div class="pcard-title canva-container" data-html-import-id="html-import-80" data-template-id="div-59" style="color: rgb(0, 204, 255); font-size: 8px;">Hiérarchie sphères</div>
+    <div class="sphere-list" id="sphereList" data-html-import-id="html-import-81"><div class="si" data-html-import-id="html-import-82" style="opacity: 1;"><div class="si-dot canva-container" data-html-import-id="html-import-83" data-template-id="div-60" style="background: rgb(26, 110, 170); box-shadow: rgba(26, 110, 170, 0.4) 0px 0px 5px;"></div><div class="si-name canva-container" data-html-import-id="html-import-84" data-template-id="div-61" style="color: rgb(122, 154, 176); font-size: 9px;">S₀ (base)</div><div class="si-freq canva-container" data-html-import-id="html-import-85" data-template-id="div-62" style="color: rgb(221, 238, 255); font-size: 9px;">360 Ω</div></div><div class="si" data-html-import-id="html-import-86" style="opacity: 1;"><div class="si-dot canva-container" data-html-import-id="html-import-87" data-template-id="div-63" style="background: rgb(0, 204, 255); box-shadow: rgba(0, 204, 255, 0.4) 0px 0px 5px;"></div><div class="si-name canva-container" data-html-import-id="html-import-88" data-template-id="div-64" style="color: rgb(122, 154, 176); font-size: 9px;">S₁ 6/5</div><div class="si-freq canva-container" data-html-import-id="html-import-89" data-template-id="div-65" style="color: rgb(221, 238, 255); font-size: 9px;">432 Ω</div></div><div class="si" data-html-import-id="html-import-90" style="opacity: 1;"><div class="si-dot canva-container" data-html-import-id="html-import-91" data-template-id="div-66" style="background: rgb(0, 255, 170); box-shadow: rgba(0, 255, 170, 0.4) 0px 0px 5px;"></div><div class="si-name canva-container" data-html-import-id="html-import-92" data-template-id="div-67" style="color: rgb(122, 154, 176); font-size: 9px;">S₂ 7/6</div><div class="si-freq canva-container" data-html-import-id="html-import-93" data-template-id="div-68" style="color: rgb(221, 238, 255); font-size: 9px;">504 Ω</div></div><div class="si" data-html-import-id="html-import-94" style="opacity: 1;"><div class="si-dot canva-container" data-html-import-id="html-import-95" data-template-id="div-69" style="background: rgb(170, 255, 0); box-shadow: rgba(170, 255, 0, 0.4) 0px 0px 5px;"></div><div class="si-name canva-container" data-html-import-id="html-import-96" data-template-id="div-70" style="color: rgb(122, 154, 176); font-size: 9px;">S₃ 8/7</div><div class="si-freq canva-container" data-html-import-id="html-import-97" data-template-id="div-71" style="color: rgb(221, 238, 255); font-size: 9px;">576 Ω</div></div><div class="si" data-html-import-id="html-import-98" style="opacity: 1;"><div class="si-dot canva-container" data-html-import-id="html-import-99" data-template-id="div-72" style="background: rgb(255, 221, 0); box-shadow: rgba(255, 221, 0, 0.4) 0px 0px 5px;"></div><div class="si-name canva-container" data-html-import-id="html-import-100" data-template-id="div-73" style="color: rgb(122, 154, 176); font-size: 9px;">S₄ 9/8</div><div class="si-freq canva-container" data-html-import-id="html-import-101" data-template-id="div-74" style="color: rgb(221, 238, 255); font-size: 9px;">648 Ω</div></div><div class="si" data-html-import-id="html-import-102" style="opacity: 1;"><div class="si-dot canva-container" data-html-import-id="html-import-103" data-template-id="div-75" style="background: rgb(255, 136, 0); box-shadow: rgba(255, 136, 0, 0.4) 0px 0px 5px;"></div><div class="si-name canva-container" data-html-import-id="html-import-104" data-template-id="div-76" style="color: rgb(122, 154, 176); font-size: 9px;">S₅ 10/9</div><div class="si-freq canva-container" data-html-import-id="html-import-105" data-template-id="div-77" style="color: rgb(221, 238, 255); font-size: 9px;">720 Ω</div></div><div class="si" data-html-import-id="html-import-106" style="opacity: 0.3;"><div class="si-dot canva-container" data-html-import-id="html-import-107" data-template-id="div-78" style="background: rgb(255, 68, 0); box-shadow: rgba(255, 68, 0, 0.4) 0px 0px 5px;"></div><div class="si-name canva-container" data-html-import-id="html-import-108" data-template-id="div-79" style="color: rgb(122, 154, 176); font-size: 9px;">S₆ 11/10</div><div class="si-freq canva-container" data-html-import-id="html-import-109" data-template-id="div-80" style="color: rgb(221, 238, 255); font-size: 9px;">792 Ω</div></div><div class="si" data-html-import-id="html-import-110" style="opacity: 0.3;"><div class="si-dot canva-container" data-html-import-id="html-import-111" data-template-id="div-81" style="background: rgb(255, 0, 102); box-shadow: rgba(255, 0, 102, 0.4) 0px 0px 5px;"></div><div class="si-name canva-container" data-html-import-id="html-import-112" data-template-id="div-82" style="color: rgb(122, 154, 176); font-size: 9px;">S₇ 12/11</div><div class="si-freq canva-container" data-html-import-id="html-import-113" data-template-id="div-83" style="color: rgb(221, 238, 255); font-size: 9px;">864 Ω</div></div><div class="si" data-html-import-id="html-import-114" style="opacity: 0.3;"><div class="si-dot canva-container" data-html-import-id="html-import-115" data-template-id="div-84" style="background: rgb(204, 0, 255); box-shadow: rgba(204, 0, 255, 0.4) 0px 0px 5px;"></div><div class="si-name canva-container" data-html-import-id="html-import-116" data-template-id="div-85" style="color: rgb(122, 154, 176); font-size: 9px;">S₈ 13/12</div><div class="si-freq canva-container" data-html-import-id="html-import-117" data-template-id="div-86" style="color: rgb(221, 238, 255); font-size: 9px;">936 Ω</div></div></div>
+  </div>
+  <div class="pcard canva-container" data-html-import-id="html-import-118" data-template-id="div-87" style="background: rgba(1, 3, 6, 0.92);">
+    <div class="pcard-title canva-container" data-html-import-id="html-import-119" data-template-id="div-88" style="color: rgb(0, 204, 255); font-size: 8px;">OSC A — Harmonique</div>
+    <div class="osc-card canva-container" data-html-import-id="html-import-120" data-template-id="div-89" style="background: rgba(1, 3, 6, 0.6);">
+      <div class="osc-head" data-html-import-id="html-import-121">
+        <div class="osc-label canva-container" style="color: rgb(136, 85, 255); font-size: 8px;" data-html-import-id="html-import-122" data-template-id="div-90">OSC A</div>
+        <div class="osc-dot" id="dotA" title="Activer" data-html-import-id="html-import-123"></div>
+      </div>
+      <div class="pr" data-html-import-id="html-import-124"><div class="pl canva-container" data-html-import-id="html-import-125" data-template-id="div-91" style="color: rgb(122, 154, 176); font-size: 9px;">Fréquence Ω</div><div class="pv canva-container" id="pvAFreq" data-html-import-id="html-import-126" data-template-id="div-92" style="color: rgb(221, 238, 255); font-size: 10px;">864</div></div>
+      <input type="range" class="rviolet canva-input" id="rAFreq" min="1" max="144000" value="864" data-html-import-id="html-import-127" data-template-id="input-93" style="background: rgba(0, 204, 255, 0.12);">
+      <div class="pr" style="margin-top:7px" data-html-import-id="html-import-128"><div class="pl canva-container" data-html-import-id="html-import-129" data-template-id="div-94" style="color: rgb(122, 154, 176); font-size: 9px;">Type</div>
+        <select id="selAType" data-html-import-id="html-import-130" data-template-id="select-95" class="canva-input" style="background: rgba(0, 204, 255, 0.07); color: rgb(221, 238, 255); font-family: &quot;Share Tech Mono&quot;; font-size: 9px;"><option value="sine" data-html-import-id="html-import-131" data-template-id="option-96" style="color: rgb(221, 238, 255);">Sinus</option><option value="triangle" data-html-import-id="html-import-132" data-template-id="option-97" style="color: rgb(221, 238, 255);">Triangle</option><option value="sawtooth" data-html-import-id="html-import-133" data-template-id="option-98" style="color: rgb(221, 238, 255);">Dent de scie</option><option value="square" data-html-import-id="html-import-134" data-template-id="option-99" style="color: rgb(221, 238, 255);">Carré</option></select>
+      </div>
+      <div class="pr" data-html-import-id="html-import-135"><div class="pl canva-container" data-html-import-id="html-import-136" data-template-id="div-100" style="color: rgb(122, 154, 176); font-size: 9px;">Volume</div><div class="pv canva-container" id="pvAVol" data-html-import-id="html-import-137" data-template-id="div-101" style="color: rgb(221, 238, 255); font-size: 10px;">60%</div></div>
+      <input type="range" class="rviolet canva-input" id="rAVol" min="0" max="100" value="60" data-html-import-id="html-import-138" data-template-id="input-102" style="background: rgba(0, 204, 255, 0.12);">
+      <div class="pr" data-html-import-id="html-import-139"><div class="pl canva-container" data-html-import-id="html-import-140" data-template-id="div-103" style="color: rgb(122, 154, 176); font-size: 9px;">Pan L↔R</div><div class="pv canva-container" id="pvAPan" data-html-import-id="html-import-141" data-template-id="div-104" style="color: rgb(221, 238, 255); font-size: 10px;">0</div></div>
+      <input type="range" class="rviolet canva-input" id="rAPan" min="-100" max="100" value="0" data-html-import-id="html-import-142" data-template-id="input-105" style="background: rgba(0, 204, 255, 0.12);">
+    </div>
+    <div class="pcard-title canva-container" style="margin-top: 10px; color: rgb(0, 204, 255); font-size: 8px;" data-html-import-id="html-import-143" data-template-id="div-106">OSC B — Sub-fractal</div>
+    <div class="osc-card canva-container" data-html-import-id="html-import-144" data-template-id="div-107" style="background: rgba(1, 3, 6, 0.6);">
+      <div class="osc-head" data-html-import-id="html-import-145">
+        <div class="osc-label canva-container" style="color: rgb(232, 160, 32); font-size: 8px;" data-html-import-id="html-import-146" data-template-id="div-108">OSC B</div>
+        <div class="osc-dot" id="dotB" title="Activer" data-html-import-id="html-import-147"></div>
+      </div>
+      <div class="pr" data-html-import-id="html-import-148"><div class="pl canva-container" data-html-import-id="html-import-149" data-template-id="div-109" style="color: rgb(122, 154, 176); font-size: 9px;">Fréquence Ω</div><div class="pv canva-container" id="pvBFreq" data-html-import-id="html-import-150" data-template-id="div-110" style="color: rgb(221, 238, 255); font-size: 10px;">216</div></div>
+      <input type="range" class="rgold canva-input" id="rBFreq" min="1" max="144000" value="216" data-html-import-id="html-import-151" data-template-id="input-111" style="background: rgba(0, 204, 255, 0.12);">
+      <div class="pr" style="margin-top:7px" data-html-import-id="html-import-152"><div class="pl canva-container" data-html-import-id="html-import-153" data-template-id="div-112" style="color: rgb(122, 154, 176); font-size: 9px;">Type</div>
+        <select id="selBType" data-html-import-id="html-import-154" data-template-id="select-113" class="canva-input" style="background: rgba(0, 204, 255, 0.07); color: rgb(221, 238, 255); font-family: &quot;Share Tech Mono&quot;; font-size: 9px;"><option value="sine" data-html-import-id="html-import-155" data-template-id="option-114" style="color: rgb(221, 238, 255);">Sinus</option><option value="triangle" data-html-import-id="html-import-156" data-template-id="option-115" style="color: rgb(221, 238, 255);">Triangle</option><option value="sawtooth" data-html-import-id="html-import-157" data-template-id="option-116" style="color: rgb(221, 238, 255);">Dent de scie</option><option value="square" data-html-import-id="html-import-158" data-template-id="option-117" style="color: rgb(221, 238, 255);">Carré</option></select>
+      </div>
+      <div class="pr" data-html-import-id="html-import-159"><div class="pl canva-container" data-html-import-id="html-import-160" data-template-id="div-118" style="color: rgb(122, 154, 176); font-size: 9px;">Volume</div><div class="pv canva-container" id="pvBVol" data-html-import-id="html-import-161" data-template-id="div-119" style="color: rgb(221, 238, 255); font-size: 10px;">60%</div></div>
+      <input type="range" class="rgold canva-input" id="rBVol" min="0" max="100" value="60" data-html-import-id="html-import-162" data-template-id="input-120" style="background: rgba(0, 204, 255, 0.12);">
+      <div class="pr" data-html-import-id="html-import-163"><div class="pl canva-container" data-html-import-id="html-import-164" data-template-id="div-121" style="color: rgb(122, 154, 176); font-size: 9px;">Pan L↔R</div><div class="pv canva-container" id="pvBPan" data-html-import-id="html-import-165" data-template-id="div-122" style="color: rgb(221, 238, 255); font-size: 10px;">0</div></div>
+      <input type="range" class="rgold canva-input" id="rBPan" min="-100" max="100" value="0" data-html-import-id="html-import-166" data-template-id="input-123" style="background: rgba(0, 204, 255, 0.12);">
+    </div>
+  </div>
+</div>
+
+<!-- BPM PANEL -->
+<div id="panBpm" data-html-import-id="html-import-167" data-template-id="div-124" class="canva-container" style="background: rgba(1, 3, 6, 0.95);">
+  <div id="bpmVal" data-html-import-id="html-import-168" data-template-id="div-125" class="canva-container" style="font-family: Orbitron; font-weight: 300; font-size: 48px;">60</div>
+  <div id="bpmLabel" data-html-import-id="html-import-169" data-template-id="div-126" class="canva-container" style="color: rgb(122, 154, 176); font-size: 8px;">BPM — Pulsation fractale</div>
+  <div id="bpmDot" data-html-import-id="html-import-170" data-template-id="div-127" class="canva-container" style="background: rgb(255, 204, 0);"></div>
+  <div class="bpm-ctrl" data-html-import-id="html-import-171">
+    <button class="bpmB canva-button" id="bpmDec" data-html-import-id="html-import-172" data-template-id="button-128" style="background: rgba(255, 204, 0, 0.1); color: rgb(255, 204, 0); font-family: &quot;Share Tech Mono&quot;; font-size: 16px;">−</button>
+    <input type="range" class="rbpm canva-input" id="rBpm" min="1" max="180" value="60" data-html-import-id="html-import-173" data-template-id="input-129" style="background: rgba(0, 204, 255, 0.12);">
+    <button class="bpmB canva-button" id="bpmInc" data-html-import-id="html-import-174" data-template-id="button-130" style="background: rgba(255, 204, 0, 0.1); color: rgb(255, 204, 0); font-family: &quot;Share Tech Mono&quot;; font-size: 16px;">+</button>
+  </div>
+  <div style="font-size: 8px; opacity: 0.35; margin-top: 6px; letter-spacing: 0.15em; color: rgb(122, 154, 176);" data-html-import-id="html-import-175" data-template-id="div-131" class="canva-container">↑↓ clavier · clic pour activer</div>
+  <div class="pr" style="margin-top:9px;justify-content:center;gap:10px;" data-html-import-id="html-import-176">
+    <div style="font-size: 9px; color: rgb(122, 154, 176);" data-html-import-id="html-import-177" data-template-id="div-132" class="canva-container">Actif</div>
+    <input type="checkbox" id="ckBpmActive" data-html-import-id="html-import-178">
+  </div>
+</div>
+
+<!-- BINAURAL PANEL -->
+<div id="panBin" data-html-import-id="html-import-179" data-template-id="div-133" class="canva-container" style="background: rgba(1, 3, 6, 0.97);">
+  <div class="bin-hdr" data-html-import-id="html-import-180">
+    <div class="bin-title canva-container" data-html-import-id="html-import-181" data-template-id="div-134" style="color: rgb(0, 204, 255); font-size: 9px;">⬡ Binaural — 1 à 144 000 Ω</div>
+    <button class="bin-x canva-button" id="binClose" data-html-import-id="html-import-182" data-template-id="button-135" style="color: rgb(122, 154, 176); font-size: 15px;">✕</button>
+  </div>
+  <div class="bin-freqs" data-html-import-id="html-import-183">
+    <div data-html-import-id="html-import-184"><div class="bfl L canva-container" data-html-import-id="html-import-185" data-template-id="div-136" style="color: rgb(0, 153, 255); font-size: 8px;">Oreille gauche</div><div class="bfv canva-container" id="bfvL" data-html-import-id="html-import-186" data-template-id="div-137" style="color: rgb(221, 238, 255); font-family: Orbitron; font-size: 20px;">432 Ω</div></div>
+    <div data-html-import-id="html-import-187"><div class="bfl R canva-container" data-html-import-id="html-import-188" data-template-id="div-138" style="color: rgb(255, 102, 0); font-size: 8px;">Oreille droite</div><div class="bfv canva-container" id="bfvR" data-html-import-id="html-import-189" data-template-id="div-139" style="color: rgb(221, 238, 255); font-family: Orbitron; font-size: 20px;">440 Ω</div></div>
+  </div>
+  <div class="bin-beat-lbl canva-container" id="beatLbl" data-html-import-id="html-import-190" data-template-id="div-140" style="font-size: 10px;">▷ Battement : 8.000 Ω — Alpha</div>
+  <canvas id="cvWave" height="36" width="520" data-html-import-id="html-import-191"></canvas>
+  <div class="bin-row" data-html-import-id="html-import-192">
+    <div class="bin-rl" data-html-import-id="html-import-193"><span data-html-import-id="html-import-194" data-template-id="span-141" class="canva-text" style="color: rgb(122, 154, 176);">Fréq. gauche Ω</span><span class="bin-rv canva-text" id="blL" data-html-import-id="html-import-195" data-template-id="span-142" style="color: rgb(221, 238, 255);">432 Ω</span></div>
+    <div class="bin-finput" data-html-import-id="html-import-196">
+      <input type="number" id="numL" min="1" max="144000" value="432" data-html-import-id="html-import-197" data-template-id="input-143" class="canva-input" style="background: rgba(0, 204, 255, 0.07); color: rgb(221, 238, 255); font-family: &quot;Share Tech Mono&quot;; font-size: 10px;">
+      <input type="range" class="rL canva-input" id="slL" min="1" max="144000" value="432" style="flex: 1 1 0%; background: rgba(0, 204, 255, 0.12);" data-html-import-id="html-import-198" data-template-id="input-144">
+    </div>
+  </div>
+  <div class="bin-row" data-html-import-id="html-import-199">
+    <div class="bin-rl" data-html-import-id="html-import-200"><span data-html-import-id="html-import-201" data-template-id="span-145" class="canva-text" style="color: rgb(122, 154, 176);">Fréq. droite Ω</span><span class="bin-rv canva-text" id="blR" data-html-import-id="html-import-202" data-template-id="span-146" style="color: rgb(221, 238, 255);">440 Ω</span></div>
+    <div class="bin-finput" data-html-import-id="html-import-203">
+      <input type="number" id="numR" min="1" max="144000" value="440" data-html-import-id="html-import-204" data-template-id="input-147" class="canva-input" style="background: rgba(0, 204, 255, 0.07); color: rgb(221, 238, 255); font-family: &quot;Share Tech Mono&quot;; font-size: 10px;">
+      <input type="range" class="rR canva-input" id="slR" min="1" max="144000" value="440" style="flex: 1 1 0%; background: rgba(0, 204, 255, 0.12);" data-html-import-id="html-import-205" data-template-id="input-148">
+    </div>
+  </div>
+  <div class="bin-row" data-html-import-id="html-import-206">
+    <div class="bin-rl" data-html-import-id="html-import-207"><span data-html-import-id="html-import-208" data-template-id="span-149" class="canva-text" style="color: rgb(122, 154, 176);">Battement</span><span class="bin-rv canva-text" id="blBeat" data-html-import-id="html-import-209" data-template-id="span-150" style="color: rgb(221, 238, 255);">8.000</span></div>
+    <input type="range" class="rBeat canva-input" id="slBeat" min="0.01" max="1000" value="8" step="0.01" data-html-import-id="html-import-210" data-template-id="input-151" style="background: rgba(0, 204, 255, 0.12);">
+  </div>
+  <div class="bin-row" data-html-import-id="html-import-211">
+    <div class="bin-rl" data-html-import-id="html-import-212"><span data-html-import-id="html-import-213" data-template-id="span-152" class="canva-text" style="color: rgb(122, 154, 176);">Volume</span><span class="bin-rv canva-text" id="blVol" data-html-import-id="html-import-214" data-template-id="span-153" style="color: rgb(221, 238, 255);">60%</span></div>
+    <input type="range" id="slVol" min="0" max="100" value="60" data-html-import-id="html-import-215" data-template-id="input-154" class="canva-input" style="background: rgba(0, 204, 255, 0.12);">
+  </div>
+  <div class="bin-presets" data-html-import-id="html-import-216">
+    <div class="pre canva-container" data-l="432" data-r="440" data-html-import-id="html-import-217" data-template-id="div-155" style="background: rgba(0, 204, 255, 0.03); color: rgb(122, 154, 176); font-size: 7px;">432/440</div>
+    <div class="pre canva-container" data-l="360" data-r="432" data-html-import-id="html-import-218" data-template-id="div-156" style="background: rgba(0, 204, 255, 0.03); color: rgb(122, 154, 176); font-size: 7px;">360/432</div>
+    <div class="pre canva-container" data-l="432" data-r="504" data-html-import-id="html-import-219" data-template-id="div-157" style="background: rgba(0, 204, 255, 0.03); color: rgb(122, 154, 176); font-size: 7px;">S1→S2</div>
+    <div class="pre canva-container" data-l="864" data-r="432" data-html-import-id="html-import-220" data-template-id="div-158" style="background: rgba(0, 204, 255, 0.03); color: rgb(122, 154, 176); font-size: 7px;">864/432</div>
+    <div class="pre canva-container" data-l="1296" data-r="432" data-html-import-id="html-import-221" data-template-id="div-159" style="background: rgba(0, 204, 255, 0.03); color: rgb(122, 154, 176); font-size: 7px;">1296/432</div>
+    <div class="pre canva-container" data-l="40" data-r="47.3" data-html-import-id="html-import-222" data-template-id="div-160" style="background: rgba(0, 204, 255, 0.03); color: rgb(122, 154, 176); font-size: 7px;">Gamma</div>
+    <div class="pre canva-container" data-l="200" data-r="210" data-html-import-id="html-import-223" data-template-id="div-161" style="background: rgba(0, 204, 255, 0.03); color: rgb(122, 154, 176); font-size: 7px;">Alpha</div>
+    <div class="pre canva-container" data-l="200" data-r="204" data-html-import-id="html-import-224" data-template-id="div-162" style="background: rgba(0, 204, 255, 0.03); color: rgb(122, 154, 176); font-size: 7px;">Theta</div>
+    <div class="pre canva-container" data-l="200" data-r="201.5" data-html-import-id="html-import-225" data-template-id="div-163" style="background: rgba(0, 204, 255, 0.03); color: rgb(122, 154, 176); font-size: 7px;">Delta</div>
+    <div class="pre canva-container" data-l="7.83" data-r="15.66" data-html-import-id="html-import-226" data-template-id="div-164" style="background: rgba(0, 204, 255, 0.03); color: rgb(122, 154, 176); font-size: 7px;">Schumann</div>
+    <div class="pre canva-container" data-l="432" data-r="504" data-html-import-id="html-import-227" data-template-id="div-165" style="background: rgba(0, 204, 255, 0.03); color: rgb(122, 154, 176); font-size: 7px;">+72Ω</div>
+    <div class="pre canva-container" data-l="144000" data-r="143568" data-html-import-id="html-import-228" data-template-id="div-166" style="background: rgba(0, 204, 255, 0.03); color: rgb(122, 154, 176); font-size: 7px;">144kΩ</div>
+  </div>
+  <div class="bin-foot" data-html-import-id="html-import-229">
+    <button class="binPlay canva-button" id="binPlay" data-html-import-id="html-import-230" data-template-id="button-167" style="background: rgba(0, 204, 255, 0.08); color: rgb(0, 204, 255); font-family: &quot;Share Tech Mono&quot;; font-size: 9px;">▶ Activer</button>
+    <div class="bin-pp-row" data-html-import-id="html-import-231"><canva-inline-text data-template-id="canva-inline-text-168" class="canva-text" style="color: rgb(122, 154, 176); font-size: 9px;">PP</canva-inline-text><input type="checkbox" id="ckBinPP" data-html-import-id="html-import-232"></div>
+  </div>
+  <div class="vubar" id="vubar" data-html-import-id="html-import-233"></div>
+</div>
+
+<!-- PING-PONG PANEL -->
+<div id="panPP" data-html-import-id="html-import-234" data-template-id="div-169" class="canva-container" style="background: rgba(1, 3, 6, 0.95);">
+  <div class="pp-title canva-container" data-html-import-id="html-import-235" data-template-id="div-170" style="color: rgb(136, 85, 255); font-size: 8px;">⇄ Ping-Pong</div>
+  <div class="pr" data-html-import-id="html-import-236"><div class="pl canva-container" data-html-import-id="html-import-237" data-template-id="div-171" style="color: rgb(122, 154, 176); font-size: 9px;">Actif</div><input type="checkbox" id="ckPP" data-html-import-id="html-import-238"></div>
+  <div class="pr" style="margin-top:8px" data-html-import-id="html-import-239"><div class="pl canva-container" data-html-import-id="html-import-240" data-template-id="div-172" style="color: rgb(122, 154, 176); font-size: 9px;">Vitesse Hz</div><div class="pv canva-container" id="pvPPSpd" data-html-import-id="html-import-241" data-template-id="div-173" style="color: rgb(221, 238, 255); font-size: 10px;">1.0</div></div>
+  <input type="range" class="rviolet canva-input" id="rPPSpd" min="1" max="200" value="10" data-html-import-id="html-import-242" data-template-id="input-174" style="background: rgba(0, 204, 255, 0.12);">
+  <div class="pr" data-html-import-id="html-import-243"><div class="pl canva-container" data-html-import-id="html-import-244" data-template-id="div-175" style="color: rgb(122, 154, 176); font-size: 9px;">Intensité</div><div class="pv canva-container" id="pvPPInt" data-html-import-id="html-import-245" data-template-id="div-176" style="color: rgb(221, 238, 255); font-size: 10px;">50%</div></div>
+  <input type="range" class="rviolet canva-input" id="rPPInt" min="0" max="100" value="50" data-html-import-id="html-import-246" data-template-id="input-177" style="background: rgba(0, 204, 255, 0.12);">
+</div>
+
+<!-- MASTER PANEL -->
+<div id="panMaster" data-html-import-id="html-import-247" data-template-id="div-178" class="canva-container" style="background: rgba(1, 3, 6, 0.97);">
+  <div class="mast-title canva-container" data-html-import-id="html-import-248" data-template-id="div-179" style="color: rgb(232, 160, 32); font-size: 8px;">◈ Mastering Global</div>
+  <div class="mast-row" data-html-import-id="html-import-249">
+    <div class="mast-lbl" data-html-import-id="html-import-250"><span data-html-import-id="html-import-251" data-template-id="span-180" class="canva-text" style="color: rgb(122, 154, 176);">Volume maître</span><span class="mast-v canva-text" id="mvVol" data-html-import-id="html-import-252" data-template-id="span-181" style="color: rgb(221, 238, 255);">80%</span></div>
+    <input type="range" class="rm canva-input" id="mVol" min="0" max="100" value="80" data-html-import-id="html-import-253" data-template-id="input-182" style="background: rgba(232, 160, 32, 0.1);">
+  </div>
+  <div class="mast-row" data-html-import-id="html-import-254">
+    <div class="mast-lbl" data-html-import-id="html-import-255"><span data-html-import-id="html-import-256" data-template-id="span-183" class="canva-text" style="color: rgb(122, 154, 176);">Bass</span><span class="mast-v canva-text" id="mvBass" data-html-import-id="html-import-257" data-template-id="span-184" style="color: rgb(221, 238, 255);">0 dB</span></div>
+    <input type="range" class="rm canva-input" id="mBass" min="-12" max="12" value="0" step=".5" data-html-import-id="html-import-258" data-template-id="input-185" style="background: rgba(232, 160, 32, 0.1);">
+  </div>
+  <div class="mast-row" data-html-import-id="html-import-259">
+    <div class="mast-lbl" data-html-import-id="html-import-260"><span data-html-import-id="html-import-261" data-template-id="span-186" class="canva-text" style="color: rgb(122, 154, 176);">Mid</span><span class="mast-v canva-text" id="mvMid" data-html-import-id="html-import-262" data-template-id="span-187" style="color: rgb(221, 238, 255);">0 dB</span></div>
+    <input type="range" class="rm canva-input" id="mMid" min="-12" max="12" value="0" step=".5" data-html-import-id="html-import-263" data-template-id="input-188" style="background: rgba(232, 160, 32, 0.1);">
+  </div>
+  <div class="mast-row" data-html-import-id="html-import-264">
+    <div class="mast-lbl" data-html-import-id="html-import-265"><span data-html-import-id="html-import-266" data-template-id="span-189" class="canva-text" style="color: rgb(122, 154, 176);">Treble</span><span class="mast-v canva-text" id="mvTreble" data-html-import-id="html-import-267" data-template-id="span-190" style="color: rgb(221, 238, 255);">0 dB</span></div>
+    <input type="range" class="rm canva-input" id="mTreble" min="-12" max="12" value="0" step=".5" data-html-import-id="html-import-268" data-template-id="input-191" style="background: rgba(232, 160, 32, 0.1);">
+  </div>
+  <div class="mast-row" data-html-import-id="html-import-269">
+    <div class="mast-lbl" data-html-import-id="html-import-270"><span data-html-import-id="html-import-271" data-template-id="span-192" class="canva-text" style="color: rgb(122, 154, 176);">Reverb</span><span class="mast-v canva-text" id="mvRev" data-html-import-id="html-import-272" data-template-id="span-193" style="color: rgb(221, 238, 255);">20%</span></div>
+    <input type="range" class="rm canva-input" id="mRev" min="0" max="100" value="20" data-html-import-id="html-import-273" data-template-id="input-194" style="background: rgba(232, 160, 32, 0.1);">
+  </div>
+  <div class="mast-row" data-html-import-id="html-import-274">
+    <div class="mast-lbl" data-html-import-id="html-import-275"><span data-html-import-id="html-import-276" data-template-id="span-195" class="canva-text" style="color: rgb(122, 154, 176);">Compresseur</span><span class="mast-v canva-text" id="mvComp" data-html-import-id="html-import-277" data-template-id="span-196" style="color: rgb(221, 238, 255);">−24 dB</span></div>
+    <input type="range" class="rm canva-input" id="mComp" min="-60" max="0" value="-24" data-html-import-id="html-import-278" data-template-id="input-197" style="background: rgba(232, 160, 32, 0.1);">
+  </div>
+  <div class="mast-lbl canva-container" style="margin-top: 8px; opacity: 0.35; font-size: 7px; letter-spacing: 0.2em; text-transform: uppercase; color: rgb(122, 154, 176);" data-html-import-id="html-import-279" data-template-id="div-198">Niveau sortie</div>
+  <div class="meter-track canva-container" data-html-import-id="html-import-280" data-template-id="div-199" style="background: rgba(232, 160, 32, 0.08);"><div class="meter-fill" id="mMeter" data-html-import-id="html-import-281"></div></div>
+</div>
+
+<!-- MODE FLASH -->
+<div id="mflash" data-html-import-id="html-import-282"></div>
+
+<!-- EXPANSION MAXIMALE OVERLAY -->
+<div id="maxExpOverlay" data-html-import-id="html-import-283"></div>
+<div id="maxExpLabel" data-html-import-id="html-import-284" data-template-id="div-200" class="canva-container" style="font-family: Orbitron; font-weight: 300; font-size: 11px;"><canva-inline-text data-template-id="canva-inline-text-201" class="canva-text" style="font-family: Orbitron; font-weight: 300; font-size: 11px;">360 × 432^(432×432)</canva-inline-text><br data-html-import-id="html-import-285"><span style="font-size:8px;letter-spacing:.5em;opacity:.6;" data-html-import-id="html-import-286" data-template-id="span-202" class="canva-text">EXPANSION MAXIMALE · CENTRES PARTOUT · AUCUN CENTRE ABSOLU</span></div>
+
+<!-- INFO BAR -->
+<div id="infobar" data-html-import-id="html-import-287">
+  <div class="ib canva-container" data-html-import-id="html-import-288" data-template-id="div-203" style="background: rgba(1, 3, 6, 0.82);"><div class="ib-k canva-container" data-html-import-id="html-import-289" data-template-id="div-204" style="color: rgb(122, 154, 176); font-size: 7px;">Produit</div><div class="ib-v canva-container" id="ibProd" data-html-import-id="html-import-290" data-template-id="div-205" style="color: rgb(221, 238, 255); font-size: 12px;">2.0000</div></div>
+  <div class="ib canva-container" data-html-import-id="html-import-291" data-template-id="div-206" style="background: rgba(1, 3, 6, 0.82);"><div class="ib-k canva-container" data-html-import-id="html-import-292" data-template-id="div-207" style="color: rgb(122, 154, 176); font-size: 7px;">Fréq. finale</div><div class="ib-v canva-container" id="ibFreq" data-html-import-id="html-import-293" data-template-id="div-208" style="color: rgb(221, 238, 255); font-size: 12px;">720 Ω</div></div>
+  <div class="ib canva-container" data-html-import-id="html-import-294" data-template-id="div-209" style="background: rgba(1, 3, 6, 0.82);"><div class="ib-k canva-container" data-html-import-id="html-import-295" data-template-id="div-210" style="color: rgb(122, 154, 176); font-size: 7px;">Battement</div><div class="ib-v rose canva-container" id="ibBeat" data-html-import-id="html-import-296" data-template-id="div-211" style="font-size: 12px;">72 Ω</div></div>
+  <div class="ib canva-container" data-html-import-id="html-import-297" data-template-id="div-212" style="background: rgba(1, 3, 6, 0.82);"><div class="ib-k canva-container" data-html-import-id="html-import-298" data-template-id="div-213" style="color: rgb(122, 154, 176); font-size: 7px;">Octaves</div><div class="ib-v canva-container" id="ibOct" data-html-import-id="html-import-299" data-template-id="div-214" style="color: rgb(221, 238, 255); font-size: 12px;">1.000</div></div>
+  <div class="ib canva-container" data-html-import-id="html-import-300" data-template-id="div-215" style="background: rgba(1, 3, 6, 0.82);"><div class="ib-k canva-container" data-html-import-id="html-import-301" data-template-id="div-216" style="color: rgb(122, 154, 176); font-size: 7px;">Mode actif</div><div class="ib-v gold canva-container" id="ibMode" data-html-import-id="html-import-302" data-template-id="div-217" style="color: rgb(232, 160, 32); font-size: 12px;">Neutre</div></div>
+</div>
+
+<div id="kbdhint" data-html-import-id="html-import-303" data-template-id="div-218" class="canva-container" style="color: rgb(122, 154, 176); font-size: 8px;">Pavé num → fréq binaural · ↑↓ BPM · F plein écran · Shift+1-8 modes</div>
+<div id="draghint" data-html-import-id="html-import-304" data-template-id="div-219" class="canva-container" style="color: rgb(122, 154, 176); font-size: 8px;">Glisser orbiter · Scroll zoom</div>
+
+</div><!-- /ui -->
+<script data-html-import-id="html-import-305">
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════
+var SC = [
+  '#1a6eaa','#00ccff','#00ffaa','#aaff00',
+  '#ffdd00','#ff8800','#ff4400','#ff0066','#cc00ff'
+];
+var SN = ['S₀','S₁','S₂','S₃','S₄','S₅','S₆','S₇','S₈'];
+var SR = ['—','6/5','7/6','8/7','9/8','10/9','11/10','12/11','13/12'];
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+var V = {
+  nS:6, base:360, spd:1.0,
+  autoRot:true, showLines:true, showBeat:true, showParts:true, showUniv:true,
+  rx:.35, ry:0, trx:.35, try_:0,
+  zoom:1, tzoom:1,
+  drag:false, lmx:0, lmy:0,
+  t:0,
+  vis:[true,true,true,true,true,true,true,true,true],
+  parts:[], modeScale:1, modeScaleT:1,
+  fluxT:0, fluxActive:false,
+  ppPhase:0, ppActive:false, ppSpd:1, ppInt:.5,
+  bpm:60, bpmActive:false, bpmFlash:0,
+  mode:null
+};
+
+// ═══════════════════════════════════════════════════════════
+// CANVAS SETUP
+// ═══════════════════════════════════════════════════════════
+var UC = document.getElementById('cvUniverse');
+var SC_ = document.getElementById('cvSphere');
+var uctx = UC.getContext('2d');
+var ctx  = SC_.getContext('2d');
+var W,H,cx,cy;
+
+function resize(){
+  W = UC.width  = SC_.width  = window.innerWidth;
+  H = UC.height = SC_.height = window.innerHeight;
+  cx = W/2; cy = H/2;
+  initUniverse();
+}
+window.addEventListener('resize', resize);
+
+// ═══════════════════════════════════════════════════════════
+// 1. UNIVERSE BACKGROUND — colourful pouring nebulae
+// ═══════════════════════════════════════════════════════════
+var uStars=[], uNebulae=[], uPour=[], uT=0;
+
+function initUniverse(){
+  uStars=[];
+  for(var i=0;i<160;i++){
+    uStars.push({
+      x:Math.random()*W, y:Math.random()*H,
+      r:.2+Math.random()*1.1,
+      tw:Math.random()*6.28, sp:.01+Math.random()*.04,
+      c:['#fff','#c8e0ff','#ffc8a0','#d0b0ff'][Math.floor(Math.random()*4)]
+    });
+  }
+  uNebulae=[];
+  var nc=[
+    ['rgba(0,80,200,','rgba(0,180,220,'],
+    ['rgba(100,0,180,','rgba(180,60,220,'],
+    ['rgba(0,140,80,','rgba(0,220,160,'],
+    ['rgba(180,60,0,','rgba(220,120,0,'],
+    ['rgba(120,0,140,','rgba(200,40,220,'],
+    ['rgba(0,100,180,','rgba(60,200,255,'],
+  ];
+  for(var i=0;i<7;i++){
+    var c=nc[i%nc.length];
+    uNebulae.push({
+      x:Math.random()*W, y:Math.random()*H,
+      rx:100+Math.random()*220, ry:70+Math.random()*160,
+      rot:Math.random()*3.14, rotSpd:.0005+Math.random()*.001,
+      c1:c[0], c2:c[1],
+      dx:(Math.random()-.5)*.12, dy:(Math.random()-.5)*.08,
+      pw:Math.random()*6.28, ps:.002+Math.random()*.003
+    });
+  }
+  uPour=[];
+  for(var i=0;i<50;i++) uPour.push(mkPour());
+}
+
+function mkPour(){
+  return{
+    x:Math.random()*W, y:Math.random()*H,
+    vx:(Math.random()-.5)*.35, vy:(Math.random()-.5)*.35,
+    r:40+Math.random()*90, h:Math.random()*360,
+    a:.03+Math.random()*.09, life:200+Math.random()*300, ml:500,
+    pw:Math.random()*6.28
+  };
+}
+
+function drawUniverse(){
+  if(!V.showUniv){
+    uctx.fillStyle='#010306';
+    uctx.fillRect(0,0,W,H);
+    return;
+  }
+  uctx.fillStyle='rgba(1,3,6,0.045)';
+  uctx.fillRect(0,0,W,H);
+
+  // Nebulae
+  for(var i=0;i<uNebulae.length;i++){
+    var n=uNebulae[i];
+    n.pw+=n.ps; n.rot+=n.rotSpd;
+    n.x+=n.dx; n.y+=n.dy;
+    if(n.x<-300)n.x=W+100; if(n.x>W+300)n.x=-100;
+    if(n.y<-300)n.y=H+100; if(n.y>H+300)n.y=-100;
+    var sc=1+Math.sin(n.pw)*.05;
+    uctx.save();
+    uctx.translate(n.x,n.y); uctx.rotate(n.rot);
+    uctx.scale(1,n.ry/n.rx); uctx.translate(-n.x,-n.y);
+    var g=uctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.rx*sc);
+    g.addColorStop(0,n.c1+'0.07)');
+    g.addColorStop(.5,n.c2+'0.035)');
+    g.addColorStop(1,n.c1+'0)');
+    uctx.fillStyle=g;
+    uctx.beginPath(); uctx.arc(n.x,n.y,n.rx*sc,0,6.28); uctx.fill();
+    uctx.restore();
+  }
+
+  // Colour pour
+  for(var i=0;i<uPour.length;i++){
+    var p=uPour[i];
+    p.x+=p.vx; p.y+=p.vy; p.life--; p.pw+=.025; p.h+=.4;
+    var a=p.a*(0.5+0.5*Math.abs(Math.sin(p.pw)))*(p.life/p.ml);
+    var g=uctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+    g.addColorStop(0,'hsla('+p.h+',80%,65%,'+a+')');
+    g.addColorStop(1,'hsla('+(p.h+50)+',60%,40%,0)');
+    uctx.fillStyle=g;
+    uctx.beginPath(); uctx.arc(p.x,p.y,p.r,0,6.28); uctx.fill();
+    if(p.life<=0) uPour[i]=mkPour();
+  }
+
+  // Stars
+  for(var i=0;i<uStars.length;i++){
+    var s=uStars[i];
+    s.tw+=s.sp;
+    uctx.globalAlpha=.3+.7*Math.abs(Math.sin(s.tw));
+    uctx.fillStyle=s.c;
+    uctx.beginPath(); uctx.arc(s.x,s.y,s.r,0,6.28); uctx.fill();
+  }
+  uctx.globalAlpha=1;
+
+  // Cosmic ray
+  if(Math.random()<.007){
+    var x1=Math.random()*W,y1=Math.random()*H,len=60+Math.random()*120,ang=Math.random()*6.28;
+    var g=uctx.createLinearGradient(x1,y1,x1+Math.cos(ang)*len,y1+Math.sin(ang)*len);
+    g.addColorStop(0,'rgba(200,220,255,0)');
+    g.addColorStop(.5,'rgba(200,220,255,0.07)');
+    g.addColorStop(1,'rgba(200,220,255,0)');
+    uctx.strokeStyle=g; uctx.lineWidth=.5; uctx.globalAlpha=1;
+    uctx.beginPath(); uctx.moveTo(x1,y1); uctx.lineTo(x1+Math.cos(ang)*len,y1+Math.sin(ang)*len); uctx.stroke();
+  }
+  uT++;
+}
+
+// ═══════════════════════════════════════════════════════════
+// 3D PROJECTION
+// ═══════════════════════════════════════════════════════════
+function proj(x,y,z){
+  var cx_=Math.cos(V.rx), sx=Math.sin(V.rx);
+  var cy_=Math.cos(V.ry), sy=Math.sin(V.ry);
+  var y2=y*cx_-z*sx, z2=y*sx+z*cx_;
+  var x2=x*cy_+z2*sy, z3=-x*sy+z2*cy_;
+  var sc=V.zoom*(H*.38), fov=600/(600+z3*80);
+  return{sx:cx+x2*sc*fov, sy:cy+y2*sc*fov, fov:fov, z:z3};
+}
+
+function getFreqs(){
+  var a=[V.base]; var f=V.base;
+  for(var i=1;i<=8;i++){f=f*(i+5)/(i+4); a.push(Math.round(f*10)/10);}
+  return a;
+}
+
+function sphR(si){ return (0.15+si*0.14)*V.modeScale; }
+
+function initParts(){
+  V.parts=[];
+  for(var si=0;si<V.nS;si++){
+    var r=sphR(si), n=12+si*6;
+    for(var i=0;i<n;i++){
+      var th=Math.random()*6.28, ph=Math.acos(2*Math.random()-1), sp=.004+Math.random()*.006;
+      V.parts.push({si:si,r:r,th:th,ph:ph,dth:(Math.random()-.5)*sp*2,dph:(Math.random()-.5)*sp,sz:1.2+Math.random()*1.8,pw:Math.random()*6.28,c:SC[si]});
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DRAW SPHERE WIREFRAME
+// ═══════════════════════════════════════════════════════════
+function drawSphere(r,col,alpha){
+  ctx.strokeStyle=col; ctx.lineWidth=.5; ctx.globalAlpha=alpha;
+  for(var m=0;m<6;m++){
+    var phi=(m/6)*3.14159;
+    ctx.beginPath(); var f=true;
+    for(var i=0;i<=32;i++){
+      var th=(i/32)*6.28;
+      var p=proj(r*Math.sin(th)*Math.cos(phi), r*Math.cos(th), r*Math.sin(th)*Math.sin(phi));
+      if(f){ctx.moveTo(p.sx,p.sy);f=false;}else ctx.lineTo(p.sx,p.sy);
+    }
+    ctx.stroke();
+  }
+  for(var ri=1;ri<16;ri++){
+    var phi=(ri/16)*3.14159, yr=r*Math.cos(phi), rr=r*Math.sin(phi);
+    ctx.beginPath(); var f=true;
+    for(var i=0;i<=32;i++){
+      var th=(i/32)*6.28;
+      var p=proj(rr*Math.cos(th), yr, rr*Math.sin(th));
+      if(f){ctx.moveTo(p.sx,p.sy);f=false;}else ctx.lineTo(p.sx,p.sy);
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawLines(){
+  if(!V.showLines) return;
+  for(var si=1;si<Math.min(V.nS,9);si++){
+    if(!V.vis[si]) continue;
+    var r1=sphR(si-1), r2=sphR(si);
+    ctx.strokeStyle=SC[si]; ctx.lineWidth=.5; ctx.globalAlpha=.08;
+    for(var i=0;i<8;i++){
+      var th=(i/8)*6.28+V.t*.1, ph=1.047;
+      var p1=proj(r1*Math.sin(ph)*Math.cos(th),r1*Math.cos(ph),r1*Math.sin(ph)*Math.sin(th));
+      var p2=proj(r2*Math.sin(ph)*Math.cos(th+.3),r2*Math.cos(ph),r2*Math.sin(ph)*Math.sin(th+.3));
+      ctx.beginPath(); ctx.moveTo(p1.sx,p1.sy); ctx.lineTo(p2.sx,p2.sy); ctx.stroke();
+    }
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawBeatRings(){
+  if(!V.showBeat) return;
+  var pulse=(Math.sin(V.t*2)+1)/2;
+  ctx.strokeStyle='#ff0066'; ctx.lineWidth=1;
+  var outerR=sphR(V.nS-1)*1.06+pulse*.03;
+  [{a:'y'},{a:'x'}].forEach(function(pl){
+    ctx.globalAlpha=.13+pulse*.09;
+    ctx.beginPath(); var f=true;
+    for(var i=0;i<=64;i++){
+      var th=(i/64)*6.28, x,y,z;
+      if(pl.a==='y'){x=outerR*Math.cos(th);y=0;z=outerR*Math.sin(th);}
+      else{x=0;y=outerR*Math.cos(th);z=outerR*Math.sin(th);}
+      var p=proj(x,y,z);
+      if(f){ctx.moveTo(p.sx,p.sy);f=false;}else ctx.lineTo(p.sx,p.sy);
+    }
+    ctx.stroke();
+  });
+  ctx.globalAlpha=1;
+}
+
+function drawParticles(){
+  if(!V.showParts) return;
+  var list=[];
+  for(var i=0;i<V.parts.length;i++){
+    var pt=V.parts[i];
+    if(!V.vis[pt.si]) continue;
+    pt.th+=pt.dth*V.spd; pt.ph+=pt.dph*V.spd;
+    var x=pt.r*Math.sin(pt.ph)*Math.cos(pt.th);
+    var y=pt.r*Math.cos(pt.ph);
+    var z=pt.r*Math.sin(pt.ph)*Math.sin(pt.th);
+    var p=proj(x,y,z);
+    list.push({sx:p.sx,sy:p.sy,fov:p.fov,z:p.z,pt:pt});
+  }
+  list.sort(function(a,b){return a.z-b.z;});
+  for(var i=0;i<list.length;i++){
+    var it=list[i], pt=it.pt;
+    var pulse=.7+.3*Math.sin(V.t*3+pt.pw);
+    var sz=pt.sz*it.fov*pulse;
+    var al=.4+.6*Math.max(0,it.fov-.5);
+    ctx.globalAlpha=al; ctx.fillStyle=pt.c;
+    ctx.shadowColor=pt.c; ctx.shadowBlur=sz*4;
+    ctx.beginPath(); ctx.arc(it.sx,it.sy,sz,0,6.28); ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  ctx.globalAlpha=1;
+}
+
+// ═══════════════════════════════════════════════════════════
+// 7. FLUX ENERGETIQUE
+// ═══════════════════════════════════════════════════════════
+var fluxStreams=[];
+function initFlux(){
+  fluxStreams=[];
+  for(var i=0;i<14;i++){
+    fluxStreams.push({
+      ang:(i/14)*6.28, spd:.018+Math.random()*.025,
+      col:SC[i%SC.length], pw:Math.random()*6.28
+    });
+  }
+}
+initFlux();
+
+function drawFlux(){
+  if(!V.fluxActive) return;
+  V.fluxT+=.022*V.spd;
+  for(var i=0;i<fluxStreams.length;i++){
+    var s=fluxStreams[i];
+    s.ang+=s.spd*V.spd;
+    var maxR=sphR(Math.min(V.nS-1,8));
+    ctx.strokeStyle=s.col; ctx.lineWidth=1.5;
+    ctx.globalAlpha=.32*(0.5+0.5*Math.sin(V.fluxT+s.pw));
+    ctx.beginPath(); var f=true;
+    for(var j=0;j<20;j++){
+      var t=j/19, r=maxR*t*(0.5+.4*Math.sin(V.fluxT*1.2+s.pw));
+      var a=s.ang+Math.sin(V.fluxT+t*2.5)*.45;
+      var x=Math.cos(a)*r, y=Math.cos(a*.6)*r*.25, z=Math.sin(a)*r;
+      var p=proj(x,y,z);
+      if(f){ctx.moveTo(p.sx,p.sy);f=false;}else ctx.lineTo(p.sx,p.sy);
+    }
+    ctx.stroke();
+    // tip
+    var t2=19/19, r2=maxR*(0.5+.4*Math.sin(V.fluxT*1.2+s.pw));
+    var a2=s.ang+Math.sin(V.fluxT+t2*2.5)*.45;
+    var tip=proj(Math.cos(a2)*r2, Math.cos(a2*.6)*r2*.25, Math.sin(a2)*r2);
+    ctx.fillStyle=s.col; ctx.shadowColor=s.col; ctx.shadowBlur=8; ctx.globalAlpha=.6;
+    ctx.beginPath(); ctx.arc(tip.sx,tip.sy,2.5,0,6.28); ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  ctx.globalAlpha=1;
+}
+
+// ═══════════════════════════════════════════════════════════
+// 4. PING-PONG VISUAL
+// ═══════════════════════════════════════════════════════════
+function drawPP(){
+  if(!V.ppActive) return;
+  V.ppPhase+=V.ppSpd*.04*V.spd;
+  var pp=(Math.sin(V.ppPhase)+1)/2;
+  var r=sphR(Math.floor(V.nS/2))*.6;
+  ctx.strokeStyle='#8855ff'; ctx.lineWidth=1.5;
+  ctx.globalAlpha=.25+pp*.35;
+  // two pulsing circles bouncing
+  var off=(pp*2-1)*cx*.18;
+  ctx.beginPath(); ctx.arc(cx+off, cy, 8+pp*18, 0, 6.28); ctx.stroke();
+  ctx.globalAlpha=.25+(1-pp)*.35;
+  ctx.beginPath(); ctx.arc(cx-off, cy, 8+(1-pp)*18, 0, 6.28); ctx.stroke();
+  // connecting beam
+  var pL=proj(-(r*pp-.3*r)*.8,0,0), pR=proj((r*(1-pp)-.3*r)*.8,0,0);
+  var g=ctx.createLinearGradient(pL.sx,pL.sy,pR.sx,pR.sy);
+  g.addColorStop(0,'rgba(136,85,255,0)');
+  g.addColorStop(.5,'rgba(136,85,255,0.5)');
+  g.addColorStop(1,'rgba(136,85,255,0)');
+  ctx.strokeStyle=g; ctx.lineWidth=1; ctx.globalAlpha=pp*.4;
+  ctx.beginPath(); ctx.moveTo(pL.sx,pL.sy); ctx.lineTo(pR.sx,pR.sy); ctx.stroke();
+  ctx.globalAlpha=1;
+}
+
+// ═══════════════════════════════════════════════════════════
+// 6. BPM FLASH
+// ═══════════════════════════════════════════════════════════
+function drawBpmFlash(){
+  if(V.bpmFlash<=0) return;
+  V.bpmFlash-=.06;
+  var p=proj(0,0,0);
+  ctx.fillStyle='rgba(255,204,0,'+Math.max(0,V.bpmFlash*.15)+')';
+  ctx.beginPath(); ctx.arc(p.sx,p.sy, 90*V.bpmFlash, 0, 6.28); ctx.fill();
+}
+
+// ═══════════════════════════════════════════════════════════
+// 8 & 9. MODES EXPANSION / CONTRACTION
+// ═══════════════════════════════════════════════════════════
+var MODES={
+  exp1:{label:'Expansion 432/360',  ratio:432/360,  col:'#00ff88'},
+  exp2:{label:'Expansion 864/360',  ratio:864/360,  col:'#80ff60'},
+  exp3:{label:'Expansion 1296/360', ratio:1296/360, col:'#ccff40'},
+  cnt1:{label:'Contraction 360/432',ratio:360/432,  col:'#ff6600'},
+  cnt2:{label:'Contraction 360/864',ratio:360/864,  col:'#ff4400'},
+  cnt3:{label:'Contraction 360/1296',ratio:360/1296,col:'#ff2200'},
+  flux:{label:'Flux énergétique',   ratio:1,        col:'#ff0066'},
+  pp:  {label:'Ping-Pong',          ratio:1,        col:'#8855ff'},
+  bpm: {label:'BPM Pulsation',      ratio:1,        col:'#ffcc00'},
+  maxexp:{label:'360 × 432^(432×432)', ratio:1,     col:'#ffd700'},
+};
+
+// ═══════════════════════════════════════════════════════════
+// MODE EXPANSION MAXIMALE — 360 × 432^(432×432)
+// ═══════════════════════════════════════════════════════════
+var ME = {
+  on: false,
+  phase: 0,          // phase globale 0→1 (progression de l'expansion)
+  ringPool: [],      // anneaux émis
+  lastRing: 0,       // timer émission anneaux
+  centres: [],       // centres fractals secondaires
+  spirals: [],       // filaments spiraux
+  bgPulse: 0,        // pulsation fond
+  baseScale: 1,      // échelle de base des sphères
+  targetScale: 1,
+  oscMaxL: null, oscMaxR: null, oscMaxSub: null,
+  oscMaxGain: null,
+};
+
+function maxExpInit(){
+  ME.phase = 0;
+  ME.ringPool = [];
+  ME.centres = [];
+  ME.spirals = [];
+  ME.bgPulse = 0;
+  ME.lastRing = 0;
+
+  // Générer 36 centres fractals secondaires (36 = brique de base)
+  ME.centres = [];
+  for(var i=0;i<36;i++){
+    var ang = (i/36)*Math.PI*2;
+    var dist = 0.3 + Math.random()*0.55;
+    ME.centres.push({
+      ang: ang, dist: dist,
+      phase: Math.random()*Math.PI*2,
+      spd: 0.004 + Math.random()*0.008,
+      r: 0.04 + Math.random()*0.08,
+      col: ['#ffd700','#00ccff','#00ff88','#ff6600','#ff0066','#8855ff'][Math.floor(Math.random()*6)],
+      born: 0, visible: false,
+    });
+  }
+
+  // Générer 9 spirales (cycle ternaire)
+  ME.spirals = [];
+  for(var i=0;i<9;i++){
+    ME.spirals.push({
+      ang: (i/9)*Math.PI*2,
+      spd: 0.006 + i*0.001,
+      col: SC[i%SC.length],
+      pts: [],
+    });
+  }
+}
+
+function maxExpEmitRing(){
+  var outerR = sphR(Math.min(V.nS-1,8));
+  var progress = ME.phase;
+  // Couleur varie de cyan→or selon la progression
+  var r = Math.round(0 + progress*255);
+  var g = Math.round(204 - progress*80);
+  var b = Math.round(255 - progress*255);
+  var col = 'rgba('+r+','+g+','+b+',';
+  ME.ringPool.push({
+    r: outerR * (0.5 + progress*0.5),
+    maxR: outerR * (2.5 + progress*6),
+    t: 0,
+    col: col,
+    axis: Math.random()<0.5 ? 'y' : (Math.random()<0.5 ? 'x' : 'z'),
+    tilt: (Math.random()-0.5)*Math.PI,
+  });
+}
+
+function drawMaxExp(){
+  if(!ME.on) return;
+  ME.phase = Math.min(1, ME.phase + 0.0008*V.spd);
+  ME.bgPulse += 0.04*V.spd;
+
+  var progress = ME.phase;
+  var outerR = sphR(Math.min(V.nS-1,8));
+
+  // ── Fond doré pulsant ──
+  var bgA = progress * 0.04 * (0.7 + 0.3*Math.sin(ME.bgPulse));
+  var ctr = proj(0,0,0);
+  var bgGrad = ctx.createRadialGradient(ctr.sx,ctr.sy,0,ctr.sx,ctr.sy,Math.max(W,H)*0.8);
+  bgGrad.addColorStop(0,'rgba(255,215,0,'+bgA*1.5+')');
+  bgGrad.addColorStop(0.4,'rgba(255,140,0,'+bgA*0.8+')');
+  bgGrad.addColorStop(0.8,'rgba(0,100,200,'+bgA*0.4+')');
+  bgGrad.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=bgGrad; ctx.globalAlpha=1;
+  ctx.fillRect(0,0,W,H);
+
+  // ── Émettre un anneau toutes les N frames selon la phase ──
+  var ringInterval = Math.max(4, Math.round(30 - progress*22));
+  ME.lastRing++;
+  if(ME.lastRing >= ringInterval){ ME.lastRing=0; maxExpEmitRing(); }
+
+  // ── Dessiner et avancer les anneaux ──
+  for(var i=ME.ringPool.length-1;i>=0;i--){
+    var ring = ME.ringPool[i];
+    ring.t += 0.022*V.spd;
+    if(ring.t >= 1){ ME.ringPool.splice(i,1); continue; }
+    var cr = ring.r + (ring.maxR - ring.r)*ring.t;
+    var alpha = (1 - ring.t) * (0.12 + progress*0.18);
+    ctx.strokeStyle = ring.col + alpha + ')';
+    ctx.lineWidth = 0.8 + (1-ring.t)*1.5;
+    ctx.globalAlpha = 1;
+
+    // Dessin selon l'axe
+    ctx.beginPath(); var f=true;
+    for(var j=0;j<=64;j++){
+      var th=(j/64)*6.28, px,py,pz;
+      if(ring.axis==='y')     { px=cr*Math.cos(th); py=cr*Math.sin(ring.tilt)*Math.sin(th); pz=cr*Math.sin(th); }
+      else if(ring.axis==='x'){ px=cr*Math.sin(ring.tilt)*Math.sin(th); py=cr*Math.cos(th); pz=cr*Math.sin(th); }
+      else                     { px=cr*Math.cos(th); py=cr*Math.sin(th); pz=cr*Math.cos(ring.tilt)*Math.sin(th)*0.3; }
+      var pp2=proj(px,py,pz);
+      if(f){ctx.moveTo(pp2.sx,pp2.sy);f=false;}else ctx.lineTo(pp2.sx,pp2.sy);
+    }
+    ctx.stroke();
+  }
+
+  // ── Centres fractals secondaires (apparaissent progressivement) ──
+  for(var i=0;i<ME.centres.length;i++){
+    var c=ME.centres[i];
+    // Apparition progressive selon progress
+    if(i/36 > progress*1.2 && !c.visible) continue;
+    c.visible = true;
+    c.ang += c.spd * V.spd;
+    var dist = c.dist * outerR * (1 + progress*2.5);
+    var cx2 = Math.cos(c.ang)*dist;
+    var cy2 = Math.sin(c.ang)*dist*0.4;
+    var cz2 = Math.sin(c.ang+c.phase)*dist*0.6;
+    var pp3=proj(cx2,cy2,cz2);
+    var pSize = c.r * (0.5+0.5*Math.sin(V.t*3+c.phase)) * (0.4+progress*0.8);
+    var pAlpha = (0.3+0.7*progress) * (0.6+0.4*Math.abs(Math.sin(V.t*2+c.phase)));
+
+    // Point central
+    ctx.fillStyle=c.col; ctx.shadowColor=c.col; ctx.shadowBlur=12*progress; ctx.globalAlpha=pAlpha;
+    ctx.beginPath(); ctx.arc(pp3.sx,pp3.sy,pSize*pp3.fov*16,0,6.28); ctx.fill();
+
+    // Mini-anneau autour de chaque centre
+    if(progress>0.3){
+      var mRing = pSize*pp3.fov*40*(progress-0.3)/0.7;
+      ctx.strokeStyle=c.col; ctx.lineWidth=0.5; ctx.globalAlpha=pAlpha*0.3; ctx.shadowBlur=0;
+      ctx.beginPath(); ctx.arc(pp3.sx,pp3.sy,mRing,0,6.28); ctx.stroke();
+    }
+
+    // Fil vers le centre
+    if(progress>0.5 && pp3.fov>0.4){
+      var cen=proj(0,0,0);
+      var lineAlpha = (progress-0.5)*0.15;
+      ctx.strokeStyle=c.col; ctx.lineWidth=0.4; ctx.globalAlpha=lineAlpha; ctx.shadowBlur=0;
+      ctx.beginPath(); ctx.moveTo(cen.sx,cen.sy); ctx.lineTo(pp3.sx,pp3.sy); ctx.stroke();
+    }
+  }
+  ctx.shadowBlur=0; ctx.globalAlpha=1;
+
+  // ── Spirales fractales (phase avancée) ──
+  if(progress>0.25){
+    var spiralAlpha = (progress-0.25)/0.75 * 0.18;
+    for(var i=0;i<ME.spirals.length;i++){
+      var sp=ME.spirals[i];
+      sp.ang += sp.spd*V.spd;
+      ctx.strokeStyle=sp.col; ctx.lineWidth=0.8; ctx.globalAlpha=spiralAlpha;
+      ctx.beginPath(); var f=true;
+      var tours = 3 + progress*4;
+      for(var j=0;j<=120;j++){
+        var t=j/120;
+        var ang2 = t*Math.PI*2*tours + sp.ang;
+        var r2 = t * outerR * (1.5 + progress*3.5);
+        var y2 = (t-0.5)*outerR*(0.8+progress*2);
+        var pp4=proj(r2*Math.cos(ang2), y2, r2*Math.sin(ang2));
+        if(f){ctx.moveTo(pp4.sx,pp4.sy);f=false;}else ctx.lineTo(pp4.sx,pp4.sy);
+      }
+      ctx.stroke();
+    }
+  }
+
+  // ── Texte fractal flottant (phase finale) ──
+  if(progress>0.8){
+    var txtA=(progress-0.8)/0.2;
+    ctx.font="8px 'Share Tech Mono'";
+    ctx.globalAlpha=txtA*0.3;
+    var labels=['360','432','36','432²','432³','∞','0','1','2','9/8','6/5'];
+    for(var i=0;i<ME.centres.length;i++){
+      if(i>=labels.length) break;
+      var c=ME.centres[i];
+      var d2=c.dist*outerR*(1+progress*2.5);
+      var pp5=proj(Math.cos(c.ang)*d2, Math.sin(c.ang)*d2*0.4, Math.sin(c.ang+c.phase)*d2*0.6);
+      if(pp5.fov>0.3){
+        ctx.fillStyle=c.col;
+        ctx.fillText(labels[i], pp5.sx+8, pp5.sy-8);
+      }
+    }
+  }
+  ctx.globalAlpha=1;
+}
+
+// Son du mode expansion maximale
+function startMaxExpSound(){
+  ensureAC(); resumeAC();
+  stopMaxExpSound();
+
+  ME.oscMaxL = AC.createOscillator();
+  ME.oscMaxR = AC.createOscillator();
+  ME.oscMaxSub = AC.createOscillator();
+  ME.oscMaxGain = AC.createGain();
+
+  var panL=AC.createStereoPanner(); panL.pan.value=-1;
+  var panR=AC.createStereoPanner(); panR.pan.value=1;
+  var gainL=AC.createGain(); gainL.gain.value=0.08;
+  var gainR=AC.createGain(); gainR.gain.value=0.08;
+  var gainSub=AC.createGain(); gainSub.gain.value=0.12;
+
+  // 360 Hz gauche, 432 Hz droite → battement 72 Hz
+  ME.oscMaxL.frequency.value=360;
+  ME.oscMaxR.frequency.value=432;
+  ME.oscMaxSub.frequency.value=54; // sub-basse profonde
+
+  ME.oscMaxL.connect(gainL); gainL.connect(panL); panL.connect(eqIn());
+  ME.oscMaxR.connect(gainR); gainR.connect(panR); panR.connect(eqIn());
+  ME.oscMaxSub.connect(gainSub); gainSub.connect(eqIn());
+
+  ME.oscMaxL.start(); ME.oscMaxR.start(); ME.oscMaxSub.start();
+  ME.oscMaxGain = gainSub;
+
+  // LFO pour faire évoluer les fréquences vers l'infini progressivement
+  var lfo=AC.createOscillator(); lfo.frequency.value=0.04;
+  var lfoG=AC.createGain(); lfoG.gain.value=72;
+  lfo.connect(lfoG); lfoG.connect(ME.oscMaxR.frequency);
+  lfo.start();
+  ME._lfo=lfo; ME._lfoG=lfoG;
+}
+
+function stopMaxExpSound(){
+  ['oscMaxL','oscMaxR','oscMaxSub','_lfo'].forEach(function(k){
+    if(ME[k]){ try{ME[k].stop();}catch(e){} try{ME[k].disconnect();}catch(e){} ME[k]=null; }
+  });
+}
+
+function toggleMaxExp(){
+  if(ME.on){ stopMaxExp(); } else { startMaxExpFull(); }
+}
+
+function startMaxExpFull(){
+  // Désactiver les autres modes spéciaux
+  if(V.mode==='flux')V.fluxActive=false;
+  if(V.mode==='pp')V.ppActive=false;
+  if(V.mode==='bpm'){V.bpmActive=false;stopBpm();}
+
+  ME.on=true;
+  maxExpInit();
+  startMaxExpSound();
+
+  document.getElementById('tMaxExp').classList.add('on');
+  document.getElementById('maxExpOverlay').classList.add('on');
+  document.getElementById('maxExpLabel').classList.add('on');
+  document.getElementById('ibMode').textContent='360 × 432^(432×432)';
+  document.getElementById('hdr-ratio').textContent='360 × 432^(432×432) · expansion maximale';
+
+  // Lancer les anneaux HTML overlay
+  var overlay=document.getElementById('maxExpOverlay');
+  overlay.innerHTML='';
+  for(var i=0;i<7;i++){
+    (function(idx){
+      setTimeout(function(){
+        if(!ME.on) return;
+        var ring=document.createElement('div');
+        ring.className='maxexp-ring';
+        var size=60+idx*80;
+        ring.style.cssText='width:'+size+'px;height:'+size+'px;border-width:'+(1.5-idx*.15)+'px;border-color:rgba('+(255-idx*30)+','+(215-idx*20)+',0,'+(0.6-idx*.07)+');animation:maxring '+(3+idx*1.5)+'s linear '+(idx*0.4)+'s infinite;';
+        overlay.appendChild(ring);
+      }, idx*200);
+    })(i);
+  }
+
+  showFlash('360 × 432^(432×432)', '#ffd700');
+}
+
+function stopMaxExp(){
+  ME.on=false; ME.phase=0;
+  stopMaxExpSound();
+  document.getElementById('tMaxExp').classList.remove('on');
+  document.getElementById('maxExpOverlay').classList.remove('on');
+  document.getElementById('maxExpLabel').classList.remove('on');
+  document.getElementById('maxExpOverlay').innerHTML='';
+  document.getElementById('ibMode').textContent='Neutre';
+  document.getElementById('hdr-ratio').textContent='432 / 360 = 6/5 → n+1/n';
+  V.modeScaleT=1;
+}
+
+var modeBreath=0;
+function setMode(id){
+  if(V.mode===id){ // toggle off
+    V.mode=null; V.modeScaleT=1;
+    V.fluxActive=false; V.ppActive=false; V.bpmActive=false;
+    stopBpm(); updateModeUI('Neutre','#7a9ab0','');
+    document.querySelectorAll('.mrow').forEach(function(r){r.classList.remove('on');});
+    document.getElementById('ibMode').textContent='Neutre';
+    document.getElementById('hdr-ratio').textContent='432 / 360 = 6/5 → n+1/n';
+    return;
+  }
+  // turn off old specials
+  V.fluxActive=false; V.ppActive=false; V.bpmActive=false; stopBpm();
+  document.getElementById('ckPP').checked=false;
+  document.getElementById('ckBpmActive').checked=false;
+
+  V.mode=id;
+  var m=MODES[id];
+  V.modeScaleT=m.ratio;
+
+  if(id==='flux'){V.fluxActive=true;}
+  if(id==='pp'){V.ppActive=true; document.getElementById('ckPP').checked=true;}
+  if(id==='bpm'){V.bpmActive=true; document.getElementById('ckBpmActive').checked=true; startBpm();}
+  if(id==='maxexp'){startMaxExpFull(); return;}
+
+  document.getElementById('ibMode').textContent=m.label;
+  document.getElementById('hdr-ratio').textContent=m.label+' · ×'+m.ratio.toFixed(3);
+  updateModeUI(m.label, m.col, id);
+
+  document.querySelectorAll('.mrow').forEach(function(r){
+    r.classList.toggle('on', r.dataset.mode===id);
+  });
+  initParts();
+  showFlash(m.label, m.col);
+}
+
+function applyModeScale(){
+  if(V.mode===null){
+    V.modeScale+=(1-V.modeScale)*.05; return;
+  }
+  var m=MODES[V.mode];
+  if(m.ratio!==1){
+    modeBreath+=.007*V.spd;
+    var breathe=1+Math.sin(modeBreath)*.035;
+    V.modeScale+=(m.ratio*breathe-V.modeScale)*.04;
+  } else {
+    V.modeScale+=(1-V.modeScale)*.05;
+  }
+}
+
+function updateModeUI(label,col,id){
+  // highlight toolbar
+  document.getElementById('ibMode').textContent=label;
+}
+
+function showFlash(txt,col){
+  var el=document.getElementById('mflash');
+  el.textContent=txt;
+  el.style.color=col; el.style.borderColor=col+'40'; el.style.background=col+'14';
+  el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},2200);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CENTER DOT + LABELS
+// ═══════════════════════════════════════════════════════════
+function drawCenter(){
+  var pulse=.6+.4*Math.sin(V.t*4);
+  var p=proj(0,0,0);
+  ctx.fillStyle='#fff'; ctx.globalAlpha=pulse*.9;
+  ctx.shadowColor='#00ccff'; ctx.shadowBlur=20*pulse;
+  ctx.beginPath(); ctx.arc(p.sx,p.sy,3,0,6.28); ctx.fill();
+  ctx.shadowBlur=0; ctx.globalAlpha=1;
+  var axes=[[.08,0,0,'rgba(255,80,80,.3)'],[0,.08,0,'rgba(80,255,80,.3)'],[0,0,.08,'rgba(80,80,255,.3)']];
+  for(var i=0;i<axes.length;i++){
+    var a=axes[i], p2=proj(a[0],a[1],a[2]);
+    ctx.strokeStyle=a[3]; ctx.lineWidth=1; ctx.globalAlpha=.5;
+    ctx.beginPath(); ctx.moveTo(p.sx,p.sy); ctx.lineTo(p2.sx,p2.sy); ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawLabels(){
+  var freqs=getFreqs();
+  for(var si=0;si<V.nS;si++){
+    if(!V.vis[si]) continue;
+    var r=sphR(si), p=proj(r,0,0);
+    ctx.font="10px 'Share Tech Mono'"; ctx.fillStyle=SC[si]; ctx.globalAlpha=.78;
+    ctx.fillText(SN[si]+' · '+freqs[si]+' Ω', p.sx+6, p.sy-4);
+  }
+  ctx.globalAlpha=1;
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAIN DRAW LOOP
+// ═══════════════════════════════════════════════════════════
+function draw(){
+  requestAnimationFrame(draw);
+  drawUniverse();
+
+  ctx.fillStyle='rgba(1,3,6,0.20)'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(0,204,255,.022)'; ctx.lineWidth=1;
+  var st=60;
+  for(var x=cx%st;x<W;x+=st){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(var y=cy%st;y<H;y+=st){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  V.rx+=(V.trx-V.rx)*.06; V.ry+=(V.try_-V.ry)*.06; V.zoom+=(V.tzoom-V.zoom)*.08;
+  if(V.autoRot) V.try_+=.003*V.spd;
+
+  applyModeScale();
+
+  for(var si=V.nS-1;si>=0;si--){
+    if(!V.vis[si]) continue;
+    var r=sphR(si), alpha=si===0?.35:.12+(V.nS-si)*.015;
+    drawSphere(r,SC[si],alpha);
+  }
+  drawBeatRings(); drawLines(); drawFlux();
+  drawParticles(); drawPP(); drawBpmFlash(); drawMaxExp(); drawCenter(); drawLabels();
+
+  // Update info bar
+  var freqs=getFreqs(); var n=V.nS, prod=(n+4)/5;
+  document.getElementById('ibProd').textContent=prod.toFixed(4);
+  document.getElementById('ibFreq').textContent=freqs[n-1]+' Ω';
+  document.getElementById('ibOct').textContent=Math.log2(prod).toFixed(3);
+  document.getElementById('ibBeat').textContent='72 Ω';
+
+  V.t+=.016*V.spd;
+  updateMasterMeter();
+}
+
+// ═══════════════════════════════════════════════════════════
+// 6. BPM ENGINE
+// ═══════════════════════════════════════════════════════════
+var bpmTimerId=null;
+function startBpm(){
+  stopBpm();
+  var ms=60000/V.bpm;
+  bpmTimerId=setInterval(function(){
+    V.bpmFlash=1;
+    var dot=document.getElementById('bpmDot');
+    dot.style.opacity='1';
+    setTimeout(function(){dot.style.opacity='0';},80);
+    if(AC&&AC.state==='running'){
+      try{
+        var o=AC.createOscillator(), g=AC.createGain();
+        o.frequency.value=900; g.gain.value=.12;
+        o.connect(g); g.connect(masterGain||AC.destination);
+        o.start(); g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+.04);
+        setTimeout(function(){try{o.stop();o.disconnect();}catch(e){}},80);
+      }catch(e){}
+    }
+  },ms);
+}
+function stopBpm(){if(bpmTimerId){clearInterval(bpmTimerId);bpmTimerId=null;}}
+function setBpm(v){
+  V.bpm=Math.max(1,Math.min(180,v));
+  document.getElementById('bpmVal').textContent=V.bpm;
+  document.getElementById('rBpm').value=V.bpm;
+  if(V.bpmActive) startBpm();
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUDIO ENGINE
+// ═══════════════════════════════════════════════════════════
+var AC=null, masterGain=null, compressor=null;
+var bassF=null, midF=null, trebleF=null, reverbN=null, revGain=null, dryGain=null;
+var oscL=null, oscR=null, binGain=null, binMerger=null;
+var ppLFO=null, ppLFOGL=null, ppLFOGR=null;
+var oscA=null, oscAG=null, oscAP=null;
+var oscB=null, oscBG=null, oscBP=null;
+var binPlaying=false, waveAnim=null;
+var binSt={fL:432,fR:440,vol:.6};
+
+function ensureAC(){
+  if(AC) return;
+  AC=new(window.AudioContext||window.webkitAudioContext)();
+  masterGain=AC.createGain(); masterGain.gain.value=.8;
+  bassF=AC.createBiquadFilter(); bassF.type='lowshelf'; bassF.frequency.value=200;
+  midF=AC.createBiquadFilter(); midF.type='peaking'; midF.frequency.value=1000; midF.Q.value=1;
+  trebleF=AC.createBiquadFilter(); trebleF.type='highshelf'; trebleF.frequency.value=5000;
+  compressor=AC.createDynamicsCompressor();
+  compressor.threshold.value=-24; compressor.knee.value=12; compressor.ratio.value=4;
+  // Reverb
+  reverbN=AC.createConvolver();
+  var rl=AC.sampleRate*1.5;
+  var rb=AC.createBuffer(2,rl,AC.sampleRate);
+  for(var ch=0;ch<2;ch++){var d=rb.getChannelData(ch);for(var i=0;i<rl;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/rl,2);}
+  reverbN.buffer=rb;
+  revGain=AC.createGain(); revGain.gain.value=.18;
+  dryGain=AC.createGain(); dryGain.gain.value=.85;
+  // Chain: bassF→midF→trebleF→compressor→dry+rev→master→dest
+  bassF.connect(midF); midF.connect(trebleF); trebleF.connect(compressor);
+  compressor.connect(dryGain); compressor.connect(reverbN);
+  reverbN.connect(revGain); revGain.connect(masterGain);
+  dryGain.connect(masterGain); masterGain.connect(AC.destination);
+}
+function resumeAC(){ if(AC&&AC.state==='suspended') AC.resume(); }
+function eqIn(){ return bassF; }
+
+// OSC A
+var oscASt={freq:864,type:'sine',vol:.6,pan:0,on:false};
+function startOscA(){
+  if(oscA){stopOscA();}
+  ensureAC(); resumeAC();
+  oscA=AC.createOscillator(); oscA.type=oscASt.type; oscA.frequency.value=oscASt.freq;
+  oscAG=AC.createGain(); oscAG.gain.value=oscASt.vol*.22;
+  oscAP=AC.createStereoPanner(); oscAP.pan.value=oscASt.pan/100;
+  oscA.connect(oscAG); oscAG.connect(oscAP); oscAP.connect(eqIn());
+  oscA.start(); oscASt.on=true;
+  document.getElementById('dotA').classList.add('on');
+}
+function stopOscA(){
+  if(oscA){try{oscA.stop();}catch(e){} oscA.disconnect(); oscA=null;}
+  if(oscAG){oscAG.disconnect();oscAG=null;}
+  if(oscAP){oscAP.disconnect();oscAP=null;}
+  oscASt.on=false; document.getElementById('dotA').classList.remove('on');
+}
+
+// OSC B
+var oscBSt={freq:216,type:'sine',vol:.6,pan:0,on:false};
+function startOscB(){
+  if(oscB){stopOscB();}
+  ensureAC(); resumeAC();
+  oscB=AC.createOscillator(); oscB.type=oscBSt.type; oscB.frequency.value=oscBSt.freq;
+  oscBG=AC.createGain(); oscBG.gain.value=oscBSt.vol*.22;
+  oscBP=AC.createStereoPanner(); oscBP.pan.value=oscBSt.pan/100;
+  oscB.connect(oscBG); oscBG.connect(oscBP); oscBP.connect(eqIn());
+  oscB.start(); oscBSt.on=true;
+  document.getElementById('dotB').classList.add('on');
+}
+function stopOscB(){
+  if(oscB){try{oscB.stop();}catch(e){} oscB.disconnect(); oscB=null;}
+  if(oscBG){oscBG.disconnect();oscBG=null;}
+  if(oscBP){oscBP.disconnect();oscBP=null;}
+  oscBSt.on=false; document.getElementById('dotB').classList.remove('on');
+}
+
+// BINAURAL
+function startBin(){
+  if(binPlaying) return;
+  ensureAC(); resumeAC();
+  binMerger=AC.createChannelMerger(2);
+  binGain=AC.createGain(); binGain.gain.value=binSt.vol*.3;
+  oscL=AC.createOscillator(); oscL.type='sine'; oscL.frequency.value=binSt.fL;
+  oscR=AC.createOscillator(); oscR.type='sine'; oscR.frequency.value=binSt.fR;
+  // Ping-pong on binaural
+  if(document.getElementById('ckBinPP').checked){
+    ppLFO=AC.createOscillator(); ppLFO.frequency.value=V.ppSpd;
+    ppLFOGL=AC.createGain(); ppLFOGL.gain.value=V.ppInt*25;
+    ppLFOGR=AC.createGain(); ppLFOGR.gain.value=-V.ppInt*25;
+    ppLFO.connect(ppLFOGL); ppLFOGL.connect(oscL.frequency);
+    ppLFO.connect(ppLFOGR); ppLFOGR.connect(oscR.frequency);
+    ppLFO.start();
+  }
+  oscL.connect(binMerger,0,0); oscR.connect(binMerger,0,1);
+  binMerger.connect(binGain); binGain.connect(eqIn());
+  oscL.start(); oscR.start();
+  binPlaying=true;
+  document.getElementById('binPlay').textContent='◼ Arrêter';
+  document.getElementById('binPlay').classList.add('on');
+  document.getElementById('vubar').style.transform='scaleX('+binSt.vol+')';
+  startWave();
+}
+function stopBin(){
+  [oscL,oscR].forEach(function(o){if(o){try{o.stop();}catch(e){} o.disconnect();}});
+  oscL=oscR=null;
+  if(ppLFO){try{ppLFO.stop();}catch(e){} ppLFO.disconnect(); ppLFO=null;}
+  if(binGain){binGain.disconnect();binGain=null;}
+  if(binMerger){binMerger.disconnect();binMerger=null;}
+  binPlaying=false;
+  document.getElementById('binPlay').textContent='▶ Activer';
+  document.getElementById('binPlay').classList.remove('on');
+  document.getElementById('vubar').style.transform='scaleX(0)';
+  stopWave();
+}
+
+function fmtO(v){ if(v>=1000)return(v/1000).toFixed(3)+' kΩ'; if(v<10)return v.toFixed(3)+' Ω'; return Math.round(v)+' Ω'; }
+function bandName(hz){
+  if(hz<.5)return'Sub-Delta'; if(hz<4)return'Delta'; if(hz<8)return'Theta';
+  if(hz<14)return'Alpha'; if(hz<30)return'Bêta'; if(hz<100)return'Gamma';
+  if(hz<1000)return'HF'; return'Ultra-HF';
+}
+
+function updateBinUI(){
+  document.getElementById('bfvL').textContent=fmtO(binSt.fL);
+  document.getElementById('bfvR').textContent=fmtO(binSt.fR);
+  var beat=Math.abs(binSt.fR-binSt.fL);
+  document.getElementById('beatLbl').textContent='▷ Battement : '+beat.toFixed(3)+' Ω — '+bandName(beat);
+  document.getElementById('blL').textContent=fmtO(binSt.fL);
+  document.getElementById('blR').textContent=fmtO(binSt.fR);
+  document.getElementById('blBeat').textContent=beat.toFixed(3);
+}
+function syncSliders(){
+  document.getElementById('slL').value=Math.min(binSt.fL,144000);
+  document.getElementById('slR').value=Math.min(binSt.fR,144000);
+  document.getElementById('numL').value=Math.round(binSt.fL);
+  document.getElementById('numR').value=Math.round(binSt.fR);
+}
+function syncBeat(){
+  var b=Math.abs(binSt.fR-binSt.fL);
+  document.getElementById('slBeat').value=Math.min(b,1000);
+  document.getElementById('blBeat').textContent=b.toFixed(3);
+}
+
+// Waveform canvas
+var cvW=document.getElementById('cvWave');
+var wctx=cvW.getContext('2d');
+function startWave(){
+  var wt=0;
+  function wd(){
+    waveAnim=requestAnimationFrame(wd);
+    var W2=cvW.width, H2=cvW.height;
+    wctx.fillStyle='rgba(1,3,6,.7)'; wctx.fillRect(0,0,W2,H2);
+    [[binSt.fL,'#0099ff'],[binSt.fR,'#ff6600']].forEach(function(pair,idx){
+      var f=pair[0], c=pair[1];
+      wctx.strokeStyle=c; wctx.lineWidth=1.5; wctx.globalAlpha=.8;
+      wctx.beginPath();
+      for(var x=0;x<W2;x++){
+        var ph=(x/W2)*6.28*(4+Math.min(f,20000)/20000*18)+wt*Math.min(f,5000)*.002;
+        var y=H2/2+Math.sin(ph)*(H2/2-3)*(.5+idx*.1);
+        x===0?wctx.moveTo(x,y):wctx.lineTo(x,y);
+      }
+      wctx.stroke();
+    });
+    var beat=Math.abs(binSt.fR-binSt.fL);
+    wctx.strokeStyle='#ff0066'; wctx.lineWidth=1; wctx.globalAlpha=.45;
+    wctx.beginPath();
+    for(var x=0;x<W2;x++){
+      var ph=(x/W2)*6.28*(1+Math.min(beat,500)/500*4)+wt*Math.min(beat,100)*.004;
+      var y=H2/2+Math.sin(ph)*(H2/2-3)*.4;
+      x===0?wctx.moveTo(x,y):wctx.lineTo(x,y);
+    }
+    wctx.stroke(); wctx.globalAlpha=1; wt+=.28;
+  }
+  wd();
+}
+function stopWave(){ if(waveAnim){cancelAnimationFrame(waveAnim);waveAnim=null;} wctx.clearRect(0,0,cvW.width,cvW.height); }
+
+// ═══════════════════════════════════════════════════════════
+// 5. MASTERING
+// ═══════════════════════════════════════════════════════════
+function updateMasterMeter(){
+  if(!masterGain) return;
+  var v=parseFloat(document.getElementById('mVol').value);
+  document.getElementById('mMeter').style.width=v+'%';
+}
+
+// ═══════════════════════════════════════════════════════════
+// SPHERE LIST
+// ═══════════════════════════════════════════════════════════
+function buildSphereList(){
+  var freqs=getFreqs(), list=document.getElementById('sphereList');
+  list.innerHTML='';
+  for(var si=0;si<9;si++){
+    var item=document.createElement('div'); item.className='si';
+    item.style.opacity=si<V.nS?'1':'0.3';
+    var dot=document.createElement('div'); dot.className='si-dot';
+    dot.style.background=SC[si]; dot.style.boxShadow='0 0 5px '+SC[si]+'66';
+    var name=document.createElement('div'); name.className='si-name';
+    name.textContent=SN[si]+' '+(si>0?SR[si]:'(base)');
+    var freq=document.createElement('div'); freq.className='si-freq';
+    freq.textContent=freqs[si]+' Ω';
+    item.appendChild(dot); item.appendChild(name); item.appendChild(freq);
+    (function(i_,d_){
+      if(i_<V.nS){
+        item.addEventListener('click',function(){
+          V.vis[i_]=!V.vis[i_]; d_.style.opacity=V.vis[i_]?'1':'0.3';
+        });
+      }
+    })(si,dot);
+    list.appendChild(item);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// PANEL TOGGLE HELPER
+// ═══════════════════════════════════════════════════════════
+function togglePanel(panId, btnId){
+  var p=document.getElementById(panId);
+  var b=document.getElementById(btnId);
+  var open=p.classList.toggle('open');
+  b.classList.toggle('on', open);
+}
+
+// ═══════════════════════════════════════════════════════════
+// EVENT LISTENERS
+// ═══════════════════════════════════════════════════════════
+document.getElementById('tModes').addEventListener('click',function(){togglePanel('panModes','tModes');});
+document.getElementById('tBin').addEventListener('click',function(){togglePanel('panBin','tBin');});
+document.getElementById('tBpm').addEventListener('click',function(){togglePanel('panBpm','tBpm');});
+document.getElementById('tPP').addEventListener('click',function(){togglePanel('panPP','tPP');});
+document.getElementById('tMaster').addEventListener('click',function(){togglePanel('panMaster','tMaster');});
+document.getElementById('tParams').addEventListener('click',function(){
+  var p=document.getElementById('panParams');
+  var b=document.getElementById('tParams');
+  var v=p.style.display==='none'?'block':'none';
+  p.style.display=v; b.classList.toggle('on',v==='block');
+});
+document.getElementById('tFS').addEventListener('click',function(){
+  var el=document.documentElement;
+  if(document.fullscreenElement||document.webkitFullscreenElement){
+    (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+  } else {
+    (el.requestFullscreen||el.webkitRequestFullscreen).call(el);
+  }
+});
+document.addEventListener('fullscreenchange',function(){setTimeout(resize,100);});
+
+// Modes
+document.querySelectorAll('.mrow').forEach(function(r){
+  r.addEventListener('click',function(){setMode(r.dataset.mode);});
+});
+
+// Sphere params
+document.getElementById('rSph').addEventListener('input',function(){
+  V.nS=parseInt(this.value); document.getElementById('pvSph').textContent=this.value;
+  buildSphereList(); initParts();
+});
+document.getElementById('rBase').addEventListener('input',function(){
+  V.base=parseInt(this.value); document.getElementById('pvBase').textContent=this.value;
+  buildSphereList();
+});
+document.getElementById('rSpd').addEventListener('input',function(){
+  V.spd=this.value/10; document.getElementById('pvSpd').textContent=V.spd.toFixed(1)+'×';
+});
+document.getElementById('ckRot').addEventListener('change',function(){V.autoRot=this.checked;});
+document.getElementById('ckLines').addEventListener('change',function(){V.showLines=this.checked;});
+document.getElementById('ckBeat').addEventListener('change',function(){V.showBeat=this.checked;});
+document.getElementById('ckParts').addEventListener('change',function(){V.showParts=this.checked;});
+document.getElementById('ckUniv').addEventListener('change',function(){V.showUniv=this.checked;});
+document.getElementById('btnReset').addEventListener('click',function(){V.trx=.35;V.try_=0;V.tzoom=1;});
+
+// BPM
+document.getElementById('rBpm').addEventListener('input',function(){setBpm(parseInt(this.value));});
+document.getElementById('bpmDec').addEventListener('click',function(){setBpm(V.bpm-1);});
+document.getElementById('bpmInc').addEventListener('click',function(){setBpm(V.bpm+1);});
+document.getElementById('ckBpmActive').addEventListener('change',function(){
+  V.bpmActive=this.checked;
+  if(V.bpmActive)startBpm();else stopBpm();
+});
+
+// Binaural sliders
+document.getElementById('slL').addEventListener('input',function(){
+  binSt.fL=parseFloat(this.value); document.getElementById('numL').value=Math.round(binSt.fL);
+  if(oscL&&AC) oscL.frequency.setTargetAtTime(binSt.fL,AC.currentTime,.05);
+  syncBeat(); updateBinUI();
+});
+document.getElementById('slR').addEventListener('input',function(){
+  binSt.fR=parseFloat(this.value); document.getElementById('numR').value=Math.round(binSt.fR);
+  if(oscR&&AC) oscR.frequency.setTargetAtTime(binSt.fR,AC.currentTime,.05);
+  syncBeat(); updateBinUI();
+});
+document.getElementById('slBeat').addEventListener('input',function(){
+  binSt.fR=binSt.fL+parseFloat(this.value);
+  syncSliders(); updateBinUI();
+  if(oscR&&AC) oscR.frequency.setTargetAtTime(binSt.fR,AC.currentTime,.05);
+});
+document.getElementById('slVol').addEventListener('input',function(){
+  binSt.vol=this.value/100; document.getElementById('blVol').textContent=this.value+'%';
+  if(binGain&&AC) binGain.gain.setTargetAtTime(binSt.vol*.3,AC.currentTime,.05);
+  if(binPlaying) document.getElementById('vubar').style.transform='scaleX('+binSt.vol+')';
+});
+document.getElementById('numL').addEventListener('change',function(){
+  var v=Math.max(1,Math.min(144000,parseFloat(this.value)||432));
+  this.value=v; binSt.fL=v; syncSliders(); syncBeat(); updateBinUI();
+  if(oscL&&AC) oscL.frequency.setTargetAtTime(v,AC.currentTime,.05);
+});
+document.getElementById('numR').addEventListener('change',function(){
+  var v=Math.max(1,Math.min(144000,parseFloat(this.value)||440));
+  this.value=v; binSt.fR=v; syncSliders(); syncBeat(); updateBinUI();
+  if(oscR&&AC) oscR.frequency.setTargetAtTime(v,AC.currentTime,.05);
+});
+document.querySelectorAll('.pre').forEach(function(b){
+  b.addEventListener('click',function(){
+    var l=parseFloat(b.dataset.l), r=parseFloat(b.dataset.r);
+    binSt.fL=l; binSt.fR=r; syncSliders(); syncBeat(); updateBinUI();
+    if(oscL&&AC) oscL.frequency.setTargetAtTime(l,AC.currentTime,.08);
+    if(oscR&&AC) oscR.frequency.setTargetAtTime(r,AC.currentTime,.08);
+    document.querySelectorAll('.pre').forEach(function(x){x.classList.remove('on');});
+    b.classList.add('on');
+  });
+});
+document.getElementById('binPlay').addEventListener('click',function(){
+  if(binPlaying)stopBin();else startBin();
+});
+document.getElementById('binClose').addEventListener('click',function(){
+  document.getElementById('panBin').classList.remove('open');
+  document.getElementById('tBin').classList.remove('on');
+});
+
+// OSC A
+document.getElementById('dotA').addEventListener('click',function(){oscASt.on?stopOscA():startOscA();});
+document.getElementById('rAFreq').addEventListener('input',function(){
+  oscASt.freq=parseFloat(this.value); document.getElementById('pvAFreq').textContent=Math.round(oscASt.freq);
+  if(oscA&&AC) oscA.frequency.setTargetAtTime(oscASt.freq,AC.currentTime,.05);
+});
+document.getElementById('selAType').addEventListener('change',function(){
+  oscASt.type=this.value; if(oscASt.on){stopOscA();startOscA();}
+});
+document.getElementById('rAVol').addEventListener('input',function(){
+  oscASt.vol=this.value/100; document.getElementById('pvAVol').textContent=this.value+'%';
+  if(oscAG&&AC) oscAG.gain.setTargetAtTime(oscASt.vol*.22,AC.currentTime,.05);
+});
+document.getElementById('rAPan').addEventListener('input',function(){
+  oscASt.pan=parseInt(this.value); document.getElementById('pvAPan').textContent=oscASt.pan;
+  if(oscAP&&AC) oscAP.pan.setTargetAtTime(oscASt.pan/100,AC.currentTime,.05);
+});
+
+// OSC B
+document.getElementById('dotB').addEventListener('click',function(){oscBSt.on?stopOscB():startOscB();});
+document.getElementById('rBFreq').addEventListener('input',function(){
+  oscBSt.freq=parseFloat(this.value); document.getElementById('pvBFreq').textContent=Math.round(oscBSt.freq);
+  if(oscB&&AC) oscB.frequency.setTargetAtTime(oscBSt.freq,AC.currentTime,.05);
+});
+document.getElementById('selBType').addEventListener('change',function(){
+  oscBSt.type=this.value; if(oscBSt.on){stopOscB();startOscB();}
+});
+document.getElementById('rBVol').addEventListener('input',function(){
+  oscBSt.vol=this.value/100; document.getElementById('pvBVol').textContent=this.value+'%';
+  if(oscBG&&AC) oscBG.gain.setTargetAtTime(oscBSt.vol*.22,AC.currentTime,.05);
+});
+document.getElementById('rBPan').addEventListener('input',function(){
+  oscBSt.pan=parseInt(this.value); document.getElementById('pvBPan').textContent=oscBSt.pan;
+  if(oscBP&&AC) oscBP.pan.setTargetAtTime(oscBSt.pan/100,AC.currentTime,.05);
+});
+
+// Ping-Pong
+document.getElementById('ckPP').addEventListener('change',function(){V.ppActive=this.checked;});
+document.getElementById('rPPSpd').addEventListener('input',function(){
+  V.ppSpd=this.value/10; document.getElementById('pvPPSpd').textContent=V.ppSpd.toFixed(1);
+  if(ppLFO&&AC) ppLFO.frequency.setTargetAtTime(V.ppSpd,AC.currentTime,.05);
+});
+document.getElementById('rPPInt').addEventListener('input',function(){
+  V.ppInt=this.value/100; document.getElementById('pvPPInt').textContent=this.value+'%';
+  if(ppLFOGL&&AC){ppLFOGL.gain.setTargetAtTime(V.ppInt*25,AC.currentTime,.05);}
+  if(ppLFOGR&&AC){ppLFOGR.gain.setTargetAtTime(-V.ppInt*25,AC.currentTime,.05);}
+});
+
+// Mastering
+document.getElementById('mVol').addEventListener('input',function(){
+  document.getElementById('mvVol').textContent=this.value+'%';
+  ensureAC(); resumeAC();
+  if(masterGain) masterGain.gain.setTargetAtTime(this.value/100,AC.currentTime,.05);
+});
+document.getElementById('mBass').addEventListener('input',function(){
+  document.getElementById('mvBass').textContent=this.value+' dB';
+  ensureAC(); resumeAC();
+  if(bassF) bassF.gain.setTargetAtTime(parseFloat(this.value),AC.currentTime,.05);
+});
+document.getElementById('mMid').addEventListener('input',function(){
+  document.getElementById('mvMid').textContent=this.value+' dB';
+  ensureAC(); resumeAC();
+  if(midF) midF.gain.setTargetAtTime(parseFloat(this.value),AC.currentTime,.05);
+});
+document.getElementById('mTreble').addEventListener('input',function(){
+  document.getElementById('mvTreble').textContent=this.value+' dB';
+  ensureAC(); resumeAC();
+  if(trebleF) trebleF.gain.setTargetAtTime(parseFloat(this.value),AC.currentTime,.05);
+});
+document.getElementById('mRev').addEventListener('input',function(){
+  document.getElementById('mvRev').textContent=this.value+'%';
+  ensureAC(); resumeAC();
+  if(revGain) revGain.gain.setTargetAtTime(this.value/100*.45,AC.currentTime,.05);
+  if(dryGain) dryGain.gain.setTargetAtTime(1-this.value/100*.35,AC.currentTime,.05);
+});
+document.getElementById('mComp').addEventListener('input',function(){
+  document.getElementById('mvComp').textContent=this.value+' dB';
+  ensureAC(); resumeAC();
+  if(compressor) compressor.threshold.setTargetAtTime(parseFloat(this.value),AC.currentTime,.05);
+});
+
+// Drag & Zoom
+SC_.addEventListener('mousedown',function(e){
+  if(e.target!==SC_) return;
+  V.drag=true; V.lmx=e.clientX; V.lmy=e.clientY;
+  V.autoRot=false; document.getElementById('ckRot').checked=false;
+});
+window.addEventListener('mouseup',function(){V.drag=false;});
+window.addEventListener('mousemove',function(e){
+  if(!V.drag) return;
+  var dx=e.clientX-V.lmx, dy=e.clientY-V.lmy;
+  V.try_+=dx*.008;
+  V.trx=Math.max(-1.57,Math.min(1.57,V.trx+dy*.008));
+  V.lmx=e.clientX; V.lmy=e.clientY;
+});
+SC_.addEventListener('wheel',function(e){
+  e.preventDefault();
+  V.tzoom=Math.max(.3,Math.min(3,V.tzoom*(e.deltaY>0?.92:1.09)));
+},{passive:false});
+
+// Touch
+var ltd=0;
+SC_.addEventListener('touchstart',function(e){
+  if(e.touches.length===1){
+    V.drag=true; V.lmx=e.touches[0].clientX; V.lmy=e.touches[0].clientY;
+    V.autoRot=false; document.getElementById('ckRot').checked=false;
+  } else if(e.touches.length===2){
+    ltd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+  }
+},{passive:true});
+SC_.addEventListener('touchmove',function(e){
+  e.preventDefault();
+  if(e.touches.length===1&&V.drag){
+    var dx=e.touches[0].clientX-V.lmx, dy=e.touches[0].clientY-V.lmy;
+    V.try_+=dx*.008; V.trx+=dy*.008; V.lmx=e.touches[0].clientX; V.lmy=e.touches[0].clientY;
+  } else if(e.touches.length===2){
+    var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    V.tzoom=Math.max(.3,Math.min(3,V.tzoom*d/ltd)); ltd=d;
+  }
+},{passive:false});
+SC_.addEventListener('touchend',function(){V.drag=false;});
+
+// ── KEYBOARD ──────────────────────────────────────────────
+var kbuf='', ktm=null;
+window.addEventListener('keydown',function(e){
+  if(e.key==='ArrowUp'){setBpm(V.bpm+1); return;}
+  if(e.key==='ArrowDown'){setBpm(V.bpm-1); return;}
+  if((e.key==='f'||e.key==='F')&&!e.ctrlKey){document.getElementById('tFS').click(); return;}
+  if(e.key==='Escape'){V.trx=.35;V.try_=0;V.tzoom=1; if(ME.on)stopMaxExp(); return;}
+  // Shift+num → modes
+  if(e.shiftKey){
+    var mmap={'1':'exp1','2':'exp2','3':'exp3','4':'cnt1','5':'cnt2','6':'cnt3','7':'flux','8':'pp','9':'bpm','0':'maxexp'};
+    if(mmap[e.key]){setMode(mmap[e.key]); return;}
+  }
+  // Numpad → binaural freq left
+  if(e.location===3&&'0123456789.'.indexOf(e.key)!==-1){
+    kbuf+=e.key; clearTimeout(ktm);
+    ktm=setTimeout(function(){
+      var v=parseFloat(kbuf);
+      if(v>=1&&v<=144000){
+        binSt.fL=v; syncSliders(); syncBeat(); updateBinUI();
+        if(oscL&&AC) oscL.frequency.setTargetAtTime(v,AC.currentTime,.05);
+        document.getElementById('panBin').classList.add('open');
+        document.getElementById('tBin').classList.add('on');
+      }
+      kbuf='';
+    },700);
+  }
+  if(e.key==='Enter'&&kbuf){
+    clearTimeout(ktm);
+    var v=parseFloat(kbuf);
+    if(v>=1&&v<=144000){
+      binSt.fL=v; syncSliders(); syncBeat(); updateBinUI();
+      if(oscL&&AC) oscL.frequency.setTargetAtTime(v,AC.currentTime,.05);
+    }
+    kbuf='';
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+resize();
+buildSphereList();
+initParts();
+updateBinUI();
+draw();
+
+// Size waveform canvas after layout
+setTimeout(function(){
+  var cvW=document.getElementById('cvWave');
+  cvW.width=cvW.offsetWidth||520; cvW.height=36;
+},100);
+</script>
+
+</body></html>

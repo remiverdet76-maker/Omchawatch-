@@ -1158,3 +1158,40 @@ Testé par script Playwright : le gain sec de la paire ne bouge plus du
 tout à l'activation (avant : divisé par 2), passe-bas de tonalité
 appliqué à la fréquence attendue, clamps Drive/Intensité toujours
 respectés, nœuds bien retirés à la désactivation. 0 erreur JS.
+
+## #59a : ajout brut de Sphère 432 et Torsion 432 (avant fusion complète)
+
+Demande : "ajoute déjà les html torsion et sphère" — première étape avant
+la fusion visuelle complète dans l'identité d'OmcVibe (#59, toujours à
+faire). Les deux fichiers fournis sont ajoutés tels quels comme nouvelles
+pages autonomes (`sphere432.html`, `torsion432.html`, mêmes mécanismes
+que `chaharmony.html` — entrées `NEW_FILES` de `repack.py`), sans
+modification de leur design/fonctionnalités.
+
+Nettoyage effectué (pas de changement visuel) : les deux fichiers
+provenaient d'un export Canva et traînaient des références mortes —
+`sphere432.html` en particulier chargeait en fin de page un script de
+tracking Cloudflare (`/cdn-cgi/challenge-platform/...` via iframe caché)
+et un SDK d'édition Canva (`/_sdk/editing_sdk.js`), tous deux inertes
+hors de l'environnement Canva mais sans rien faire d'utile ici — retirés.
+Les deux fichiers référençaient aussi `bg-rotator.css`/`bg-rotator.js`,
+absents du projet (404 silencieux) — retirés également.
+
+La page `sphere-flux.html` (accessible depuis le lanceur "OmchaSphere /
+Flux") devient un vrai chooser dans le thème doré d'OmcVibe (Cinzel
+Decorative), avec une carte pour chacune des deux visualisations. Un
+petit bouton "← Retour" a été ajouté dans la barre d'outils de chaque
+page (elles n'en avaient aucun — sans lui, impossible de revenir à
+OmcVibe autrement que le bouton système Android, non garanti dans un
+WebView Capacitor).
+
+Testé par script Playwright : les 3 pages chargent sans erreur JS ni
+requête réseau qui échoue (hors les refs mortes déjà retirées), la
+navigation chooser → sphère/torsion → retour fonctionne dans les deux
+sens.
+
+**Reste à faire (#59)** : fusion visuelle complète dans l'identité
+d'OmcVibe (remplacer le thème néon cyan/Orbitron par le doré/cuivré
+Cinzel Decorative directement dans ces deux pages, pas seulement dans le
+chooser) — pas fait ici, demande explicitement de "d'abord ajouter" avant
+la fusion.
