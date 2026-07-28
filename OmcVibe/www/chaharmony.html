@@ -114,10 +114,12 @@ const N_OSC = 7;
 const FILTER_TYPES = { off:'allpass', hpf:'highpass', bpf:'bandpass', lpf:'lowpass' };
 let AC = null, master = null, flowing = false, silenced = false;
 
+// #69 : un seul oscillateur actif par défaut (OSC 1) — les 6 autres
+// démarrent coupés (bouton mute déjà existant pour les réactiver un par un).
 const OSC = [];
 for (let i = 0; i < N_OSC; i++) {
   OSC.push({
-    freq: 144 + i * 36, bin: false, delta: 4.0, n: 1, muted: false,
+    freq: 144 + i * 36, bin: false, delta: 4.0, n: 1, muted: i !== 0,
     vol: 0.6, pan: 0, lfoDepth: 0,
     filtMode: 'off', cutoff: 2000, res: 0,
     revWet: 0, delWet: 0,

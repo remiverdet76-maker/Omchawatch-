@@ -1195,3 +1195,39 @@ d'OmcVibe (remplacer le thème néon cyan/Orbitron par le doré/cuivré
 Cinzel Decorative directement dans ces deux pages, pas seulement dans le
 chooser) — pas fait ici, demande explicitement de "d'abord ajouter" avant
 la fusion.
+
+## #69 : un seul oscillateur actif par défaut (OmcVibe + Chaharmony)
+
+Demande : "Par défaut on mettra OmcVibe et Chaharmony sur un oscillateur
+actif, les autres s'activent manuellement". Auparavant, `startFlow()` /
+`startFlux()` démarraient les 7 paires (OmcVibe) ou les 7 oscillateurs
+(Chaharmony) simultanément — l'utilisateur devait couper manuellement ce
+qu'il ne voulait pas, plutôt que d'ajouter ce qu'il voulait.
+
+- **OmcVibe** (`index.html`) : le mécanisme de coupure existait déjà en
+  entier (`mutedOscs`, `toggleMutePair`, `soloMaster` — mute/solo par
+  paire depuis longtemps). Seul le point de départ changeait : la
+  déclaration initiale de `mutedOscs` mettait tout à `false` (tout actif)
+  — désormais seule la paire maître (`MASTER_IDX`) démarre active, les 6
+  autres démarrent coupées (nœuds audio quand même construits, juste à
+  gain 0 — s'activent instantanément via le mute existant, pas de
+  reconstruction nécessaire). `resetAll()` (bouton Réinitialiser) suit la
+  même règle — avant il réactivait tout, maintenant il revient au même
+  état "1 seul actif" que le premier lancement.
+- **Chaharmony** (`chaharmony.html`) : même principe, seul `OSC[0]`
+  démarre actif (`muted:false`), les 6 autres démarrent à `muted:true` —
+  s'activent via le bouton mute (■/✕) déjà existant sur chaque
+  oscillateur.
+- **Une session déjà sauvegardée n'est jamais écrasée** : `loadState()`
+  (OmcVibe) relit `mutedOscs` depuis le `localStorage` de l'utilisateur
+  si une session existe et prend le dessus sur ce nouveau défaut — donc
+  un utilisateur qui avait déjà personnalisé quels oscillateurs sont
+  actifs retrouve exactement son réglage, seul le tout premier lancement
+  (ou un Réinitialiser explicite) applique la règle "1 seul actif".
+
+Testé par script Playwright : à froid (sans session sauvegardée), seule
+la paire maître / OSC 1 est active (gain non nul), les autres à gain 0 ;
+activation manuelle d'une paire/oscillateur coupé fonctionne
+normalement ; `resetAll()` revient au même état ; une session sauvegardée
+avec tout actif est bien respectée au rechargement (pas écrasée par le
+nouveau défaut). 0 erreur JS sur l'ensemble de la suite de régression.

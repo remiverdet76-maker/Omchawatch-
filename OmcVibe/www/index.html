@@ -2452,10 +2452,15 @@ function isosonicVol(freq, base) {
   return base * Math.max(0.5, Math.min(1.5, k));  // dynamique grave rendue (mais maîtrisée)
 }
 
+// #69 : par défaut, un seul oscillateur actif (le maître) — les autres
+// démarrent coupés et s'activent manuellement (mute/solo par paire, déjà
+// existant). Écrasé par loadState() si une session sauvegardée existe
+// (préférences déjà personnalisées par l'utilisateur non touchées).
 let mutedOscs = {};
-PAIRS.forEach(p => {
-  mutedOscs[p.pingala.id] = false;
-  mutedOscs[p.ida.id]     = false;
+PAIRS.forEach((p, i) => {
+  const startMuted = i !== MASTER_IDX;
+  mutedOscs[p.pingala.id] = startMuted;
+  mutedOscs[p.ida.id]     = startMuted;
 });
 
 let masterFreq  = 144;
@@ -5851,8 +5856,11 @@ function resetAll() {
     p.ida.delta   = DELTA_DEFAULT;       // battement binaural doux, unique
     p.ida.polarity = (i % 2 === 0) ? 1 : -1;
     p.ida.vol     = vol;
-    mutedOscs[p.pingala.id] = false;
-    mutedOscs[p.ida.id]     = false;
+    // #69 : Réinitialiser = revenir au défaut (un seul oscillateur actif,
+    // le maître), pas tout réactiver — cohérent avec le 1er lancement.
+    const startMuted = i !== MASTER_IDX;
+    mutedOscs[p.pingala.id] = startMuted;
+    mutedOscs[p.ida.id]     = startMuted;
   });
   try { localStorage.removeItem(LS_KEY); } catch(e) {}
   const mvs = document.getElementById('mvol-slider'); if (mvs) mvs.value = 0.70;
