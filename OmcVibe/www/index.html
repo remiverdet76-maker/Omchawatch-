@@ -2798,20 +2798,32 @@ function setGrainDrive(v) {
   const el = document.getElementById('sv-grain-drive'); if (el) el.textContent = GRAIN_STATE.drive.toFixed(2);
 }
 
-// #57 : Color FX BD-2 (Blues Driver) — étage additionnel PAR PAIRE (distinct
-// du Grain analogique, global). Expérimental : Drive/Niveau bridés en dur à
-// 50% (0.5), pas juste dans l'UI — une sinus pure sature vite, ce plafond
-// limite le risque de bourdonnement/conflit avec le ton pur de l'app.
-// OFF par défaut, par paire.
+// #57/#68 : Color FX "Overdrive Halogène" — étage additionnel PAR PAIRE
+// (distinct du Grain analogique, global). Signalé de mauvaise qualité dans
+// sa 1ère version (BD-2 Blues Driver) : le signal traité REMPLAÇAIT
+// entièrement le sec (pas de mélange), avec un gain de sortie plafonné à
+// 50% — donc l'activer coupait le volume de moitié en échange d'un timbre
+// plus dur (filtre "tonalité" résonant façon wah figée). Repris en #68 :
+// - Mélange additif : le signal sec passe TOUJOURS tel quel, la couleur
+//   chaude s'AJOUTE par-dessus (avant : remplacement complet) — plus rond
+//   et plus intense au lieu de plus faible et plus dur.
+// - Courbe de saturation adoucie (moins de harshness à drive élevé) et
+//   biais asymétrique plus prononcé (plus d'harmoniques paires, signature
+//   "lampe"/analogique chaude plutôt que numérique).
+// - "Tonalité" n'est plus un filtre en cloche résonant (source du côté
+//   nasillard) mais un passe-bas doux sur la couche ajoutée seulement :
+//   grave = plus rond/chaud, aigu = plus présent — jamais sur le sec.
+// Drive/Intensité restent bridés en dur (une sinus pure sature vite), OFF
+// par défaut, par paire.
 const PAIR_BD2 = {}; // pairIdx → {on, drive, tone, level}
 function _bd2Curve(driveNorm) {
-  // Soft-clip asymétrique (tanh + léger biais positif) façon overdrive à
-  // lampe — génère surtout des harmoniques paires, plus doux qu'un clip dur.
+  // Soft-clip asymétrique (tanh + biais positif) façon overdrive à lampe —
+  // génère surtout des harmoniques paires, plus doux qu'un clip dur.
   const n = 2048, curve = new Float32Array(n);
-  const k = 1 + Math.max(0, Math.min(0.5, driveNorm)) * 18;
+  const k = 1 + Math.max(0, Math.min(0.5, driveNorm)) * 13; // #68 : 18→13, moins agressif à fond de course
   for (let i = 0; i < n; i++) {
     const x = (i / (n - 1)) * 2 - 1;
-    const biased = x + 0.08 * x * x * Math.sign(x);
+    const biased = x + 0.14 * x * x * Math.sign(x); // #68 : 0.08→0.14, plus chaud/rond
     curve[i] = Math.tanh(k * biased) / Math.tanh(k);
   }
   return curve;
@@ -2838,7 +2850,7 @@ function setPairBD2(i, drive, tone, level) {
     [pid, iid].forEach(id => {
       const n = nodes[id]; if (!n || !n.bd2Shaper) return;
       n.bd2Shaper.curve = _bd2Curve(cur.drive);
-      n.bd2Tone.gain.setTargetAtTime((cur.tone - 0.5) * 12, aNow(), 0.05);
+      n.bd2Tone.frequency.setTargetAtTime(700 + cur.tone * 5300, aNow(), 0.05); // #68 : passe-bas, plus de résonance
       n.bd2Gain.gain.setTargetAtTime(cur.level, aNow(), 0.05);
     });
   }
@@ -2952,24 +2964,30 @@ function buildOsc(id, freq, vol, pan) {
   const g      = c.createGain(); g.gain.value = 0;
   const hiTrim = c.createGain(); hiTrim.gain.value = 1;
 
-  // #57 : Color FX BD-2 — étage optionnel PAR PAIRE, inséré entre le panner
-  // et le coupe-bas/filtre. Construit UNIQUEMENT si activé pour cette paire
-  // (comme Grain analogique) : trajet 100% inchangé sinon.
+  // #68 : Color FX "Overdrive Halogène" — étage optionnel PAR PAIRE, inséré
+  // EN PARALLÈLE du panner (pas à sa place). Construit UNIQUEMENT si activé
+  // pour cette paire (comme Grain analogique) : trajet 100% inchangé sinon.
   const _bd2PairIdx = PAIRS.findIndex(p2 => p2.pingala.id === id || p2.ida.id === id);
   const bd2 = _bd2PairIdx >= 0 ? PAIR_BD2[_bd2PairIdx] : null;
   const bd2On = !!(bd2 && bd2.on);
   let bd2Shaper = null, bd2Tone = null, bd2Gain = null;
   if (bd2On) {
     bd2Shaper = c.createWaveShaper(); bd2Shaper.oversample = '4x'; bd2Shaper.curve = _bd2Curve(bd2.drive);
-    bd2Tone = c.createBiquadFilter(); bd2Tone.type = 'peaking'; bd2Tone.frequency.value = 1500; bd2Tone.Q.value = 0.8;
-    bd2Tone.gain.value = (bd2.tone - 0.5) * 12;
-    bd2Gain = c.createGain(); bd2Gain.gain.value = bd2.level;
+    // #68 : passe-bas doux (pas de résonance en cloche) — grave = plus rond,
+    // aigu = plus présent, appliqué uniquement à la couche ajoutée.
+    bd2Tone = c.createBiquadFilter(); bd2Tone.type = 'lowpass'; bd2Tone.Q.value = 0.707;
+    bd2Tone.frequency.value = 700 + Math.max(0, Math.min(1, bd2.tone)) * 5300; // 700-6000Hz
+    bd2Gain = c.createGain(); bd2Gain.gain.value = bd2.level; // #68 : intensité du MÉLANGE ajouté (le sec reste à 100%)
   }
 
   if (shaper) { signalIn.connect(shaper); shaper.connect(p); }
   else        { signalIn.connect(p); }      // sinus pure → aucun traitement
+  // #68 : le sec passe TOUJOURS (avant : coupé/remplacé quand BD-2 était ON,
+  // d'où le volume divisé par deux à l'activation). La couche chaude
+  // s'AJOUTE par-dessus en parallèle — hpf est un nœud sommateur, les deux
+  // connexions se mélangent nativement, aucun 3ᵉ nœud de mix nécessaire.
+  p.connect(hpf);
   if (bd2On) { p.connect(bd2Shaper); bd2Shaper.connect(bd2Tone); bd2Tone.connect(bd2Gain); bd2Gain.connect(hpf); }
-  else       { p.connect(hpf); }
   hpf.connect(flt); flt.connect(g); g.connect(hiTrim);
   // #11 (roadmap) : en option, Pingala ET Ida d'une même paire convergent
   // vers un bus commun passant par un compresseur TRÈS doux avant le master
@@ -6784,9 +6802,9 @@ function buildPairHTML(pair, i) {
         onclick="togglePairFX(${i})">${fxOn?'● ON':'○ OFF'}</button>
     </div>
     <div class="osc-hint">ON = la paire entre dans Reverb/Delay/Ping-Pong du maître · OFF = 100% sèche</div>
-    <div class="osc-sec-t" style="color:${c}aa;">Color FX · BOSS Blues Driver (expérimental)</div>
+    <div class="osc-sec-t" style="color:${c}aa;">Color FX · Overdrive Halogène (chaud, rond)</div>
     <div class="fx-onoff-row">
-      <span class="ctl-l">BD-2</span>
+      <span class="ctl-l">Overdrive</span>
       <button class="fx-onoff${bd2.on?' on':''}" id="bd2on-${i}" style="--ec:${c};"
         onclick="togglePairBD2(${i})">${bd2.on?'● ON':'○ OFF'}</button>
     </div>
@@ -6795,15 +6813,15 @@ function buildPairHTML(pair, i) {
         <input type="range" min="0" max="50" step="1" value="${Math.round(bd2.drive*100)}" style="color:${c};"
           oninput="setPairBD2(${i},this.value/100,null,null);this.nextElementSibling.textContent=this.value+'%'">
         <span class="ctl-v">${Math.round(bd2.drive*100)}%</span></div>
-      <div class="ctl-row"><span class="ctl-l">Tonalité</span>
+      <div class="ctl-row"><span class="ctl-l">Tonalité (grave↔aigu)</span>
         <input type="range" min="0" max="100" step="1" value="${Math.round(bd2.tone*100)}" style="color:${c}aa;"
           oninput="setPairBD2(${i},null,this.value/100,null);this.nextElementSibling.textContent=this.value+'%'">
         <span class="ctl-v">${Math.round(bd2.tone*100)}%</span></div>
-      <div class="ctl-row"><span class="ctl-l">Niveau</span>
+      <div class="ctl-row"><span class="ctl-l">Intensité</span>
         <input type="range" min="0" max="50" step="1" value="${Math.round(bd2.level*100)}" style="color:${c}aa;"
           oninput="setPairBD2(${i},null,null,this.value/100);this.nextElementSibling.textContent=this.value+'%'">
         <span class="ctl-v">${Math.round(bd2.level*100)}%</span></div>
-      <div class="osc-hint">Drive/Niveau bridés à 50% — expérimental, une sinus pure sature vite</div>
+      <div class="osc-hint">Le son sec reste à 100% — la chaleur s'ajoute par-dessus (ne coupe plus le volume)</div>
     </div>
     <div class="osc-sec-t" style="color:${c}aa;">Réglages tactiles (glisser sur le graphique)</div>
     <div class="filt-mode-row">

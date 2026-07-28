@@ -1125,3 +1125,36 @@ loin : passer manuellement en qualité "Légère" (bouton dédié) avant même
 que les craquements apparaissent plutôt que d'attendre l'auto-détection,
 ou couper "Visuel léger" ; réduire le nombre de paires actives (mute) en
 solo prolongé.
+
+## #68 : reprise du Color FX BD-2 → "Overdrive Halogène"
+
+Signalé : le BD-2 Blues Driver (#57) "n'est pas de bonne qualité audio, à
+reprendre". Bug de fond trouvé dans le routage (`buildOsc`, index.html) :
+quand activé, le signal traité (waveshaper → filtre tonalité résonant →
+gain plafonné à 50%) **remplaçait entièrement** le signal sec au lieu de
+s'y mélanger — `p.connect(bd2Shaper)...bd2Gain.connect(hpf)` OU
+`p.connect(hpf)`, jamais les deux. Concrètement : activer l'effet coupait
+le volume de la paire de moitié en échange d'un timbre plus dur (filtre
+en cloche résonant à 1500Hz, source du côté nasillard) — l'inverse de "un
+son plus rond et plus intense" demandé.
+
+Repris avec un modèle additif :
+- **Le signal sec passe désormais toujours** (`p.connect(hpf)`
+  inconditionnel) — la couche chaude s'ajoute par-dessus en parallèle
+  (`hpf` est un nœud sommateur, aucun nœud de mix supplémentaire requis).
+  Activer l'effet n'atténue plus jamais le son de base.
+- **Courbe de saturation adoucie** : moins agressive à drive max (k
+  18→13) et biais asymétrique renforcé (0.08→0.14) pour plus
+  d'harmoniques paires — signature chaude/lampe plutôt que numérique dure.
+- **"Tonalité" repensée** : l'ancien filtre en cloche résonant (Q 0.8 @
+  1500Hz, source du nasillard) est remplacé par un passe-bas doux (Q
+  0.707, 700-6000Hz) appliqué UNIQUEMENT à la couche ajoutée — grave =
+  plus rond/chaud, aigu = plus présent, jamais sur le sec.
+- Renommé dans l'UI ("BOSS Blues Driver" → "Overdrive Halogène"), même
+  emplacement (onglet FX de chaque paire), toujours OFF par défaut,
+  Drive/Intensité toujours bridés à 50% (expérimental, reste par paire).
+
+Testé par script Playwright : le gain sec de la paire ne bouge plus du
+tout à l'activation (avant : divisé par 2), passe-bas de tonalité
+appliqué à la fréquence attendue, clamps Drive/Intensité toujours
+respectés, nœuds bien retirés à la désactivation. 0 erreur JS.
