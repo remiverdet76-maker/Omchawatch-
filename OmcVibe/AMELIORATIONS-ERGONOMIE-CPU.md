@@ -1329,3 +1329,51 @@ d'origine) et scénario "démarrage vierge" (le tout premier appui isole
 correctement, ne réactive plus tout par erreur) — les deux passent.
 Sphère coupée : `opacity:.62`, `box-shadow:none`, dégradé quartz blanc
 confirmés par style calculé + capture d'écran. 0 erreur JS.
+
+## #72 : esthétique du dock OmcVibe + Tutoriel 3 niveaux
+
+**1/ Fond transparent** — `#bottom-dock` était à `background:rgba(2,1,14,.92)`
+(quasi opaque) ; ramené à `.58` pour laisser voir le fond cosmique même
+sur les WebView Android où `backdrop-filter` ne s'applique pas de façon
+fiable (cf. #67 déjà rencontré sur ce sujet).
+
+**2/ "Petite sphère pas harmonieuse"** — les sphères "+" du dock
+(`.dcell-extra`, raccourcis appui long) étaient en aplat de couleur plein
+et mat (`background:#FF4646` etc.) — tranchaient avec l'esthétique en
+dégradé/lueur du reste de l'app. Remplacées par un rendu "verre" (dégradé
+radial + reflet + lueur douce), même principe que les sphères
+d'oscillateur.
+
+**3/ Texte qui déborde** — confirmé par capture d'écran à 360px de large :
+"Aléatoire" coupé en "Aléatoir", "Paramètres" cassé en "Paramè"/"tres" au
+milieu du mot. Cause : `.dcell-sub` était en `white-space:nowrap` (aucun
+retour à la ligne, contrairement à `.dcell-name` qui l'avait déjà) et la
+règle mobile (`@media max-width:900px`) réimposait des tailles de police
+`!important` qui écrasaient silencieusement l'ajustement spécifique du
+bouton bleu (`.dcell-blue .dcell-name`, sans `!important` lui). Corrigé :
+`.dcell-sub` accepte maintenant le retour à la ligne comme `.dcell-name`,
+tailles réduites (dock mobile : .9rem→.82rem / 1.14rem→.88rem), et
+`.dcell-blue .dcell-name` passé en `!important` pour ne plus être écrasé.
+Vérifié : 0 élément en dépassement (`scrollWidth`/`scrollHeight`) après
+correction, contre 1 avant.
+
+## #72b : Tutoriel utilisateur (Paramètres → Tutoriel)
+
+Nouveau panneau accessible depuis Paramètres, guide complet à 3 niveaux
+sélectionnables (le choix est mémorisé) :
+- **Chaton** (débutant) — vocabulaire simple, l'essentiel pour démarrer :
+  c'est quoi l'app, démarrer/couper le son, le binaural en une phrase,
+  toucher une sphère, le dock.
+- **Chat perché** (avancé) — les concepts en détail (Δ, ratios
+  harmoniques), tous les gestes (tap/appui long/menu rapide à 4 boutons),
+  solo maître, personnalisation du dock, FX par paire vs global.
+- **Chat cosmique** (expert) — profondeur technique complète : moteur
+  double-sinus, mode casque strict, filtre par oscillateur, Overdrive
+  Halogène (modèle additif), compression/mastering, watchdog qualité
+  audio, presets.
+
+Chaque niveau est une liste de sections en accordéon (réutilise
+`toggleAccord`, déjà existant ailleurs dans l'app). Testé par script
+Playwright : contenu présent aux 3 niveaux, changement de niveau
+fonctionne, accordéon s'ouvre/se ferme, préférence de niveau restaurée
+après rechargement de page. 0 erreur JS.

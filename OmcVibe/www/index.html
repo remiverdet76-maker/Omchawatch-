@@ -103,7 +103,7 @@ body{
   display:flex;flex-direction:row;align-items:center;justify-content:center;
   gap:.5rem;padding:0 .5rem;
   z-index:100;
-  background:rgba(2,1,14,.92);
+  background:rgba(10,4,26,.58); /* #72 : plus transparent — laisse voir le fond cosmique même sans support backdrop-filter */
   border-top:1px solid rgba(200,100,255,.22);
   backdrop-filter:blur(20px);
   box-shadow:0 -4px 24px rgba(80,40,160,.18);
@@ -766,9 +766,13 @@ body{
 .dcell:active{ transform:scale(.96); }
 .dcell.dc-hold{ transform:scale(1.05); box-shadow:0 0 22px currentColor; }
 .dcell-txt{ display:flex;flex-direction:column;align-items:center;line-height:1.05;min-width:0;overflow:hidden; }
-.dcell-name{ font-family:'Cinzel Decorative',serif;font-size:.98rem;letter-spacing:.06em;font-weight:700; /* #52 : +36% */
-  white-space:normal;overflow:hidden;max-width:100%;text-align:center;overflow-wrap:break-word; } /* #52 : le texte passe sur 2 lignes (et coupe un mot long type "Paramètres" si besoin) plutôt que d'être coupé — la cellule est maintenant assez haute */
-.dcell-sub{ font-family:'IM Fell English',serif;font-size:1.17rem;font-weight:bold;opacity:.85;white-space:nowrap; } /* #52 : +36% */
+.dcell-name{ font-family:'Cinzel Decorative',serif;font-size:.92rem;letter-spacing:.04em;font-weight:700; /* #72 : -0.06rem, laisse de la marge à .dcell-sub */
+  white-space:normal;overflow:hidden;max-width:100%;text-align:center;overflow-wrap:break-word; }
+/* #72 : "Aléatoire" débordait/était coupé ("Aléatoir") — même traitement
+   que .dcell-name (retour à la ligne + coupure de mot en dernier recours)
+   au lieu d'un nowrap qui débordait silencieusement de la cellule. */
+.dcell-sub{ font-family:'IM Fell English',serif;font-size:.98rem;font-weight:bold;opacity:.85;
+  white-space:normal;overflow-wrap:break-word;max-width:100%;text-align:center; }
 .dcell-ico{ font-size:1.56rem;flex-shrink:0; } /* #52 : +36% */
 
 /* ROUGE translucide — Option Jeu aléatoire */
@@ -781,7 +785,7 @@ body{
 .dcell-green.dc-on{ background:rgba(90,255,160,.28);box-shadow:0 0 14px rgba(90,255,160,.4); }
 /* BLEU translucide — Paramètres */
 .dcell-blue{ background:rgba(60,170,255,.14);border-color:rgba(80,190,255,.5);color:#78C6FF; }
-.dcell-blue .dcell-name{ font-size:.72rem;letter-spacing:.1em; }
+.dcell-blue .dcell-name{ font-size:.68rem !important;letter-spacing:.02em; } /* #72 : !important nécessaire — sinon écrasé par la règle mobile générique .dcell-name (cf. media query plus bas), "Paramètres" tient sur 2 lignes sans casser au milieu d'un mot */
 
 /* ── Chaque cellule = 1 sphère "extra" (raccourci) + bouton principal, en
    flux flexbox normal, SANS espace entre eux (gap:0 — sphère et cellule
@@ -822,17 +826,23 @@ body{
   transition:none !important;
 }
 
-/* Fond plein assorti à la couleur de chaque cellule (même code couleur) */
-.dcell-extra-red{ background:#FF4646; }
-.dcell-extra-orange{ background:#FF9628; }
-.dcell-extra-green{ background:#5AFFA0; }
-.dcell-extra-blue{ background:#3CAAFF; }
+/* #72 : sphère de verre (dégradé + reflet + lueur) au lieu d'un aplat plein
+   mat — les aplats tranchaient avec l'esthétique douce du reste de l'app.
+   Valeurs figées (pas de color-mix/variables CSS — support WebView Android
+   incertain sur les appareils bas de gamme visés par l'app). */
+.dcell-extra{ box-shadow:0 0 9px rgba(0,0,0,.4),inset 0 1px 2px rgba(255,255,255,.35); }
+.dcell-extra-red{ background:radial-gradient(circle at 34% 30%, #FFB0B0, #FF5050 45%, #B02020 100%); box-shadow:0 0 9px rgba(255,80,80,.55),inset 0 1px 2px rgba(255,255,255,.35); }
+.dcell-extra-orange{ background:radial-gradient(circle at 34% 30%, #FFDCA8, #FF9628 45%, #B05E0A 100%); box-shadow:0 0 9px rgba(255,150,40,.55),inset 0 1px 2px rgba(255,255,255,.35); }
+.dcell-extra-green{ background:radial-gradient(circle at 34% 30%, #D0FFE8, #5AFFA0 45%, #1CA860 100%); box-shadow:0 0 9px rgba(90,255,160,.55),inset 0 1px 2px rgba(255,255,255,.35); }
+.dcell-extra-blue{ background:radial-gradient(circle at 34% 30%, #C8E8FF, #3CAAFF 45%, #1560A8 100%); box-shadow:0 0 9px rgba(60,170,255,.55),inset 0 1px 2px rgba(255,255,255,.35); }
 
 /* CENTRE — Flux : cercle jaune surélevé, plus gros — reste en position
    absolue (seule sphère de la case, pas de risque de chevauchement). */
 .dcell-wrap-flux{ position:relative;flex-shrink:0;width:auto; }
 .dcell-extra-flux{ position:absolute;top:6px;left:-15px;transform:none;
-  border-color:rgba(255,215,0,.65);color:#FFD700;background:#FFB020; }
+  border-color:rgba(255,215,0,.65);color:#FFD700;
+  background:radial-gradient(circle at 34% 30%, #FFF0C0, #FFB020 45%, #B0740A 100%);
+  box-shadow:0 0 9px rgba(255,176,32,.55),inset 0 1px 2px rgba(255,255,255,.35); }
 .dcell-extra-flux:hover{ transform:scale(1.12); }
 .dcell-extra-flux:active{ transform:scale(.88); }
 .dcell-flux{
@@ -1226,6 +1236,22 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
 .accord-body{overflow:hidden;transition:max-height .3s ease,opacity .2s;max-height:0;opacity:0;}
 .accord-body.open{max-height:700px;opacity:1;}
 
+/* #72 : Tutoriel — sélecteur de niveau + contenu accordéon */
+.tuto-level-switch{display:flex;gap:.4rem;margin:.3rem 0 .8rem;}
+.tuto-lvl-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:.15rem;
+  padding:.5rem .3rem;border-radius:10px;border:1.5px solid rgba(200,150,255,.28);
+  background:rgba(255,255,255,.04);color:rgba(230,210,255,.75);cursor:pointer;
+  font-family:'Cinzel Decorative',serif;font-size:.72rem;letter-spacing:.03em;text-align:center;}
+.tuto-lvl-btn.on{border-color:#FFD700;background:rgba(255,215,0,.14);color:#FFD700;
+  box-shadow:0 0 10px rgba(255,215,0,.3);}
+.tuto-lvl-sub{font-family:'IM Fell English',serif;font-size:.6rem;opacity:.7;font-style:italic;letter-spacing:.05em;}
+.tuto-intro{font-size:.78rem;line-height:1.5;opacity:.8;font-style:italic;margin-bottom:.6rem;
+  color:rgba(220,200,255,.85);}
+.tuto-sec-body{font-size:.82rem;line-height:1.55;color:rgba(230,220,245,.88);padding:0 .8rem .8rem;}
+.tuto-sec-body b{color:#FFD700;font-weight:700;}
+.tuto-sec-body ul{margin:.3rem 0 .3rem 1.1rem;padding:0;}
+.tuto-sec-body li{margin-bottom:.25rem;}
+
 /* Contrôles individuels par paire */
 .bctrl{display:flex;flex-direction:column;gap:.28rem;}
 .bctrl-row{display:flex;align-items:center;justify-content:space-between;gap:.4rem;}
@@ -1570,8 +1596,8 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   #spectroid-bar { bottom: 158px !important; width: 80vw !important; }
 
   .dcell { height: 61px !important; } /* #52 : +36% vs #32 (45px→61px) */
-  .dcell-name { font-size: .9rem !important; } /* #52 : +36% */
-  .dcell-sub  { font-size: 1.14rem !important; } /* #52 : +36% */
+  .dcell-name { font-size: .82rem !important; } /* #72 : réduit, "Aléatoire"/"Paramètres" débordaient */
+  .dcell-sub  { font-size: .88rem !important; } /* #72 : réduit + retour à la ligne (cf. règle de base) au lieu de nowrap */
   .dcell-extra { width: 34px !important; height: 34px !important; } /* #52 : -36% vs #32 (53px→34px) */
   .dcell-flux { width: 60px !important; height: 60px !important; margin-bottom: 8px !important; } /* #52 : -36% vs #32 (93px→60px) */
 
@@ -1826,6 +1852,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <button class="params-item canva-button" id="btn-advanced" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleAdvanced()" data-html-import-id="html-import-55" data-template-id="button-46"><canva-inline-text data-template-id="canva-inline-text-47" class="canva-text" style="color: #FFD700; font-size: 22px;">⊹</canva-inline-text><span data-html-import-id="html-import-56" data-template-id="span-48" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Mode avancé (6 sphères) : OFF</span></button>
     <button class="params-item canva-button" id="btn-vislite" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleVisLite()" data-html-import-id="html-import-57" data-template-id="button-49"><canva-inline-text data-template-id="canva-inline-text-50" class="canva-text" style="color: #FFD700; font-size: 22px;">◐</canva-inline-text><span data-html-import-id="html-import-58" data-template-id="span-51" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Visuel léger : OFF</span></button>
     <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panCustom')" data-html-import-id="html-import-59" data-template-id="button-52"><canva-inline-text data-template-id="canva-inline-text-53" class="canva-text" style="color: #FFD700; font-size: 22px;">◈</canva-inline-text><span data-html-import-id="html-import-60" data-template-id="span-54" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Personnaliser l'interface</span></button>
+    <button class="params-item canva-button" style="--ic: #B0D8FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panTuto')"><span style="color:#FFD700;font-size:22px;">✎</span><span style="color:#B0D8FF;font-family:'Cinzel Decorative';font-size:14px;">Tutoriel</span></button>
   </div>
 </div>
 
@@ -2141,6 +2168,18 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
 <!-- Panel : Master FX — droite -->
 <div class="pan-right canva-container" id="panFX" data-html-import-id="html-import-604" data-template-id="div-582">
   <div id="panel-fx-body"></div>
+</div>
+
+<!-- Panel : Tutoriel — droite (#72) -->
+<div class="pan-right canva-container" id="panTuto">
+  <div class="pct canva-container">✎ Tutoriel</div>
+  <div class="tuto-intro">Choisis ton niveau — le contenu s'adapte, tu peux changer à tout moment.</div>
+  <div class="tuto-level-switch">
+    <button class="tuto-lvl-btn on" id="tuto-lvl-chaton" onclick="setTutoLevel('chaton')">Chaton<span class="tuto-lvl-sub">Débutant</span></button>
+    <button class="tuto-lvl-btn" id="tuto-lvl-perche" onclick="setTutoLevel('perche')">Chat perché<span class="tuto-lvl-sub">Avancé</span></button>
+    <button class="tuto-lvl-btn" id="tuto-lvl-cosmique" onclick="setTutoLevel('cosmique')">Chat cosmique<span class="tuto-lvl-sub">Expert</span></button>
+  </div>
+  <div id="tuto-body"></div>
 </div>
 
 <!-- Panel : Notice — droite -->
@@ -4922,6 +4961,73 @@ function toggleAccord(id) {
   const open = body.classList.toggle('open');
   arrow.classList.toggle('open', open);
 }
+
+// #72 : Tutoriel — 3 niveaux (Chaton/Chat perché/Chat cosmique), guide
+// complet (concepts + gestes) à chaque niveau, profondeur croissante.
+const TUTO_CONTENT = {
+  chaton: [
+    { h: "C'est quoi, OmcVibe ?", b: "Une appli de sons doux pour se détendre. Tu écoutes des fréquences qui \"respirent\" avec toi. <b>Le casque est fortement conseillé</b> pour profiter de l'effet." },
+    { h: "Démarrer / arrêter le son", b: "Le gros bouton rond au milieu du dock (en bas) démarre et arrête le son. Une pression pour lancer, une autre pour couper." },
+    { h: "Le son binaural, en simple", b: "Avec un casque, une oreille entend un son un tout petit peu différent de l'autre. Ton cerveau perçoit cette petite différence comme un battement doux et régulier — c'est ça, le binaural." },
+    { h: "Les sphères", b: "Chaque bulle colorée à l'écran est un son. La grosse bulle au milieu est le son principal (le \"maître\"). Les autres l'accompagnent." },
+    { h: "Toucher une sphère", b: "Un <b>tap</b> (appui court) sur une petite bulle l'allume ou l'éteint. Une bulle en <b>blanc quartz</b> (pâle, sans lueur) est éteinte ; une bulle colorée qui pulse est allumée." },
+    { h: "Un appui plus long", b: "Reste appuyé un peu plus longtemps sur une bulle : un petit menu s'ouvre avec quelques réglages simples pour cette sphère." },
+    { h: "Le dock du bas", b: "5 cases en bas de l'écran : à gauche pour tirer un nouveau son au hasard, au milieu pour démarrer/arrêter, à droite pour les réglages et les effets." },
+  ],
+  perche: [
+    { h: "OmcVibe en bref", b: "Générateur binaural fractal : 7 paires d'oscillateurs (Pingala grave / Ida aiguë) accordées sur une fréquence maître et des ratios harmoniques." },
+    { h: "Le binaural, concrètement", b: "Chaque paire envoie une fréquence légèrement différente à gauche et à droite (l'écart s'appelle <b>Δ</b>, quelques Hz). Le cerveau perçoit un battement à la fréquence Δ. <b>Casque obligatoire</b> : sans lui, les deux oreilles se mélangent dans l'air et l'effet disparaît." },
+    { h: "Δ (delta), le battement", b: "Réglable, resserré par défaut entre 0.8 et 1.2Hz pour rester dans une plage douce à l'écoute. Chaque paire peut avoir son propre Δ indépendant, avec une dérive lente en option (\"respiration du battement\")." },
+    { h: "Les ratios harmoniques", b: "Chaque paire satellite est accordée sur une fraction (n/n+1, n+1/n…) de la fréquence maître — des intervalles proches de l'accordage harmonique traditionnel. Le sélecteur de ratio, dans le panneau de chaque oscillateur, permet de choisir laquelle." },
+    { h: "Les gestes sur les sphères", b: "<ul><li><b>Tap</b> sur une satellite : mute/unmute (coupe ou réactive son son).</li><li><b>Tap</b> sur la sphère maître : ouvre son menu rapide.</li><li><b>Appui long</b> sur une satellite : ouvre le menu rapide de cette sphère.</li><li><b>Appui long</b> sur la maître : tire un nouveau jeu aléatoire complet.</li></ul>" },
+    { h: "Le menu rapide (4 boutons autour d'une sphère)", b: "<ul><li><b>Haut</b> — Random ratio : change le timbre de cette sphère sans toucher au reste.</li><li><b>Bas</b> — Verrouiller : empêche cette fréquence de changer aux tirages aléatoires (appui long dessus = random ciblé même verrouillée).</li><li><b>Gauche</b> — Solo : coupe tout sauf cette sphère (retap pour revenir en arrière).</li><li><b>Droite</b> — FX : active/coupe les envois reverb/delay/ping-pong pour cette sphère.</li></ul>" },
+    { h: "Solo maître", b: "Appui long sur la case rouge du dock isole la fréquence maître (coupe toutes les satellites). Un seul oscillateur est déjà actif par défaut au premier lancement — le solo maître mémorise et restaure exactement ce qui jouait avant, pas besoin de tout réactiver à la main." },
+    { h: "Le dock du bas", b: "5 cases — Rouge (Aléatoire), Orange (Samples), Centre (Flux), Vert (Effets), Bleu (Paramètres) — chacune personnalisable (tap / appui long / bouton \"+\") depuis Paramètres → Personnaliser l'interface." },
+    { h: "FX", b: "Reverb, Delay et Ping-Pong globaux, plus un envoi par paire (bouton FX du menu rapide). Filtre par oscillateur : HPF/BPF/LPF avec cutoff et résonance réglables." },
+  ],
+  cosmique: [
+    { h: "Architecture", b: "7 paires (Pingala grave / Ida aiguë), 2 oscillateurs Web Audio chacune. Onde par défaut : <b>double sinus</b> (deux voix sinus détunées de quelques cents) — plus doux qu'une sinusoïdale simple, sans harmoniques dures." },
+    { h: "Binaural — le détail", b: "Δ resserré par défaut à 0.8-1.2Hz. Mode <b>casque strict</b> disponible : routage 100% isolé gauche/droite sans aucune fuite. Polarité indépendante par paire même Δ verrouillé, décorrélation du drift analogique (chaque oscillateur \"respire\" indépendamment)." },
+    { h: "Ratios & fréquences", b: "Fréquence maître 36-432Hz. Chaque satellite = maître × ratio (n/(n+1) ou (n+1)/n), n réglable finement par pas de 0.1 (stepper dédié). Matrice 🌀 : 36 cellules d'assignation rapide ratio × n." },
+    { h: "Filtre par oscillateur", b: "HPF/BPF/LPF, cutoff 20Hz-8kHz, résonance 0-30. Modulable par LFO (patch) ou pad tactile XY (mode Cutoff/Résonance ou Attaque/Relâche)." },
+    { h: "FX par paire vs FX global", b: "Chaque paire a un bouton FX (envoi vers Reverb/Delay/Ping-Pong globaux). <b>Overdrive Halogène</b> (par paire, expérimental) : mélange additif — le son sec ne disparaît jamais, la saturation s'ajoute par-dessus (drive/intensité bridés à 50%)." },
+    { h: "Compression & mastering", b: "Compresseur doux optionnel par paire (seuil haut, ratio faible, anti-pompage), limiteur de sécurité sur le bus master, EQ graphique 6 bandes fixes (36-432Hz)." },
+    { h: "Options avancées", b: "Sub-drone d'ancrage (fréquence grave continue), ancre respiratoire périodique, dérive lente du Δ, historique des tirages aléatoires avec retour arrière (undo)." },
+    { h: "Watchdog qualité audio", b: "Surveille la tension du thread audio (dérive de timer + API Web Audio Latency) et bascule automatiquement en qualité \"Légère\" (coupe la reverb, force sine simple) après ~6s de tension soutenue — réglable manuellement dans le panneau Effet." },
+    { h: "Presets & personnalisation", b: "Sauvegarde du jeu complet (fréquence, binaural, FX) en banques illimitées. Dock entièrement réassignable (tap/appui long/bouton extra) depuis Personnaliser l'interface." },
+  ],
+};
+let TUTO_LEVEL = 'chaton';
+function renderTuto() {
+  const body = document.getElementById('tuto-body');
+  if (!body) return;
+  const sections = TUTO_CONTENT[TUTO_LEVEL] || [];
+  body.innerHTML = sections.map((s, i) => `
+    <div class="accord-header" onclick="toggleAccord('tuto${i}')">
+      <span class="accord-arrow${i===0?' open':''}" id="aa-tuto${i}">▶</span>
+      <span style="font-family:'Cinzel Decorative',serif;font-size:.8rem;color:#FFD700;">${s.h}</span>
+    </div>
+    <div class="accord-body${i===0?' open':''}" id="ab-tuto${i}">
+      <div class="tuto-sec-body">${s.b}</div>
+    </div>`).join('');
+}
+function setTutoLevel(lvl) {
+  if (!TUTO_CONTENT[lvl]) return;
+  TUTO_LEVEL = lvl;
+  ['chaton','perche','cosmique'].forEach(l => {
+    const b = document.getElementById('tuto-lvl-'+l);
+    if (b) b.classList.toggle('on', l === lvl);
+  });
+  try { localStorage.setItem('fbf432-tutoLevel', lvl); } catch(e) {}
+  renderTuto();
+}
+(function _initTuto() {
+  try {
+    const saved = localStorage.getItem('fbf432-tutoLevel');
+    if (saved && TUTO_CONTENT[saved]) TUTO_LEVEL = saved;
+  } catch(e) {}
+  setTutoLevel(TUTO_LEVEL);
+})();
 
 </script>
 <script data-html-import-id="html-import-871">
