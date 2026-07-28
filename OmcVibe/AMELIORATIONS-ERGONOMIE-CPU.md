@@ -905,3 +905,60 @@ manuellement.
 Où regarder : `RAND_OPTS.randomDualSine` (déclaration + garde dans
 `triggerMagicAuto()`), le bloc `OSC_FILTER` fusionné (au lieu de remplacé)
 dans `triggerMagicAuto()`, `_setOscFilterMode` (fallback `hp` ajouté).
+
+## 14e passe — #62/#63 : gains ramenés, diagnostic "tirage sans interaction"
+
+Retour terrain : un nouveau jeu aléatoire apparaîtrait spontanément après
+~2min en solo maître, sans aucun tap (vérifié plusieurs fois par
+l'utilisateur). Plus, gains jugés trop forts, mauvaise qualité perçue.
+
+### #62 — Gains ramenés (volume global 70%, oscillateurs plats à 30%)
+
+- `masterVol` par défaut : 0.85 → 0.70 (variable JS, `resetAll()`,
+  curseur HTML `#mvol-slider`/`#mvol-val`, cohérents partout).
+- `_defaultVolUIForFreq()` : ne dépend plus de la bande de fréquence
+  (72/66/54/36%, #44) — retourne un plateau unique de 30% pour comparaison.
+  `PAIRS[].pingala.vol`/`.ida.vol` mis à jour en conséquence
+  (0.30 × VOL_UI_SCALE = 0.135) pour les 7 paires. `resetAll()` en hérite
+  automatiquement. La logique par bande reste dans le code (fonction
+  simplifiée) si l'utilisateur veut y revenir après comparaison.
+- Onde par défaut Sin×2 (#54) reconfirmée intacte — aucune régression
+  depuis, `OSC_WAVES` toujours pré-rempli pour les 14 oscillateurs.
+
+### #63 — Recherche du "tirage aléatoire sans interaction" : audit exhaustif + instrumentation
+
+Audit statique complet, sans trouver de cause JS/minuteur :
+- **Les 6 `setInterval()` de toute l'app** passés en revue un par un :
+  heartbeat `AudioContext.resume()` (12s), watchdog CPU (3s, ne fait que
+  dégrader la qualité si tension soutenue), ancre respiratoire (240s,
+  OFF par défaut ET ne fait que moduler du volume, jamais un nouveau
+  tirage), automation du pad tactile (#58, par paire, OFF par défaut,
+  ne touche que cutoff/enveloppe), barre de progression, infobar (1s,
+  affichage seul). Aucun n'appelle `triggerMagicAuto()`.
+- **Les 10 points d'appel de `triggerMagicAuto()`** passés en revue un par
+  un : bouton "⚄ Omchaléatoire", appui long sur une sphère, bouton
+  "Random ratio" du menu rapide, verrou maître, jeu aléatoire depuis un
+  sample, etc. — tous derrière un `onclick`/gestionnaire d'appui
+  long/tap direct, aucun déclenché par un minuteur.
+- **MediaSession** (contrôles écran verrouillé/casque Bluetooth) :
+  seuls `play`/`pause`/`stop` sont branchés, rien qui appelle
+  `triggerMagicAuto()`.
+- Rien d'anormal trouvé qui explique un déclenchement après ~2min sans
+  interaction — le bug ne se reproduit pas dans l'environnement de test
+  (headless, sans attente réelle de 2min sur device réel).
+
+**Instrumentation ajoutée** (`_diagLogAutoTrigger`) : un minuteur global
+`_lastUserGestureAt`, mis à jour par un écouteur en phase de capture sur
+`pointerdown`/`touchstart`/`mousedown` posé une seule fois sur
+`document`. À CHAQUE appel de `triggerMagicAuto()`, si plus de 1,5s se
+sont écoulées depuis le dernier geste tactile/souris réel, l'appel est
+journalisé : horodatage, écart en ms, pile d'appel JS complète — dans
+`localStorage.omc_diag_autotrigger` (8 dernières entrées) ET affiché
+immédiatement à l'écran via le bandeau d'état existant (`ui('live', ...)`)
+pour une confirmation visuelle instantanée si ça se reproduit. Vérifié par
+script Playwright : un vrai geste juste avant l'appel → rien loggé ; un
+appel simulé après 5s d'inactivité → loggé avec pile d'appel complète.
+
+Où regarder : `_defaultVolUIForFreq()`/`PAIRS[]`/`masterVol` (#62),
+`_diagLogAutoTrigger`/`_lastUserGestureAt` juste avant
+`triggerMagicAuto()` (#63).

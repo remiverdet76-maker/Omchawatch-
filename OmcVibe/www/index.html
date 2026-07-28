@@ -2308,30 +2308,29 @@ const DELTA_DEFAULT = 1.0;
 // l'échelle interne reste 0-VOL_UI_SCALE (aucun changement de gain réel,
 // seul l'affichage/la saisie passe en 0-1 "contraction max / expansion max").
 const VOL_UI_SCALE = 0.45;
-// Volumes par défaut PAR BANDE DE FRÉQUENCE (grave = priorité, cf. demande) :
-// 36-108Hz→72% · 108-216Hz→66% · 216-324Hz→54% · 324-432Hz→36% du volume UI max.
+// #62 : volume par défaut ramené à un plateau UNIQUE de 30% pour tous les
+// oscillateurs (retour terrain "gains trop forts, mauvaise qualité") — la
+// répartition précédente par bande de fréquence (72/66/54/36%) est
+// remplacée ici, à comparer avant de revenir dessus si besoin.
 function _defaultVolUIForFreq(freq) {
-  if (freq <= 108) return 0.72;
-  if (freq <= 216) return 0.66;
-  if (freq <= 324) return 0.54;
-  return 0.36;
+  return 0.30;
 }
-// vol ci-dessous = _defaultVolUIForFreq(freq par défaut de la paire à masterFreq=144) * VOL_UI_SCALE
+// vol ci-dessous = 0.30 (défaut plat, #62) * VOL_UI_SCALE
 const PAIRS = [
-  { label:'Paire 1', color:'#FF6B6B', grad:['#FF6B6B','#FF9A8B'],   // 144×11/10×1.0 ≈158Hz → 66%
-    pingala:{id:'p0', ri:0, n:1.0, vol:.297}, ida:{id:'i0', delta:DELTA_DEFAULT, polarity:1,  vol:.297} },
-  { label:'Paire 2', color:'#FFB347', grad:['#FFB347','#FFD080'],   // 144×10/11×1.0 ≈131Hz → 66%
-    pingala:{id:'p1', ri:1, n:1.0, vol:.297}, ida:{id:'i1', delta:DELTA_DEFAULT, polarity:-1, vol:.297} },
-  { label:'Paire 3', color:'#E8FF60', grad:['#E8FF60','#C8FF80'],   // 144×12/11×2.0 ≈314Hz → 54%
-    pingala:{id:'p2', ri:2, n:2.0, vol:.243}, ida:{id:'i2', delta:DELTA_DEFAULT, polarity:1,  vol:.243} },
-  { label:'Paire 4', color:'#56FFB0', grad:['#56FFB0','#80FFD0'],   // 144×11/12×2.0 =264Hz → 54%
-    pingala:{id:'p3', ri:3, n:2.0, vol:.243}, ida:{id:'i3', delta:DELTA_DEFAULT, polarity:-1, vol:.243} },
-  { label:'Paire 5', color:'#60D8FF', grad:['#60D8FF','#80B0FF'],   // 144×12/10×0.5 =86.4Hz → 72%
-    pingala:{id:'p4', ri:4, n:0.5, vol:.324}, ida:{id:'i4', delta:DELTA_DEFAULT, polarity:1,  vol:.324} },
-  { label:'Paire 6', color:'#C080FF', grad:['#C080FF','#E080FF'],   // 144×10/12×0.5 =60.0Hz → 72%
-    pingala:{id:'p5', ri:5, n:0.5, vol:.324}, ida:{id:'i5', delta:DELTA_DEFAULT, polarity:-1, vol:.324} },
-  { label:'Maître',  color:'#FFB0FF', grad:['#FFB0FF','#FF80C0'],   // 144×11/10×1.0 ≈158Hz → 66%
-    pingala:{id:'p6', ri:0, n:1.0, vol:.297}, ida:{id:'i6', delta:DELTA_DEFAULT, polarity:1,  vol:.297} },
+  { label:'Paire 1', color:'#FF6B6B', grad:['#FF6B6B','#FF9A8B'],
+    pingala:{id:'p0', ri:0, n:1.0, vol:.135}, ida:{id:'i0', delta:DELTA_DEFAULT, polarity:1,  vol:.135} },
+  { label:'Paire 2', color:'#FFB347', grad:['#FFB347','#FFD080'],
+    pingala:{id:'p1', ri:1, n:1.0, vol:.135}, ida:{id:'i1', delta:DELTA_DEFAULT, polarity:-1, vol:.135} },
+  { label:'Paire 3', color:'#E8FF60', grad:['#E8FF60','#C8FF80'],
+    pingala:{id:'p2', ri:2, n:2.0, vol:.135}, ida:{id:'i2', delta:DELTA_DEFAULT, polarity:1,  vol:.135} },
+  { label:'Paire 4', color:'#56FFB0', grad:['#56FFB0','#80FFD0'],
+    pingala:{id:'p3', ri:3, n:2.0, vol:.135}, ida:{id:'i3', delta:DELTA_DEFAULT, polarity:-1, vol:.135} },
+  { label:'Paire 5', color:'#60D8FF', grad:['#60D8FF','#80B0FF'],
+    pingala:{id:'p4', ri:4, n:0.5, vol:.135}, ida:{id:'i4', delta:DELTA_DEFAULT, polarity:1,  vol:.135} },
+  { label:'Paire 6', color:'#C080FF', grad:['#C080FF','#E080FF'],
+    pingala:{id:'p5', ri:5, n:0.5, vol:.135}, ida:{id:'i5', delta:DELTA_DEFAULT, polarity:-1, vol:.135} },
+  { label:'Maître',  color:'#FFB0FF', grad:['#FFB0FF','#FF80C0'],
+    pingala:{id:'p6', ri:0, n:1.0, vol:.135}, ida:{id:'i6', delta:DELTA_DEFAULT, polarity:1,  vol:.135} },
 ];
 
 // Panoramique stéréo — éventail : chaque paire a un CENTRE distinct (gauche→droite),
@@ -2403,7 +2402,7 @@ PAIRS.forEach(p => {
 
 let masterFreq  = 144;
 let globalDelta = DELTA_DEFAULT;   // #35 : référence Delta (n'impose plus le même battement à tous)
-let masterVol   = 0.85;  // le curseur affichait 0.8 mais la valeur réelle était 0.6 — trop faible
+let masterVol   = 0.70;  // #62 : ramené de 0.85 à 0.70 (retour terrain "gains trop forts")
 // #38 : remonté 0.5→1.0 (+6 dB). Le plafond à 0.5 datait d'avant la chaîne
 // de sécurité actuelle (masterGlue + limiter dur -3.6dB/20:1 + safetyClip,
 // tanh sans latence, garantit 0 clipping quel que soit le gain en amont) —
@@ -5463,8 +5462,38 @@ function undoLastRandom() {
   _updateUndoButton();
 }
 
+// #63 : diagnostic — retour terrain "un nouveau jeu aléatoire se crée sans
+// interaction, après ~2min en solo maître". Audit statique de TOUS les
+// setInterval() et de TOUS les appels à triggerMagicAuto() de l'app : aucun
+// n'est déclenché par un minuteur ou en arrière-plan, tous sont posés
+// derrière un tap/appui long/clic direct — impossible de reproduire le bug
+// en environnement de test headless. Cette instrumentation trace donc CHAQUE
+// appel à triggerMagicAuto() survenant sans geste tactile/souris récent
+// (>1,5s), avec la pile d'appel JS et le temps écoulé, pour identifier la
+// source exacte au prochain déclenchement — sur l'appareil réel.
+var _lastUserGestureAt = Date.now();
+if (!window._diagGestureBound) {
+  window._diagGestureBound = true;
+  ['pointerdown', 'touchstart', 'mousedown'].forEach(evt =>
+    document.addEventListener(evt, () => { _lastUserGestureAt = Date.now(); }, { capture: true, passive: true }));
+}
+function _diagLogAutoTrigger(gapMs) {
+  try {
+    const entry = { t: new Date().toISOString(), gapMs, stack: (new Error()).stack || '' };
+    const key = 'omc_diag_autotrigger';
+    const arr = JSON.parse(localStorage.getItem(key) || '[]');
+    arr.push(entry);
+    while (arr.length > 8) arr.shift();
+    localStorage.setItem(key, JSON.stringify(arr));
+  } catch(e) {}
+  console.warn('[OmcVibe diag] triggerMagicAuto() sans interaction récente (+' + Math.round(gapMs/1000) + 's) — voir localStorage.omc_diag_autotrigger');
+  if (typeof ui === 'function') ui('live', '⚠ Tirage auto sans interaction (+' + Math.round(gapMs/1000) + 's) — diagnostic enregistré');
+}
+
 function triggerMagicAuto(opts) {
   const now = Date.now();
+  const _gestureGapMs = now - _lastUserGestureAt;
+  if (_gestureGapMs > 1500) _diagLogAutoTrigger(_gestureGapMs);
   if (now - _lastMagicAt < 350) return;
   _lastMagicAt = now;
 
@@ -5715,14 +5744,13 @@ function triggerMagicAuto(opts) {
 
 function resetAll() {
   if (flowing) return;
-  masterFreq = 252; globalDelta = DELTA_DEFAULT; masterVol = 0.85;
+  masterFreq = 252; globalDelta = DELTA_DEFAULT; masterVol = 0.70; // #62
   PAIRS.forEach((p, i) => {
     p.pingala.ri = i % RATIO_OPTS.length;
     p.pingala.n  = (i === MASTER_IDX) ? 1.0 : 0.2 + (i*0.5);
-    // #44 : volume par défaut selon la bande de fréquence réellement
-    // atteinte par cette paire (grave = priorité), pas une valeur fixe.
-    const f = Math.min(432, masterFreq * RATIO_OPTS[p.pingala.ri].r * p.pingala.n);
-    const vol = _defaultVolUIForFreq(f) * VOL_UI_SCALE;
+    // #62 : volume par défaut plat à 30% (_defaultVolUIForFreq ne dépend
+    // plus de la bande de fréquence, cf. plus haut).
+    const vol = _defaultVolUIForFreq(0) * VOL_UI_SCALE;
     p.pingala.vol = vol;
     p.ida.delta   = DELTA_DEFAULT;       // battement binaural doux, unique
     p.ida.polarity = (i % 2 === 0) ? 1 : -1;
@@ -5731,8 +5759,8 @@ function resetAll() {
     mutedOscs[p.ida.id]     = false;
   });
   try { localStorage.removeItem(LS_KEY); } catch(e) {}
-  const mvs = document.getElementById('mvol-slider'); if (mvs) mvs.value = 0.85;
-  const mvv = document.getElementById('mvol-val');    if (mvv) mvv.textContent = '85%';
+  const mvs = document.getElementById('mvol-slider'); if (mvs) mvs.value = 0.70;
+  const mvv = document.getElementById('mvol-val');    if (mvv) mvv.textContent = '70%';
   updateDisplay();
   setGlobalDelta(DELTA_DEFAULT);
 }
@@ -6173,8 +6201,8 @@ function buildMasterFXHTML() {
       <!-- Fader GAIN (volume général) -->
       <div class="fxq-row">
         <span class="fxq-lbl">Gain</span>
-        <input type="range" id="mvol-slider" class="fx-slider" min="0" max="1" step="0.01" value="0.85" oninput="setMasterVol(this.value)">
-        <span class="fx-val-disp" id="mvol-val">85%</span>
+        <input type="range" id="mvol-slider" class="fx-slider" min="0" max="1" step="0.01" value="0.70" oninput="setMasterVol(this.value)">
+        <span class="fx-val-disp" id="mvol-val">70%</span>
         <button class="btn-reset sm" onclick="resetAll()" title="Réinitialiser">↺</button>
       </div>
       <!-- Réglages avancés du Gain : fondu d'entrée/sortie + respiration organique -->
