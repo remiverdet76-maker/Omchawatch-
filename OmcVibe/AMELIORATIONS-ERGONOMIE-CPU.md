@@ -962,3 +962,91 @@ appel simulé après 5s d'inactivité → loggé avec pile d'appel complète.
 Où regarder : `_defaultVolUIForFreq()`/`PAIRS[]`/`masterVol` (#62),
 `_diagLogAutoTrigger`/`_lastUserGestureAt` juste avant
 `triggerMagicAuto()` (#63).
+
+## 15e passe — #64 : univers à 3 modules (lanceur, icône, Chaharmony)
+
+Demande : transformer l'APK en 3 modules choisis au lancement — OmchaVibe
+432 (le jeu actuel), Chaharmony (générateur de fréquences), OmchaSphere /
+Flux (visualisation géométrique). Icône remplacée par le mandala fourni.
+
+### Icône
+
+`branding/icons/` régénéré depuis la nouvelle image (mandala doré) via
+un script adapté de `gen_icons.py` — toutes densités (mipmap
+mdpi→xxxhdpi, legacy + round + foreground adaptatif) + les 11 écrans de
+démarrage natifs (`splash.png` port/land toutes densités) + le logo
+in-webview (`www/img/omcvibe432-logo.jpg`, utilisé par `#splash-36`).
+Recadrage carré centré sur la sphère dorée du mandala. Le NOM de l'app
+(label natif Android) n'a lui pas pu être changé : il vit dans
+`AndroidManifest.xml`, compilé en binaire (AXML) dans l'APK d'origine —
+ce pipeline ne repackage que les fichiers web (`assets/public/*`), sans
+outil pour décoder/recompiler le manifeste natif.
+
+### Lanceur 3 modules
+
+Nouvel overlay plein écran `#omc-launcher` (z-index 10500, au-dessus de
+tout, y compris le splash) affiché par défaut à l'ouverture. 3 cartes :
+- **OmchaVibe 432** → masque simplement le lanceur (`_launcherGo('vibe')`),
+  aucun rechargement — l'app est déjà initialisée en dessous.
+- **Chaharmony** → navigue vers `chaharmony.html` (nouvelle page).
+- **OmchaSphere / Flux** → navigue vers `sphere-flux.html` (page d'attente
+  pour l'instant, cf. #59 à venir).
+
+Les deux nouvelles pages sont enregistrées dans `NEW_FILES` de
+`repack.py` (même mécanisme déjà utilisé pour les images de branding) —
+ajoutées à l'APK en tant que nouvelles entrées, aucun fichier existant
+touché.
+
+**Effet de bord découvert en testant** : le lanceur intercepte désormais
+TOUT geste tactile tant qu'il n'a pas été fermé (z-index au-dessus de
+tout, comme voulu) — logique et volontaire, mais ça a cassé plusieurs
+scripts de test Playwright existants qui interagissaient directement avec
+l'app sans d'abord fermer le lanceur (un des tests a même déclenché une
+vraie navigation vers Chaharmony en cliquant "à travers" une carte du
+lanceur). Corrigé côté tests uniquement (ils retirent le lanceur avant
+d'interagir) — comportement normal et volontaire pour un utilisateur réel.
+
+### Module Chaharmony (nouvelle page `chaharmony.html`)
+
+Générateur de fréquences autonome, 7 oscillateurs, calqué sur la
+référence fournie mais dans l'identité visuelle d'OmcVibe (doré/cuivré,
+Cinzel Decorative) plutôt que le thème néon cyan d'origine :
+- Onglets OSC 1-7, affichage fréquence + curseur 54-864Hz, stepper n
+  (−/■/+, le bouton central mute/solo cet oscillateur), curseur volume,
+  curseur pan (mode mono).
+- **Bouton L·R** : bascule mono (centré, pannable) ↔ binaural (2
+  sous-oscillateurs L/R via `ChannelMergerNode`, écart Δ réglable) —
+  demande explicite du point 4.
+- **Filtre · Type / Cutoff / Résonance** (demande du point 2) : sélecteur
+  OFF/HPF/BPF/LPF ajouté au-dessus des curseurs Cutoff/Résonance —
+  absent de la référence, ajouté ici en reprenant le même `FILTER_TYPES`
+  qu'OmcVibe.
+- **Moteur FX propre à chaque oscillateur** (demande du point 3) :
+  chaque oscillateur a son propre `ConvolverNode` (reverb) et
+  `DelayNode` (delay) indépendants — pas de bus partagé entre
+  oscillateurs, contrairement à la référence qui envoyait vers "le jeu
+  en cours".
+- **Bouton Silence** (demande du point 4) : coupe le master instantanément.
+- **Bouton "+"** ouvre un menu déroulant (réinitialiser cet oscillateur,
+  fréquence aléatoire, copier ces réglages sur les 7).
+- Dock : Retour (→ lanceur), Silence, Flux on/off.
+
+Testé par script Playwright : 7 onglets/oscillateurs présents, bascule
+mono→binaural crée bien 2 oscillateurs (gauche/droite décalés de Δ),
+changement de type de filtre appliqué en direct au nœud vivant, reverb
+par oscillateur connectée indépendamment. Aucune erreur JS.
+
+### OmchaSphere / Flux — en attente (#59)
+
+Page d'attente pour l'instant (`sphere-flux.html`, thème cohérent,
+bouton retour). La fusion des 2 visualisateurs fournis (Sphère 432 —
+canvas 3D expansion fractale + hiérarchie de sphères harmoniques —, et
+Torsion 432 — double hélice ↔ tore avec modes Expansion/Contraction/Flux)
+dans l'identité visuelle d'OmcVibe reste à faire : ce sont deux pages
+déjà abouties (~1000-2000 lignes chacune, moteur audio binaural intégré,
+nombreux panneaux de paramètres) — portage complet dans un futur passage
+dédié plutôt que précipité ici.
+
+Où regarder : `#omc-launcher`/`_launcherGo()` (index.html), `NEW_FILES`
+dans `repack.py`, `chaharmony.html` (nouveau fichier autonome),
+`sphere-flux.html` (placeholder), `branding/icons/` (icône régénérée).

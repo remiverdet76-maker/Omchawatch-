@@ -1389,6 +1389,40 @@ input.param-input{
   color:#FFD27A;letter-spacing:.22em;text-shadow:0 0 24px rgba(255,200,90,.6);}
 #splash-36 .splash-sub{font-family:'IM Fell English',serif;font-style:italic;font-size:.95rem;color:rgba(255,210,130,.7);letter-spacing:.1em;}
 
+/* ════════ #64 : Lanceur 3 modules (OmchaVibe/Chaharmony/OmchaSphère) ════════ */
+#omc-launcher{position:fixed;inset:0;z-index:10500;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1.1rem;padding:1.5rem;
+  background:radial-gradient(circle at 50% 38%,#1a1004,#000 72%);
+  transition:opacity .6s ease,visibility .6s;overflow-y:auto;}
+#omc-launcher.hide{opacity:0;visibility:hidden;pointer-events:none;}
+#omc-launcher .lch-logo{width:min(34vw,150px);height:auto;margin-bottom:.3rem;
+  filter:drop-shadow(0 0 34px rgba(255,190,70,.45));animation:splashGlow 2.6s ease-in-out infinite;}
+#omc-launcher .lch-title{font-family:'Cinzel Decorative',serif;font-size:1.5rem;font-weight:900;
+  color:#FFD27A;letter-spacing:.16em;text-shadow:0 0 22px rgba(255,200,90,.55);text-align:center;}
+#omc-launcher .lch-sub{font-family:'IM Fell English',serif;font-style:italic;font-size:.82rem;
+  color:rgba(255,210,130,.6);letter-spacing:.08em;text-align:center;margin-bottom:.6rem;}
+.lch-cards{display:flex;flex-direction:column;gap:.7rem;width:100%;max-width:360px;}
+.lch-card{display:flex;flex-direction:column;align-items:center;gap:.25rem;
+  padding:1rem .8rem;border-radius:14px;cursor:pointer;text-align:center;
+  background:rgba(20,12,4,.55);border:1.5px solid rgba(255,190,90,.28);
+  backdrop-filter:blur(10px);transition:transform .15s,border-color .2s,background .2s;}
+.lch-card:active{transform:scale(.97);}
+.lch-card:hover{border-color:rgba(255,200,100,.6);background:rgba(30,18,6,.7);}
+.lch-card .lch-ico{font-size:1.7rem;line-height:1;margin-bottom:.15rem;}
+.lch-card .lch-name{font-family:'Cinzel Decorative',serif;font-size:1rem;font-weight:700;
+  letter-spacing:.08em;color:#FFE0A0;}
+.lch-card .lch-desc{font-family:'IM Fell English',serif;font-size:.74rem;
+  color:rgba(220,200,255,.6);letter-spacing:.03em;}
+.lch-card.vibe{border-color:rgba(99,230,255,.35);}
+.lch-card.vibe:hover{border-color:rgba(99,230,255,.7);}
+.lch-card.vibe .lch-name{color:#8CE8FF;}
+.lch-card.chaharmony{border-color:rgba(200,140,255,.35);}
+.lch-card.chaharmony:hover{border-color:rgba(200,140,255,.7);}
+.lch-card.chaharmony .lch-name{color:#D9B3FF;}
+.lch-card.sphereflux{border-color:rgba(140,255,180,.35);}
+.lch-card.sphereflux:hover{border-color:rgba(140,255,180,.7);}
+.lch-card.sphereflux .lch-name{color:#9CFFC0;}
+
 /* ════════ Thèmes visuels ════════ */
 .theme-switch{margin:.2rem 0 .7rem;padding:.5rem;background:rgba(0,0,0,.2);border-radius:9px;border:1px solid rgba(200,170,255,.14);}
 .theme-switch .theme-lbl{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(200,170,255,.55);display:block;margin-bottom:.4rem;}
@@ -1675,6 +1709,30 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   <img onerror="this.style.display='none'" data-html-import-id="html-import-2" data-template-id="img-0" class="canva-image" src="img/omcvibe432-logo.jpg" alt="OmcVibe432">
   <div class="splash-title canva-container" data-html-import-id="html-import-3" data-template-id="div-1" style="font-family: &quot;Cinzel Decorative&quot;; font-weight: 900; font-size: 27px;">OmcVibe432</div>
   <div class="splash-sub canva-container" data-html-import-id="html-import-4" data-template-id="div-2" style="color: rgba(255, 210, 130, 0.7); font-family: &quot;IM Fell English&quot;; font-style: italic; font-size: 15px;">✦ Flux Binaural Fractal ✦</div>
+</div>
+
+<!-- #64 : Lanceur — choix entre les 3 modules, affiché avant l'app -->
+<div id="omc-launcher">
+  <img class="lch-logo" src="img/omcvibe432-logo.jpg" alt="OMCHA" onerror="this.style.display='none'">
+  <div class="lch-title">OMCHA · UNIVERS 432</div>
+  <div class="lch-sub">✦ Choisis ton module ✦</div>
+  <div class="lch-cards">
+    <div class="lch-card vibe" onclick="_launcherGo('vibe')">
+      <span class="lch-ico">✦</span>
+      <span class="lch-name">OmchaVibe 432</span>
+      <span class="lch-desc">Le jeu binaural fractal — sphères, matrice, module tactile</span>
+    </div>
+    <div class="lch-card chaharmony" onclick="_launcherGo('chaharmony')">
+      <span class="lch-ico">⬡</span>
+      <span class="lch-name">Chaharmony</span>
+      <span class="lch-desc">Générateur de fréquences — 7 oscillateurs, casque ou enceintes</span>
+    </div>
+    <div class="lch-card sphereflux" onclick="_launcherGo('sphereflux')">
+      <span class="lch-ico">◎</span>
+      <span class="lch-name">OmchaSphere / Flux</span>
+      <span class="lch-desc">Visualisation géométrique — Sphère 432 · Torsion 432</span>
+    </div>
+  </div>
 </div>
 
 <div id="cosmic-bg" data-html-import-id="html-import-5" style="background-image: url(&quot;img/cosmic-flux.jpg&quot;); filter: hue-rotate(-23.8deg) saturate(1.15);"></div>
@@ -7545,6 +7603,19 @@ function hideSplash() {
   if (!s) return;
   s.classList.add('hide');
   setTimeout(() => { if (s) s.style.display = 'none'; }, 900);
+}
+
+// #64 : Lanceur 3 modules — 'vibe' démasque simplement l'app déjà chargée en
+// dessous (aucun rechargement, aucune perte d'état) ; les 2 autres modules
+// vivent dans des pages séparées (assets/public/*.html), on y navigue.
+function _launcherGo(mod) {
+  if (mod === 'vibe') {
+    const l = document.getElementById('omc-launcher');
+    if (l) { l.classList.add('hide'); setTimeout(() => { if (l) l.style.display = 'none'; }, 650); }
+    return;
+  }
+  const pages = { chaharmony: 'chaharmony.html', sphereflux: 'sphere-flux.html' };
+  if (pages[mod]) location.href = pages[mod];
 }
 
 // ── Init ──────────────────────────────────────────────────────────

@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Chaharmony · Générateur de fréquences</title>
+<style>
+:root{
+  --void:#02010D;--gold:#E8A020;--goldBright:#FFD27A;--text:#B8A8D0;
+  --bright:#F0E0FF;--panel:rgba(20,12,4,.62);--border:rgba(255,190,90,.28);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--void);color:var(--text);
+  font-family:'IM Fell English',serif;}
+body{background:radial-gradient(circle at 50% 20%,#1a1004,#000 78%);}
+#wrap{position:fixed;inset:0;display:flex;flex-direction:column;}
+#hdr{padding:.9rem 1rem .5rem;flex-shrink:0;}
+#hdr-title{font-family:'Cinzel Decorative',serif;font-size:1.15rem;font-weight:700;
+  color:var(--goldBright);letter-spacing:.1em;text-shadow:0 0 18px rgba(255,200,90,.4);}
+#hdr-sub{font-size:.7rem;letter-spacing:.12em;opacity:.55;text-transform:uppercase;margin-top:2px;}
+#tabs{display:flex;gap:.3rem;padding:0 1rem;overflow-x:auto;flex-shrink:0;scrollbar-width:none;}
+#tabs::-webkit-scrollbar{display:none;}
+.otab{flex-shrink:0;padding:.4rem .75rem;border-radius:8px;font-family:'Cinzel Decorative',serif;
+  font-size:.68rem;letter-spacing:.05em;color:var(--text);border:1.5px solid var(--border);
+  background:rgba(20,12,4,.4);cursor:pointer;white-space:nowrap;}
+.otab.on{color:var(--goldBright);border-color:var(--gold);background:rgba(232,160,32,.16);}
+#body{flex:1;overflow-y:auto;padding:.8rem 1rem 1rem;}
+.card{background:var(--panel);border:1.5px solid var(--border);border-radius:12px;
+  padding:.9rem;margin-bottom:.7rem;backdrop-filter:blur(8px);}
+.sec-t{font-family:'Cinzel Decorative',serif;font-size:.68rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gold);opacity:.85;margin-bottom:.55rem;}
+.osc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;}
+.lr-btn,.plus-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);
+  background:rgba(20,12,4,.5);color:var(--text);font-family:'Cinzel Decorative',serif;
+  font-size:.62rem;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  flex-direction:column;gap:1px;}
+.lr-btn.bin{border-color:var(--gold);color:var(--goldBright);background:rgba(232,160,32,.18);}
+.plus-btn{font-size:1.2rem;color:#8CFFC0;border-color:rgba(140,255,180,.4);}
+.freq-disp{text-align:center;flex:1;}
+.freq-num{font-family:'Cinzel Decorative',serif;font-size:2.1rem;font-weight:700;color:var(--bright);
+  line-height:1;}
+.freq-hz{font-size:.68rem;opacity:.5;letter-spacing:.1em;text-transform:uppercase;}
+input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:2px;
+  background:rgba(232,160,32,.18);outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;
+  border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 8px rgba(232,160,32,.6);}
+input[type=range].pink::-webkit-slider-thumb{background:#FF6FA8;box-shadow:0 0 8px rgba(255,111,168,.6);}
+.freq-range{display:flex;justify-content:space-between;font-size:.6rem;opacity:.4;margin-top:2px;}
+.n-row{display:flex;align-items:center;justify-content:center;gap:.9rem;margin:.7rem 0;}
+.n-step{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--border);
+  background:rgba(20,12,4,.5);color:var(--goldBright);font-size:1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;}
+.n-mute{width:56px;height:56px;border-radius:50%;border:2px solid var(--gold);cursor:pointer;
+  background:radial-gradient(circle,rgba(232,160,32,.35),rgba(232,160,32,.08));
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--goldBright);}
+.n-mute.muted{border-color:#666;background:rgba(60,60,60,.3);color:#888;}
+.ctl-row{margin-bottom:.55rem;}
+.ctl-lv{display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:.2rem;}
+.ctl-l{opacity:.75;}
+.ctl-v{color:var(--bright);}
+.filt-row{display:flex;gap:.3rem;margin-bottom:.55rem;}
+.filt-btn{flex:1;padding:.32rem 0;border-radius:8px;font-size:.62rem;letter-spacing:.05em;
+  border:1px solid var(--border);background:rgba(20,12,4,.5);color:var(--text);cursor:pointer;}
+.filt-btn.active{background:rgba(232,160,32,.22);border-color:var(--gold);color:var(--goldBright);}
+.hint{font-size:.62rem;opacity:.4;font-style:italic;margin-top:.3rem;}
+#dock{display:flex;gap:.5rem;padding:.6rem 1rem calc(.6rem + env(safe-area-inset-bottom));
+  flex-shrink:0;border-top:1px solid var(--border);}
+.dbtn{flex:1;padding:.6rem .3rem;border-radius:10px;border:1.5px solid var(--border);
+  background:rgba(20,12,4,.5);color:var(--text);font-family:'Cinzel Decorative',serif;
+  font-size:.66rem;text-align:center;cursor:pointer;}
+.dbtn.silence{border-color:rgba(255,90,90,.4);color:#FF9090;}
+.dbtn.silence.on{background:rgba(255,60,60,.22);border-color:#FF6060;color:#FFB0B0;}
+.dbtn.flux{border-color:var(--gold);color:var(--goldBright);}
+.dbtn.flux.on{background:rgba(232,160,32,.25);}
+#plusMenu{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;
+  align-items:flex-end;justify-content:center;}
+#plusMenu.open{display:flex;}
+#plusMenu .sheet{width:100%;max-width:420px;background:#0c0806;border:1.5px solid var(--border);
+  border-radius:16px 16px 0 0;padding:1rem;}
+.pm-item{padding:.7rem .5rem;font-family:'Cinzel Decorative',serif;font-size:.78rem;
+  color:var(--bright);border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;}
+.pm-item:last-child{border-bottom:none;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hdr">
+    <div id="hdr-title">⬡ CHAHARMONY</div>
+    <div id="hdr-sub">Générateur de fréquences · 7 oscillateurs</div>
+  </div>
+  <div id="tabs"></div>
+  <div id="body"></div>
+  <div id="dock">
+    <div class="dbtn" onclick="location.href='index.html'">← Retour</div>
+    <div class="dbtn silence" id="btnSilence" onclick="toggleSilence()">◼ Silence</div>
+    <div class="dbtn flux" id="btnFlux" onclick="toggleFlux()">◎ Flux OFF</div>
+  </div>
+</div>
+<div id="plusMenu" onclick="if(event.target===this)closePlusMenu()">
+  <div class="sheet">
+    <div class="pm-item" onclick="oscReset(curOsc);closePlusMenu()">↺ Réinitialiser cet oscillateur</div>
+    <div class="pm-item" onclick="oscRandom(curOsc);closePlusMenu()">⚄ Fréquence aléatoire</div>
+    <div class="pm-item" onclick="copyToAll();closePlusMenu()">⇉ Copier ces réglages sur les 7</div>
+    <div class="pm-item" onclick="closePlusMenu()">Fermer</div>
+  </div>
+</div>
+<script>
+// ─── AUDIO ENGINE — 7 oscillateurs indépendants, chacun son propre moteur
+// FX (reverb + delay non partagés), normal (mono centré) ↔ binaural (L/R
+// séparés + Δ) commutable par oscillateur. ──────────────────────────────
+const N_OSC = 7;
+const FILTER_TYPES = { off:'allpass', hpf:'highpass', bpf:'bandpass', lpf:'lowpass' };
+let AC = null, master = null, flowing = false, silenced = false;
+
+const OSC = [];
+for (let i = 0; i < N_OSC; i++) {
+  OSC.push({
+    freq: 144 + i * 36, bin: false, delta: 4.0, n: 1, muted: false,
+    vol: 0.6, pan: 0, lfoDepth: 0,
+    filtMode: 'off', cutoff: 2000, res: 0,
+    revWet: 0, delWet: 0,
+    nodes: null
+  });
+}
+let curOsc = 0;
+
+function ensureAC() {
+  if (AC) return;
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+  master = AC.createGain(); master.gain.value = 0.8; master.connect(AC.destination);
+}
+function _makeIR(c, decay) {
+  const sr = c.sampleRate, len = Math.max(1, Math.floor(sr * decay));
+  const buf = c.createBuffer(2, len, sr);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.2);
+  }
+  return buf;
+}
+function _buildOscNodes(o) {
+  const c = AC;
+  const filt = c.createBiquadFilter();
+  filt.type = FILTER_TYPES[o.filtMode] || 'allpass';
+  filt.frequency.value = o.cutoff; filt.Q.value = o.res;
+  const g = c.createGain(); g.gain.value = o.muted ? 0 : o.vol;
+  // Moteur FX PROPRE à cet oscillateur (pas de bus partagé) :
+  const rev = c.createConvolver(); rev.buffer = _makeIR(c, 1.6);
+  const revGain = c.createGain(); revGain.gain.value = o.revWet;
+  const del = c.createDelay(1.2); del.delayTime.value = 0.28;
+  const delFb = c.createGain(); delFb.gain.value = 0.32;
+  const delGain = c.createGain(); delGain.gain.value = o.delWet;
+  del.connect(delFb); delFb.connect(del);
+  g.connect(filt);
+  filt.connect(master);
+  filt.connect(rev); rev.connect(revGain); revGain.connect(master);
+  filt.connect(del); del.connect(delGain); delGain.connect(master);
+  let oscL = null, oscR = null, p = null, merge = null, lfo = null, lfoGain = null;
+  if (o.bin) {
+    merge = c.createChannelMerger(2);
+    oscL = c.createOscillator(); oscL.type = 'sine'; oscL.frequency.value = o.freq;
+    oscR = c.createOscillator(); oscR.type = 'sine'; oscR.frequency.value = o.freq + o.delta;
+    oscL.connect(merge, 0, 0); oscR.connect(merge, 0, 1);
+    merge.connect(g);
+    oscL.start(); oscR.start();
+  } else {
+    p = c.createOscillator(); p.type = 'sine'; p.frequency.value = o.freq;
+    const pan = c.createStereoPanner(); pan.pan.value = o.pan;
+    p.connect(pan); pan.connect(g);
+    p.start();
+    oscL = p;
+  }
+  if (o.lfoDepth > 0) {
+    lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.15;
+    lfoGain = c.createGain(); lfoGain.gain.value = o.lfoDepth * o.vol;
+    lfo.connect(lfoGain); lfoGain.connect(g.gain); lfo.start();
+  }
+  return { filt, g, rev, revGain, del, delFb, delGain, oscL, oscR, merge, lfo, lfoGain };
+}
+function _teardownOscNodes(o) {
+  if (!o.nodes) return;
+  const n = o.nodes;
+  [n.oscL, n.oscR, n.lfo].forEach(x => { if (x) { try { x.stop(); } catch(e){} try { x.disconnect(); } catch(e){} } });
+  [n.merge, n.filt, n.g, n.rev, n.revGain, n.del, n.delFb, n.delGain, n.lfoGain].forEach(x => { if (x) try { x.disconnect(); } catch(e){} });
+  o.nodes = null;
+}
+function rebuildOsc(i) {
+  const o = OSC[i];
+  _teardownOscNodes(o);
+  if (flowing) o.nodes = _buildOscNodes(o);
+}
+function startFlux() {
+  ensureAC();
+  if (AC.state !== 'running') AC.resume();
+  flowing = true;
+  OSC.forEach((o, i) => rebuildOsc(i));
+  document.getElementById('btnFlux').textContent = '◉ Flux ON';
+  document.getElementById('btnFlux').classList.add('on');
+}
+function stopFlux() {
+  flowing = false;
+  OSC.forEach(o => _teardownOscNodes(o));
+  document.getElementById('btnFlux').textContent = '◎ Flux OFF';
+  document.getElementById('btnFlux').classList.remove('on');
+}
+function toggleFlux() { flowing ? stopFlux() : startFlux(); }
+function toggleSilence() {
+  silenced = !silenced;
+  ensureAC();
+  if (master) master.gain.setTargetAtTime(silenced ? 0 : 0.8, AC.currentTime, 0.05);
+  const b = document.getElementById('btnSilence');
+  b.classList.toggle('on', silenced);
+  b.textContent = silenced ? '◼ Coupé' : '◼ Silence';
+}
+
+function setOscFreq(i, hz) {
+  const o = OSC[i]; o.freq = Math.max(1, Math.min(864, parseFloat(hz)));
+  if (o.nodes) {
+    const now = AC.currentTime;
+    if (o.nodes.oscL) o.nodes.oscL.frequency.setTargetAtTime(o.freq, now, 0.05);
+    if (o.bin && o.nodes.oscR) o.nodes.oscR.frequency.setTargetAtTime(o.freq + o.delta, now, 0.05);
+  }
+  renderOsc(i);
+}
+function setOscDelta(i, hz) {
+  const o = OSC[i]; o.delta = Math.max(0, Math.min(40, parseFloat(hz)));
+  if (o.nodes && o.nodes.oscR) o.nodes.oscR.frequency.setTargetAtTime(o.freq + o.delta, AC.currentTime, 0.05);
+  renderOsc(i);
+}
+function toggleOscBin(i) {
+  const o = OSC[i]; o.bin = !o.bin;
+  rebuildOsc(i);
+  renderOsc(i);
+}
+function setOscVol(i, v) {
+  const o = OSC[i]; o.vol = Math.max(0, Math.min(1, parseFloat(v)));
+  if (o.nodes && !o.muted) o.nodes.g.gain.setTargetAtTime(o.vol, AC.currentTime, 0.05);
+  renderOsc(i);
+}
+function setOscPan(i, v) {
+  const o = OSC[i]; o.pan = Math.max(-1, Math.min(1, parseFloat(v)));
+  renderOsc(i);
+}
+function toggleOscMute(i) {
+  const o = OSC[i]; o.muted = !o.muted;
+  if (o.nodes) o.nodes.g.gain.setTargetAtTime(o.muted ? 0 : o.vol, AC.currentTime, 0.05);
+  renderOsc(i);
+}
+function stepOscN(i, d) {
+  const o = OSC[i]; o.n = Math.max(0.1, Math.round((o.n + d) * 10) / 10);
+  renderOsc(i);
+}
+function setOscFilterMode(i, mode) {
+  const o = OSC[i]; o.filtMode = mode;
+  if (o.nodes) o.nodes.filt.type = FILTER_TYPES[mode] || 'allpass';
+  renderOsc(i);
+}
+function setOscCutoff(i, hz) {
+  const o = OSC[i]; o.cutoff = Math.max(20, Math.min(8000, parseFloat(hz)));
+  if (o.nodes) o.nodes.filt.frequency.setTargetAtTime(o.cutoff, AC.currentTime, 0.05);
+  renderOsc(i);
+}
+function setOscRes(i, q) {
+  const o = OSC[i]; o.res = Math.max(0, Math.min(20, parseFloat(q)));
+  if (o.nodes) o.nodes.filt.Q.setTargetAtTime(o.res, AC.currentTime, 0.05);
+  renderOsc(i);
+}
+function setOscLfo(i, v) {
+  const o = OSC[i]; o.lfoDepth = Math.max(0, Math.min(1, parseFloat(v)));
+  rebuildOsc(i);
+  renderOsc(i);
+}
+function setOscRevWet(i, v) {
+  const o = OSC[i]; o.revWet = Math.max(0, Math.min(1, parseFloat(v)));
+  if (o.nodes) o.nodes.revGain.gain.setTargetAtTime(o.revWet, AC.currentTime, 0.08);
+  renderOsc(i);
+}
+function setOscDelWet(i, v) {
+  const o = OSC[i]; o.delWet = Math.max(0, Math.min(1, parseFloat(v)));
+  if (o.nodes) o.nodes.delGain.gain.setTargetAtTime(o.delWet, AC.currentTime, 0.08);
+  renderOsc(i);
+}
+function oscReset(i) {
+  const o = OSC[i];
+  Object.assign(o, { freq:144, bin:false, delta:4.0, n:1, muted:false, vol:0.6, pan:0,
+    lfoDepth:0, filtMode:'off', cutoff:2000, res:0, revWet:0, delWet:0 });
+  rebuildOsc(i); renderOsc(i);
+}
+function oscRandom(i) {
+  const o = OSC[i]; o.freq = Math.round(54 + Math.random() * (864 - 54));
+  setOscFreq(i, o.freq);
+}
+function copyToAll() {
+  const src = OSC[curOsc];
+  for (let i = 0; i < N_OSC; i++) {
+    if (i === curOsc) continue;
+    Object.assign(OSC[i], { bin:src.bin, delta:src.delta, vol:src.vol, lfoDepth:src.lfoDepth,
+      filtMode:src.filtMode, cutoff:src.cutoff, res:src.res, revWet:src.revWet, delWet:src.delWet });
+    rebuildOsc(i);
+  }
+  renderOsc(curOsc);
+}
+function openPlusMenu() { document.getElementById('plusMenu').classList.add('open'); }
+function closePlusMenu() { document.getElementById('plusMenu').classList.remove('open'); }
+
+// ─── UI ──────────────────────────────────────────────────────────────
+function buildTabs() {
+  const t = document.getElementById('tabs');
+  t.innerHTML = OSC.map((_, i) => `<button class="otab${i===curOsc?' on':''}" onclick="selectOsc(${i})">OSC ${i+1}</button>`).join('');
+}
+function selectOsc(i) { curOsc = i; buildTabs(); renderOsc(i); }
+function renderOsc(i) {
+  if (i !== curOsc) return;
+  const o = OSC[i];
+  buildTabs();
+  document.getElementById('body').innerHTML = `
+    <div class="card">
+      <div class="osc-top">
+        <button class="lr-btn${o.bin?' bin':''}" onclick="toggleOscBin(${i})">L·R<span style="font-size:.5rem;opacity:.7">${o.bin?'BIN':'MONO'}</span></button>
+        <div class="freq-disp">
+          <div class="freq-num">${o.freq.toFixed(1)}</div>
+          <div class="freq-hz">Hz</div>
+        </div>
+        <button class="plus-btn" onclick="openPlusMenu()">+</button>
+      </div>
+      <input type="range" min="54" max="864" step="0.5" value="${o.freq}" oninput="setOscFreq(${i},this.value)">
+      <div class="freq-range"><span>54Hz</span><span>864Hz</span></div>
+      <div class="n-row">
+        <button class="n-step" onclick="stepOscN(${i},-0.1)">−</button>
+        <button class="n-mute${o.muted?' muted':''}" onclick="toggleOscMute(${i})">${o.muted?'✕':'■'}</button>
+        <button class="n-step" onclick="stepOscN(${i},0.1)">+</button>
+      </div>
+      <div class="ctl-lv"><span class="ctl-l">Volume</span><span class="ctl-v">${Math.round(o.vol*100)}%</span></div>
+      <input type="range" class="pink" min="0" max="1" step="0.01" value="${o.vol}" oninput="setOscVol(${i},this.value)">
+      ${!o.bin ? `
+      <div class="ctl-lv" style="margin-top:.5rem"><span class="ctl-l">Pan L↔R</span><span class="ctl-v">${o.pan.toFixed(2)}</span></div>
+      <input type="range" min="-1" max="1" step="0.02" value="${o.pan}" oninput="setOscPan(${i},this.value)">` : ''}
+    </div>
+
+    <div class="card">
+      <div class="sec-t">Filtre · Type / Cutoff / Résonance</div>
+      <div class="filt-row">
+        ${['off','hpf','bpf','lpf'].map(m=>`<button class="filt-btn${o.filtMode===m?' active':''}" onclick="setOscFilterMode(${i},'${m}')">${m.toUpperCase()}</button>`).join('')}
+      </div>
+      <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Cutoff</span><span class="ctl-v">${Math.round(o.cutoff)} Hz</span></div>
+        <input type="range" min="20" max="8000" step="10" value="${o.cutoff}" oninput="setOscCutoff(${i},this.value)"></div>
+      <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Résonance</span><span class="ctl-v">${o.res.toFixed(1)}</span></div>
+        <input type="range" min="0" max="20" step="0.1" value="${o.res}" oninput="setOscRes(${i},this.value)"></div>
+    </div>
+
+    ${o.bin ? `
+    <div class="card">
+      <div class="sec-t">Δ Binaural</div>
+      <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Δ =</span><span class="ctl-v">${o.delta.toFixed(2)} Hz</span></div>
+        <input type="range" min="0" max="40" step="0.1" value="${o.delta}" oninput="setOscDelta(${i},this.value)"></div>
+      <div class="hint">Gauche ${o.freq.toFixed(1)}Hz · Droite ${(o.freq+o.delta).toFixed(1)}Hz — casque requis</div>
+    </div>` : ''}
+
+    <div class="card">
+      <div class="sec-t">LFO doux</div>
+      <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Intensité</span><span class="ctl-v">${Math.round(o.lfoDepth*100)}%</span></div>
+        <input type="range" min="0" max="1" step="0.01" value="${o.lfoDepth}" oninput="setOscLfo(${i},this.value)"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-t">Moteur FX · propre à cet oscillateur</div>
+      <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Reverb</span><span class="ctl-v">${Math.round(o.revWet*100)}%</span></div>
+        <input type="range" min="0" max="1" step="0.01" value="${o.revWet}" oninput="setOscRevWet(${i},this.value)"></div>
+      <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Delay</span><span class="ctl-v">${Math.round(o.delWet*100)}%</span></div>
+        <input type="range" min="0" max="1" step="0.01" value="${o.delWet}" oninput="setOscDelWet(${i},this.value)"></div>
+      <div class="hint">Chaque oscillateur a sa propre reverb/delay — aucun bus partagé.</div>
+    </div>
+  `;
+}
+
+buildTabs();
+renderOsc(0);
+</script>
+</body>
+</html>
