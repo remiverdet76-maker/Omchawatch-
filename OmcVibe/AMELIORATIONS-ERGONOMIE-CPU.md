@@ -1377,3 +1377,23 @@ Chaque niveau est une liste de sections en accordéon (réutilise
 Playwright : contenu présent aux 3 niveaux, changement de niveau
 fonctionne, accordéon s'ouvre/se ferme, préférence de niveau restaurée
 après rechargement de page. 0 erreur JS.
+
+## #73 : dock encore plus transparent
+
+Retour terrain : `.58` (première passe de #72) pas assez transparent sur
+l'appareil réel. Ramené à `.24` — le motif de géométrie sacrée et le fond
+cosmique restent bien visibles à travers la barre.
+
+## #74 : logo de l'icône APK recentré
+
+Le crop carré de l'icône (mandala/sphère dorée) était calculé à l'oeil
+(`center_y = H×0.455`), ce qui décentrait le logo — la sphère dorée
+tombait visiblement trop bas dans le cadre, plus de rognage en bas qu'en
+haut. Recalculé par détection de couleur (centroïde des tons dorés de la
+sphère/mandala sur l'image source) : les mesures convergent entre 0.487
+et 0.53 selon le seuil de détection ; confirmé visuellement à **0.50**
+(centre vertical exact de l'image source) comme le mieux équilibré
+haut/bas. Régénéré : toutes les densités d'icône (mdpi→xxxhdpi, legacy +
+round + adaptive foreground), tous les splashscreens, et le logo web
+(`img/omcvibe432-logo.jpg`, utilisé par l'écran de démarrage `#splash-36`
+dans l'app elle-même).
