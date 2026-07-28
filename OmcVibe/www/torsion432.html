@@ -30,82 +30,111 @@
 <style>
 
 :root{
-  --void:#010306;--c432:#00ccff;--cexp:#00ff88;--ccont:#ff6600;
-  --cflux:#ff0066;--cgold:#e8a020;--cviolet:#8855ff;
-  --text:#7a9ab0;--bright:#ddeeff;
-  --mono:'Share Tech Mono',monospace;--orb:'Orbitron',sans-serif;
+  --void:#02010D;--c432:#E8A020;--cexp:#FFD27A;--ccont:#ff9060;
+  --cflux:#ff6fa8;--cgold:#E8A020;--cviolet:#c090ff;
+  --text:#B8A8D0;--bright:#F0E0FF;
+  --mono:'Share Tech Mono',monospace;--orb:'Cinzel Decorative',serif;
+  --panel:rgba(20,12,4,.68);--border:rgba(255,190,90,.28);
 }
-*{margin:0;padding:0;box-sizing:border-box;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
 html,body{width:100%;height:100%;overflow:hidden;background:var(--void);color:var(--text);font-family:var(--mono);}
 #cvM{position:fixed;inset:0;z-index:0;pointer-events:none;}
 #cvF{position:fixed;inset:0;z-index:1;}
 #ui{position:fixed;inset:0;z-index:10;pointer-events:none;}
-#hdr{position:absolute;top:18px;left:24px;pointer-events:auto;}
-#hdr-title{font-family:var(--orb);font-size:26px;font-weight:700;color:var(--c432);letter-spacing:.08em;text-shadow:0 0 30px rgba(0,204,255,.5),0 0 60px rgba(0,204,255,.2);}
-#hdr-sub{font-size:9px;letter-spacing:.32em;opacity:.42;text-transform:uppercase;margin-top:4px;}
-#hdr-ratio{font-size:10px;color:var(--cgold);opacity:.65;margin-top:2px;letter-spacing:.05em;}
-#toolbar{position:absolute;top:18px;right:18px;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;pointer-events:auto;max-width:600px;}
-.tbtn{font-family:var(--mono);font-size:9px;letter-spacing:.14em;padding:7px 11px;cursor:pointer;text-transform:uppercase;border-radius:2px;transition:all .18s;background:rgba(1,3,6,.92);border:1px solid rgba(0,204,255,.2);color:var(--c432);backdrop-filter:blur(10px);white-space:nowrap;}
-.tbtn:hover{background:rgba(0,204,255,.1);border-color:rgba(0,204,255,.5);}
-.tbtn.on{background:rgba(0,204,255,.14);border-color:rgba(0,204,255,.7);color:#fff;}
-.tbtn.mx{border-color:rgba(255,215,0,.3);color:#ffd700;}
-.tbtn.mx.on{background:rgba(255,215,0,.12);border-color:rgba(255,215,0,.7);}
-#panModes{position:absolute;top:66px;left:18px;width:198px;background:rgba(1,3,6,.94);border:1px solid rgba(0,204,255,.12);border-radius:3px;padding:13px;pointer-events:auto;backdrop-filter:blur(12px);display:none;}
-#panModes.open{display:block;}
-.psec{font-size:8px;letter-spacing:.28em;text-transform:uppercase;margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid rgba(0,204,255,.07);}
+#hdr{position:absolute;top:10px;left:14px;pointer-events:none;}
+#hdr-title{font-family:var(--orb);font-size:15px;font-weight:700;color:var(--cexp);letter-spacing:.08em;text-shadow:0 0 18px rgba(255,190,90,.5);}
+#hdr-sub{display:none;}
+#hdr-ratio{font-size:8px;color:var(--cgold);opacity:.55;margin-top:1px;letter-spacing:.04em;}
+#toolbar{position:absolute;top:9px;right:12px;display:flex;gap:5px;pointer-events:auto;}
+.tbtn{font-family:var(--orb);font-size:8px;letter-spacing:.1em;padding:7px 10px;cursor:pointer;text-transform:uppercase;border-radius:8px;transition:all .18s;background:var(--panel);border:1px solid var(--border);color:var(--cexp);backdrop-filter:blur(10px);white-space:nowrap;}
+.tbtn:hover{background:rgba(232,160,32,.12);border-color:rgba(255,190,90,.55);}
+.tbtn.on{background:rgba(232,160,32,.18);border-color:rgba(255,190,90,.75);color:#fff8ea;}
+.tbtn.mx{border-color:rgba(255,215,0,.35);color:#ffd700;}
+.tbtn.mx.on{background:rgba(255,215,0,.14);border-color:rgba(255,215,0,.75);}
+#drawerBackdrop{position:fixed;inset:0;background:rgba(2,1,13,.5);z-index:19;display:none;pointer-events:auto;}
+#drawerBackdrop.open{display:block;}
+#drawerMenu{position:fixed;left:0;right:0;bottom:0;max-height:72vh;background:rgba(10,6,2,.96);
+  border-top:1.5px solid var(--border);border-radius:18px 18px 0 0;z-index:20;
+  pointer-events:auto;backdrop-filter:blur(16px);display:flex;flex-direction:column;
+  transform:translateY(100%);transition:transform .28s ease;}
+#drawerMenu.open{transform:translateY(0);}
+#drawerTabs{display:flex;gap:.4rem;padding:.8rem .9rem .5rem;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
+#drawerTabs::-webkit-scrollbar{display:none;}
+.dtab{flex-shrink:0;padding:.42rem .8rem;border-radius:9px;font-family:var(--orb);font-size:.62rem;
+  letter-spacing:.05em;color:var(--text);border:1.5px solid var(--border);background:rgba(20,12,4,.4);
+  cursor:pointer;white-space:nowrap;}
+.dtab.on{color:var(--cexp);border-color:var(--cgold);background:rgba(232,160,32,.16);}
+#drawerBody{flex:1;overflow-y:auto;padding:.3rem 1rem 1.1rem;scrollbar-width:none;}
+#drawerBody::-webkit-scrollbar{display:none;}
+#drawerClose{position:absolute;top:8px;right:12px;font-size:15px;cursor:pointer;opacity:.5;background:none;border:none;color:var(--text);}
+#drawerClose:hover{opacity:1;}
+#panModes,#panParams,#panBin{position:static;width:auto;max-height:none;background:none;border:none;
+  border-radius:0;padding:0;pointer-events:auto;backdrop-filter:none;display:none;}
+#panModes.dsec-on,#panParams.dsec-on,#panBin.dsec-on{display:block;}
+.psec{font-size:8px;letter-spacing:.28em;text-transform:uppercase;margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid var(--border);color:var(--cgold);}
 .psec.e{color:var(--cexp);}.psec.c{color:var(--ccont);}.psec.g{color:#ffd700;}
 .gap{height:9px;}
-.mrow{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;margin-bottom:3px;cursor:pointer;border:1px solid rgba(0,204,255,.07);border-radius:2px;font-size:9px;letter-spacing:.09em;text-transform:uppercase;transition:all .14s;}
-.mrow:hover{border-color:rgba(0,204,255,.28);background:rgba(0,204,255,.04);}
-.mrow.on{border-color:var(--c432);background:rgba(0,204,255,.1);color:var(--bright);}
-.mrow.e{color:var(--cexp);border-color:rgba(0,255,136,.07);}
-.mrow.e:hover,.mrow.e.on{border-color:var(--cexp);background:rgba(0,255,136,.07);}
-.mrow.c{color:var(--ccont);border-color:rgba(255,102,0,.07);}
-.mrow.c:hover,.mrow.c.on{border-color:var(--ccont);background:rgba(255,102,0,.07);}
-.mrow.mx{color:#ffd700;border-color:rgba(255,215,0,.14);}
-.mrow.mx:hover,.mrow.mx.on{border-color:#ffd700;background:rgba(255,215,0,.09);}
-.mrow.fl{color:var(--cflux);border-color:rgba(255,0,102,.07);}
-.mrow.fl:hover,.mrow.fl.on{border-color:var(--cflux);background:rgba(255,0,102,.07);}
-#panParams{position:absolute;top:66px;right:18px;width:238px;max-height:calc(100vh - 100px);overflow-y:auto;scrollbar-width:none;pointer-events:auto;display:none;}
-#panParams.open{display:block;}
+.mrow{display:flex;justify-content:space-between;align-items:center;padding:8px 9px;margin-bottom:4px;cursor:pointer;border:1px solid var(--border);border-radius:8px;font-size:9px;letter-spacing:.09em;text-transform:uppercase;transition:all .14s;color:var(--text);}
+.mrow:hover{border-color:rgba(255,190,90,.5);background:rgba(232,160,32,.06);}
+.mrow.on{border-color:var(--cgold);background:rgba(232,160,32,.16);color:var(--bright);}
+.mrow.e{color:var(--cexp);}
+.mrow.e:hover,.mrow.e.on{border-color:var(--cexp);background:rgba(255,210,122,.09);}
+.mrow.c{color:var(--ccont);}
+.mrow.c:hover,.mrow.c.on{border-color:var(--ccont);background:rgba(255,144,96,.09);}
+.mrow.mx{color:#ffd700;border-color:rgba(255,215,0,.24);}
+.mrow.mx:hover,.mrow.mx.on{border-color:#ffd700;background:rgba(255,215,0,.1);}
+.mrow.fl{color:var(--cflux);}
+.mrow.fl:hover,.mrow.fl.on{border-color:var(--cflux);background:rgba(255,111,168,.08);}
 #panParams::-webkit-scrollbar{display:none;}
-.pcard{background:rgba(1,3,6,.93);border:1px solid rgba(0,204,255,.1);border-radius:2px;padding:12px;margin-bottom:6px;backdrop-filter:blur(10px);}
-.pct{font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:var(--c432);opacity:.55;margin-bottom:10px;}
+.pcard{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;backdrop-filter:blur(10px);}
+.pct{font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:var(--cgold);opacity:.8;margin-bottom:10px;}
 .pr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
-.pl{font-size:9px;opacity:.62;}.pv{font-size:10px;color:var(--bright);min-width:52px;text-align:right;}
-input[type=range]{width:100%;-webkit-appearance:none;height:2px;background:rgba(0,204,255,.1);border-radius:1px;outline:none;margin-top:3px;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;border-radius:50%;background:var(--c432);cursor:pointer;box-shadow:0 0 5px rgba(0,204,255,.55);}
+.pl{font-size:9px;opacity:.7;}.pv{font-size:10px;color:var(--bright);min-width:52px;text-align:right;}
+input[type=range]{width:100%;-webkit-appearance:none;height:3px;background:rgba(232,160,32,.16);border-radius:2px;outline:none;margin-top:3px;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cgold);cursor:pointer;box-shadow:0 0 6px rgba(232,160,32,.6);}
 input[type=range].rg::-webkit-slider-thumb{background:var(--cgold);}
 input[type=range].re::-webkit-slider-thumb{background:var(--cexp);}
 input[type=range].rf::-webkit-slider-thumb{background:var(--cflux);}
-input[type=checkbox]{accent-color:var(--c432);width:13px;height:13px;cursor:pointer;}
-#panBin{position:absolute;bottom:86px;left:50%;transform:translateX(-50%);min-width:300px;background:rgba(1,3,6,.97);border:1px solid rgba(0,204,255,.2);border-radius:3px;padding:15px;pointer-events:auto;backdrop-filter:blur(16px);display:none;text-align:center;}
-#panBin.open{display:block;}
+input[type=checkbox]{accent-color:var(--cgold);width:15px;height:15px;cursor:pointer;}
+#panBin{text-align:center;}
 .bh{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;}
-.bt{font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--c432);}
-.bx{font-size:14px;cursor:pointer;opacity:.4;background:none;border:none;color:var(--text);}
-.bx:hover{opacity:1;}
+.bt{font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--cgold);}
+.bx{display:none;}
 .bfr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;text-align:left;}
 .bfl{font-size:8px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:3px;}
-.bfl.L{color:#0099ff;}.bfl.R{color:#ff6600;}
+.bfl.L{color:#ffcf80;}.bfl.R{color:#ff9060;}
 .bfv{font-family:var(--orb);font-size:17px;color:var(--bright);}
 .bbeat{font-size:9px;color:var(--cflux);letter-spacing:.18em;margin-bottom:11px;}
-.bplay{width:100%;font-family:var(--mono);font-size:9px;letter-spacing:.18em;padding:9px;cursor:pointer;text-transform:uppercase;border-radius:1px;background:rgba(0,204,255,.07);border:1px solid rgba(0,204,255,.22);color:var(--c432);transition:all .2s;}
-.bplay:hover{background:rgba(0,204,255,.16);}
-.bplay.on{background:rgba(255,0,102,.09);border-color:rgba(255,0,102,.32);color:var(--cflux);}
-#polGauge{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);pointer-events:none;text-align:center;}
+.bplay{width:100%;font-family:var(--orb);font-size:.7rem;letter-spacing:.1em;padding:.7rem;cursor:pointer;
+  text-transform:uppercase;border-radius:9px;background:rgba(232,160,32,.1);border:1.5px solid var(--border);
+  color:var(--cgold);transition:all .2s;}
+.bplay:hover{background:rgba(232,160,32,.2);}
+.bplay.on{background:rgba(255,111,168,.12);border-color:rgba(255,111,168,.4);color:var(--cflux);}
+#quickDock{position:fixed;left:0;right:0;bottom:0;z-index:21;display:flex;pointer-events:auto;
+  background:rgba(8,5,2,.92);border-top:1.5px solid var(--border);backdrop-filter:blur(10px);
+  padding-bottom:env(safe-area-inset-bottom,0);}
+.dbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  padding:.55rem .2rem;cursor:pointer;color:var(--text);border:none;background:none;font-family:var(--orb);}
+.dbtn .di{font-size:1.05rem;line-height:1;}
+.dbtn .dl{font-size:.52rem;letter-spacing:.06em;text-transform:uppercase;opacity:.8;}
+.dbtn.on{color:var(--cexp);}
+.dbtn.on .di{text-shadow:0 0 10px rgba(255,210,122,.7);}
+.dbtn.breath.on{color:#8CFFC0;}
+.dbtn.breath.on .di{text-shadow:0 0 10px rgba(140,255,192,.7);}
+#polGauge{position:absolute;left:50%;bottom:58px;transform:translateX(-50%);pointer-events:none;text-align:center;}
 #polRow{display:flex;align-items:center;gap:9px;}
-#polExpLbl{font-size:7px;color:var(--cexp);opacity:.45;letter-spacing:.12em;white-space:nowrap;}
-#polContLbl{font-size:7px;color:var(--cflux);opacity:.45;letter-spacing:.12em;white-space:nowrap;}
-#polBar{width:148px;height:2px;background:rgba(255,255,255,.05);border-radius:1px;position:relative;overflow:visible;}
+#polExpLbl{font-size:7px;color:var(--cexp);opacity:.5;letter-spacing:.12em;white-space:nowrap;}
+#polContLbl{font-size:7px;color:var(--cflux);opacity:.5;letter-spacing:.12em;white-space:nowrap;}
+#polBar{width:120px;height:2px;background:rgba(255,255,255,.06);border-radius:1px;position:relative;overflow:visible;}
 #polFill{position:absolute;top:-0.5px;height:3px;border-radius:2px;transition:all .25s;}
-#polLbl{font-size:7px;letter-spacing:.28em;opacity:.26;text-transform:uppercase;margin-top:4px;}
-#infobar{position:absolute;bottom:18px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none;}
-.ib{background:rgba(1,3,6,.82);border:1px solid rgba(0,204,255,.07);padding:7px 12px;border-radius:2px;backdrop-filter:blur(8px);}
-.ib-k{font-size:7px;letter-spacing:.22em;opacity:.38;text-transform:uppercase;}
-.ib-v{font-size:12px;color:var(--bright);margin-top:2px;}
+#polLbl{font-size:7px;letter-spacing:.24em;opacity:.3;text-transform:uppercase;margin-top:4px;}
+#infobar{position:absolute;bottom:96px;left:10px;right:10px;display:flex;justify-content:space-between;
+  align-items:flex-end;pointer-events:none;flex-wrap:wrap;gap:4px;}
+.ib{background:rgba(10,6,2,.78);border:1px solid var(--border);padding:5px 9px;border-radius:8px;backdrop-filter:blur(8px);}
+.ib-k{font-size:7px;letter-spacing:.22em;opacity:.45;text-transform:uppercase;}
+.ib-v{font-size:11px;color:var(--bright);margin-top:2px;}
 .ib-v.r{color:var(--cflux);}.ib-v.g{color:var(--cgold);}.ib-v.e{color:var(--cexp);}.ib-v.v{color:var(--cviolet);}
-#mflash{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;font-family:var(--orb);font-size:13px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;padding:5px 17px;border-radius:2px;opacity:0;transition:opacity .4s;z-index:20;}
+#mflash{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;font-family:var(--orb);font-size:13px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;padding:5px 18px;border-radius:2px;opacity:0;transition:opacity .4s;z-index:20;}
 #mflash.show{opacity:1;}
 #mxOv{position:fixed;inset:0;pointer-events:none;z-index:3;opacity:0;transition:opacity 2s;}
 #mxOv.on{opacity:1;}
@@ -113,7 +142,7 @@ input[type=checkbox]{accent-color:var(--c432);width:13px;height:13px;cursor:poin
 #mxLbl.on{opacity:.85;}
 @keyframes mxring{0%{transform:translate(-50%,-50%) scale(.4);opacity:.7;}100%{transform:translate(-50%,-50%) scale(3.5);opacity:0;}}
 .mxr{position:absolute;border-radius:50%;border-style:solid;left:50%;top:50%;transform:translate(-50%,-50%);opacity:0;}
-#khint{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:.16em;opacity:.13;text-transform:uppercase;pointer-events:none;white-space:nowrap;}
+#khint{display:none;}
 </style>
 <style id="cosmic-bg-override">
   html,body{background:transparent !important;}
@@ -130,87 +159,9 @@ input[type=checkbox]{accent-color:var(--c432);width:13px;height:13px;cursor:poin
   <div id="hdr-ratio">432 / 360 = 6/5 · expansion organique infinie</div>
 </div>
 <div id="toolbar">
-  <button class="tbtn" onclick="location.href='sphere-flux.html'" style="color:var(--cgold);">← Retour</button>
-  <button class="tbtn" id="tModes">⊞ Modes</button>
   <button class="tbtn mx" id="tMx" onclick="toggleMx()">✦ Expansion ∞</button>
-  <button class="tbtn" id="tBin">⬡ Binaural 432</button>
-  <button class="tbtn" id="tParams">≡ Params</button>
-  <button class="tbtn" id="tFS">⤢ Plein écran</button>
 </div>
-<div id="panModes">
-  <div class="psec e">Expansion</div>
-  <div class="mrow e" data-m="exp1">T=432 · 6/5 <span style="opacity:.4;font-size:8px">×1.200</span></div>
-  <div class="mrow e" data-m="exp2">T=864 · 12/5 <span style="opacity:.4;font-size:8px">×2.400</span></div>
-  <div class="mrow" data-m="exp3" style="color:#ffd700;border-color:rgba(255,215,0,.14);flex-direction:column;align-items:flex-start;gap:2px;">
-    <div style="display:flex;justify-content:space-between;width:100%">T=1296 · 18/5 <span style="opacity:.4;font-size:8px">×3.600</span></div>
-    <div style="font-size:7px;opacity:.45;letter-spacing:.1em;">⬡ formation toroïdale · handpan</div>
-  </div>
-  <div class="gap"></div>
-  <div class="psec c">Contraction</div>
-  <div class="mrow c" data-m="cnt1">360/432 <span style="opacity:.4;font-size:8px">×0.833</span></div>
-  <div class="mrow c" data-m="cnt2">360/864 <span style="opacity:.4;font-size:8px">×0.417</span></div>
-  <div class="gap"></div>
-  <div class="psec" style="color:var(--cflux)">Flux</div>
-  <div class="mrow fl" data-m="flux">Flux Libre ∿</div>
-  <div class="mrow" data-m="breath" style="color:var(--cexp);border-color:rgba(0,255,136,.07)">Respiration Omcha</div>
-  <div class="gap"></div>
-  <div class="psec g">Suprême</div>
-  <div class="mrow mx" data-m="maxexp">360 × 432^(432×432)</div>
-</div>
-<div id="panParams">
-  <div class="pcard">
-    <div class="pct">Paramètres Fondamentaux</div>
-    <!-- T : clé de la formation toroïdale -->
-    <div class="pr"><div class="pl">T — Fréquence base</div><div class="pv" id="pvT" style="color:#ffd700">432</div></div>
-    <input type="range" class="rg" id="rT" min="360" max="1296" value="432" step="1">
-    <div style="height:3px"></div>
-    <div style="font-size:7px;opacity:.35;letter-spacing:.14em;margin-bottom:7px">360 → 432 → 864 → <span style="color:#ffd700">1296 ⬡</span></div>
-    <!-- Torsion -->
-    <div class="pr"><div class="pl">Torsion ω</div><div class="pv" id="pvWi">3.5×</div></div>
-    <input type="range" class="re" id="rWi" min="5" max="90" value="35">
-    <div style="height:7px"></div>
-    <!-- Densité -->
-    <div class="pr"><div class="pl">Densité</div><div class="pv" id="pvNs">160</div></div>
-    <input type="range" id="rNs" min="40" max="320" value="160">
-    <div style="height:7px"></div>
-    <div class="pr"><div class="pl">Vitesse</div><div class="pv" id="pvSp">1.0×</div></div>
-    <input type="range" id="rSp" min="0" max="30" value="10">
-  </div>
-  <div class="pcard">
-    <div class="pct">Géométrie secondaire</div>
-    <div class="pr"><div class="pl">Expansion radiale</div><div class="pv" id="pvEx">0.14</div></div>
-    <input type="range" class="rg" id="rEx" min="2" max="45" value="14">
-    <div style="height:7px"></div>
-    <div class="pr"><div class="pl">Étendue axiale</div><div class="pv" id="pvTM">7.0</div></div>
-    <input type="range" id="rTM" min="20" max="120" value="70">
-  </div>
-  <div class="pcard">
-    <div class="pct">Visuel</div>
-    <div class="pr"><div class="pl">Rotation auto</div><input type="checkbox" id="ckRot" checked></div>
-    <div class="pr"><div class="pl">Ponts harmoniques</div><input type="checkbox" id="ckBr" checked></div>
-    <div class="pr"><div class="pl">Particules flux</div><input type="checkbox" id="ckPa" checked></div>
-    <div class="pr"><div class="pl">Mandala fond</div><input type="checkbox" id="ckMa" checked></div>
-    <div class="pr"><div class="pl">Labels fractals</div><input type="checkbox" id="ckLa" checked></div>
-    <div style="height:4px"></div>
-    <div class="pr"><div class="pl">Glow</div><div class="pv" id="pvGl">60%</div></div>
-    <input type="range" id="rGl" min="0" max="100" value="60">
-    <div style="height:4px"></div>
-    <div class="pr"><div class="pl">Asymétrie pol.</div><div class="pv" id="pvPo">0</div></div>
-    <input type="range" class="rf" id="rPo" min="-100" max="100" value="0">
-  </div>
-</div>
-<div id="panBin">
-  <div class="bh">
-    <div class="bt">⬡ Binaural · 360 / 432 Ω</div>
-    <button class="bx" onclick="document.getElementById('panBin').classList.remove('open');document.getElementById('tBin').classList.remove('on')">✕</button>
-  </div>
-  <div class="bfr">
-    <div><div class="bfl L">Gauche</div><div class="bfv">360 Ω</div></div>
-    <div><div class="bfl R">Droite</div><div class="bfv">432 Ω</div></div>
-  </div>
-  <div class="bbeat">▷ Battement : 72 Ω · Theta · ∿</div>
-  <button class="bplay" id="binPlay">▶ Activer 360 / 432 Ω</button>
-</div>
+
 <div id="polGauge">
   <div id="polRow">
     <span id="polExpLbl">↑ exp</span>
@@ -229,7 +180,100 @@ input[type=checkbox]{accent-color:var(--c432);width:13px;height:13px;cursor:poin
 <div id="mflash"></div>
 <div id="mxOv"></div>
 <div id="mxLbl">360 × 432^(432×432)<br><span style="font-size:8px;letter-spacing:.45em;opacity:.55;">flux total · centres partout · aucun centre absolu</span></div>
-<div id="khint">Glisser orbiter · Scroll zoom · F plein écran · Shift+1–8 modes</div>
+</div>
+
+<!-- Menu unique : Modes / Paramètres / Binaural, tous les onglets rangés à l'intérieur -->
+<div id="drawerBackdrop" onclick="closeDrawer()"></div>
+<div id="drawerMenu">
+  <button id="drawerClose" onclick="closeDrawer()">✕</button>
+  <div id="drawerTabs">
+    <button class="dtab on" data-dsec="panModes" onclick="drawerTab('panModes')">⊞ Modes</button>
+    <button class="dtab" data-dsec="panParams" onclick="drawerTab('panParams')">≡ Paramètres</button>
+    <button class="dtab" data-dsec="panBin" onclick="drawerTab('panBin')">⬡ Binaural</button>
+  </div>
+  <div id="drawerBody">
+    <div id="panModes" class="dsec-on">
+      <div class="psec e">Expansion</div>
+      <div class="mrow e" data-m="exp1">T=432 · 6/5 <span style="opacity:.4;font-size:8px">×1.200</span></div>
+      <div class="mrow e" data-m="exp2">T=864 · 12/5 <span style="opacity:.4;font-size:8px">×2.400</span></div>
+      <div class="mrow" data-m="exp3" style="color:#ffd700;border-color:rgba(255,215,0,.14);flex-direction:column;align-items:flex-start;gap:2px;">
+        <div style="display:flex;justify-content:space-between;width:100%">T=1296 · 18/5 <span style="opacity:.4;font-size:8px">×3.600</span></div>
+        <div style="font-size:7px;opacity:.45;letter-spacing:.1em;">⬡ formation toroïdale · handpan</div>
+      </div>
+      <div class="gap"></div>
+      <div class="psec c">Contraction</div>
+      <div class="mrow c" data-m="cnt1">360/432 <span style="opacity:.4;font-size:8px">×0.833</span></div>
+      <div class="mrow c" data-m="cnt2">360/864 <span style="opacity:.4;font-size:8px">×0.417</span></div>
+      <div class="gap"></div>
+      <div class="psec" style="color:var(--cflux)">Flux</div>
+      <div class="mrow fl" data-m="flux">Flux Libre ∿</div>
+      <div class="mrow" data-m="breath" style="color:var(--cexp);border-color:rgba(0,255,136,.07)">Respiration Omcha · 6/5→5/6→11/10→10/11→12/11→11/12</div>
+      <div class="gap"></div>
+      <div class="psec g">Suprême</div>
+      <div class="mrow mx" data-m="maxexp">360 × 432^(432×432)</div>
+    </div>
+    <div id="panParams">
+      <div class="pcard">
+        <div class="pct">Paramètres Fondamentaux</div>
+        <div class="pr"><div class="pl">T — Fréquence base</div><div class="pv" id="pvT" style="color:#ffd700">432</div></div>
+        <input type="range" class="rg" id="rT" min="360" max="1296" value="432" step="1">
+        <div style="height:3px"></div>
+        <div style="font-size:7px;opacity:.35;letter-spacing:.14em;margin-bottom:7px">360 → 432 → 864 → <span style="color:#ffd700">1296 ⬡</span></div>
+        <div class="pr"><div class="pl">Torsion ω</div><div class="pv" id="pvWi">3.5×</div></div>
+        <input type="range" class="re" id="rWi" min="5" max="90" value="35">
+        <div style="height:7px"></div>
+        <div class="pr"><div class="pl">Densité</div><div class="pv" id="pvNs">160</div></div>
+        <input type="range" id="rNs" min="40" max="320" value="160">
+        <div style="height:7px"></div>
+        <div class="pr"><div class="pl">Vitesse</div><div class="pv" id="pvSp">1.0×</div></div>
+        <input type="range" id="rSp" min="0" max="30" value="10">
+      </div>
+      <div class="pcard">
+        <div class="pct">Géométrie secondaire</div>
+        <div class="pr"><div class="pl">Expansion radiale</div><div class="pv" id="pvEx">0.14</div></div>
+        <input type="range" class="rg" id="rEx" min="2" max="45" value="14">
+        <div style="height:7px"></div>
+        <div class="pr"><div class="pl">Étendue axiale</div><div class="pv" id="pvTM">7.0</div></div>
+        <input type="range" id="rTM" min="20" max="120" value="70">
+      </div>
+      <div class="pcard">
+        <div class="pct">Visuel</div>
+        <div class="pr"><div class="pl">Rotation auto</div><input type="checkbox" id="ckRot" checked></div>
+        <div class="pr"><div class="pl">Ponts harmoniques</div><input type="checkbox" id="ckBr" checked></div>
+        <div class="pr"><div class="pl">Particules flux</div><input type="checkbox" id="ckPa" checked></div>
+        <div class="pr"><div class="pl">Mandala fond</div><input type="checkbox" id="ckMa" checked></div>
+        <div class="pr"><div class="pl">Labels fractals</div><input type="checkbox" id="ckLa" checked></div>
+        <div style="height:4px"></div>
+        <div class="pr"><div class="pl">Glow</div><div class="pv" id="pvGl">60%</div></div>
+        <input type="range" id="rGl" min="0" max="100" value="60">
+        <div style="height:4px"></div>
+        <div class="pr"><div class="pl">Asymétrie pol.</div><div class="pv" id="pvPo">0</div></div>
+        <input type="range" class="rf" id="rPo" min="-100" max="100" value="0">
+        <div style="height:4px"></div>
+        <button class="bplay" id="btnReset" style="margin-top:6px;">↺ Réinitialiser vue</button>
+      </div>
+    </div>
+    <div id="panBin">
+      <div class="bh">
+        <div class="bt">⬡ Binaural · 360 / 432 Ω</div>
+      </div>
+      <div class="bfr">
+        <div><div class="bfl L">Gauche</div><div class="bfv">360 Ω</div></div>
+        <div><div class="bfl R">Droite</div><div class="bfv">432 Ω</div></div>
+      </div>
+      <div class="bbeat">▷ Battement : 72 Ω · Theta · ∿</div>
+      <button class="bplay" id="binPlay">▶ Activer 360 / 432 Ω</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dock rapide en bas, toujours visible — écran maximisé pour l'animation -->
+<div id="quickDock">
+  <button class="dbtn" onclick="location.href='sphere-flux.html'"><span class="di">←</span><span class="dl">Retour</span></button>
+  <button class="dbtn" id="dockMenuBtn" onclick="openDrawer('panModes')"><span class="di">☰</span><span class="dl">Menu</span></button>
+  <button class="dbtn" id="dockBinBtn" onclick="toggleBinPlayQuick()"><span class="di">⬡</span><span class="dl">Binaural</span></button>
+  <button class="dbtn breath" id="dockBreathBtn" onclick="toggleBreath()"><span class="di">〜</span><span class="dl">Respiration</span></button>
+  <button class="dbtn" id="tFS"><span class="di">⤢</span><span class="dl">Écran</span></button>
 </div>
 
 <script>
@@ -244,6 +288,25 @@ var ME={on:false,ph:0,sps:[]};
 // T=864 → seuil · T=1296 → champ toroïdal fermé
 var TF={val:0,target:0};
 var baseT=432; // fréquence base courante (360→1296)
+
+// ─── #70 : RESPIRATION — transform à volume préservé ──────────────
+// Le centre (facteur 1) s'étire vers 6/5 puis se resserre vers 5/6, puis
+// vers 11/10↔10/11, puis 12/11↔11/12 (3 paliers, de plus en plus fins) :
+// Y ×s, X·Z ×1/√s — le volume est conservé (s × (1/√s)² = 1).
+var BREATH2={on:false,t:0};
+var BREATH_STAGES=[6/5,11/10,12/11];
+var BREATH_STAGE_DUR=13; // secondes par palier (respiration lente)
+function breathScale(){
+  if(!BREATH2.on)return{sy:1,sxz:1,twist:0};
+  var total=BREATH_STAGE_DUR*BREATH_STAGES.length;
+  var tt=BREATH2.t%total;
+  var stage=Math.min(BREATH_STAGES.length-1,Math.floor(tt/BREATH_STAGE_DUR));
+  var localT=(tt-stage*BREATH_STAGE_DUR)/BREATH_STAGE_DUR;
+  var r=BREATH_STAGES[stage];
+  var phase=localT*Math.PI*2;
+  var s=Math.pow(r,Math.sin(phase));
+  return{sy:s,sxz:1/Math.sqrt(s),twist:(s-1)*2.4};
+}
 
 // ─── CANVAS ──────────────────────────────────────────────────────
 var MC=document.getElementById('cvM'),FC=document.getElementById('cvF');
@@ -366,12 +429,14 @@ function drawMandala(){
 // Le même paramètre t pilote les DEUX géométries — la transition est continue
 function hPt(t,strand){
   var ang=t*HP.wi+V.t*V.spd*.28+strand*Math.PI;
+  var br=breathScale();
+  if(br.twist)ang+=br.twist*Math.sign(t||1); // #70 : la corde tire en Z — léger vrillage corrélé à la respiration
   var r=(HP.rM+HP.ex*Math.pow(Math.abs(t)+.08,.76))*HP.breathe*V.ms;
 
   // ── Géométrie hélice (TF=0)
   var hx=r*Math.cos(ang),hy=r*Math.sin(ang),hz=t*.17;
 
-  if(TF.val<.001)return{x:hx,y:hy,z:hz,r:r,ang:ang};
+  if(TF.val<.001)return{x:hx*br.sxz,y:hy*br.sy,z:hz*br.sxz,r:r,ang:ang};
 
   // ── Géométrie tore (TF=1)
   // t ∈ [-tM, tM] → u ∈ [0, 2π] : révolution autour de l'axe principal
@@ -388,9 +453,9 @@ function hPt(t,strand){
   // ── Interpolation linéaire hélice → tore
   var f=TF.val;
   return{
-    x:hx+(tx-hx)*f,
-    y:hy+(ty-hy)*f,
-    z:hz+(tz-hz)*f,
+    x:(hx+(tx-hx)*f)*br.sxz,
+    y:(hy+(ty-hy)*f)*br.sy,
+    z:(hz+(tz-hz)*f)*br.sxz,
     r:r,ang:ang
   };
 }
@@ -418,16 +483,17 @@ function drawHelix(){
   for(var s=0;s<total;s++){
     var sg=segBuf[s];
     var col=sg.strand===0?colA(sg.ePr):colB(sg.ePr);
-    var dA=Math.max(0,Math.min(1.05,sg.fov*.72+.18));
-    var fA=Math.max(0,1-sg.pr*.7);
+    // #70 : contraste des flux amélioré — plancher d'alpha relevé, glow plus large
+    var dA=Math.max(0,Math.min(1.1,sg.fov*.85+.24));
+    var fA=Math.max(0,1-sg.pr*.62);
     var alpha=dA*fA;
     if(alpha<.018)continue;
-    var needGl=HP.gl>.12&&sg.fov>.85&&sg.pr<.84;
-    var gb=needGl?Math.round(HP.gl*11):0;
+    var needGl=HP.gl>.1&&sg.fov>.7&&sg.pr<.9;
+    var gb=needGl?Math.round(HP.gl*15):0;
     if(gb!==prevBlur){ctx.shadowBlur=gb;if(gb>0)ctx.shadowColor=col;prevBlur=gb;}
     ctx.strokeStyle=col;
-    ctx.lineWidth=Math.max(.4,1.7*sg.fov*V.zoom);
-    ctx.globalAlpha=Math.min(.92,alpha);
+    ctx.lineWidth=Math.max(.55,2.05*sg.fov*V.zoom);
+    ctx.globalAlpha=Math.min(1,alpha);
     ctx.beginPath();ctx.moveTo(sg.x1,sg.y1);ctx.lineTo(sg.x2,sg.y2);ctx.stroke();
   }
   ctx.shadowBlur=0;ctx.globalAlpha=1;
@@ -681,12 +747,12 @@ function drawMx(){
         var pp1=proj(x1,y1,z1),pp2=proj(x2,y2,z2);
         var avgFov=(pp1.fov+pp2.fov)*.5;
         var col=strand===0?colA(tM):colB(tM);
-        var alpha=Math.min(.92,aHel*Math.max(.08,avgFov*.85));
+        var alpha=Math.min(1,aHel*Math.max(.16,avgFov*.95)); // #70 : contraste amélioré
 
-        var gb=avgFov>.84&&HP.gl>.1?Math.round(HP.gl*10):0;
+        var gb=avgFov>.7&&HP.gl>.08?Math.round(HP.gl*13):0;
         if(gb!==prevBlur){ctx.shadowBlur=gb;if(gb>0)ctx.shadowColor=col;prevBlur=gb;}
         ctx.strokeStyle=col;
-        ctx.lineWidth=Math.max(.5,1.55*avgFov*V.zoom);
+        ctx.lineWidth=Math.max(.65,1.85*avgFov*V.zoom);
         ctx.globalAlpha=alpha;
         ctx.beginPath();ctx.moveTo(pp1.sx,pp1.sy);ctx.lineTo(pp2.sx,pp2.sy);ctx.stroke();
       }
@@ -770,11 +836,13 @@ function setMode(id){
     document.querySelectorAll('.mrow').forEach(function(r){r.classList.remove('on');});
     var ibM=document.getElementById('ibMode');if(ibM)ibM.textContent='Neutre';
     var hdrR=document.getElementById('hdr-ratio');if(hdrR)hdrR.textContent='432 / 360 = 6/5 · expansion organique infinie';
+    if(id==='breath')setBreath(false); // #70
     return;
   }
   V.mode=id;
   var m=MODES[id];V.msT=m?m.ratio:1;
   if(id==='maxexp'){startMx();return;}
+  setBreath(id==='breath'); // #70 : n'active la respiration QUE sur ce mode
   // Mettre à jour T depuis le mode
   if(m&&m.T)setBaseT(m.T);
   document.querySelectorAll('.mrow').forEach(function(r){r.classList.toggle('on',r.dataset.m===id);});
@@ -783,6 +851,16 @@ function setMode(id){
     document.getElementById('hdr-ratio').textContent=m.lbl+' · ×'+m.ratio.toFixed(3);
     flash(m.lbl,m.col);
   }
+}
+// #70 : bouton dédié du dock — bascule la respiration indépendamment des modes
+function setBreath(on){
+  BREATH2.on=on;
+  if(!on)BREATH2.t=0;
+  var b=document.getElementById('dockBreathBtn');if(b)b.classList.toggle('on',on);
+}
+function toggleBreath(){
+  if(BREATH2.on){setBreath(false);if(V.mode==='breath')setMode('breath');}
+  else{setBreath(true);}
 }
 
 function flash(txt,col){
@@ -813,6 +891,7 @@ function startBin(){
   oscL.start();oscR.start();binOn=true;
   document.getElementById('binPlay').textContent='◼ Arrêter 360/432';
   document.getElementById('binPlay').classList.add('on');
+  var dbb=document.getElementById('dockBinBtn');if(dbb)dbb.classList.add('on');
 }
 function stopBin(){
   [oscL,oscR].forEach(function(o){if(o){try{o.stop();}catch(e){}o.disconnect();}});
@@ -820,6 +899,7 @@ function stopBin(){
   binOn=false;
   document.getElementById('binPlay').textContent='▶ Activer 360 / 432 Ω';
   document.getElementById('binPlay').classList.remove('on');
+  var dbb=document.getElementById('dockBinBtn');if(dbb)dbb.classList.remove('on');
 }
 
 // ─── POLARITY GAUGE ──────────────────────────────────────────────
@@ -867,6 +947,7 @@ function draw(){
 
   // Omcha breathe
   HP.breathe=1+.08*Math.sin(V.t*.5);
+  if(BREATH2.on)BREATH2.t+=.016*V.spd; // #70
 
   drawHelix();
   drawBridges();
@@ -905,13 +986,26 @@ window.addEventListener('keydown',function(e){
   if(e.shiftKey){var mm={'1':'exp1','2':'exp2','3':'exp3','4':'cnt1','5':'cnt2','6':'flux','7':'breath','8':'maxexp'};if(mm[e.key])setMode(mm[e.key]);}
 });
 
-// ─── UI EVENTS ───────────────────────────────────────────────────
-function tPanel(pid,bid){var p=document.getElementById(pid),b=document.getElementById(bid);var o=p.classList.toggle('open');b.classList.toggle('on',o);}
-document.getElementById('tModes').addEventListener('click',function(){tPanel('panModes','tModes');});
-document.getElementById('tBin').addEventListener('click',function(){tPanel('panBin','tBin');});
-document.getElementById('tParams').addEventListener('click',function(){tPanel('panParams','tParams');});
+// ─── UI EVENTS — menu unique (drawer) + dock rapide ───────────────
+function openDrawer(sec){
+  document.getElementById('drawerMenu').classList.add('open');
+  document.getElementById('drawerBackdrop').classList.add('open');
+  if(sec)drawerTab(sec);
+}
+function closeDrawer(){
+  document.getElementById('drawerMenu').classList.remove('open');
+  document.getElementById('drawerBackdrop').classList.remove('open');
+}
+function drawerTab(sec){
+  ['panModes','panParams','panBin'].forEach(function(id){document.getElementById(id).classList.toggle('dsec-on',id===sec);});
+  document.querySelectorAll('.dtab').forEach(function(t){t.classList.toggle('on',t.dataset.dsec===sec);});
+}
+document.querySelectorAll('.dtab').forEach(function(t){t.addEventListener('click',function(){drawerTab(t.dataset.dsec);});});
+function toggleBinPlayQuick(){ binOn?stopBin():startBin(); }
 document.getElementById('tFS').addEventListener('click',function(){var el=document.documentElement;if(document.fullscreenElement||(document.webkitFullscreenElement)){(document.exitFullscreen||document.webkitExitFullscreen).call(document);}else{(el.requestFullscreen||el.webkitRequestFullscreen).call(el);}});
 document.addEventListener('fullscreenchange',function(){setTimeout(resize,100);});
+var btnResetEl=document.getElementById('btnReset');
+if(btnResetEl)btnResetEl.addEventListener('click',function(){V.trx=.22;V.try_=0;V.tzoom=1;});
 
 document.querySelectorAll('.mrow').forEach(function(r){r.addEventListener('click',function(){setMode(r.dataset.m);});});
 document.getElementById('binPlay').addEventListener('click',function(){binOn?stopBin():startBin();});

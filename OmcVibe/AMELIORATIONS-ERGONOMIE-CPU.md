@@ -1231,3 +1231,61 @@ activation manuelle d'une paire/oscillateur coupé fonctionne
 normalement ; `resetAll()` revient au même état ; une session sauvegardée
 avec tout actif est bien respectée au rechargement (pas écrasée par le
 nouveau défaut). 0 erreur JS sur l'ensemble de la suite de régression.
+
+## #70 : refonte Sphère 432 / Torsion 432 + mode Respiration
+
+Demande : boutons retour, fusion visuelle dans le design d'OmcVibe (menu
+unique avec tous les onglets à l'intérieur, dock rapide en bas, écran
+maximisé pour l'animation), contraste des flux amélioré, nouveau mode
+"Respiration" (transform à volume préservé, 3 paliers 6/5↔5/6 →
+11/10↔10/11 → 12/11↔11/12, cf. schéma fourni).
+
+**Menu unique + dock rapide** (`sphere432.html` : 6 panneaux — Modes,
+Paramètres, Binaural, BPM, Ping-Pong, Master ; `torsion432.html` : 3 —
+Modes, Paramètres, Binaural) : l'ancienne toolbar à 5-7 boutons + panneaux
+flottants dispersés aux 4 coins de l'écran est remplacée par un seul
+tiroir (`#drawerMenu`) qui glisse depuis le bas, avec un bandeau d'onglets
+horizontal (`#drawerTabs`) — même principe que les onglets OSC 1-7 de
+Chaharmony. Chaque panneau garde son markup et ses ID EXACTEMENT
+inchangés (aucun risque de casser le JS existant, `getElementById`
+continue de trouver les mêmes éléments) — seule leur position CSS change
+(`position:absolute` dispersé → `position:static` dans le tiroir,
+affichage basculé par onglet plutôt que par bouton indépendant). Un dock
+bas fixe (`#quickDock`, 5 boutons : Retour / Menu / Binaural / Respiration
+/ Écran) reste visible en permanence, y compris tiroir ouvert.
+
+**Écran maximisé** : en-tête réduit à un simple titre (l'ancien sous-titre
+et les infos secondaires sont supprimés ou déplacés dans le tiroir),
+`#kbdhint`/`#draghint` masqués (redondants avec la nouvelle UI), barre
+d'info repositionnée juste au-dessus du dock plutôt qu'au ras du bord bas.
+
+**Palette recolorée** : variables racine (`--c432`, `--cexp`, etc.)
+basculées du cyan/vert/orange néon vers le doré/cuivré d'OmcVibe, police
+des titres/boutons passée en Cinzel Decorative. Les couleurs propres à
+l'animation (dégradés cyan→vert→or des brins/sphères) sont conservées —
+c'est la signature visuelle du module, seul l'habillage UI change.
+
+**Contraste des flux amélioré** : planchers d'alpha et largeurs de trait
+relevés dans les fonctions de dessin (`drawHelix`/`drawMx` de
+torsion432.html, `drawSphere` de sphere432.html), glow élargi — les
+lignes du flux se détachent mieux du fond sombre.
+
+**Mode Respiration** (nouveau, les deux fichiers) : `BREATH2` — le centre
+oscille en 3 paliers successifs (6/5↔5/6, puis 11/10↔10/11, puis
+12/11↔11/12, ~13s chacun) via `s = r^sin(phase)`, où `r` est le ratio du
+palier. Appliqué comme `Y ×s, X·Z ×1/√s` : volume géométrique
+mathématiquement préservé (s × (1/√s)² = 1), exactement la formule du
+schéma fourni. Un léger vrillage corrélé à `s` est ajouté ("la corde tire
+en Z, la sphère se tord"). Sur torsion432.html appliqué dans `hPt()` (le
+générateur de points partagé par toute la géométrie) ; sur sphere432.html
+appliqué directement dans `proj()` (la fonction de projection unique par
+laquelle passe tout l'écran) — dans les deux cas un seul point
+d'application suffit à faire respirer toute la scène de façon cohérente.
+Activable via le bouton dédié du dock (indépendant des autres modes) ou
+via l'entrée "Respiration Omcha" du panneau Modes.
+
+Testé par script Playwright sur les deux fichiers : ouverture/fermeture
+du tiroir, bascule entre tous les onglets, respiration on/off (change
+bien la géométrie/projection), bouton retour → chooser, aucune régression
+sur les fonctions existantes (modes, expansion maximale, BPM, ping-pong,
+binaural). 0 erreur JS, syntaxe vérifiée (`node --check`).
