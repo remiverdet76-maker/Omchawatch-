@@ -1573,3 +1573,49 @@ Vérifié par test Playwright : gain d'une paire mute strictement à 0 sur
 (avant : aurait pulsé) ; respiration attachée puis paire mute juste après
 → gain retombe et reste exactement à 0 (avant : serait resté audible).
 0 erreur JS, 0 régression sur les suites existantes.
+
+## #84 : refonte du panneau Options Aléatoire
+
+Retour terrain sur plusieurs points du panneau "Omchaléatoire".
+
+1. **"Caractère du battement" (Apaisé/Équilibré/Immersif) sans effet
+   perceptible** — double cause trouvée. D'abord, ce réglage n'agit QUE
+   verrou binaural décoché (`RAND_OPTS.lockBinaural`) — activé par défaut,
+   donc invisible pour qui ne l'a jamais désactivé manuellement. Choisir
+   explicitement un caractère décoche maintenant ce verrou à sa place (avec
+   un message expliquant pourquoi), sinon le bouton semblait ne servir à
+   rien. Ensuite, même actif, les 3 plages de Δ se chevauchaient presque
+   entièrement (Apaisé finissait à 1.00 Hz, Immersif commençait à 1.00 Hz)
+   — redistribuées sur 3 tiers bien distincts de la bande Delta
+   (0.8-1.2 Hz, plage volontairement resserrée, jamais élargie).
+2. **Modes de tirage Ratio⌀/Identique/Harmonique cassés depuis toujours**
+   — `RAND_OPTS.ratioMode` était réglé par les 3 boutons mais jamais LU
+   nulle part : appuyer dessus ne changeait strictement rien au tirage
+   suivant. Implémenté pour de vrai : Identique tire un seul ratio partagé
+   par toutes les paires (seul le registre varie encore) ; Harmonique
+   assigne les 6 ratios dans un ordre fixe et non mélangé (au lieu du
+   tirage aléatoire habituel).
+3. **Nouveau mode Personnalisé** — 4ᵉ bouton : le tirage aléatoire ne
+   touche plus jamais aux ratios/registres des paires satellites, qui
+   restent exactement ce que l'utilisateur a réglé à la main.
+4. **Édition directe + lecture/pause dans la table d'oscillateurs** (déjà
+   visible dans le panneau Options Aléatoire) — chaque ligne a maintenant
+   un bouton lecture/pause (mute sans passer par la sphère), le ratio se
+   touche pour tourner parmi les 6 valeurs, et ×n s'édite au clavier
+   (tap → saisie → Entrée). Rend le mode Personnalisé utilisable
+   directement depuis cette liste, comme demandé.
+5. **Évolution harmonique douce** (nouveau) — case à cocher séparée du
+   tirage aléatoire classique : toutes les ~45s, UNE paire satellite (jamais
+   le maître, jamais mute/verrouillée) dérive très légèrement de registre
+   (±12%, jamais un saut de créneau) avec une glisse de 6 à 10s — assez
+   lent pour ne jamais s'entendre comme un "changement", juste une
+   respiration harmonique du jeu dans la durée. Hors plage active : le
+   cycle ne fait rien plutôt que de forcer un retour brusque en bord de
+   plage (aucun risque de à-coup/saturation).
+
+Vérifié par tests Playwright : plages Δ non chevauchantes + décochage
+automatique du verrou, Identique/Harmonique/Personnalisé produisent
+exactement le comportement attendu sur plusieurs tirages, lecture/pause +
+cycle de ratio + édition ×n depuis la table fonctionnent, évolution douce
+ne touche jamais le maître/une paire mute/verrouillée et reste dans les
+bornes. 0 erreur JS, 0 régression sur l'ensemble des suites existantes.
