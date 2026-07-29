@@ -1619,3 +1619,32 @@ exactement le comportement attendu sur plusieurs tirages, lecture/pause +
 cycle de ratio + édition ×n depuis la table fonctionnent, évolution douce
 ne touche jamais le maître/une paire mute/verrouillée et reste dans les
 bornes. 0 erreur JS, 0 régression sur l'ensemble des suites existantes.
+
+## #85 : toutes les sphères démarrent mute + marge de sécurité 36 Hz
+
+1. **Toutes les sphères démarrent coupées (blanc quartz)** — y compris le
+   maître, qui était la seule active par défaut depuis #69. L'utilisateur
+   active désormais tout manuellement (tap/solo) ou via un tirage
+   aléatoire. Ne change rien pour qui a déjà une session sauvegardée
+   (`loadState()` reste prioritaire) — n'affecte que le premier lancement
+   et "Réinitialiser tout".
+2. **Marge de sécurité 36 Hz entre fréquences (pas une option)** — sur 7
+   oscillateurs indépendants répartis dans la même plage, deux paires
+   DIFFÉRENTES pouvaient par hasard tomber à quelques Hz l'une de l'autre :
+   un battement non voulu, non contrôlé, entre deux paires qui n'ont rien
+   à voir (à ne pas confondre avec le Δ binaural intentionnel à
+   l'intérieur d'une paire). Chaque tirage aléatoire vérifie maintenant la
+   fréquence de chaque paire contre toutes celles déjà retenues ce
+   tirage-ci ; en cas de conflit, recherche du point libre le plus proche
+   de la position visée dans toute la plage active valide (pas seulement
+   le créneau log d'origine, qui peut être "pollué" si le maître tombe
+   justement dedans). Se dégrade proprement si la plage active est trop
+   étroite pour le nombre de paires actives (garde le tirage habituel
+   plutôt qu'une valeur forcée).
+
+Vérifié par tests Playwright : toutes les paires mute au 1er lancement et
+après Réinitialiser (y compris le maître), état sauvegardé toujours
+respecté au rechargement, 0 violation de la marge de 36 Hz sur 25 tirages
+aléatoires consécutifs (525 paires de fréquences comparées), aucun crash
+sur une plage active volontairement trop étroite pour tenir la contrainte.
+0 erreur JS, 0 régression sur l'ensemble des suites existantes.

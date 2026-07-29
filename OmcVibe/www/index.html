@@ -2395,6 +2395,16 @@ const PAIR_BAND = [0, 0, 1, 1, 2, 2];   // paires 0-5 → bande (master = source
 const HEX_DEG    = [0, 60, 120, 180, 240, 300];
 const MASTER_IDX = 6;
 
+// #85 : marge de sécurité — PAS une option, une limite réelle appliquée à
+// tout tirage aléatoire de fréquences. Sur 7 oscillateurs indépendants
+// répartis dans une même plage, deux paires DIFFÉRENTES peuvent tomber par
+// hasard à quelques Hz l'une de l'autre : ça crée un battement non voulu,
+// non contrôlé, entre deux paires qui n'ont rien à voir (à ne pas
+// confondre avec le Δ binaural intentionnel À L'INTÉRIEUR d'une paire).
+// 36 Hz suffit à toujours distinguer les paires à l'oreille sans jamais
+// les faire interférer entre elles.
+const MIN_FREQ_SPACING_HZ = 36;
+
 // Ratios OmcV — famille 10-11-12 uniquement (les 9/x et 13/x, trop rugueux, sont retirés)
 // Paires miroir : (11/10 ↔ 10/11) · (12/11 ↔ 11/12) · (12/10 ↔ 10/12)
 const RATIO_OPTS = [
@@ -2502,15 +2512,15 @@ function isosonicVol(freq, base) {
   return base * Math.max(0.5, Math.min(1.5, k));  // dynamique grave rendue (mais maîtrisée)
 }
 
-// #69 : par défaut, un seul oscillateur actif (le maître) — les autres
-// démarrent coupés et s'activent manuellement (mute/solo par paire, déjà
-// existant). Écrasé par loadState() si une session sauvegardée existe
-// (préférences déjà personnalisées par l'utilisateur non touchées).
+// #85 : par défaut, TOUTES les sphères démarrent coupées (blanc quartz),
+// y compris le maître — l'utilisateur active manuellement ce qu'il veut
+// (mute/solo par paire, déjà existant) ou lance un tirage aléatoire.
+// Écrasé par loadState() si une session sauvegardée existe (préférences
+// déjà personnalisées par l'utilisateur non touchées).
 let mutedOscs = {};
 PAIRS.forEach((p, i) => {
-  const startMuted = i !== MASTER_IDX;
-  mutedOscs[p.pingala.id] = startMuted;
-  mutedOscs[p.ida.id]     = startMuted;
+  mutedOscs[p.pingala.id] = true;
+  mutedOscs[p.ida.id]     = true;
 });
 
 let masterFreq  = 144;
@@ -5568,6 +5578,37 @@ function aeratedN(master, ratio, idx, spread, lo, hi, slotCount) {
   return Math.max(0.03, Math.min(N_MAX, Math.round(n * 100) / 100));
 }
 
+// #85 : marge de sécurité 36 Hz — tire un n qui, combiné à master×ratio,
+// reste à ≥ MIN_FREQ_SPACING_HZ de toute fréquence déjà retenue ce
+// tirage-ci. aeratedN() propose une position "idéale" (créneau log +
+// jitter + spread) ; si elle viole la marge, on cherche le point LIBRE le
+// plus proche de cette cible dans toute la plage valide (pas seulement le
+// créneau d'origine — le maître, tiré indépendamment, peut tomber
+// n'importe où et "polluer" n'importe quel créneau). Balayage au pas de
+// 1 Hz sur au plus ~400 Hz (la plage active) : coût négligeable, appelé
+// seulement au clic utilisateur. Si la plage est saturée (trop de paires
+// actives pour l'espace disponible aux 36 Hz), on garde le tirage habituel
+// plutôt que de forcer une valeur qui n'aurait plus de sens.
+function _drawSpacedN(master, ri, slotIdx, spread, lo, hi, claimed) {
+  const ratio = RATIO_OPTS[ri].r;
+  const idealN = aeratedN(master, ratio, slotIdx, spread, lo, hi);
+  const idealF = Math.max(lo, Math.min(hi, master * ratio * idealN));
+  const isFree = (f) => claimed.every(c => Math.abs(c - f) >= MIN_FREQ_SPACING_HZ);
+  if (isFree(idealF)) return idealN;
+
+  const nMinF = Math.max(lo, master * ratio * 0.1);
+  const nMaxF = Math.min(hi, master * ratio * N_MAX);
+  if (nMinF > nMaxF) return idealN; // plage invalide (cas limite) : tirage habituel
+  let bestF = null, bestDist = Infinity;
+  for (let f = nMinF; f <= nMaxF; f += 1) {
+    if (!isFree(f)) continue;
+    const d = Math.abs(f - idealF);
+    if (d < bestDist) { bestDist = d; bestF = f; }
+  }
+  if (bestF == null) return idealN; // plage saturée : pas de point libre, tirage habituel gardé
+  return Math.max(0.1, Math.min(N_MAX, bestF / (master * ratio)));
+}
+
 // Indice de ratio le plus proche d'une valeur cible dans RATIO_OPTS
 function closestRatioIdx(target) {
   return RATIO_OPTS.reduce((best, o, i) =>
@@ -5835,6 +5876,10 @@ function triggerMagicAuto(opts) {
   const _spotPool = [MASTER_IDX, ..._activeSatIdxs];
   const spotlight = _spotPool[Math.floor(Math.random() * _spotPool.length)];
 
+  // #85 : marge de sécurité 36 Hz — fréquences déjà "prises" par ce tirage,
+  // dans l'ordre où elles sont validées (maître en premier, toujours fixe).
+  const _claimedFreqs = [Math.min(432, newMaster)];
+
   _duckAndApply(() => {
   PAIRS.forEach((pair, idx) => {
     if (typeof isLocked === 'function' && isLocked(idx)) return;
@@ -5898,10 +5943,13 @@ function triggerMagicAuto(opts) {
       ri = riBySlot[idx];                                         // ratio OmcV redistribué
       // La plage active (rMin–rMax) est passée à aeratedN : les 7 oscillateurs
       // (maître + satellites) restent TOUS dans la plage fréquence choisie.
-      n  = aeratedN(newMaster, RATIO_OPTS[ri].r, slotOrder[idx], spread, rMin, rMax);
+      // #85 : marge de sécurité 36 Hz, cf. _drawSpacedN — vérifiée contre
+      // toutes les fréquences déjà retenues ce tirage-ci.
+      n = _drawSpacedN(newMaster, ri, slotOrder[idx], spread, rMin, rMax, _claimedFreqs);
       pair.pingala.ri = ri;
       pair.pingala.n  = n;
     }
+    _claimedFreqs.push(Math.max(rMin, Math.min(rMax, newMaster * RATIO_OPTS[ri].r * n)));
     if (!lockBin) {                              // delta figé si verrou binaural (défaut)
       const oldDelta = pair.ida.delta;
       // #6 : Δ varié par paire (option) — chaque paire pioche indépendamment
@@ -6033,11 +6081,10 @@ function resetAll() {
     p.ida.delta   = DELTA_DEFAULT;       // battement binaural doux, unique
     p.ida.polarity = (i % 2 === 0) ? 1 : -1;
     p.ida.vol     = vol;
-    // #69 : Réinitialiser = revenir au défaut (un seul oscillateur actif,
-    // le maître), pas tout réactiver — cohérent avec le 1er lancement.
-    const startMuted = i !== MASTER_IDX;
-    mutedOscs[p.pingala.id] = startMuted;
-    mutedOscs[p.ida.id]     = startMuted;
+    // #85 : Réinitialiser = revenir au défaut (tout coupé, blanc quartz),
+    // cohérent avec le 1er lancement.
+    mutedOscs[p.pingala.id] = true;
+    mutedOscs[p.ida.id]     = true;
   });
   try { localStorage.removeItem(LS_KEY); } catch(e) {}
   const mvs = document.getElementById('mvol-slider'); if (mvs) mvs.value = 0.70;
