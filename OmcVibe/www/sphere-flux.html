@@ -23,6 +23,7 @@ h1{font-family:'Cinzel Decorative',serif;color:#FFD27A;font-size:1.35rem;letter-
 .card-desc{font-size:.72rem;opacity:.6;line-height:1.4;}
 .sphere .card-ico{color:#00ccff;}
 .torsion .card-ico{color:#ff6600;}
+.geometrie .card-ico{color:#c090ff;}
 .back{display:inline-block;margin-top:1.6rem;padding:.55rem 1.3rem;border:1.5px solid rgba(255,190,90,.3);
   border-radius:10px;color:#FFE0A0;text-decoration:none;font-family:'Cinzel Decorative',serif;
   font-size:.7rem;letter-spacing:.08em;}
@@ -43,8 +44,26 @@ h1{font-family:'Cinzel Decorative',serif;color:#FFD27A;font-size:1.35rem;letter-
       <span class="card-name">Torsion 432</span>
       <span class="card-desc">Double hélice ↔ tore, modes Expansion/Contraction/Flux, binaural intégré</span>
     </a>
+    <a class="card geometrie" href="geometrie.html">
+      <span class="card-ico">◈</span>
+      <span class="card-name">Géométrie</span>
+      <span class="card-desc">Modélisation 3D — même moteur, base d'un projet en évolution</span>
+    </a>
   </div>
-  <a class="back" href="index.html">← Retour à l'accueil</a>
+  <a class="back" href="index.html" id="sf-back">← Retour à l'accueil</a>
 </div>
+<script>
+// Embarqué dans OmchaVibe 432 (overlay du lanceur) : "Retour à l'accueil" ne
+// doit pas naviguer l'iframe vers index.html (ça rechargerait l'app entière
+// à l'intérieur d'elle-même) — on referme simplement l'overlay du parent,
+// qui continue de jouer le binaural en cours sans coupure. Page autonome
+// (onglet séparé) : comportement inchangé, navigation normale.
+document.getElementById('sf-back').addEventListener('click', function (e) {
+  if (window.self !== window.top && typeof parent._closeModuleOverlay === 'function') {
+    e.preventDefault();
+    parent._closeModuleOverlay();
+  }
+});
+</script>
 </body>
 </html>

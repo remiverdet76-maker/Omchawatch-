@@ -1680,3 +1680,47 @@ Vérifié par tests Playwright : option décochée par défaut et persistée
 entre 1 et 7.2 Hz apparaît sur 28 tirages sur 30, toujours entre EXACTEMENT
 deux paires (jamais de violation de 36 Hz "en trop" ailleurs dans le même
 tirage). 0 erreur JS, 0 régression sur l'ensemble des suites existantes.
+
+## #87 : nouveau module "Géométrie" + binaural OmchaVibe 432 en fond dans Sphère/Flux
+
+Demande : un nouveau module de modélisation 3D, à sa place aux côtés de
+Sphère 432 / Torsion 432 dans OmchaSphere/Flux, en partant du moteur 3D déjà
+existant — et si possible, garder le son d'OmchaVibe 432 audible en fond
+pendant qu'on parcourt ces modules visuels (au lieu de le couper).
+
+1. **Nouveau module `geometrie.html`** — export du moteur 3D existant
+   (projection/rotation canvas, mandala/double-hélice/tore, modes
+   Expansion/Contraction/Flux) déjà éprouvé dans Torsion 432, repris tel
+   quel comme socle du nouveau projet "Géométrie" (identité propre :
+   titre, en-tête). Base de départ pour la modélisation 3D plus complexe à
+   venir, comme demandé — rien n'est réinventé qui marchait déjà.
+2. **Nouvelle carte "Géométrie"** dans le sélecteur OmchaSphere/Flux
+   (`sphere-flux.html`), aux côtés de Sphère 432 et Torsion 432.
+3. **Binaural d'OmchaVibe 432 en fond sonore réel** — jusqu'ici, ouvrir
+   Sphère 432/Torsion 432 depuis le lanceur faisait une navigation
+   complète (`location.href`) : nouvelle page, nouveau contexte audio,
+   donc le binaural en cours s'arrêtait net. Le sélecteur OmchaSphere/Flux
+   s'ouvre désormais dans un **overlay iframe** par-dessus `index.html` au
+   lieu de le remplacer : le moteur audio d'OmchaVibe 432 tourne
+   toujours en dessous, sans coupure, tout le temps qu'on navigue entre
+   Sphère 432 / Torsion 432 / Géométrie. Ces 3 modules coupent déjà
+   automatiquement leur propre moteur binaural interne dès qu'ils
+   détectent l'embarquement (`window.self !== window.top`, mécanisme déjà
+   en place) — le son d'OmchaVibe 432 reste ainsi l'unique source, sans
+   double lecture ni conflit. "Retour à l'accueil" depuis l'intérieur de
+   l'overlay referme simplement l'overlay (jamais de rechargement imbriqué
+   d'`index.html` dans lui-même).
+4. **CPU** — le rendu visuel d'OmchaVibe 432 (`masterTick`, sphères/canvas)
+   s'arrête pendant que l'overlay est ouvert (nouvelle vérification dédiée
+   — `document.visibilityState` ne suffisait pas ici, l'onglet reste
+   "visible" tout du long) : pas de rendu invisible gâché derrière le
+   module affiché, seul le moteur audio continue de tourner.
+
+Vérifié par tests Playwright : le binaural reste `flowing` et l'AudioContext
+`running` tout au long de l'ouverture/navigation/fermeture de l'overlay,
+0 AudioContext créé côté module tant que son bouton "Activer" n'est pas
+pressé à la main, les 3 cartes (Sphère 432 / Torsion 432 / Géométrie)
+s'ouvrent correctement dans l'overlay avec `window.self !== window.top`,
+fermeture de l'overlay (`_closeModuleOverlay`) remet bien l'iframe à
+`about:blank` et le binaural n'est jamais interrompu. 0 erreur JS, 0
+régression sur l'ensemble des suites existantes.
