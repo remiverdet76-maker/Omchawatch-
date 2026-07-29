@@ -1489,3 +1489,50 @@ Vérifié par tests Playwright (édition fondamentale + persistance,
 glisser-déposer bout en bout jusqu'au déplacement réel, redémarrage rapide
 du Flux avec les 14 oscillateurs bien reconstruits, tirage aléatoire avec
 paires mute qui ne redessinent plus leur fréquence) : 0 erreur JS.
+
+## #82 : passe d'équilibrage modules + nettoyage interface
+
+Audit de chaque module (OmcVibe, Chaharmony, Sphère432, Torsion432) pour
+CPU/batterie et conflits, + nettoyage visuel.
+
+**CPU/batterie :**
+- **Sphère432** avait le même défaut que l'ancienne reverb d'OmcVibe
+  (#33) : son convolveur (moteur audio indépendant, propre à ce module)
+  restait connecté en continu même à 0% de reverbe. Corrigé avec le même
+  gating (entrée coupée/reconnectée selon le wet). Ajout au passage d'un
+  plafond dur (soft-clip tanh) avant la sortie matérielle — absent
+  jusqu'ici, alors que ce module cumule EQ 3 bandes + compresseur + reverb.
+- **Torsion432** : chaîne audio (2 sinus + gain) vérifiée intrinsèquement
+  sûre (gain conservateur, aucune addition de sources capable de
+  dépasser 0dBFS) — pas de plafond nécessaire.
+- **`updateInfobar()`** (OmcVibe) tournait toutes les secondes en continu,
+  y compris app en arrière-plan — travail trivial mais désormais sauté
+  entièrement quand la page n'est pas visible.
+- Vérification croisée : aucun timer/interval orphelin trouvé ailleurs
+  (watchdog, ancre respiratoire, heartbeat, automations tactiles) — tous
+  correctement armés/désarmés avec le Flux.
+- Modules indépendants (Sphère432/Torsion432 = pages séparées, chacune son
+  propre AudioContext) : pas de conflit constaté, la navigation entre
+  modules décharge proprement le contexte précédent (navigation de page
+  complète, pas de superposition de moteurs audio).
+
+**Interface :**
+- Texte "FBF · PRESS & DESTRESS" supprimé (bandeau au-dessus de la
+  fréquence maître, jugé superflu/brouillon).
+- Cellule "Option Jeu Aléatoire" du dock : elle seule mélangeait deux
+  polices différentes (nom en Cinzel Decorative 12px + sous-titre en IM
+  Fell English 16px, plus gros que le "titre") — unifiée sur la même
+  police/taille que les 3 autres cellules (Samples/Effet Audio/
+  Paramètres), retour à la ligne naturel comme "Paramètres" le fait déjà.
+- Flou du fond de la barre du bas réduit (20px→9px) : à alpha égal (.24),
+  un flou aussi fort aplatissait le fond étoilé en une masse sombre
+  uniforme, recréant la "barrière visuelle" malgré 2 passes précédentes
+  sur la seule transparence.
+- Chiffre de fréquence maître (mode solo, actif par défaut depuis #69)
+  adouci : 4.2rem→3.3rem, halo lumineux réduit — jugé trop imposant/
+  agressif à l'écran d'accueil.
+
+Vérifié par tests Playwright (gating reverbe Sphère432 par défaut et sur
+changement de curseur, absence de régression sur les suites existantes
+OmcVibe/Sphère432/Torsion432, 0 élément de texte en débordement dans le
+dock) : 0 erreur JS.

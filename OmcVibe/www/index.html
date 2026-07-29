@@ -105,7 +105,12 @@ body{
   z-index:100;
   background:rgba(10,4,26,.24); /* #73 : encore plus transparent (retour terrain : .58 pas assez) */
   border-top:1px solid rgba(200,100,255,.22);
-  backdrop-filter:blur(20px);
+  /* #81 : 20px→9px — un flou aussi fort aplatit le fond étoilé en une masse
+     sombre uniforme quel que soit l'alpha au-dessus, recréant la "barrière
+     visuelle" même à .24 (retour terrain répété malgré 2 passes sur l'alpha
+     seul). Un flou plus léger laisse deviner la nébuleuse/les étoiles au
+     travers, tout en gardant le texte des cellules lisible. */
+  backdrop-filter:blur(9px);
   box-shadow:0 -4px 24px rgba(80,40,160,.18);
   transition:transform .35s cubic-bezier(.4,0,.2,1);
 }
@@ -348,14 +353,14 @@ body{
   animation:soloBreath 7s ease-in-out infinite;
   box-shadow:inset 0 0 55px rgba(255,255,255,.16),inset 12px -14px 55px rgba(0,0,0,.32),0 0 55px rgba(200,140,255,.32);
 }
-.vp-center-wrap.vp-solo .ms-freq{ font-size:4.2rem; }
+.vp-center-wrap.vp-solo .ms-freq{ font-size:3.3rem; } /* #81 : 4.2rem jugé trop agressif/imposant en mode solo (défaut depuis #69) */
 .vp-center-wrap.vp-solo .vp-type{ font-size:.95rem !important; }
 .vp-center-wrap.vp-solo .ms-state{ font-size:.9rem; }
 @keyframes soloBreath{
   0%,100%{ transform:scale(1); }
   50%{ transform:scale(1.06); }
 }
-.ms-freq{font-family:'IM Fell English',serif;font-size:2.2rem;color:#F3D9FF;line-height:1;cursor:text;text-shadow:0 0 20px rgba(220,130,255,.75);font-weight:bold;}
+.ms-freq{font-family:'IM Fell English',serif;font-size:2.2rem;color:#F3D9FF;line-height:1;cursor:text;text-shadow:0 0 14px rgba(220,130,255,.55);font-weight:bold;}
 .ms-freq:hover{color:#FFD700;}
 .ms-state{font-size:.7rem;font-style:italic;letter-spacing:.1em;color:rgba(220,180,255,.7);text-transform:uppercase;transition:color .5s;font-weight:bold;}
 #freq-input-master{
@@ -1755,7 +1760,6 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 <canvas id="meta-canvas" width="540" height="1024" style="width: 540px; height: 1024px; cursor: grab; pointer-events: auto;" data-html-import-id="html-import-6"></canvas>
 <div id="sphere-layer" data-html-import-id="html-import-7"><div class="vp-center-wrap vp-solo" id="vp6" data-html-import-id="html-import-8">
     <div class="vp-p  " id="vpc-p6" style="border-color:hsl(187,72%,64%);background:radial-gradient(circle,hsla(187,72%,60%,0.32) 0%,hsla(187,72%,62%,0.18) 55%,rgba(20,5,38,.6) 100%);box-shadow:0 0 30px hsla(187,72%,62%,0.5);backdrop-filter:blur(4px);cursor:pointer;user-select:none;" onmousedown="_vpStart(6,event)" onmouseup="_vpEnd(6)" onmouseleave="_vpCancel()" onmousemove="_vpMove(6,event)" ontouchstart="_vpStart(6,event)" ontouchend="_vpEnd(6)" ontouchmove="_vpMove(6,event)" data-html-import-id="html-import-9">
-      <span class="vp-type canva-text" style="color: rgb(97, 214, 229); font-size: 15px; letter-spacing: 0.1em; font-weight: 700; font-family: &quot;Cinzel Decorative&quot;;" data-html-import-id="html-import-10" data-template-id="span-3">FBF · PRESS &amp; DESTRESS</span>
       <span class="ms-freq canva-text" id="ms-freq" onclick="event.stopPropagation();openFreqEdit();" data-html-import-id="html-import-11" data-template-id="span-4" style="font-family: &quot;IM Fell English&quot;; font-weight: 700; font-size: 67px;">181</span>
       <input type="number" id="freq-input-master" min="54" max="432" placeholder="181" autocomplete="off" onkeydown="handleFreqKey(event);" data-html-import-id="html-import-12" data-template-id="input-5" class="canva-input" style="color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 29px;">
       <span class="ms-state canva-text" id="ms-state" data-html-import-id="html-import-13" data-template-id="span-6" style="color: rgba(220, 180, 255, 0.7); font-weight: 700; font-style: italic; font-size: 14px;">BINAURAL</span>
@@ -1770,7 +1774,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <div class="dcell-wrap" data-html-import-id="html-import-16">
       <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Afficher / masquer les oscillateurs">+</button>
       <button class="dcell dcell-red canva-button" id="dcRed" title="Tap : Options Aléatoire · Appui long : Solo fréquence maître" data-html-import-id="html-import-17" data-template-id="button-8" style="background: rgba(255, 70, 70, 0.14); color: rgb(255, 142, 142);">
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Option Jeu</b><span class="dcell-sub canva-text" data-html-import-id="html-import-21" data-template-id="span-12" style="color: rgb(255, 142, 142); font-family: &quot;IM Fell English&quot;; font-weight: 700; font-size: 16px;">Aléatoire</span></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Option Jeu Aléatoire</b></span>
       </button>
     </div>
     <!-- ORANGE — Samples : tap=ouvrir · long=jeu aléatoire sur fréquence du sample · sphère=raccourci -->
@@ -4846,7 +4850,6 @@ function buildVesicaPairs() {
          style="border-color:${mc};background:radial-gradient(circle,${mcSoft} 0%,${mcGlow.replace('0.5','0.18')} 55%,rgba(20,5,38,.6) 100%);box-shadow:0 0 30px ${mcGlow};backdrop-filter:blur(4px);cursor:pointer;user-select:none;"
          onmousedown="_vpStart(${MASTER_IDX},event)" onmouseup="_vpEnd(${MASTER_IDX})" onmouseleave="_vpCancel()" onmousemove="_vpMove(${MASTER_IDX},event)"
          ontouchstart="_vpStart(${MASTER_IDX},event)" ontouchend="_vpEnd(${MASTER_IDX})" ontouchmove="_vpMove(${MASTER_IDX},event)">
-      <span class="vp-type" style="color:${mc};font-size:.62rem;letter-spacing:.1em;font-weight:bold;">FBF · PRESS &amp; DESTRESS</span>
       <span class="ms-freq" id="ms-freq" onclick="event.stopPropagation();openFreqEdit();">${masterFreq}</span>
       <input type="number" id="freq-input-master" min="${F_MIN}" max="432" placeholder="${masterFreq}" autocomplete="off"
              onkeydown="handleFreqKey(event);">
@@ -7350,6 +7353,10 @@ function closePanel() {
 
 // ── Infobar live ───────────────────────────────────────────────────
 function updateInfobar() {
+  // #82 (perf) : cet interval tourne toutes les 1s, indéfiniment, même app
+  // en arrière-plan — le travail lui-même est trivial (4 lectures/écritures
+  // DOM), mais autant l'éviter complètement quand rien n'est visible.
+  if (document.visibilityState === 'hidden') return;
   const ibFreq = document.getElementById('ib-freq');
   const ibFlux = document.getElementById('ib-flux');
   const ibGeo  = document.getElementById('ib-geo');

@@ -1558,7 +1558,7 @@ function setBpm(v){
 // AUDIO ENGINE
 // ═══════════════════════════════════════════════════════════
 var AC=null, masterGain=null, compressor=null;
-var bassF=null, midF=null, trebleF=null, reverbN=null, revGain=null, dryGain=null;
+var bassF=null, midF=null, trebleF=null, reverbN=null, revGain=null, dryGain=null, safetyClip=null;
 var oscL=null, oscR=null, binGain=null, binMerger=null;
 var ppLFO=null, ppLFOGL=null, ppLFOGR=null;
 var oscA=null, oscAG=null, oscAP=null;
@@ -1575,7 +1575,9 @@ function ensureAC(){
   trebleF=AC.createBiquadFilter(); trebleF.type='highshelf'; trebleF.frequency.value=5000;
   compressor=AC.createDynamicsCompressor();
   compressor.threshold.value=-24; compressor.knee.value=12; compressor.ratio.value=4;
-  // Reverb
+  // Reverb — #82 (perf) : le convolveur n'est connecté QUE si le wet est
+  // réellement > 0 (cf. même correctif sur OmcVibe/Chaharmony, #33/#74) ;
+  // avant, il tournait en continu dès la lecture même à 0% de reverbe.
   reverbN=AC.createConvolver();
   var rl=AC.sampleRate*1.5;
   var rb=AC.createBuffer(2,rl,AC.sampleRate);
@@ -1583,11 +1585,28 @@ function ensureAC(){
   reverbN.buffer=rb;
   revGain=AC.createGain(); revGain.gain.value=.18;
   dryGain=AC.createGain(); dryGain.gain.value=.85;
-  // Chain: bassF→midF→trebleF→compressor→dry+rev→master→dest
+  // Plafond dur sans latence avant la sortie matérielle (même principe que
+  // le safetyClip d'OmcVibe/Chaharmony) : jamais de dépassement quoi qu'il
+  // arrive en amont (EQ/compresseur/reverbe cumulés).
+  safetyClip=AC.createWaveShaper(); safetyClip.oversample='4x';
+  { var n=2048, curve=new Float32Array(n), k=1.2, ceiling=0.95;
+    for (var si=0; si<n; si++) { var x=(si/(n-1))*2-1; curve[si]=ceiling*Math.tanh(k*x)/Math.tanh(k); }
+    safetyClip.curve=curve; }
+  // Chain: bassF→midF→trebleF→compressor→dry+rev→master→safetyClip→dest
   bassF.connect(midF); midF.connect(trebleF); trebleF.connect(compressor);
-  compressor.connect(dryGain); compressor.connect(reverbN);
+  compressor.connect(dryGain);
   reverbN.connect(revGain); revGain.connect(masterGain);
-  dryGain.connect(masterGain); masterGain.connect(AC.destination);
+  dryGain.connect(masterGain); masterGain.connect(safetyClip); safetyClip.connect(AC.destination);
+  // Le slider Reverbe part à 20% par défaut (valeur HTML) — sans ceci, le
+  // gate resterait déconnecté tant que l'utilisateur n'a pas touché le
+  // curseur, alors que l'UI affiche déjà un wet non nul.
+  var mRevEl=document.getElementById('mRev');
+  if (mRevEl && parseFloat(mRevEl.value)>0.5) _gateReverb(true);
+}
+var _revConnected=false;
+function _gateReverb(on){
+  if(on===_revConnected||!compressor||!reverbN) return;
+  try{ on ? compressor.connect(reverbN) : compressor.disconnect(reverbN); _revConnected=on; }catch(e){}
 }
 function resumeAC(){ if(AC&&AC.state==='suspended') AC.resume(); }
 function eqIn(){ return bassF; }
@@ -1957,8 +1976,11 @@ document.getElementById('mTreble').addEventListener('input',function(){
 document.getElementById('mRev').addEventListener('input',function(){
   document.getElementById('mvRev').textContent=this.value+'%';
   ensureAC(); resumeAC();
-  if(revGain) revGain.gain.setTargetAtTime(this.value/100*.45,AC.currentTime,.05);
-  if(dryGain) dryGain.gain.setTargetAtTime(1-this.value/100*.35,AC.currentTime,.05);
+  var v=parseFloat(this.value);
+  if (v>0.5) _gateReverb(true);
+  if(revGain) revGain.gain.setTargetAtTime(v/100*.45,AC.currentTime,.05);
+  if(dryGain) dryGain.gain.setTargetAtTime(1-v/100*.35,AC.currentTime,.05);
+  if (v<=0.5) setTimeout(function(){ if(revGain && revGain.gain.value<0.002) _gateReverb(false); }, 550);
 });
 document.getElementById('mComp').addEventListener('input',function(){
   document.getElementById('mvComp').textContent=this.value+' dB';
