@@ -2231,7 +2231,8 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
   <div style="margin-top:.6rem;padding:.5rem;background:rgba(140,255,200,.05);border:1px solid rgba(140,255,200,.18);border-radius:9px;" class="canva-container">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;">
       <span style="font-size:.7rem;color:rgba(140,255,200,.7);" class="canva-text">Fondamentale</span>
-      <span id="sample-fund-disp" style="font-family:'IM Fell English',serif;font-size:.95rem;color:#8CFFC8;" class="canva-text">—</span>
+      <span id="sample-fund-disp" style="font-family:'IM Fell English',serif;font-size:.95rem;color:#8CFFC8;cursor:text;" class="canva-text" onclick="openSampleFundEdit()" title="Toucher pour corriger">—</span>
+      <input type="number" id="sample-fund-input" min="54" max="432" step="0.1" style="display:none;width:76px;font-family:'IM Fell English',serif;font-size:.95rem;color:#8CFFC8;background:rgba(140,255,200,.1);border:1px solid rgba(140,255,200,.45);border-radius:6px;text-align:right;padding:.1rem .3rem;" onkeydown="handleSampleFundKey(event)" onblur="exitSampleFundEdit(true)">
     </div>
     <div style="display:flex;gap:.4rem;">
       <button class="fbf-step canva-button" style="flex:1;" onclick="sampleAutoGame()">✦ Jeu depuis sample</button>
@@ -3761,6 +3762,17 @@ async function stopFlow() {
     }, 500);
   });
   setTimeout(() => {
+    // #80 : garde anti-course — si un NOUVEAU startFlow() a démarré entre-temps
+    // (stop/relance rapide, ex. depuis le jeu d'un sample), `flowing` est de
+    // nouveau true à ce moment. Sans cette garde, ce nettoyage DIFFÉRÉ de
+    // l'ANCIENNE session met masterGain/_lfoGain/etc. à null en pleine
+    // nouvelle session (ce sont des variables globales partagées, pas des
+    // références locales à cet appel) — swapPingala/swapIda se mettent alors
+    // à ignorer silencieusement toute paire pas encore construite (garde
+    // `if (!flowing || !masterGain) return;`), watchdog/sub-drone de la
+    // nouvelle session coupés, etc. Symptôme observé : jeu/fréquence maître
+    // "perdus" juste après un redémarrage rapide du Flux.
+    if (flowing) return;
     [_breathLFO, _driftLFO].forEach(x => { try { x?.stop(); } catch(e){} });
     [_lfoGain, _breathLFO, _breathGain, _breathDepthGain, _driftLFO, _driftDepth, masterGain]
       .forEach(x => { try { x?.disconnect(); } catch(e){} });
@@ -5442,15 +5454,16 @@ function fitDensityN(master, ratio, baseN) {
 //    créneau le plus haut ne peut JAMAIS dépasser ~66% du chemin vers `hi`,
 //    quel que soit le nombre de tirages : tout le haut (ou le bas) de la
 //    plage réglée par l'utilisateur restait une zone morte, jamais jouée.
-function aeratedN(master, ratio, idx, spread, lo, hi) {
+function aeratedN(master, ratio, idx, spread, lo, hi, slotCount) {
   lo = lo || F_MIN; hi = hi || F_MAX;
+  slotCount = slotCount || 6;
   const GEO = Math.sqrt(lo * hi);                          // centre géométrique de la plage
   const jitter = 0.08 + Math.random() * 0.84;              // position variable dans le créneau à CHAQUE tirage
-  const anchor = lo * Math.pow(hi / lo, (idx + jitter) / 6); // étage log de la paire (aléatoire)
-  // Les créneaux extrêmes (0 et 5) restent capables d'approcher les vraies
-  // bornes lo/hi même à spread modéré, pour que la plage choisie soit
-  // vraiment exploitée dans son intégralité au fil des tirages.
-  const openness = (idx === 0 || idx === 5) ? Math.max(spread, 0.85) : spread;
+  const anchor = lo * Math.pow(hi / lo, (idx + jitter) / slotCount); // étage log de la paire (aléatoire)
+  // Les créneaux extrêmes (premier et dernier) restent capables d'approcher
+  // les vraies bornes lo/hi même à spread modéré, pour que la plage choisie
+  // soit vraiment exploitée dans son intégralité au fil des tirages.
+  const openness = (idx === 0 || idx === slotCount - 1) ? Math.max(spread, 0.85) : spread;
   const target = GEO * Math.pow(anchor / GEO, openness);   // spread = ouverture de l'éventail
   let n = target / (master * ratio);
   return Math.max(0.03, Math.min(N_MAX, Math.round(n * 100) / 100));
@@ -5678,19 +5691,44 @@ function triggerMagicAuto(opts) {
 
   // ── Registre CONTINU par paire (répartition log-continue déjà conçue,
   // enfin exploitée) : slots mélangés → étage fréquentiel quasi-infini.
-  const slotOrder = _shuffle([0, 1, 2, 3, 4, 5]);
+  // #78 : la répartition (aeratedN) utilisait TOUJOURS 6 créneaux fixes,
+  // même quand une partie des paires est mute — les paires actives se
+  // retrouvaient tassées dans une plage pensée pour 6, au lieu de profiter
+  // de toute la plage laissée libre par les paires coupées. On ne bâtit
+  // désormais les créneaux QUE sur les paires satellites actives (non
+  // mute) ; les paires mute sont ignorées par le tirage (leur fréquence
+  // reste inchangée tant qu'elles restent coupées — inutile de la tirer).
+  const _activeSatIdxs = [];
+  for (let _si = 0; _si < 6; _si++) {
+    const _sp = PAIRS[_si];
+    if (!(mutedOscs[_sp.pingala.id] && mutedOscs[_sp.ida.id])) _activeSatIdxs.push(_si);
+  }
+  const _slotCount = _activeSatIdxs.length || 6; // repli si tout est mute (cas limite)
+  const _shuffledSlots = _shuffle([...Array(_slotCount).keys()]);
+  const slotOrder = {};
+  (_activeSatIdxs.length ? _activeSatIdxs : [0, 1, 2, 3, 4, 5]).forEach((satIdx, k) => {
+    slotOrder[satIdx] = _shuffledSlots[k];
+  });
 
   // ── Profondeur 3D : une paire « vedette » est proche (sèche, brillante,
   // devant), les autres reculent à des distances variables (plus mates,
   // moins présentes) — vraie sensation de volume/espace, pas juste un
   // panoramique gauche-droite. Le panning binaural lui-même n'est jamais
   // touché (précision du battement préservée).
-  const spotlight = Math.floor(Math.random() * 7); // 0-5 satellites, 6 = maître
+  // #78 : la vedette ne doit jamais tomber sur une paire mute (traitement
+  // gaspillé, inaudible) — tirée uniquement parmi les paires actives.
+  const _spotPool = [MASTER_IDX, ..._activeSatIdxs];
+  const spotlight = _spotPool[Math.floor(Math.random() * _spotPool.length)];
 
   _duckAndApply(() => {
   PAIRS.forEach((pair, idx) => {
     if (typeof isLocked === 'function' && isLocked(idx)) return;
     if (idx === keepIdx && idx !== MASTER_IDX) return;
+    // #78 : paire satellite mute → on ne la retire pas de la boucle (elle a
+    // encore besoin d'un état cohérent si un jour elle est démute sans
+    // nouveau tirage), mais son ratio/registre/detune ne sont PAS retirés au
+    // hasard — seule la fréquence RESTE ce qu'elle était avant le tirage.
+    if (idx !== MASTER_IDX && !_activeSatIdxs.includes(idx) && _activeSatIdxs.length) return;
 
     const isSpot = idx === spotlight;
     // Option "Profondeur 3D" décochée → tout le monde reste proche/neutre
@@ -8512,11 +8550,14 @@ function _sampleRowPointerDown(ev) {
   if (ev.target.closest('.sample-row-btn')) return; // pas sur Découper/Supprimer
   const row = ev.target.closest('.sample-row'); if (!row) return;
   _dragState = { folderId: row.dataset.folder, idx: parseInt(row.dataset.idx), startX: ev.clientX, startY: ev.clientY, dragging: false, row };
+  // #76 : 420ms → 280ms (retour terrain : trop lent pour "attraper" un
+  // sample rapidement). Reste assez long pour ne pas confondre un scroll
+  // vertical normal de la liste avec un appui long (cf. seuil 10px ci-dessous).
   _dragState.timer = setTimeout(() => {
     if (!_dragState) return;
     _dragState.dragging = true;
     _sampleDragStart(_dragState);
-  }, 420);
+  }, 280);
 }
 function _sampleRowPointerMove(ev) {
   if (!_dragState) return;
@@ -9003,6 +9044,43 @@ async function sampleDelete(folderId, idx) {
   sampleOpenFolder(folderId);
 }
 
+// #77 : correction manuelle de la fondamentale détectée — la détection
+// automatique (autocorrélation) se trompe parfois sur des samples complexes
+// (harmoniques fortes, bruit, percussif…) et il n'existait auparavant AUCUN
+// moyen de la corriger, forçant à subir un jeu binaural mal ancré.
+function openSampleFundEdit() {
+  const disp = document.getElementById('sample-fund-disp');
+  const inp  = document.getElementById('sample-fund-input');
+  if (!disp || !inp) return;
+  disp.style.display = 'none';
+  inp.style.display = 'inline-block';
+  inp.value = _curSampleFund != null ? _curSampleFund : '';
+  inp.focus(); inp.select();
+}
+function handleSampleFundKey(e) {
+  if (e.key === 'Enter')  { e.preventDefault(); exitSampleFundEdit(true); }
+  if (e.key === 'Escape') exitSampleFundEdit(false);
+}
+function exitSampleFundEdit(apply) {
+  const disp = document.getElementById('sample-fund-disp');
+  const inp  = document.getElementById('sample-fund-input');
+  if (!disp || !inp) return;
+  if (apply && inp.value !== '') {
+    const v = parseFloat(inp.value);
+    if (!isNaN(v)) {
+      _curSampleFund = Math.round(Math.max(F_MIN, Math.min(432, v)) * 10) / 10;
+      // Persiste la correction sur le fichier courant (comme la détection
+      // auto), pour qu'elle survive à un changement de dossier/rechargement.
+      const files = _curSampleFolderId ? SAMPLE_FILES[_curSampleFolderId] : null;
+      const idx = _sampleSrc ? _sampleSrc._idx : null;
+      const f = (files && idx != null) ? files[idx] : null;
+      if (f) { f.fund = _curSampleFund; if (f.id != null) _sdbUpdateFund(f.id, _curSampleFund); }
+    }
+  }
+  inp.style.display = 'none';
+  disp.style.display = '';
+  disp.textContent = _curSampleFund != null ? (_curSampleFund + ' Hz') : '—';
+}
 function sampleSoloMaster() {
   if (!_curSampleFund && _sampleSrc && _sampleSrc.buffer) {
     _curSampleFund = foldToBand(detectFundamental(_sampleSrc.buffer));

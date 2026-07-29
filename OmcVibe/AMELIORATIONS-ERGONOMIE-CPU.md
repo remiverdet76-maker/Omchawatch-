@@ -1449,3 +1449,43 @@ du moteur audio, passe de correctifs sur `OmcVibe/www/index.html` et
 Vérifié par une suite de tests Playwright (suppression Bowl/Reverb/Timer,
 chaîne de sécurité Chaharmony, gating reverb/delay, non-régression du
 rebuild ciblé par paire, plafond de résonance) : 0 erreur JS sur l'ensemble.
+
+## #76 : 4 correctifs samples / jeu aléatoire
+
+Retour terrain suite à la maj précédente.
+
+1. **Glisser-déposer un sample vers un dossier trop lent** — le seuil
+   d'appui long ramené de 420ms à 280ms (reste assez long pour ne pas
+   confondre un scroll de liste avec un appui long).
+2. **Impossible de corriger la fréquence fondamentale détectée** — elle
+   était en lecture seule (aucun moyen de la corriger si l'autocorrélation
+   se trompe sur un sample complexe). Ajout d'une édition tactile (toucher
+   la valeur → clavier, Entrée valide/Échap annule), correction persistée
+   sur le fichier comme la détection automatique.
+3. **Conflit au lancement du jeu avec un sample : fréquence maître
+   "perdue", jeu recalé sur rien de cohérent** — vraie course entre
+   `stopFlow()` et un `startFlow()` rapproché (redémarrage rapide du Flux,
+   scénario courant avec le jeu depuis un sample). Le nettoyage DIFFÉRÉ de
+   `stopFlow()` (600ms) mettait `masterGain`/`_lfoGain`/etc. — des
+   variables globales partagées, pas des références locales — à `null` en
+   pleine NOUVELLE session si celle-ci avait démarré entre-temps : les
+   paires pas encore reconstruites au moment du nettoyage restaient alors
+   silencieusement absentes (garde `if (!flowing || !masterGain) return`
+   dans `swapPingala`/`swapIda`), watchdog et sub-drone de la nouvelle
+   session coupés au passage. Corrigé par une garde `if (flowing) return;`
+   en tête du nettoyage différé : s'il y a une nouvelle session en cours,
+   le nettoyage de l'ancienne ne fait plus rien.
+4. **Le jeu aléatoire (Omchaléatoire / Nouveau jeu) ignorait les
+   oscillateurs mute** — la répartition fréquentielle (`aeratedN`)
+   utilisait toujours 6 créneaux fixes même quand une partie des paires
+   est coupée, les tassant dans une plage pensée pour 6 au lieu de profiter
+   de tout l'espace libéré. Le tirage ne construit désormais ses créneaux
+   QUE sur les paires satellites actives (non mute, `slotCount` dynamique)
+   ; une paire mute n'est plus retirée au hasard (elle garde sa fréquence
+   jusqu'à être démutée) et la "vedette" (traitement timbre/profondeur) ne
+   peut plus tomber sur une paire inaudible.
+
+Vérifié par tests Playwright (édition fondamentale + persistance,
+glisser-déposer bout en bout jusqu'au déplacement réel, redémarrage rapide
+du Flux avec les 14 oscillateurs bien reconstruits, tirage aléatoire avec
+paires mute qui ne redessinent plus leur fréquence) : 0 erreur JS.
