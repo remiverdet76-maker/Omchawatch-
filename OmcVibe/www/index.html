@@ -4098,6 +4098,13 @@ function setPairBreathDepthMax(v) {
 
 function attachOscVolLFO(id, rate, depth, phase) {
   clearOscVolLFO(id);
+  // #83 : un oscillateur mute ne doit JAMAIS produire de son — hors, l'ancien
+  // code connectait quand même le LFO directement sur node.g.gain (AudioParam
+  // qui SOMME base+LFO), donc même gain=0 ciblé par le mute, l'oscillateur
+  // pulsait audiblement au rythme du LFO ("un son qui s'active sans savoir
+  // d'où"). Refus d'attacher si mute — se réactive normalement au démutage
+  // (l'utilisateur peut relancer la respiration manuellement si besoin).
+  if (mutedOscs[id]) return;
   const node = nodes[id]; if (!node) return;
   const c = audioCtx();
   const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = rate || 0.2;
@@ -5240,6 +5247,9 @@ function toggleMutePair(i) {
   const next = !bothMuted; // pas encore tout coupé -> on coupe tout ; déjà tout coupé -> on redonne le son
   mutedOscs[pid] = next;
   mutedOscs[iid] = next;
+  // #83 : coupe aussi tout LFO de respiration déjà attaché — sinon il
+  // continue de moduler node.g.gain et fait "pulser" un oscillateur muet.
+  if (next) { clearOscVolLFO(pid); clearOscVolLFO(iid); }
   const np = nodes[pid], ni = nodes[iid];
   if (np) safeRamp(np.g.gain, next ? 0 : pair.pingala.vol, 0.5);
   if (ni) safeRamp(ni.g.gain, next ? 0 : pair.ida.vol, 0.5);
@@ -5264,6 +5274,10 @@ function soloPair(i) {
       const wasMutedI = _soloSnapshot ? !!_soloSnapshot[p.ida.id]     : false;
       mutedOscs[p.pingala.id] = wasMutedP;
       mutedOscs[p.ida.id]     = wasMutedI;
+      // #83 : idem toggleMutePair — une paire qui redevient mute (état
+      // d'avant le solo) ne doit garder aucun LFO de respiration attaché.
+      if (wasMutedP) clearOscVolLFO(p.pingala.id);
+      if (wasMutedI) clearOscVolLFO(p.ida.id);
       const np = nodes[p.pingala.id], ni = nodes[p.ida.id];
       if (np) safeRamp(np.g.gain, wasMutedP ? 0 : p.pingala.vol, 0.4);
       if (ni) safeRamp(ni.g.gain, wasMutedI ? 0 : p.ida.vol, 0.4);
@@ -5281,6 +5295,7 @@ function soloPair(i) {
     _soloSnapshot[p.ida.id]     = !!mutedOscs[p.ida.id];
     mutedOscs[p.pingala.id] = true;
     mutedOscs[p.ida.id]     = true;
+    clearOscVolLFO(p.pingala.id); clearOscVolLFO(p.ida.id); // #83
     const np = nodes[p.pingala.id], ni = nodes[p.ida.id];
     if (np) safeRamp(np.g.gain, 0, 0.4);
     if (ni) safeRamp(ni.g.gain, 0, 0.4);
@@ -9098,6 +9113,7 @@ function sampleSoloMaster() {
   PAIRS.forEach((p, i) => {
     mutedOscs[p.pingala.id] = solo;
     mutedOscs[p.ida.id]     = solo;
+    if (solo) { clearOscVolLFO(p.pingala.id); clearOscVolLFO(p.ida.id); } // #83
     const np = nodes[p.pingala.id], ni = nodes[p.ida.id];
     if (np) safeRamp(np.g.gain, solo ? 0 : p.pingala.vol, 0.4);
     if (ni) safeRamp(ni.g.gain, solo ? 0 : p.ida.vol, 0.4);

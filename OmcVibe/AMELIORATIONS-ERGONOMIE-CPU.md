@@ -1536,3 +1536,40 @@ Vérifié par tests Playwright (gating reverbe Sphère432 par défaut et sur
 changement de curseur, absence de régression sur les suites existantes
 OmcVibe/Sphère432/Torsion432, 0 élément de texte en débordement dans le
 dock) : 0 erreur JS.
+
+## #83 : fuite audio — un oscillateur "mute" pouvait quand même s'entendre
+
+Retour terrain : "des sons qui s'activent sans savoir d'où ils sortent".
+
+Cause racine : la respiration par paire (`attachOscVolLFO`, LFO doux de
+volume) connecte son gain DIRECTEMENT sur l'AudioParam `node.g.gain` — un
+AudioParam SOMME toutes ses entrées (valeur de base + tout ce qui y est
+connecté). Couper une paire (mute) ramène la valeur de BASE à 0, mais
+n'empêchait pas un LFO déjà (ou nouvellement) attaché de continuer à
+moduler ce même paramètre par-dessus — l'oscillateur "muet" se mettait
+alors à pulser audiblement au rythme du LFO (quelques secondes à plus
+d'une minute de cycle), sans bouton ni sphère associée à l'origine du son
+puisque rien dans l'UI ne "montre" un LFO de respiration actif sur une
+paire éteinte.
+
+Deux déclencheurs identifiés :
+1. Le tirage aléatoire (`triggerMagicAuto`) attache une respiration à
+   TOUTES les paires quand l'option "Respiration par paire" est cochée —
+   y compris les paires mute (bug depuis l'introduction de la fonctionnalité,
+   resté longtemps invisible tant que peu de paires étaient mute par
+   défaut ; devenu flagrant depuis #69, une seule paire active de base).
+2. Couper une paire qui avait déjà une respiration active (bouton dédié,
+   ou solo, ou ancre respiratoire) ne la détachait jamais.
+
+Corrigé à la source : `attachOscVolLFO` refuse maintenant d'attacher un
+LFO sur un oscillateur mute (protège tous les points d'entrée d'un coup —
+tirage aléatoire, ancre respiratoire, bouton manuel), et les 3 fonctions
+qui coupent une paire interactivement (mute d'une sphère, solo, solo
+sample) détachent explicitement toute respiration déjà en cours au moment
+de couper.
+
+Vérifié par test Playwright : gain d'une paire mute strictement à 0 sur
+10 échantillons après un tirage aléatoire avec respiration activée
+(avant : aurait pulsé) ; respiration attachée puis paire mute juste après
+→ gain retombe et reste exactement à 0 (avant : serait resté audible).
+0 erreur JS, 0 régression sur les suites existantes.
