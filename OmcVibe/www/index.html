@@ -2081,6 +2081,9 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
     <!-- #84 : évolution harmonique douce — dérive lente et continue, distincte du tirage aléatoire instantané -->
     <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Évolution harmonique douce </span><input type="checkbox" class="sw" id="ck-organic-evo" onchange="setOrganicEvolution(this.checked)"></div>
     <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;">Toutes les 45s environ, une paire (jamais mute/verrouillée) dérive très légèrement de registre, en glissant sur plusieurs secondes — un jeu qui vit tout seul dans le temps, sans jamais de saut ni de à-coup.</div>
+    <!-- #86 : battement rapproché — seule exception assumée à la marge de sécurité 36 Hz -->
+    <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Battement rapproché (1–7.2 Hz) </span><input type="checkbox" class="sw" id="ck-rand-closebeat" onchange="setCloseBeatPair(this.checked)"></div>
+    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;">À chaque tirage, DEUX paires sont volontairement rapprochées à 1–7.2 Hz l'une de l'autre (seule exception à la marge de 36 Hz) pour un battement plus vivant et imprévisible. Tout le reste du jeu garde ses 36 Hz.</div>
     <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.3rem 0 .2rem;" data-html-import-id="html-import-511" data-template-id="div-493" class="canva-container">PLAGE FRÉQUENCE — toujours active, répartition continue</div>
     <div class="sl-row" data-html-import-id="html-import-512">
       <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;" data-html-import-id="html-import-513" data-template-id="label-494" class="canva-text"><canva-inline-text data-template-id="canva-inline-text-495" class="canva-text">Min </canva-inline-text><span id="rv-fmin" style="color:#63E6FF" data-html-import-id="html-import-514" data-template-id="span-496" class="canva-text">54</span><canva-inline-text data-template-id="canva-inline-text-497" class="canva-text"> Hz</canva-inline-text></label>
@@ -5119,7 +5122,7 @@ function setDeltaCharacter(mode, btn) {
 // cette plage — répartition quasi-infinie, plus de pool figé.
 const RAND_OPTS={freqMin:F_MIN,freqMax:432,ratioMode:'random',useFX:false,spread:0.6,lockBinaural:true,
   filterLFO:false, randomTimbre:true, randomDepth:true, breathRandom:true, deltaVariety:true, polarityVariety:true,
-  randomDualSine:false};
+  randomDualSine:false, closeBeatPair:false};
 // filterLFO désactivé par défaut (retour terrain, comparaison avec la
 // version du 01/07 qui ne l'avait pas) : à chaque tirage aléatoire, cette
 // option fait jusqu'à 24 créations/déconnexions de nœuds de modulation
@@ -5202,6 +5205,18 @@ function setRandBreath(v){
     const btn = document.getElementById('btn-lfo-' + i);
     if (btn) { btn.textContent = '〜 Activer'; btn.style.opacity = ''; }
   });
+  saveState();
+}
+// #86 : « battement rapproché » — option qui autorise VOLONTAIREMENT deux
+// paires satellites du tirage à se retrouver à 1–7.2 Hz l'une de l'autre
+// (au lieu des 36 Hz habituels) pour un effet de battement plus dynamique.
+// Seule exception assumée à la marge de sécurité (#85) : tout le reste du
+// jeu reste à ≥36 Hz de tout, y compris de ce duo. OFF par défaut — la
+// marge de sécurité pleine s'applique tant que l'utilisateur ne choisit
+// pas explicitement plus de dynamisme.
+function setCloseBeatPair(v){
+  RAND_OPTS.closeBeatPair=!!v;
+  const ck=document.getElementById('ck-rand-closebeat'); if(ck) ck.checked=RAND_OPTS.closeBeatPair;
   saveState();
 }
 
@@ -5609,6 +5624,28 @@ function _drawSpacedN(master, ri, slotIdx, spread, lo, hi, claimed) {
   return Math.max(0.1, Math.min(N_MAX, bestF / (master * ratio)));
 }
 
+// #86 : « battement rapproché » (option, cf. RAND_OPTS.closeBeatPair) —
+// cherche une fréquence à 1–7.2 Hz (au hasard au-dessus OU en-dessous) de
+// la paire "meneuse" désignée pour ce tirage, tout en restant ≥36 Hz de
+// TOUT LE RESTE déjà retenu (seule la meneuse est exemptée de la marge —
+// c'est elle, volontairement, que la paire "suiveuse" vient frôler).
+// Retourne null si aucune des deux positions n'est libre : l'appelant se
+// replie alors sur le tirage normal à 36 Hz (dégradation propre plutôt
+// qu'une valeur forcée qui romprait la marge de sécurité avec une tierce
+// paire).
+function _drawCloseFollowerN(master, ri, leaderF, lo, hi, claimed) {
+  const ratio = RATIO_OPTS[ri].r;
+  const isFreeExceptLeader = (f) => claimed.every(c => c === leaderF || Math.abs(c - f) >= MIN_FREQ_SPACING_HZ);
+  const gap = 1 + Math.random() * 6.2; // 1 à 7.2 Hz
+  const candidates = _shuffle([leaderF + gap, leaderF - gap]);
+  for (const f of candidates) {
+    if (f < lo || f > hi) continue;
+    if (!isFreeExceptLeader(f)) continue;
+    return Math.max(0.1, Math.min(N_MAX, f / (master * ratio)));
+  }
+  return null;
+}
+
 // Indice de ratio le plus proche d'une valeur cible dans RATIO_OPTS
 function closestRatioIdx(target) {
   return RATIO_OPTS.reduce((best, o, i) =>
@@ -5880,6 +5917,23 @@ function triggerMagicAuto(opts) {
   // dans l'ordre où elles sont validées (maître en premier, toujours fixe).
   const _claimedFreqs = [Math.min(432, newMaster)];
 
+  // #86 : « battement rapproché » (option) — désigne pour CE tirage un duo
+  // meneur/suiveur parmi les paires satellites actives, non verrouillées,
+  // non conservées (keepIdx). C'est la SEULE exception assumée à la marge
+  // de 36 Hz : la suiveuse visera volontairement 1–7.2 Hz de la meneuse
+  // (cf. _drawCloseFollowerN plus loin), tout le reste du jeu garde ses
+  // 36 Hz. Index triés pour que la meneuse soit toujours traitée avant la
+  // suiveuse dans le forEach ci-dessous (elle doit déjà avoir sa fréquence
+  // validée pour que la suiveuse puisse viser autour).
+  const _closeBeatCandidates = _activeSatIdxs.filter(i =>
+    i !== keepIdx && !(typeof isLocked === 'function' && isLocked(i)));
+  let _closeBeatLeaderIdx = -1, _closeBeatFollowerIdx = -1, _closeBeatLeaderFreq = null;
+  if (RAND_OPTS.closeBeatPair && _closeBeatCandidates.length >= 2) {
+    const picked = _shuffle([..._closeBeatCandidates]).slice(0, 2).sort((a, b) => a - b);
+    _closeBeatLeaderIdx = picked[0];
+    _closeBeatFollowerIdx = picked[1];
+  }
+
   _duckAndApply(() => {
   PAIRS.forEach((pair, idx) => {
     if (typeof isLocked === 'function' && isLocked(idx)) return;
@@ -5943,13 +5997,21 @@ function triggerMagicAuto(opts) {
       ri = riBySlot[idx];                                         // ratio OmcV redistribué
       // La plage active (rMin–rMax) est passée à aeratedN : les 7 oscillateurs
       // (maître + satellites) restent TOUS dans la plage fréquence choisie.
+      // #86 : la suiveuse du duo « battement rapproché » vise 1–7.2 Hz de la
+      // meneuse déjà validée au lieu de la marge de 36 Hz habituelle ; si
+      // aucune des deux positions n'est libre (tierce paire dans la zone),
+      // on retombe proprement sur le tirage normal à 36 Hz.
       // #85 : marge de sécurité 36 Hz, cf. _drawSpacedN — vérifiée contre
       // toutes les fréquences déjà retenues ce tirage-ci.
-      n = _drawSpacedN(newMaster, ri, slotOrder[idx], spread, rMin, rMax, _claimedFreqs);
+      n = (idx === _closeBeatFollowerIdx && _closeBeatLeaderFreq != null)
+        ? _drawCloseFollowerN(newMaster, ri, _closeBeatLeaderFreq, rMin, rMax, _claimedFreqs)
+        : null;
+      if (n == null) n = _drawSpacedN(newMaster, ri, slotOrder[idx], spread, rMin, rMax, _claimedFreqs);
       pair.pingala.ri = ri;
       pair.pingala.n  = n;
     }
     _claimedFreqs.push(Math.max(rMin, Math.min(rMax, newMaster * RATIO_OPTS[ri].r * n)));
+    if (idx === _closeBeatLeaderIdx) _closeBeatLeaderFreq = _claimedFreqs[_claimedFreqs.length - 1];
     if (!lockBin) {                              // delta figé si verrou binaural (défaut)
       const oldDelta = pair.ida.delta;
       // #6 : Δ varié par paire (option) — chaque paire pioche indépendamment
@@ -7402,6 +7464,7 @@ function _syncRandOptsUI() {
   setCk('ck-rand-depth',    RAND_OPTS.randomDepth);
   setCk('ck-rand-breath',   RAND_OPTS.breathRandom);
   setCk('ck-rand-fx',       RAND_OPTS.useFX);
+  setCk('ck-rand-closebeat', RAND_OPTS.closeBeatPair);
   setCk('ck-delta-drift',   DELTA_DRIFT_STATE.on);
   setCk('ck-strict-headphone', STRICT_HEADPHONE_MODE);
   setCk('ck-pair-comp', PAIR_COMP_STATE.on);

@@ -1648,3 +1648,35 @@ respecté au rechargement, 0 violation de la marge de 36 Hz sur 25 tirages
 aléatoires consécutifs (525 paires de fréquences comparées), aucun crash
 sur une plage active volontairement trop étroite pour tenir la contrainte.
 0 erreur JS, 0 régression sur l'ensemble des suites existantes.
+
+## #86 : option « Battement rapproché » (1–7.2 Hz) — exception assumée à la marge de 36 Hz
+
+Demande : pouvoir influencer le tirage aléatoire pour retrouver, VOLONTAIREMENT,
+l'effet dynamique d'un battement rapproché entre deux paires (1 à 7.2 Hz
+d'écart) — contradictoire avec la marge de sécurité #85, donc une exception
+explicite, pas un retour en arrière sur la règle des 36 Hz.
+
+1. **Nouvelle case à cocher "Battement rapproché (1–7.2 Hz)"** dans le
+   panneau Options Aléatoire (`RAND_OPTS.closeBeatPair`, **OFF par
+   défaut** — la marge de sécurité pleine reste le comportement par
+   défaut, l'utilisateur choisit explicitement plus de dynamisme).
+2. **Un seul duo par tirage** — quand l'option est active, `triggerMagicAuto`
+   désigne au hasard DEUX paires satellites actives (non mute, non
+   verrouillées, non conservées) : une "meneuse" tirée normalement (36 Hz
+   respectés vis-à-vis de tout), puis une "suiveuse" dont la fréquence
+   vise volontairement 1 à 7.2 Hz au-dessus OU en-dessous de la meneuse
+   (`_drawCloseFollowerN`). C'est la SEULE exception à la marge de 36 Hz :
+   la suiveuse reste malgré tout à ≥36 Hz de TOUTES les autres paires
+   (uniquement la meneuse est frôlée) — aucune paire tierce ne se
+   retrouve prise dans le rapprochement.
+3. **Dégradation propre** — si aucune des deux positions (meneuse + gap,
+   meneuse − gap) n'est libre par rapport à une tierce paire, la
+   suiveuse retombe sur le tirage normal à 36 Hz pour ce tirage-là
+   (jamais de valeur forcée qui romprait la marge avec une autre paire).
+
+Vérifié par tests Playwright : option décochée par défaut et persistée
+(sauvegarde/rechargement), option décochée → 0 changement de comportement
+(marge de 36 Hz intacte sur 20 tirages), option cochée → un écart compris
+entre 1 et 7.2 Hz apparaît sur 28 tirages sur 30, toujours entre EXACTEMENT
+deux paires (jamais de violation de 36 Hz "en trop" ailleurs dans le même
+tirage). 0 erreur JS, 0 régression sur l'ensemble des suites existantes.
