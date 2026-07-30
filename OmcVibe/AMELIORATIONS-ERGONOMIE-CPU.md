@@ -1724,3 +1724,47 @@ s'ouvrent correctement dans l'overlay avec `window.self !== window.top`,
 fermeture de l'overlay (`_closeModuleOverlay`) remet bien l'iframe à
 `about:blank` et le binaural n'est jamais interrompu. 0 erreur JS, 0
 régression sur l'ensemble des suites existantes.
+
+**Correction (même jour) — mauvais moteur exporté.** Le retour terrain a
+signalé que `geometrie.html` reprenait par erreur le moteur de Torsion 432
+(double hélice/tore, projection canvas maison) — un doublon, pas "le moteur
+3D de OmchaVibe". Le vrai moteur visé est celui qui tourne EN PERMANENCE
+derrière la sphère maître d'OmchaVibe 432 elle-même (`meta-canvas`,
+fonctions `FX3D`/`drawMetatron` d'`index.html`) : réseau de lignes de flux
+lumineuses avec bloom, mandala sacré en fond, 72 particules orbitales sur 6
+familles de couleur, centre fractal pulsant — sensiblement plus riche que
+Torsion 432. `geometrie.html` a été entièrement réécrit autour de CE moteur :
+
+1. **Export fidèle du moteur FX3D** — `proj`, `buildMC` (mandala), `FX3D`
+   (construction des points + rendu bloom/flux/centre), particules
+   orbitales, projection caméra (`V`) avec glisser/pincer/zoom : code repris
+   à l'identique d'`index.html`, aucune réécriture des maths.
+2. **Les 4 formes originales, toutes réactivées** — dans OmchaVibe 432
+   lui-même, seul Torus reste sélectionnable (Sphère/Métatron/Merkaba ont
+   leur code de rendu intact mais dormant, exclues de l'UI). Ce module leur
+   redonne accès : un sélecteur "Formes" bascule librement entre les 4,
+   plus une évolution automatique optionnelle qui les enchaîne toute
+   seule.
+3. **Panneau "Paramètres"** — densité, torsion, expansion, étalement,
+   éclat, polarité de couleur, vitesse : tous les curseurs de FX3D exposés
+   pour explorer librement le moteur (base pour les évolutions design à
+   venir, comme demandé).
+4. **Teinte reliée au binaural RÉEL en cours de lecture** — dans OmchaVibe
+   432, la couleur du flux suit `masterFreq`. Embarqué dans l'overlay (cf.
+   #87 ci-dessus), Géométrie lit maintenant la fréquence maître
+   RÉELLEMENT jouée chez le parent via un pont dédié
+   (`window.getMasterFreq` côté `index.html` — `masterFreq` est déclarée
+   en `let`, donc invisible depuis un iframe enfant via `parent.masterFreq`
+   directement, contrairement à une globale `var` ; bug découvert et
+   corrigé pendant la vérification) : les couleurs réagissent vraiment à ce
+   qu'on entend, pas à une simulation. Page autonome (hors overlay) :
+   dérive douce et purement décorative autour de 432 Hz.
+
+Vérifié par tests Playwright : les 4 formes rendent sans erreur, tous les
+curseurs/interrupteurs du panneau "Paramètres" s'appliquent bien à `FX3D`/
+`V`/`AE`, le pont `getMasterFreq` renvoie la valeur exacte et à jour de
+`masterFreq` côté parent (testé avec changement en direct : 108 → 288 Hz,
+bien répercuté), 0 erreur JS. Captures d'écran validées visuellement pour
+Torus/Métatron (rendu identique en qualité à ce qui tourne derrière la
+sphère maître). Suite de régression complète (16 fichiers) toujours à 0
+erreur.

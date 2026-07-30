@@ -2545,6 +2545,11 @@ PAIRS.forEach((p, i) => {
 });
 
 let masterFreq  = 144;
+// #87 : masterFreq est déclarée en `let` — invisible depuis un iframe enfant
+// via `parent.masterFreq` (seules les globales `var`/`window.x=` traversent
+// la frontière de fenêtre). Pont explicite pour Géométrie (qui lit la
+// fréquence maître RÉELLEMENT en cours de lecture pour teinter son flux).
+window.getMasterFreq = () => masterFreq;
 let globalDelta = DELTA_DEFAULT;   // #35 : référence Delta (n'impose plus le même battement à tous)
 let masterVol   = 0.70;  // #62 : ramené de 0.85 à 0.70 (retour terrain "gains trop forts")
 // #38 : remonté 0.5→1.0 (+6 dB). Le plafond à 0.5 datait d'avant la chaîne
