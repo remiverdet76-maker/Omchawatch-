@@ -1768,3 +1768,97 @@ bien répercuté), 0 erreur JS. Captures d'écran validées visuellement pour
 Torus/Métatron (rendu identique en qualité à ce qui tourne derrière la
 sphère maître). Suite de régression complète (16 fichiers) toujours à 0
 erreur.
+
+## #88 : Géométrie — 17 points design / fractal / 3D / organique
+
+Suite de la demande précédente : 17 des 18 points proposés pour enrichir le
+moteur FX3D exporté dans `geometrie.html` (le 18ᵉ, pulsation synchronisée
+sur le battement binaural réel, explicitement écarté par le demandeur).
+Tout reste **purement additif** — aucun réglage neuf ne change quoi que ce
+soit tant qu'on ne le touche pas (valeurs par défaut strictement
+équivalentes à l'état livré juste avant, p=q=1 pour le torus, bruit/
+vibration/plan de coupe à 0%, etc.).
+
+**Géométrie fractale**
+1. **Fractal (IFS, chaos game)** — nouvelle forme : nuage de points
+   auto-similaire par jeu du chaos (3 à 9 attracteurs selon la profondeur),
+   mis en cache et stable (pas de scintillement d'une frame à l'autre).
+2. **Torus généralisé en nœud (p,q)** — la formule d'origine du torus est
+   étendue avec 2 multiplicateurs de phase (p, q) ; p=q=1 (défaut)
+   reproduit EXACTEMENT le torus d'origine, au-delà on obtient un vrai
+   nœud toroïdal tissé.
+3. **Symétrie kaléidoscopique réglable** — le mandala de fond n'avait que
+   3 bras de spirale dorée fixes ; curseur 3 à 16.
+4. **Arbre de vie** — nouvelle forme : structure arborescente générée par
+   L-system récursif (racines → branches), profondeur ET densité de
+   nœuds réglables (voir correctif ci-dessous).
+5. **Formes composites** — une 2ᵉ forme au choix se superpose à la forme
+   principale en transparence réglable.
+
+**Organique**
+6. **Distorsion organique** — bruit spatial 3D (implémentation "bruit de
+   valeur" compacte, auto-contenue) qui froisse doucement n'importe
+   quelle forme, intensité réglable.
+7. **Nuée de particules (boids)** — mode alternatif pour les 72
+   particules : séparation/alignement/cohésion au lieu d'orbites fixes.
+8. **Vibration haute fréquence** — jitter aléatoire ré-tiré à CHAQUE
+   frame sur les sommets (distinct de la distorsion organique, qui varie
+   lentement avec le temps).
+9. **Morphing interpolé** — l'évolution automatique (déjà existante)
+   glisse désormais d'une forme à l'autre sur ~2,6s (easing) au lieu d'un
+   cut instantané ; la sélection manuelle d'une forme reste, elle,
+   immédiate.
+
+**Profondeur / 3D**
+11. **Profondeur de champ** — passe floutée (canvas `filter: blur()`)
+    sous la passe nette, approximation pragmatique d'un flou de
+    profondeur.
+12. **Lumière directionnelle rotative simulée** — chaque segment de ligne
+    est éclairci/assombri selon son orientation par rapport à une source
+    lumineuse qui tourne lentement (façon éclairage Lambertien 2D).
+13. **Vue libre étendue + plan de coupe** — plage de zoom élargie
+    (.15×–6× au lieu de .3×–3×) et un curseur "plan de coupe" qui masque
+    les points les plus lointains (espace de vue, après rotation caméra)
+    pour révéler l'intérieur des formes.
+14. **Traînées de particules** — calque canvas séparé, effacé par
+    `destination-out` (fondu vers le TRANSPARENT) plutôt qu'un simple
+    remplissage noir à faible alpha qui, lui, finit par s'accumuler en un
+    calque opaque et masquer tout le reste — bug détecté à la capture
+    d'écran et corrigé avant livraison.
+
+**Design / couleur**
+15. **Palette dynamique étendue** — un curseur de teinte continue (0-360°)
+    tourne désormais aussi les couleurs du réseau de lignes/formes (pas
+    seulement les particules, qui avaient déjà leur propre suivi de
+    fréquence maître).
+16. **Mandala génératif à seed** — bouton "Nouveau mandala" : re-tire un
+    nombre de pétales et un léger désalignement des bras via un PRNG à
+    seed (mulberry32), pour un motif jamais identique.
+
+**Créatif / UX**
+17. **Export image** — capture le rendu courant (fond + flux + traînées
+    éventuelles) en PNG et déclenche un téléchargement.
+18. **Presets "constellations"** — sauvegarde/rappel de combinaisons
+    complètes (forme, ratio, tous les curseurs, tous les effets actifs)
+    dans un espace `localStorage` dédié (`omcha432_geo_presets`, aucune
+    collision avec les clés d'OmchaVibe 432 ou des autres modules).
+
+**2 bugs trouvés et corrigés pendant la vérification (avant livraison) :**
+- L'Arbre de vie ne produisait que ~13 nœuds par défaut (profondeur
+  mappée trop bas) — quasiment invisible à l'écran. Reparamétré pour
+  viser un nombre de nœuds dérivé de la Densité déjà existante (comme le
+  Fractal), donnant ~120 nœuds par défaut — vraie structure arborescente
+  visible immédiatement.
+- Les Traînées masquaient progressivement tout le reste du rendu (voir
+  point 14 ci-dessus).
+
+Vérifié par tests Playwright : les 6 formes rendent sans erreur, chaque
+nouveau curseur/interrupteur modifie bien l'état attendu (`FX3D`, `V`,
+`AE`, `COMPOSITE`, `DOF`, `LIGHT`, `TRAILS`, `PARTMODE`, `MANDALA_SYM`),
+morphing déclenché par l'évolution auto, presets sauvegarde/rappel/
+suppression fonctionnels et fidèles (forme + réglage retrouvés à
+l'identique), aucune régression sur l'overlay audio (#87 — le binaural
+d'OmchaVibe 432 reste `flowing` tout du long). Captures d'écran
+inspectées visuellement pour chacun des 17 points — 2 défauts réels
+repérés et corrigés avant cette livraison (voir ci-dessus). Suite de
+régression complète (18 fichiers) à 0 erreur JS.

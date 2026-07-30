@@ -18,22 +18,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--void);color:va
   background-size:cover;background-position:center;background-repeat:no-repeat;opacity:.34;z-index:0;}
 #geo-canvas{position:fixed;inset:0;z-index:1;touch-action:none;cursor:grab;}
 #geo-canvas.drag{cursor:grabbing;}
+#parts-canvas{position:fixed;inset:0;z-index:2;pointer-events:none;}
 #ui{position:fixed;inset:0;z-index:10;pointer-events:none;}
 #hdr{position:absolute;top:10px;left:14px;pointer-events:none;}
 #hdr-title{font-family:var(--orb);font-size:15px;font-weight:700;color:var(--cexp);letter-spacing:.08em;text-shadow:0 0 18px rgba(255,190,90,.5);}
 #hdr-sub{font-size:8px;color:var(--cgold);opacity:.55;margin-top:2px;letter-spacing:.04em;max-width:74vw;}
-#toolbar{position:absolute;top:9px;right:12px;display:flex;gap:5px;pointer-events:auto;}
+#toolbar{position:absolute;top:9px;right:12px;display:flex;gap:5px;pointer-events:auto;flex-wrap:wrap;justify-content:flex-end;max-width:56vw;}
 .tbtn{font-family:var(--orb);font-size:8px;letter-spacing:.1em;padding:7px 10px;cursor:pointer;text-transform:uppercase;border-radius:8px;transition:all .18s;background:var(--panel);border:1px solid var(--border);color:var(--cexp);backdrop-filter:blur(10px);white-space:nowrap;}
 .tbtn:hover{background:rgba(232,160,32,.12);border-color:rgba(255,190,90,.55);}
 .tbtn.on{background:rgba(232,160,32,.18);border-color:rgba(255,190,90,.75);color:#fff8ea;}
 #drawerBackdrop{position:fixed;inset:0;background:rgba(2,1,13,.5);z-index:19;display:none;pointer-events:auto;}
 #drawerBackdrop.open{display:block;}
-#drawerMenu{position:fixed;left:0;right:0;bottom:0;max-height:72vh;background:rgba(10,6,2,.96);
+#drawerMenu{position:fixed;left:0;right:0;bottom:0;max-height:76vh;background:rgba(10,6,2,.96);
   border-top:1.5px solid var(--border);border-radius:18px 18px 0 0;z-index:20;
   pointer-events:auto;backdrop-filter:blur(16px);display:flex;flex-direction:column;
   transform:translateY(100%);transition:transform .28s ease;}
 #drawerMenu.open{transform:translateY(0);}
-#drawerTabs{display:flex;gap:.4rem;padding:.8rem .9rem .5rem;flex-shrink:0;}
+#drawerTabs{display:flex;gap:.4rem;padding:.8rem .9rem .5rem;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
+#drawerTabs::-webkit-scrollbar{display:none;}
 .dtab{flex-shrink:0;padding:.42rem .8rem;border-radius:9px;font-family:var(--orb);font-size:.62rem;
   letter-spacing:.05em;color:var(--text);border:1.5px solid var(--border);background:rgba(20,12,4,.4);
   cursor:pointer;white-space:nowrap;}
@@ -55,13 +57,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--void);color:va
 .pl{font-size:9px;opacity:.7;}.pv{font-size:10px;color:var(--bright);min-width:52px;text-align:right;}
 input[type=range]{width:100%;-webkit-appearance:none;height:3px;background:rgba(232,160,32,.16);border-radius:2px;outline:none;margin-top:3px;margin-bottom:10px;}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cgold);cursor:pointer;box-shadow:0 0 6px rgba(232,160,32,.6);}
+.chiprow{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:8px;}
+.chip{font-size:8px;letter-spacing:.06em;padding:5px 8px;border-radius:7px;border:1px solid var(--border);background:rgba(20,12,4,.4);color:var(--text);cursor:pointer;text-transform:uppercase;}
+.chip.on{border-color:var(--cgold);background:rgba(232,160,32,.18);color:var(--bright);}
+.pbtn{width:100%;text-align:center;font-family:var(--orb);font-size:.68rem;letter-spacing:.08em;padding:.6rem;
+  border-radius:9px;background:rgba(232,160,32,.1);border:1.5px solid var(--border);color:var(--cgold);
+  cursor:pointer;margin-bottom:8px;}
+.pbtn:hover{background:rgba(232,160,32,.2);}
+.hint{font-size:8px;opacity:.4;padding:6px 2px;line-height:1.5;}
 #quickDock{position:fixed;left:0;right:0;bottom:0;z-index:21;display:flex;pointer-events:auto;
   background:rgba(8,5,2,.92);border-top:1.5px solid var(--border);backdrop-filter:blur(10px);
   padding-bottom:env(safe-area-inset-bottom,0);}
 .dbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   padding:.55rem .2rem;cursor:pointer;color:var(--text);border:none;background:none;font-family:var(--orb);}
 .dbtn .di{font-size:1.05rem;line-height:1;}
-.dbtn .dl{font-size:.52rem;letter-spacing:.06em;text-transform:uppercase;opacity:.8;}
+.dbtn .dl{font-size:.5rem;letter-spacing:.04em;text-transform:uppercase;opacity:.8;}
 .dbtn.on{color:var(--cexp);}
 #footnote{position:absolute;bottom:64px;left:0;right:0;text-align:center;font-size:7px;
   letter-spacing:.12em;color:rgba(200,170,255,.35);pointer-events:none;padding:0 1rem;}
@@ -70,6 +80,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
 <body>
 <div id="cosmic-bg"></div>
 <canvas id="geo-canvas"></canvas>
+<canvas id="parts-canvas"></canvas>
 <div id="ui">
   <div id="hdr">
     <div id="hdr-title">GÉOMÉTRIE</div>
@@ -77,6 +88,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
   </div>
   <div id="toolbar">
     <button class="tbtn on" id="tRot" onclick="toggleAutoRot()">↻ Rotation</button>
+    <button class="tbtn" onclick="exportImage()">⇩ Export</button>
   </div>
   <div id="footnote">Glisser pour orbiter · pincer/molette pour zoomer</div>
 </div>
@@ -87,6 +99,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
   <div id="drawerTabs">
     <button class="dtab on" id="dtab-formes" onclick="openDrawer('formes')">Formes</button>
     <button class="dtab" id="dtab-params" onclick="openDrawer('params')">Paramètres</button>
+    <button class="dtab" id="dtab-effets" onclick="openDrawer('effets')">Effets</button>
+    <button class="dtab" id="dtab-presets" onclick="openDrawer('presets')">Presets</button>
   </div>
   <div id="drawerBody">
     <div id="panFormes" class="dsec on">
@@ -95,6 +109,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
       <div class="mrow on" id="frm-torus" onclick="fx3dSetForm('torus')">∿ Torus</div>
       <div class="mrow" id="frm-metatron" onclick="fx3dSetForm('metatron')">✡ Métatron (icosaèdre)</div>
       <div class="mrow" id="frm-merkaba" onclick="fx3dSetForm('merkaba')">△ Merkaba</div>
+      <div class="mrow" id="frm-fractal" onclick="fx3dSetForm('fractal')">✳ Fractal (IFS)</div>
+      <div class="mrow" id="frm-arbre" onclick="fx3dSetForm('arbre')">🜍 Arbre de vie</div>
       <div class="gap"></div>
       <div class="psec">COULEURS (RATIO HARMONIQUE)</div>
       <div class="mrow on" id="rat-432-360" onclick="fx3dSetRatio('432/360')">432 / 360 · or ↔ turquoise</div>
@@ -105,7 +121,23 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
       <div class="mrow" id="rat-396-360" onclick="fx3dSetRatio('396/360')">396 / 360 · violet ↔ turquoise</div>
       <div class="gap"></div>
       <div class="mrow" id="ck-mandala" onclick="toggleMandala()">◈ Mandala sacré (fond)</div>
+      <div class="pr"><div class="pl">Symétrie kaléidoscope</div><div class="pv" id="sv-sym">3</div></div>
+      <input type="range" min="3" max="16" step="1" value="3" oninput="g3dSetSym(this.value)">
+      <div class="pbtn" onclick="newMandala()">🎲 Nouveau mandala</div>
       <div class="mrow" id="ck-parts" onclick="toggleParts()">✦ Particules orbitales</div>
+      <div class="gap"></div>
+      <div class="psec">FORME COMPOSITE</div>
+      <div class="mrow" id="ck-composite" onclick="toggleComposite()">⬡ Superposer une 2ᵉ forme</div>
+      <div class="chiprow" id="composite-picker">
+        <span class="chip" data-f="sphere" onclick="setCompositeForm2('sphere')">Sphère</span>
+        <span class="chip" data-f="torus" onclick="setCompositeForm2('torus')">Torus</span>
+        <span class="chip on" data-f="metatron" onclick="setCompositeForm2('metatron')">Métatron</span>
+        <span class="chip" data-f="merkaba" onclick="setCompositeForm2('merkaba')">Merkaba</span>
+        <span class="chip" data-f="fractal" onclick="setCompositeForm2('fractal')">Fractal</span>
+        <span class="chip" data-f="arbre" onclick="setCompositeForm2('arbre')">Arbre</span>
+      </div>
+      <div class="pr"><div class="pl">Opacité 2ᵉ forme</div><div class="pv" id="sv-comp-op">50%</div></div>
+      <input type="range" min="5" max="100" value="50" oninput="setCompositeOpacity(this.value)">
     </div>
     <div id="panParams" class="dsec">
       <div class="pcard">
@@ -118,6 +150,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
         <input type="range" min="20" max="200" value="100" oninput="g3dSetEx(this.value)">
         <div class="pr"><div class="pl">Étalement</div><div class="pv" id="sv-tm">1.00</div></div>
         <input type="range" min="10" max="200" value="100" oninput="g3dSetTM(this.value)">
+        <div class="pr"><div class="pl">Nœud torus P</div><div class="pv" id="sv-pknot">1</div></div>
+        <input type="range" min="1" max="8" step="1" value="1" oninput="g3dSetPKnot(this.value)">
+        <div class="pr"><div class="pl">Nœud torus Q</div><div class="pv" id="sv-qknot">1</div></div>
+        <input type="range" min="1" max="8" step="1" value="1" oninput="g3dSetQKnot(this.value)">
+        <div class="pr"><div class="pl">Profondeur fractale/arbre</div><div class="pv" id="sv-depth">4</div></div>
+        <input type="range" min="4" max="9" step="1" value="4" oninput="g3dSetDepth(this.value)">
       </div>
       <div class="pcard">
         <div class="pct">LUMIÈRE / MOUVEMENT</div>
@@ -127,10 +165,41 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
         <input type="range" min="1" max="30" value="8" oninput="g3dSetSpd(this.value)">
         <div class="pr"><div class="pl">Polarité couleur</div><div class="pv" id="sv-pol">0.00</div></div>
         <input type="range" min="-100" max="100" value="0" oninput="g3dSetPol(this.value)">
+        <div class="pr"><div class="pl">Teinte (lignes/formes)</div><div class="pv" id="sv-hue">0°</div></div>
+        <input type="range" min="0" max="360" value="0" oninput="g3dSetHue(this.value)">
       </div>
       <div class="mrow on" id="mrow-ae" onclick="g3dToggleAEBtn()">↻ Évolution automatique des formes</div>
       <div class="pr" style="margin-top:8px"><div class="pl">Vitesse évolution</div><div class="pv" id="sv-ae-spd">0.3×</div></div>
       <input type="range" min="1" max="15" value="3" oninput="g3dSetAESpd(this.value)">
+      <div class="hint">L'évolution automatique fait morphir une forme dans l'autre en douceur (~2,6s) au lieu d'un changement instantané.</div>
+    </div>
+    <div id="panEffets" class="dsec">
+      <div class="psec">DISTORSION / VIBRATION</div>
+      <div class="pr"><div class="pl">Distorsion organique</div><div class="pv" id="sv-noise">0%</div></div>
+      <input type="range" min="0" max="100" value="0" oninput="g3dSetNoise(this.value)">
+      <div class="hint">Bruit spatial doux qui froisse la forme — la rend vivante plutôt que parfaitement géométrique.</div>
+      <div class="pr"><div class="pl">Vibration haute fréquence</div><div class="pv" id="sv-jitter">0%</div></div>
+      <input type="range" min="0" max="100" value="0" oninput="g3dSetJitter(this.value)">
+      <div class="gap"></div>
+      <div class="psec">PROFONDEUR / VOLUME</div>
+      <div class="pr"><div class="pl">Profondeur de champ</div><div class="pv" id="sv-dof">0%</div></div>
+      <input type="range" min="0" max="100" value="0" oninput="g3dSetDof(this.value)">
+      <div class="mrow" id="ck-light" onclick="toggleLight()">☀ Lumière directionnelle rotative</div>
+      <div class="pr"><div class="pl">Vitesse lumière</div><div class="pv" id="sv-light-spd">0.2×</div></div>
+      <input type="range" min="1" max="20" value="2" oninput="g3dSetLightSpd(this.value)">
+      <div class="pr"><div class="pl">Plan de coupe</div><div class="pv" id="sv-clip">0%</div></div>
+      <input type="range" min="0" max="100" value="0" oninput="g3dSetClip(this.value)">
+      <div class="hint">Révèle l'intérieur de la forme en masquant les points les plus éloignés de la caméra.</div>
+      <div class="gap"></div>
+      <div class="psec">PARTICULES</div>
+      <div class="mrow" id="ck-boids" onclick="toggleBoids()">🐦 Comportement nuée (boids)</div>
+      <div class="mrow" id="ck-trails" onclick="toggleTrails()">☄ Traînées lumineuses</div>
+    </div>
+    <div id="panPresets" class="dsec">
+      <div class="psec">CONSTELLATIONS ENREGISTRÉES</div>
+      <div class="pbtn" onclick="saveGeoPreset()">💾 Enregistrer les réglages actuels</div>
+      <div id="presetList"></div>
+      <div class="hint">Un preset mémorise forme, couleurs, tous les curseurs et effets actifs — rappel en un tap.</div>
     </div>
   </div>
 </div>
@@ -138,28 +207,38 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
 <div id="quickDock">
   <button class="dbtn on" id="dockFormes" onclick="openDrawer('formes')"><span class="di">◈</span><span class="dl">Formes</span></button>
   <button class="dbtn" id="dockParams" onclick="openDrawer('params')"><span class="di">≡</span><span class="dl">Réglages</span></button>
+  <button class="dbtn" id="dockEffets" onclick="openDrawer('effets')"><span class="di">✧</span><span class="dl">Effets</span></button>
   <button class="dbtn" onclick="location.href='sphere-flux.html'"><span class="di">←</span><span class="dl">Retour</span></button>
 </div>
 
 <script>
 'use strict';
 /* ═══════════════════════════════════════════════════════════════════
-   GÉOMÉTRIE — export direct du moteur 3D d'OmchaVibe 432
-   (03-geometry.js : FX3D Flux · Mandala sacré · Particules orbitales)
-   4 formes : Sphère · Torus · Métatron · Merkaba — les 4 sont ici
-   actives (dans OmchaVibe 432 lui-même, seul Torus reste sélectionnable
-   en pratique : sphère/métatron/merkaba y dorment, code intact mais
-   inaccessible ; ce module leur redonne vie en plus d'expérimenter
-   librement les réglages, sans jamais toucher au moteur original).
+   GÉOMÉTRIE — export du moteur 3D d'OmchaVibe 432 (FX3D Flux · Mandala
+   sacré · Particules), étendu de 18 points (design / géométrie fractale
+   / 3D / organique) — voir AMELIORATIONS-ERGONOMIE-CPU.md #88.
+   Les 4 formes d'origine (Sphère/Torus/Métatron/Merkaba) restent
+   identiques par défaut (aucun réglage neuf ne change quoi que ce soit
+   tant qu'on ne le touche pas) ; 2 nouvelles formes (Fractal/Arbre) et
+   tous les effets sont des ajouts purement additifs.
    ═══════════════════════════════════════════════════════════════════ */
 
-const GEO_NAMES=['Sphère','Torus','Métatron','Merkaba'];
-const GEO_IDS  =['sphere','torus','metatron','merkaba'];
+const GEO_NAMES=['Sphère','Torus','Métatron','Merkaba','Fractal','Arbre'];
+const GEO_IDS  =['sphere','torus','metatron','merkaba','fractal','arbre'];
 let activeGeometry=1; // Torus par défaut, comme dans OmchaVibe 432
 
 const V={rx:.28,ry:0,trx:.28,try_:0,zoom:2.2,tzoom:2.2,drag:false,lmx:0,lmy:0,t:0,spd:.8,autoRot:true};
 const HP={ex:.18,pa:true,ma:true,gl:.65,f:1,breathe:1};
 const AE={on:true,spd:.3,phase:0,counter:0};
+
+// #5 formes composites · #7 boids · #11 profondeur de champ · #12 lumière
+// #14 traînées — tous OFF/neutres par défaut (purement additifs).
+const COMPOSITE={on:false,form2:'metatron',opacity2:0.5};
+const PARTMODE={boids:false};
+const DOF={amt:0};
+const LIGHT={on:false,angle:0,speed:0.2};
+const TRAILS={on:false};
+let MANDALA_SYM=3, MANDALA_SEED=0;
 
 var _gW=0,_gH=0,_gCx=0,_gCy=0;
 
@@ -177,11 +256,6 @@ var _SMID_BASE=SCOLS.map(c=>[(c[0][0]+c[1][0])>>1,(c[0][1]+c[1][1])>>1,(c[0][2]+
 var _SMID=[..._SMID_BASE];
 
 // ── Teinte liée à la fréquence maître d'OmchaVibe 432 ──────────────
-// Embarqué dans l'overlay (cf. index.html #87) : lit la fréquence maître
-// RÉELLEMENT en cours de lecture chez le parent (même origine, accès
-// direct), pour que la couleur du flux réagisse vraiment au binaural
-// qu'on entend — pas une simulation. Page autonome (hors overlay) :
-// dérive doucement autour de 432 Hz, purement décorative.
 let _localMasterFreq=432,_localDrift=0;
 function _getMasterFreq(){
   if (window.self !== window.top) {
@@ -216,6 +290,57 @@ function applyMasterHueToFlux(freq){
   _lastMasterHueShift+=(targetShift-_lastMasterHueShift)*0.015;
   _SMID=_SMID_BASE.map(c=>{const[h,s,l]=_rgb2hsl(c[0],c[1],c[2]);return _hsl2rgb(h+_lastMasterHueShift,s,l);});
 }
+// #15 : teinte continue appliquée aux couleurs de lignes/formes (FX3D_RATIOS),
+// distincte de la teinte automatique ci-dessus qui ne touchait que les
+// particules. hue=0 (défaut) → couleurs de base inchangées.
+function _hueShiftRGB(rgb,deg){
+  if(!deg)return rgb;
+  const[h,s,l]=_rgb2hsl(rgb[0],rgb[1],rgb[2]);
+  return _hsl2rgb(h+deg,s,l);
+}
+
+// ── Bruit de valeur 3D compact (#6 distorsion organique) ───────────
+function _hash3(x,y,z){
+  let h=(x*374761393+y*668265263+z*2147483647)|0;
+  h=(h^(h>>>13))*1274126177|0;
+  h=h^(h>>>16);
+  return ((h>>>0)/4294967296)*2-1;
+}
+function _smooth(t){return t*t*(3-2*t);}
+function valueNoise3(x,y,z){
+  const xi=Math.floor(x),yi=Math.floor(y),zi=Math.floor(z);
+  const xf=x-xi,yf=y-yi,zf=z-zi;
+  const u=_smooth(xf),v=_smooth(yf),w=_smooth(zf);
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const c000=_hash3(xi,yi,zi),c100=_hash3(xi+1,yi,zi);
+  const c010=_hash3(xi,yi+1,zi),c110=_hash3(xi+1,yi+1,zi);
+  const c001=_hash3(xi,yi,zi+1),c101=_hash3(xi+1,yi,zi+1);
+  const c011=_hash3(xi,yi+1,zi+1),c111=_hash3(xi+1,yi+1,zi+1);
+  const x00=lerp(c000,c100,u),x10=lerp(c010,c110,u);
+  const x01=lerp(c001,c101,u),x11=lerp(c011,c111,u);
+  const y0=lerp(x00,x10,v),y1=lerp(x01,x11,v);
+  return lerp(y0,y1,w);
+}
+function applyNoise(pts,amt,t){
+  if(!amt||amt<=0)return pts;
+  const scale=2.4,ts=t*0.12;
+  return pts.map(p=>{
+    const nx=valueNoise3(p[0]*scale+ts,p[1]*scale,p[2]*scale+7.7);
+    const ny=valueNoise3(p[0]*scale+31.3,p[1]*scale+ts,p[2]*scale+2.2);
+    const nz=valueNoise3(p[0]*scale+5.1,p[1]*scale+9.4,p[2]*scale+ts);
+    return[p[0]+nx*amt*0.16,p[1]+ny*amt*0.16,p[2]+nz*amt*0.16];
+  });
+}
+// #8 : vibration haute fréquence — change à CHAQUE frame (contrairement à la
+// distorsion organique ci-dessus qui varie lentement avec le temps t).
+function applyJitter(pts,amt){
+  if(!amt||amt<=0)return pts;
+  return pts.map(p=>[
+    p[0]+(Math.random()-0.5)*amt*0.05,
+    p[1]+(Math.random()-0.5)*amt*0.05,
+    p[2]+(Math.random()-0.5)*amt*0.05
+  ]);
+}
 
 // ── Projection (particules + centre) ───────────────────────────────
 function proj(x,y,z){
@@ -226,19 +351,29 @@ function proj(x,y,z){
   return{sx:_gCx+x2*sc*fov,sy:_gCy+y2*sc*fov,fov,z:z3};
 }
 
-// ── Mandala sacré (cache offscreen) ────────────────────────────────
+// ── Mandala sacré (cache offscreen) — #3 symétrie réglable, #16 seed ─
 var mandCache=null,mandRot=0;
+function _mulberry32(seed){
+  return function(){
+    seed|=0;seed=seed+0x6D2B79F5|0;
+    let t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return((t^t>>>14)>>>0)/4294967296;
+  };
+}
 function buildMC(){
   mandCache=document.createElement('canvas');
   mandCache.width=_gW;mandCache.height=_gH;
   var m=mandCache.getContext('2d'),base=Math.min(_gW,_gH)*.44;
   m.save();m.translate(_gCx,_gCy);
   var phi=1.6180339887;
-  for(var a=0;a<3;a++){
-    m.save();m.rotate(a*Math.PI*2/3);
+  var rnd=_mulberry32(MANDALA_SEED);
+  var armStep=.055+(MANDALA_SEED?(rnd()-.5)*.02:0);
+  for(var a=0;a<MANDALA_SYM;a++){
+    m.save();m.rotate(a*Math.PI*2/MANDALA_SYM+(MANDALA_SEED?rnd()*0.015:0));
     m.strokeStyle='rgba(232,160,32,.022)';m.lineWidth=.4;m.beginPath();
     var r0=5,fst=true;
-    for(var ii=0;ii<550;ii++){var ang=ii*.055,r=r0*Math.pow(phi,ang/(Math.PI*2));if(r>base*1.3)break;fst?m.moveTo(r*Math.cos(ang),r*Math.sin(ang)):m.lineTo(r*Math.cos(ang),r*Math.sin(ang));fst=false;}
+    for(var ii=0;ii<550;ii++){var ang=ii*armStep,r=r0*Math.pow(phi,ang/(Math.PI*2));if(r>base*1.3)break;fst?m.moveTo(r*Math.cos(ang),r*Math.sin(ang)):m.lineTo(r*Math.cos(ang),r*Math.sin(ang));fst=false;}
     m.stroke();m.restore();
   }
   for(var ri=1;ri<=9;ri++){
@@ -250,19 +385,140 @@ function buildMC(){
       for(var si=0;si<12;si++){var a1=si/12*Math.PI*2,a2=(si+5)/12*Math.PI*2;m.beginPath();m.moveTo(rr*Math.cos(a1),rr*Math.sin(a1));m.lineTo(rr*Math.cos(a2),rr*Math.sin(a2));m.stroke();}
     }
   }
+  var petals=MANDALA_SEED?(8+Math.floor(rnd()*10)):12;
   var pR=base*.135;
-  for(var pi2=0;pi2<12;pi2++){var pa=pi2/12*Math.PI*2,px2=Math.cos(pa)*pR*.62,py2=Math.sin(pa)*pR*.62;m.save();m.translate(px2,py2);m.rotate(pa+Math.PI/2);m.beginPath();m.ellipse(0,0,pR*.21,pR*.48,0,0,Math.PI*2);m.strokeStyle='rgba(232,160,32,.038)';m.lineWidth=.5;m.stroke();m.restore();}
+  for(var pi2=0;pi2<petals;pi2++){var pa=pi2/petals*Math.PI*2,px2=Math.cos(pa)*pR*.62,py2=Math.sin(pa)*pR*.62;m.save();m.translate(px2,py2);m.rotate(pa+Math.PI/2);m.beginPath();m.ellipse(0,0,pR*.21,pR*.48,0,0,Math.PI*2);m.strokeStyle='rgba(232,160,32,.038)';m.lineWidth=.5;m.stroke();m.restore();}
   var vR=base*.21;
   for(var vi=0;vi<6;vi++){var va=vi/6*Math.PI*2;m.beginPath();m.arc(Math.cos(va)*vR*.5,Math.sin(va)*vR*.5,vR,0,Math.PI*2);m.strokeStyle='rgba(0,204,255,.012)';m.lineWidth=.35;m.stroke();}
   m.beginPath();m.arc(0,0,base*.045,0,Math.PI*2);m.strokeStyle='rgba(232,160,32,.06)';m.lineWidth=.5;m.stroke();
   m.restore();
 }
+function newMandala(){ MANDALA_SEED=(Math.random()*1e9)|0; mandCache=null; }
+// #3 : symétrie kaléidoscopique réglable — nombre de bras de la spirale
+// dorée (3 = look d'origine, jusqu'à 16 pour un mandala bien plus dense).
+function g3dSetSym(v){
+  MANDALA_SYM=Math.max(3,Math.min(16,parseInt(v)));
+  mandCache=null;
+  const el=document.getElementById('sv-sym');if(el)el.textContent=MANDALA_SYM;
+}
 
-/* ═══ FX3D — réseau de lignes flux lumineuses, 4 formes ═══ */
+// ── #1 Fractal IFS (chaos game, nuage de points auto-similaire) ────
+let _fractalCache=null,_fractalCacheKey='';
+function _fractalAttractors(n){
+  if(n<=4){
+    return [[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]].map(p=>{const m=Math.sqrt(p[0]*p[0]+p[1]*p[1]+p[2]*p[2]);return[p[0]/m,p[1]/m,p[2]/m];});
+  }
+  const pts=[],ga=Math.PI*(3-Math.sqrt(5));
+  for(let i=0;i<n;i++){
+    const yy=1-(i/((n-1)||1))*2,rad=Math.sqrt(Math.max(0,1-yy*yy)),th=ga*i;
+    pts.push([Math.cos(th)*rad,yy,Math.sin(th)*rad]);
+  }
+  return pts;
+}
+function genFractalIFS(N,depth){
+  const nAttr=Math.max(4,Math.min(9,Math.round(depth)));
+  const key=N+'|'+nAttr;
+  if(_fractalCache&&_fractalCacheKey===key)return _fractalCache;
+  const V4=_fractalAttractors(nAttr);
+  const pts=[];let cur=[0,0,0];const ratio=0.5;
+  const iters=Math.max(N,120)+40;
+  for(let i=0;i<iters;i++){
+    const v=V4[(Math.random()*V4.length)|0];
+    cur=[cur[0]+(v[0]-cur[0])*ratio,cur[1]+(v[1]-cur[1])*ratio,cur[2]+(v[2]-cur[2])*ratio];
+    if(i>=40)pts.push([cur[0],cur[1],cur[2]]);
+  }
+  _fractalCache=pts;_fractalCacheKey=key;
+  return pts;
+}
+
+// ── #4 Arbre de vie (L-system branchant) ─────────────────────────────
+let _treeCache=null,_treeCacheKey='';
+function _normalize(v){const m=Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2])||1;return[v[0]/m,v[1]/m,v[2]/m];}
+function _cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function _orthoVec(d){const a=Math.abs(d[0])<0.9?[1,0,0]:[0,1,0];return _normalize(_cross(d,a));}
+// "Profondeur" pilote le nombre de NIVEAUX (forme de l'arbre) ; la
+// densité (déjà partagée avec les autres formes) pilote le nombre total
+// de nœuds visés — sans ce plafond, un arbre à faible profondeur ne
+// produisait que ~13 nœuds, quasi invisible à l'écran.
+function genTreeLSystem(depth,targetN){
+  const maxDepth=Math.max(3,Math.min(9,Math.round(depth)));
+  const key=maxDepth+'|'+targetN;
+  if(_treeCache&&_treeCacheKey===key)return _treeCache;
+  const nodes=[[0,-0.5,0]],edges=[];
+  function branch(parentIdx,pos,dir,len,d){
+    if(nodes.length>=targetN)return;
+    if(d>maxDepth||len<0.016)return;
+    const end=[pos[0]+dir[0]*len,pos[1]+dir[1]*len,pos[2]+dir[2]*len];
+    nodes.push(end);
+    const idx=nodes.length-1;
+    edges.push([parentIdx,idx]);
+    const nBranches=3;
+    for(let k=0;k<nBranches;k++){
+      if(nodes.length>=targetN)break;
+      const spread=0.5+Math.random()*0.3;
+      const ang=(k/nBranches)*Math.PI*2+Math.random()*0.6;
+      const o1=_orthoVec(dir),o2=_cross(dir,o1);
+      const nd=_normalize([
+        dir[0]+o1[0]*Math.cos(ang)*spread+o2[0]*Math.sin(ang)*spread,
+        dir[1]+o1[1]*Math.cos(ang)*spread+o2[1]*Math.sin(ang)*spread,
+        dir[2]+o1[2]*Math.cos(ang)*spread+o2[2]*Math.sin(ang)*spread
+      ]);
+      branch(idx,end,nd,len*0.76,d+1);
+    }
+  }
+  branch(0,[0,-0.5,0],[0,1,0],0.34,0);
+  _treeCache={nodes,edges};_treeCacheKey=key;
+  return _treeCache;
+}
+
+// ── Génération de points pure (indépendante de FX3D.form courant) ──
+// Fonction pure : sert au rendu normal, au morphing (#9) et aux formes
+// composites (#5) sans jamais muter l'état partagé.
+function genFormPoints(formId,N,t,p){
+  const E=0.42*p.expansion;
+  let pts=[],pairs=null,edges=null;
+  if(formId==='sphere'){
+    const ga=Math.PI*(3-Math.sqrt(5)),tw=p.torsion*0.15,sy=0.65+0.6*p.spread;
+    for(let i=0;i<N;i++){
+      const yy=1-(i/((N-1)||1))*2,rad=Math.sqrt(Math.max(0,1-yy*yy)),th=ga*i+t*0.2+yy*tw;
+      pts.push([Math.cos(th)*rad*E,yy*E*sy*0.8,Math.sin(th)*rad*E]);
+    }
+    pairs=[1,Math.max(2,(N*0.382)|0),Math.max(3,(N*0.236)|0)];
+  }else if(formId==='torus'){
+    // #2 : nœud toroïdal (p,q) généralisé — p=q=1 (défaut) reproduit
+    // EXACTEMENT le torus d'origine, p/q>1 tisse un vrai nœud.
+    const R=0.34*p.expansion,r=0.14*p.spread,tw=Math.max(1,p.torsion);
+    const pk=Math.max(1,Math.round(p.pKnot)),qk=Math.max(1,Math.round(p.qKnot));
+    for(let i=0;i<N;i++){
+      const u=(i/N*Math.PI*2)*pk+t*0.15,v=u*tw*qk+t*0.1;
+      pts.push([(R+r*Math.cos(v))*Math.cos(u),r*Math.sin(v),(R+r*Math.cos(v))*Math.sin(u)]);
+    }
+    pairs=[1,Math.max(2,(N/tw)|0)];
+  }else if(formId==='metatron'){
+    const s=E*1.05;for(const pt of _FX_ICO)pts.push([pt[0]*s,pt[1]*s,pt[2]*s]);
+    pairs=null;
+  }else if(formId==='merkaba'){
+    const s=E*1.18;for(const pt of _FX_MERK)pts.push([pt[0]*s,pt[1]*s,pt[2]*s]);
+    pairs=null;
+  }else if(formId==='fractal'){
+    pts=genFractalIFS(N,p.fractalDepth).map(pt=>[pt[0]*E*1.3,pt[1]*E*1.3,pt[2]*E*1.3]);
+    pairs=[]; // nuage de points pur, pas de lignes — le motif fractal émerge de la densité
+  }else{ // 'arbre'
+    const tr=genTreeLSystem(p.fractalDepth,N);
+    pts=tr.nodes.map(pt=>[pt[0]*E*1.4,pt[1]*E*1.4,pt[2]*E*1.4]);
+    edges=tr.edges;pairs=null;
+  }
+  pts=applyNoise(pts,p.noiseAmt,t);
+  pts=applyJitter(pts,p.jitterAmt);
+  return{pts,pairs,edges};
+}
+
+/* ═══ FX3D — réseau de lignes flux lumineuses, 6 formes ═══ */
 const FX3D={
   form:'torus', ratio:'432/360',
   density:220, torsion:3.0, expansion:1.0, spread:1.0, glow:0.65, polarity:0.0,
-  _pts:null, _pairs:null
+  pKnot:1, qKnot:1, fractalDepth:4, noiseAmt:0, jitterAmt:0, hue:0, clip:0,
+  _pts:null, _pairs:null, _edges:null
 };
 const FX3D_RATIOS={
   '432/360':[[240,196,72],[0,214,200]],
@@ -288,37 +544,69 @@ FX3D.proj=function(x,y,z){
   const sc=V.zoom*(_gH*0.38),fov=600/(600+z3*240);
   return{sx:_gCx+x2*sc*fov,sy:_gCy+y2*sc*fov,fov,z:z3};
 };
+
+// #9 : morphing — {fromPts, toForm, t0, dur} pendant une transition AE
+let MORPH=null;
+function _startMorph(toForm){
+  if(toForm===FX3D.form)return;
+  const fromPts=(FX3D._pts&&FX3D._pts.length)?FX3D._pts.map(pt=>pt.slice()):[[0,0,0]];
+  MORPH={fromPts,toForm,t0:performance.now(),dur:2600};
+}
+function _easeInOutQuad(k){return k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;}
+
 FX3D._build=function(t){
-  const f=this.form,N=Math.max(40,Math.min(340,this.density|0)),E=0.42*this.expansion,pts=[];
-  if(f==='sphere'){
-    const ga=Math.PI*(3-Math.sqrt(5)),tw=this.torsion*0.15,sy=0.65+0.6*this.spread;
-    for(let i=0;i<N;i++){
-      const yy=1-(i/((N-1)||1))*2,rad=Math.sqrt(Math.max(0,1-yy*yy)),th=ga*i+t*0.2+yy*tw;
-      pts.push([Math.cos(th)*rad*E,yy*E*sy*0.8,Math.sin(th)*rad*E]);
+  const N=Math.max(40,Math.min(340,this.density|0));
+  const params={expansion:this.expansion,torsion:this.torsion,spread:this.spread,
+    pKnot:this.pKnot,qKnot:this.qKnot,fractalDepth:this.fractalDepth,
+    noiseAmt:this.noiseAmt,jitterAmt:this.jitterAmt};
+  if(MORPH){
+    const now=performance.now();
+    let k=(now-MORPH.t0)/MORPH.dur;
+    if(k>=1){
+      this.form=MORPH.toForm;
+      const idx=GEO_IDS.indexOf(this.form);if(idx>=0)activeGeometry=idx;
+      _syncFormUI();
+      MORPH=null;
+      const r=genFormPoints(this.form,N,t,params);
+      this._pts=r.pts;this._pairs=r.pairs;this._edges=r.edges;
+      return;
     }
-    this._pairs=[1,Math.max(2,(N*0.382)|0),Math.max(3,(N*0.236)|0)];
-  }else if(f==='torus'){
-    const R=0.34*this.expansion,r=0.14*this.spread,tw=Math.max(1,this.torsion);
-    for(let i=0;i<N;i++){
-      const u=i/N*Math.PI*2+t*0.15,v=u*tw+t*0.1;
-      pts.push([(R+r*Math.cos(v))*Math.cos(u),r*Math.sin(v),(R+r*Math.cos(v))*Math.sin(u)]);
+    k=Math.max(0,Math.min(1,k));
+    const ease=_easeInOutQuad(k);
+    const fromPts=MORPH.fromPts,toR=genFormPoints(MORPH.toForm,N,t,params);
+    const n=Math.max(fromPts.length,toR.pts.length);
+    const pts=[];
+    for(let i=0;i<n;i++){
+      const a=fromPts[i%fromPts.length],b=toR.pts[i%toR.pts.length];
+      pts.push([a[0]+(b[0]-a[0])*ease,a[1]+(b[1]-a[1])*ease,a[2]+(b[2]-a[2])*ease]);
     }
-    this._pairs=[1,Math.max(2,(N/tw)|0)];
-  }else if(f==='metatron'){
-    const s=E*1.05;for(const p of _FX_ICO)pts.push([p[0]*s,p[1]*s,p[2]*s]);
-    this._pairs=null;
-  }else{
-    const s=E*1.18;for(const p of _FX_MERK)pts.push([p[0]*s,p[1]*s,p[2]*s]);
-    this._pairs=null;
+    this._pts=pts;this._pairs=[];this._edges=null; // topologie neutre pendant la transition
+    return;
   }
-  this._pts=pts;
+  const r=genFormPoints(this.form,N,t,params);
+  this._pts=r.pts;this._pairs=r.pairs;this._edges=r.edges;
 };
+
 FX3D.render=function(ctx,t){
   this._build(t);
   const pts=this._pts,N=pts.length;
-  const cols=FX3D_RATIOS[this.ratio]||FX3D_RATIOS['432/360'],c1=cols[0],c2=cols[1];
+  const colsBase=FX3D_RATIOS[this.ratio]||FX3D_RATIOS['432/360'];
+  const c1=this.hue?_hueShiftRGB(colsBase[0],this.hue):colsBase[0];
+  const c2=this.hue?_hueShiftRGB(colsBase[1],this.hue):colsBase[1];
   const P=new Array(N);
   for(let i=0;i<N;i++)P[i]=this.proj(pts[i][0],pts[i][1],pts[i][2]);
+
+  // #13 : plan de coupe — masque les points les plus éloignés de la caméra
+  // (dans l'espace de vue, après rotation) pour révéler l'intérieur.
+  if(this.clip>0){
+    const zs=P.filter(pp=>pp).map(pp=>pp.z);
+    if(zs.length){
+      const zMin=Math.min(...zs),zMax=Math.max(...zs);
+      const clipZ=zMin+(zMax-zMin)*(1-this.clip);
+      for(let i=0;i<N;i++)if(P[i]&&P[i].z>clipZ)P[i]=null;
+    }
+  }
+
   const gl=this.glow,pol=this.polarity;
   const tP=0.5+0.5*Math.sin(t*1.75);
   const tP2=0.5+0.5*Math.sin(t*2.8+1.1);
@@ -326,32 +614,49 @@ FX3D.render=function(ctx,t){
 
   ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';
 
-  ctx.beginPath();
-  if(this._pairs){
-    for(const off of this._pairs){for(let i=0;i<N;i++){const A=P[i],B=P[(i+off)%N];if(A&&B){ctx.moveTo(A.sx,A.sy);ctx.lineTo(B.sx,B.sy);}}}
+  const edgeList=[];
+  if(this._edges){
+    for(const e of this._edges)edgeList.push(e);
+  }else if(this._pairs){
+    for(const off of this._pairs){for(let i=0;i<N;i++)edgeList.push([i,(i+off)%N]);}
   }else{
-    for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){const A=P[i],B=P[j];if(A&&B){ctx.moveTo(A.sx,A.sy);ctx.lineTo(B.sx,B.sy);}}
+    for(let i=0;i<N;i++)for(let j=i+1;j<N;j++)edgeList.push([i,j]);
   }
+
+  ctx.beginPath();
+  for(const[a,b]of edgeList){const A=P[a],B=P[b];if(A&&B){ctx.moveTo(A.sx,A.sy);ctx.lineTo(B.sx,B.sy);}}
   ctx.strokeStyle=`rgba(${avgC[0]},${avgC[1]},${avgC[2]},${(0.038*gl*tP).toFixed(3)})`;
   ctx.lineWidth=11;ctx.stroke();
   ctx.strokeStyle=`rgba(${avgC[0]},${avgC[1]},${avgC[2]},${(0.082*gl*tP).toFixed(3)})`;
   ctx.lineWidth=4.2;ctx.stroke();
 
-  {const dl=(a,b,p)=>{
-    const A=P[a],B=P[b];if(!A||!B)return;
-    const fov=(A.fov+B.fov)*0.5,al=gl*0.23*fov-0.02;if(al<=0.005)return;
-    let q=p+pol*0.35;q=q<0?0:q>1?1:q;
+  const en=edgeList.length||1;
+  let ei=0;
+  for(const[a,b]of edgeList){
+    const A=P[a],B=P[b];if(!A||!B){ei++;continue;}
+    const fov=(A.fov+B.fov)*0.5;let al=gl*0.23*fov-0.02;
+    // #12 : lumière directionnelle simulée — assombrit/éclaire selon
+    // l'orientation du segment par rapport à une source rotative.
+    if(LIGHT.on){
+      const segAngle=Math.atan2(B.sy-A.sy,B.sx-A.sx);
+      al*=0.35+0.65*Math.max(0,Math.cos(segAngle-LIGHT.angle));
+    }
+    ei++;
+    if(al<=0.005)continue;
+    let q=(ei/en)+pol*0.35;q=q<0?0:q>1?1:q;
     const r=(c1[0]+(c2[0]-c1[0])*q)|0,g=(c1[1]+(c2[1]-c1[1])*q)|0,bl=(c1[2]+(c2[2]-c1[2])*q)|0;
     ctx.strokeStyle=`rgba(${r},${g},${bl},${al.toFixed(3)})`;
     ctx.lineWidth=Math.max(0.5,1.15*fov);
     ctx.beginPath();ctx.moveTo(A.sx,A.sy);ctx.lineTo(B.sx,B.sy);ctx.stroke();
-  };
-  if(this._pairs){for(const off of this._pairs){for(let i=0;i<N;i++)dl(i,(i+off)%N,i/N);}}
-  else{for(let i=0;i<N;i++)for(let j=i+1;j<N;j++)dl(i,j,(i+j)/(2*N));}}
+  }
 
+  // #1 : le fractal n'a AUCUNE ligne (nuage de points pur, cf. genFormPoints)
+  // — sans elles pour porter la présence visuelle, ses points doivent être
+  // plus marqués que ceux des formes qui ont déjà le réseau de lignes.
+  const ptBoost=this.form==='fractal'?1.9:1;
   for(let i=0;i<N;i++){
     const A=P[i];if(!A)continue;
-    const al=Math.min(1,gl*0.55*A.fov),rr=Math.max(0.8,1.9*A.fov);
+    const al=Math.min(1,gl*0.55*A.fov*ptBoost),rr=Math.max(0.8,1.9*A.fov)*ptBoost;
     ctx.fillStyle=`rgba(255,255,255,${(al*0.08).toFixed(3)})`;
     ctx.beginPath();ctx.arc(A.sx,A.sy,rr*5.5,0,Math.PI*2);ctx.fill();
     ctx.fillStyle=`rgba(255,255,255,${(al*0.26).toFixed(3)})`;
@@ -380,24 +685,37 @@ FX3D.render=function(ctx,t){
   ctx.restore();
 };
 
+function _syncFormUI(){
+  document.querySelectorAll('#panFormes .mrow[id^="frm-"]').forEach(b=>b.classList.toggle('on',b.id==='frm-'+FX3D.form));
+}
 function fx3dSetForm(f){
   FX3D.form=f;
   const idx=GEO_IDS.indexOf(f);
   if(idx>=0)activeGeometry=idx;
-  document.querySelectorAll('#panFormes .mrow[id^="frm-"]').forEach(b=>b.classList.toggle('on',b.id==='frm-'+f));
+  MORPH=null; // sélection manuelle : coupe net, pas de morph en attente
+  _syncFormUI();
 }
 function fx3dSetRatio(r){
   FX3D.ratio=r;
   document.querySelectorAll('#panFormes .mrow[id^="rat-"]').forEach(b=>b.classList.toggle('on',b.id==='rat-'+r.replace('/','-')));
 }
 function g3dSetWi(v){FX3D.torsion=v/10;const el=document.getElementById('sv-wi');if(el)el.textContent=FX3D.torsion.toFixed(1)+'×';}
-function g3dSetNs(v){FX3D.density=parseInt(v);const el=document.getElementById('sv-ns');if(el)el.textContent=v;}
+function g3dSetNs(v){FX3D.density=parseInt(v);const el=document.getElementById('sv-ns');if(el)el.textContent=v;_fractalCacheKey='';_treeCacheKey='';}
 function g3dSetSpd(v){V.spd=v/10;const el=document.getElementById('sv-spd');if(el)el.textContent=V.spd.toFixed(1)+'×';}
 function g3dSetEx(v){FX3D.expansion=v/100;const el=document.getElementById('sv-ex');if(el)el.textContent=parseFloat(v/100).toFixed(2);}
 function g3dSetTM(v){FX3D.spread=v/100;const el=document.getElementById('sv-tm');if(el)el.textContent=parseFloat(v/100).toFixed(2);}
 function g3dSetGlow(v){FX3D.glow=v/100;const el=document.getElementById('sv-glow');if(el)el.textContent=v+'%';}
 function g3dSetPol(v){FX3D.polarity=v/100;const el=document.getElementById('sv-pol');if(el)el.textContent=FX3D.polarity.toFixed(2);}
 function g3dSetAESpd(v){AE.spd=v/10;const el=document.getElementById('sv-ae-spd');if(el)el.textContent=AE.spd.toFixed(1)+'×';}
+function g3dSetPKnot(v){FX3D.pKnot=parseInt(v);const el=document.getElementById('sv-pknot');if(el)el.textContent=v;}
+function g3dSetQKnot(v){FX3D.qKnot=parseInt(v);const el=document.getElementById('sv-qknot');if(el)el.textContent=v;}
+function g3dSetDepth(v){FX3D.fractalDepth=parseInt(v);const el=document.getElementById('sv-depth');if(el)el.textContent=v;_fractalCacheKey='';_treeCacheKey='';}
+function g3dSetHue(v){FX3D.hue=parseFloat(v);const el=document.getElementById('sv-hue');if(el)el.textContent=Math.round(v)+'°';}
+function g3dSetNoise(v){FX3D.noiseAmt=v/100;const el=document.getElementById('sv-noise');if(el)el.textContent=v+'%';}
+function g3dSetJitter(v){FX3D.jitterAmt=v/100;const el=document.getElementById('sv-jitter');if(el)el.textContent=v+'%';}
+function g3dSetDof(v){DOF.amt=v/100;const el=document.getElementById('sv-dof');if(el)el.textContent=v+'%';}
+function g3dSetClip(v){FX3D.clip=v/100;const el=document.getElementById('sv-clip');if(el)el.textContent=v+'%';}
+function g3dSetLightSpd(v){LIGHT.speed=v/10;const el=document.getElementById('sv-light-spd');if(el)el.textContent=LIGHT.speed.toFixed(1)+'×';}
 function g3dToggleAEBtn(){
   AE.on=!AE.on;AE.phase=0;AE.counter=0;
   const el=document.getElementById('mrow-ae');if(el)el.classList.toggle('on',AE.on);
@@ -413,6 +731,32 @@ function toggleMandala(){
 function toggleParts(){
   HP.pa=!HP.pa;
   const el=document.getElementById('ck-parts');if(el)el.classList.toggle('on',HP.pa);
+}
+function toggleComposite(){
+  COMPOSITE.on=!COMPOSITE.on;
+  const el=document.getElementById('ck-composite');if(el)el.classList.toggle('on',COMPOSITE.on);
+}
+function setCompositeForm2(f){
+  COMPOSITE.form2=f;
+  document.querySelectorAll('#composite-picker .chip').forEach(c=>c.classList.toggle('on',c.dataset.f===f));
+}
+function setCompositeOpacity(v){
+  COMPOSITE.opacity2=v/100;
+  const el=document.getElementById('sv-comp-op');if(el)el.textContent=v+'%';
+}
+function toggleLight(){
+  LIGHT.on=!LIGHT.on;
+  const el=document.getElementById('ck-light');if(el)el.classList.toggle('on',LIGHT.on);
+}
+function toggleBoids(){
+  PARTMODE.boids=!PARTMODE.boids;
+  const el=document.getElementById('ck-boids');if(el)el.classList.toggle('on',PARTMODE.boids);
+  if(PARTMODE.boids){for(const p of PARTS)p.vx=undefined;} // force réinitialisation boids
+}
+function toggleTrails(){
+  TRAILS.on=!TRAILS.on;
+  const el=document.getElementById('ck-trails');if(el)el.classList.toggle('on',TRAILS.on);
+  if(!TRAILS.on){const pc=document.getElementById('parts-canvas');if(pc)pc.width=0;}
 }
 
 // ── Centre fractal pulsant ──────────────────────────────────────────
@@ -436,7 +780,7 @@ function drawCenter(ctx){
   ctx.shadowBlur=0;ctx.globalAlpha=1;
 }
 
-// ── Particules orbitales ────────────────────────────────────────────
+// ── Particules orbitales · #7 mode nuée (boids) ─────────────────────
 var PARTS=[];
 function initParts(){
   PARTS=[];
@@ -449,13 +793,50 @@ function initParts(){
     });
   }
 }
+function updateBoidsStep(){
+  const list=PARTS;
+  for(const p of list){
+    if(p.vx===undefined){
+      const th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1);
+      p.x=0.32*Math.sin(ph)*Math.cos(th);p.y=0.32*Math.cos(ph);p.z=0.32*Math.sin(ph)*Math.sin(th);
+      p.vx=(Math.random()-.5)*0.004;p.vy=(Math.random()-.5)*0.004;p.vz=(Math.random()-.5)*0.004;
+    }
+  }
+  const R2=0.18*0.18;
+  for(const p of list){
+    let ax=0,ay=0,az=0,cx=0,cy=0,cz=0,sx=0,sy=0,sz=0,n=0;
+    for(const q of list){
+      if(q===p)continue;
+      const dx=q.x-p.x,dy=q.y-p.y,dz=q.z-p.z,d2=dx*dx+dy*dy+dz*dz;
+      if(d2<R2&&d2>0.00001){
+        n++;cx+=q.x;cy+=q.y;cz+=q.z;
+        ax+=q.vx;ay+=q.vy;az+=q.vz;
+        const d=Math.sqrt(d2);sx-=dx/d;sy-=dy/d;sz-=dz/d;
+      }
+    }
+    if(n>0){
+      p.vx+=((cx/n-p.x)*0.0006+(ax/n-p.vx)*0.01+sx*0.00025);
+      p.vy+=((cy/n-p.y)*0.0006+(ay/n-p.vy)*0.01+sy*0.00025);
+      p.vz+=((cz/n-p.z)*0.0006+(az/n-p.vz)*0.01+sz*0.00025);
+    }
+    p.vx+=-p.x*0.00012;p.vy+=-p.y*0.00012;p.vz+=-p.z*0.00012;
+    const sp=Math.sqrt(p.vx*p.vx+p.vy*p.vy+p.vz*p.vz),maxSp=0.006;
+    if(sp>maxSp){p.vx*=maxSp/sp;p.vy*=maxSp/sp;p.vz*=maxSp/sp;}
+    p.x+=p.vx*V.spd;p.y+=p.vy*V.spd;p.z+=p.vz*V.spd;
+  }
+}
 function drawParts(ctx){
   if(!HP.pa)return;
   const _src=((window.innerWidth<=900||window.innerHeight<=500)&&PARTS.length>90)?PARTS.slice(0,90):PARTS;
+  if(PARTMODE.boids)updateBoidsStep();
   const list=[];
   for(const pt of _src){
-    pt.theta+=pt.dtheta*V.spd*HP.f;pt.phi+=pt.dphi*V.spd;
-    const x=pt.r*Math.sin(pt.phi)*Math.cos(pt.theta),y=pt.r*Math.cos(pt.phi),z=pt.r*Math.sin(pt.phi)*Math.sin(pt.theta);
+    let x,y,z;
+    if(PARTMODE.boids){x=pt.x;y=pt.y;z=pt.z;}
+    else{
+      pt.theta+=pt.dtheta*V.spd*HP.f;pt.phi+=pt.dphi*V.spd;
+      x=pt.r*Math.sin(pt.phi)*Math.cos(pt.theta);y=pt.r*Math.cos(pt.phi);z=pt.r*Math.sin(pt.phi)*Math.sin(pt.theta);
+    }
     const p=proj(x,y,z);list.push({sx:p.sx,sy:p.sy,fov:p.fov,z:p.z,pt});
   }
   list.sort((a,b)=>a.z-b.z);
@@ -471,7 +852,7 @@ function drawParts(ctx){
   ctx.globalAlpha=1;
 }
 
-// ── Drag / pinch / zoom ─────────────────────────────────────────────
+// ── Drag / pinch / zoom — #13 plage étendue (.15–6 au lieu de .3–3) ─
 let _lastPinch=0;
 function g3dInitDrag(){
   const cv=document.getElementById('geo-canvas');if(!cv||cv._g3dDrag)return;
@@ -479,20 +860,20 @@ function g3dInitDrag(){
   cv.addEventListener('mousedown',e=>{V.drag=true;V.lmx=e.clientX;V.lmy=e.clientY;V.autoRot=false;const t=document.getElementById('tRot');if(t)t.classList.remove('on');cv.classList.add('drag');});
   window.addEventListener('mouseup',()=>{V.drag=false;cv.classList.remove('drag');});
   window.addEventListener('mousemove',e=>{if(!V.drag)return;V.try_+=(e.clientX-V.lmx)*.008;V.trx=Math.max(-1.4,Math.min(1.4,V.trx+(e.clientY-V.lmy)*.008));V.lmx=e.clientX;V.lmy=e.clientY;});
-  cv.addEventListener('wheel',e=>{e.preventDefault();V.tzoom=Math.max(.3,Math.min(3,V.tzoom*(e.deltaY>0?.92:1.09)));},{passive:false});
+  cv.addEventListener('wheel',e=>{e.preventDefault();V.tzoom=Math.max(.15,Math.min(6,V.tzoom*(e.deltaY>0?.92:1.09)));},{passive:false});
   cv.addEventListener('touchstart',e=>{
     if(e.touches.length===1){V.drag=true;V.lmx=e.touches[0].clientX;V.lmy=e.touches[0].clientY;V.autoRot=false;const t=document.getElementById('tRot');if(t)t.classList.remove('on');}
     else if(e.touches.length===2){V.drag=false;const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;_lastPinch=Math.sqrt(dx*dx+dy*dy);}
   },{passive:true});
   cv.addEventListener('touchmove',e=>{
     e.preventDefault();
-    if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY,dist=Math.sqrt(dx*dx+dy*dy);if(_lastPinch>0)V.tzoom=Math.max(.3,Math.min(3,V.tzoom*dist/_lastPinch));_lastPinch=dist;}
+    if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY,dist=Math.sqrt(dx*dx+dy*dy);if(_lastPinch>0)V.tzoom=Math.max(.15,Math.min(6,V.tzoom*dist/_lastPinch));_lastPinch=dist;}
     else if(e.touches.length===1&&V.drag){V.try_+=(e.touches[0].clientX-V.lmx)*.008;V.trx+=(e.touches[0].clientY-V.lmy)*.008;V.lmx=e.touches[0].clientX;V.lmy=e.touches[0].clientY;}
   },{passive:false});
   cv.addEventListener('touchend',()=>{V.drag=false;_lastPinch=0;});
 }
 
-// ── Drawer (Formes / Paramètres) ────────────────────────────────────
+// ── Drawer (Formes / Paramètres / Effets / Presets) ─────────────────
 function openDrawer(sec){
   document.getElementById('drawerBackdrop').classList.add('open');
   document.getElementById('drawerMenu').classList.add('open');
@@ -505,10 +886,140 @@ function openDrawer(sec){
   if(tab)tab.classList.add('on');
   const dock=document.getElementById('dock'+sec.charAt(0).toUpperCase()+sec.slice(1));
   if(dock)dock.classList.add('on');
+  if(sec==='presets')_renderPresetList();
 }
 function closeDrawer(){
   document.getElementById('drawerBackdrop').classList.remove('open');
   document.getElementById('drawerMenu').classList.remove('open');
+}
+
+// ── #17 Export image (PNG) ───────────────────────────────────────────
+function exportImage(){
+  const geoCv=document.getElementById('geo-canvas');
+  if(!geoCv||!geoCv.width)return;
+  const out=document.createElement('canvas');
+  out.width=geoCv.width;out.height=geoCv.height;
+  const octx=out.getContext('2d');
+  octx.fillStyle='#02010D';octx.fillRect(0,0,out.width,out.height);
+  const finish=(bgImg)=>{
+    try{if(bgImg){octx.globalAlpha=.34;octx.drawImage(bgImg,0,0,out.width,out.height);octx.globalAlpha=1;}}catch(e){}
+    octx.drawImage(geoCv,0,0);
+    if(TRAILS.on){const pc=document.getElementById('parts-canvas');if(pc&&pc.width>0)octx.drawImage(pc,0,0);}
+    let url;
+    try{url=out.toDataURL('image/png');}catch(e){return;}
+    const a=document.createElement('a');
+    a.href=url;a.download='omcha432-geometrie-'+Date.now()+'.png';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+  };
+  const bgImg=new Image();
+  bgImg.crossOrigin='anonymous';
+  bgImg.onload=()=>finish(bgImg);
+  bgImg.onerror=()=>finish(null);
+  bgImg.src='img/cosmic-flux.jpg';
+}
+
+// ── #18 Presets "constellations" (localStorage dédié) ────────────────
+const GEO_PRESET_KEY='omcha432_geo_presets';
+function _loadGeoPresets(){
+  try{const l=JSON.parse(localStorage.getItem(GEO_PRESET_KEY)||'[]');return Array.isArray(l)?l:[];}catch(e){return[];}
+}
+function _captureGeoState(){
+  return{
+    form:FX3D.form,ratio:FX3D.ratio,density:FX3D.density,torsion:FX3D.torsion,
+    expansion:FX3D.expansion,spread:FX3D.spread,glow:FX3D.glow,polarity:FX3D.polarity,
+    pKnot:FX3D.pKnot,qKnot:FX3D.qKnot,fractalDepth:FX3D.fractalDepth,
+    noiseAmt:FX3D.noiseAmt,jitterAmt:FX3D.jitterAmt,hue:FX3D.hue,clip:FX3D.clip,
+    composite:{...COMPOSITE},dof:DOF.amt,light:{...LIGHT},trails:TRAILS.on,
+    boids:PARTMODE.boids,mandalaSym:MANDALA_SYM,ma:HP.ma,pa:HP.pa,
+    spd:V.spd,aeOn:AE.on,aeSpd:AE.spd
+  };
+}
+function _applyGeoState(s){
+  if(!s)return;
+  MORPH=null;
+  Object.assign(FX3D,{form:s.form,ratio:s.ratio,density:s.density,torsion:s.torsion,
+    expansion:s.expansion,spread:s.spread,glow:s.glow,polarity:s.polarity,
+    pKnot:s.pKnot,qKnot:s.qKnot,fractalDepth:s.fractalDepth,
+    noiseAmt:s.noiseAmt,jitterAmt:s.jitterAmt,hue:s.hue,clip:s.clip});
+  if(s.composite)Object.assign(COMPOSITE,s.composite);
+  if(typeof s.dof==='number')DOF.amt=s.dof;
+  if(s.light)Object.assign(LIGHT,s.light);
+  if(typeof s.trails==='boolean'){TRAILS.on=s.trails;if(!TRAILS.on){const pc=document.getElementById('parts-canvas');if(pc)pc.width=0;}}
+  if(typeof s.boids==='boolean')PARTMODE.boids=s.boids;
+  if(typeof s.mandalaSym==='number'){MANDALA_SYM=s.mandalaSym;mandCache=null;}
+  if(typeof s.ma==='boolean')HP.ma=s.ma;
+  if(typeof s.pa==='boolean')HP.pa=s.pa;
+  if(typeof s.spd==='number')V.spd=s.spd;
+  if(typeof s.aeOn==='boolean')AE.on=s.aeOn;
+  if(typeof s.aeSpd==='number')AE.spd=s.aeSpd;
+  const idx=GEO_IDS.indexOf(FX3D.form);if(idx>=0)activeGeometry=idx;
+  _fractalCacheKey='';_treeCacheKey='';
+  _syncAllUI();
+}
+function saveGeoPreset(){
+  const list=_loadGeoPresets();
+  const name=prompt('Nom de ce preset ?','Constellation '+(1+list.length));
+  if(!name)return;
+  list.push({name,state:_captureGeoState()});
+  localStorage.setItem(GEO_PRESET_KEY,JSON.stringify(list));
+  _renderPresetList();
+}
+function loadGeoPreset(i){
+  const list=_loadGeoPresets();
+  if(list[i])_applyGeoState(list[i].state);
+}
+function deleteGeoPreset(i){
+  const list=_loadGeoPresets();
+  list.splice(i,1);
+  localStorage.setItem(GEO_PRESET_KEY,JSON.stringify(list));
+  _renderPresetList();
+}
+function _renderPresetList(){
+  const el=document.getElementById('presetList');if(!el)return;
+  const list=_loadGeoPresets();
+  el.innerHTML=list.length?list.map((p,i)=>
+    `<div class="mrow" style="justify-content:space-between;" onclick="loadGeoPreset(${i})">`+
+      `<span>★ ${_escHtml(p.name)}</span>`+
+      `<span onclick="event.stopPropagation();deleteGeoPreset(${i})" style="opacity:.5;padding:0 4px;">✕</span>`+
+    `</div>`
+  ).join(''):'<div class="hint">Aucun preset enregistré pour l’instant.</div>';
+}
+function _escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// ── Synchronise tous les contrôles UI après un chargement de preset ──
+function _syncAllUI(){
+  _syncFormUI();
+  document.querySelectorAll('#panFormes .mrow[id^="rat-"]').forEach(b=>b.classList.toggle('on',b.id==='rat-'+FX3D.ratio.replace('/','-')));
+  document.querySelectorAll('#composite-picker .chip').forEach(c=>c.classList.toggle('on',c.dataset.f===COMPOSITE.form2));
+  document.getElementById('ck-mandala')?.classList.toggle('on',HP.ma);
+  document.getElementById('ck-parts')?.classList.toggle('on',HP.pa);
+  document.getElementById('ck-composite')?.classList.toggle('on',COMPOSITE.on);
+  document.getElementById('ck-light')?.classList.toggle('on',LIGHT.on);
+  document.getElementById('ck-boids')?.classList.toggle('on',PARTMODE.boids);
+  document.getElementById('ck-trails')?.classList.toggle('on',TRAILS.on);
+  document.getElementById('mrow-ae')?.classList.toggle('on',AE.on);
+  const setSlider=(sel,val)=>{const el=document.querySelector(sel);if(el)el.value=val;};
+  const setTxt=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+  setTxt('sv-ns',FX3D.density);
+  setTxt('sv-wi',FX3D.torsion.toFixed(1)+'×');
+  setTxt('sv-ex',FX3D.expansion.toFixed(2));
+  setTxt('sv-tm',FX3D.spread.toFixed(2));
+  setTxt('sv-pknot',FX3D.pKnot);
+  setTxt('sv-qknot',FX3D.qKnot);
+  setTxt('sv-depth',FX3D.fractalDepth);
+  setTxt('sv-glow',Math.round(FX3D.glow*100)+'%');
+  setTxt('sv-spd',V.spd.toFixed(1)+'×');
+  setTxt('sv-pol',FX3D.polarity.toFixed(2));
+  setTxt('sv-hue',Math.round(FX3D.hue)+'°');
+  setTxt('sv-ae-spd',AE.spd.toFixed(1)+'×');
+  setTxt('sv-noise',Math.round(FX3D.noiseAmt*100)+'%');
+  setTxt('sv-jitter',Math.round(FX3D.jitterAmt*100)+'%');
+  setTxt('sv-dof',Math.round(DOF.amt*100)+'%');
+  setTxt('sv-clip',Math.round(FX3D.clip*100)+'%');
+  setTxt('sv-light-spd',LIGHT.speed.toFixed(1)+'×');
+  setTxt('sv-comp-op',Math.round(COMPOSITE.opacity2*100)+'%');
+  setTxt('sv-sym',MANDALA_SYM);
+  setSlider('#panFormes input[oninput^="g3dSetSym"]',MANDALA_SYM);
 }
 
 // ── Boucle principale ────────────────────────────────────────────────
@@ -544,15 +1055,51 @@ function drawGeo(ts){
   V.rx+=(V.trx-V.rx)*.06;V.ry+=(V.try_-V.ry)*.06;V.zoom+=(V.tzoom-V.zoom)*.08;
   if(V.autoRot)V.try_+=.0025*V.spd;
   HP.breathe=1+.07*Math.sin(V.t*.5);
+  if(LIGHT.on)LIGHT.angle+=.01*LIGHT.speed*V.spd;
 
-  if(AE.on){
+  if(AE.on&&!MORPH){
     AE.phase+=.016*AE.spd;AE.counter++;
     const fi=Math.round(Math.max(90,900/AE.spd));
-    if(AE.counter>=fi){AE.counter=0;const next=(activeGeometry+1)%GEO_NAMES.length;fx3dSetForm(GEO_IDS[next]);}
+    if(AE.counter>=fi){AE.counter=0;const next=(activeGeometry+1)%GEO_NAMES.length;_startMorph(GEO_IDS[next]);}
   }
 
+  // #11 : profondeur de champ — passe floutée sous la passe nette
+  if(DOF.amt>0){
+    ctx.save();
+    try{ctx.filter=`blur(${(DOF.amt*8).toFixed(1)}px)`;}catch(e){}
+    ctx.globalAlpha=0.35;
+    FX3D.render(ctx,V.t);
+    ctx.restore();
+  }
+  // #5 : forme composite — 2ᵉ forme translucide, sous la forme principale
+  if(COMPOSITE.on&&COMPOSITE.form2!==FX3D.form){
+    const savedForm=FX3D.form;
+    FX3D.form=COMPOSITE.form2;
+    ctx.save();ctx.globalAlpha=COMPOSITE.opacity2;
+    FX3D.render(ctx,V.t);
+    ctx.restore();
+    FX3D.form=savedForm;
+  }
   FX3D.render(ctx,V.t);
-  drawParts(ctx);
+
+  if(TRAILS.on){
+    const pc=document.getElementById('parts-canvas');
+    if(pc.width!==nW||pc.height!==nH){pc.width=nW;pc.height=nH;pc.style.width=vw+'px';pc.style.height=vh+'px';}
+    const pctx=pc.getContext('2d');
+    pctx.setTransform(dpr,0,0,dpr,0,0);
+    // #14 : la traînée doit s'estomper vers le TRANSPARENT (pour laisser voir
+    // le flux/mandala en dessous), pas vers un noir opaque — 'destination-out'
+    // ronge l'alpha existant proportionnellement, sans jamais peindre de
+    // couleur. Un simple fillRect(noir, alpha faible) en 'source-over'
+    // finit par accumuler jusqu'à un calque totalement opaque, masquant tout.
+    pctx.globalCompositeOperation='destination-out';
+    pctx.fillStyle='rgba(0,0,0,0.12)';
+    pctx.fillRect(0,0,vw,vh);
+    pctx.globalCompositeOperation='source-over';
+    drawParts(pctx);
+  }else{
+    drawParts(ctx);
+  }
   drawCenter(ctx);
   V.t+=.016*V.spd;
 }
