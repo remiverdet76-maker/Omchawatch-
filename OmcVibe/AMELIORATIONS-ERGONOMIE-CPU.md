@@ -2239,3 +2239,57 @@ visuellement — mandala + fond cosmique + points arc-en-ciel + centre
 pulsant, cohérent avec l'identité visuelle de `geometrie.html`. APK
 régénéré et re-signé avec le même pipeline `repack.py`/`jarsigner`/
 `apksig`, vérifié `verified=true` (API 24+).
+
+## #97 : OmchaWatch v5 — anneaux lisibles à la place du nuage de points
+
+Retour sans détour : "on est censé lire quoi sur ton nuage de points
+Smarties ?". Diagnostic correct — la forme "Densité" en v4 (répartition
+en spirale dorée, 220+ points scattered en 3D) ne portait aucune
+structure lisible : rien à suivre du regard, pas de tracé continu, pas
+de "aiguille". Ça ne correspondait pas non plus à l'image de référence
+(des ANNEAUX concentriques nets, pas un nuage), reposté une 3ᵉ fois par
+l'utilisateur pour trancher le doute.
+
+**Changement de nature, pas de degré** : abandon complet du nuage de
+points comme représentation de l'horloge. À la place, `drawClockRings()`
+dessine de vrais anneaux concentriques — bande arc-en-ciel CONTINUE (144
+segments, dégradé de teinte complet sur 360°) dont seule la portion déjà
+parcourue est allumée, le reste restant terne. Une tête lumineuse
+("comète", cercle blanc au centre d'un halo coloré) marque la position
+actuelle sur chaque anneau — c'est elle qu'on lit, exactement comme
+l'aiguille d'une montre, pas une position à deviner dans un nuage.
+L'anneau Omc (le focus) porte en plus un croisillon doré avec les 4
+repères solaires nommés (Lever/Zénith/Coucher/Zén. polaire) aux positions
+108/216/324/432, et 144 points dorés le long de son tracé qui s'allument
+un à un avec la progression — texture "tissée" comme la référence
+visuelle, mais ancrée sur le cercle plutôt que dispersée en 3D. Chaque
+anneau affiche aussi sa lecture en toutes lettres à côté (ex. "OMC ·
+343.3/432"). 4 anneaux : Omc (le plus intérieur, le plus épais), Année
+(360), Organique (432) et Grand cycle (15552) — ces deux derniers
+uniquement si J0 est réglé, comme avant.
+
+Deux bugs trouvés et corrigés en testant sur device réel (capture
+transmise par l'utilisateur) :
+1. **Rayons mal calés à l'échelle de `proj()`** — les premiers rayons
+   choisis (0,5 à 1,12) donnaient des anneaux bien plus larges que
+   l'écran en largeur (l'app calibre son échelle sur la HAUTEUR de
+   l'écran, `sc≈V.zoom×hauteur×0.38`, qui sur un portrait étroit produit
+   un rayon en pixels très supérieur à la largeur disponible) — les
+   anneaux n'apparaissaient plus que comme des bandes tronquées quasi
+   droites. Corrigé : rayons recalés (0,12 à 0,26) pour que le grand
+   anneau tienne confortablement dans la largeur du portrait.
+2. **Forme décorative par défaut trop chargée** — la sphère par défaut
+   (220 points + lignes de connexion) créait un maillage très dense qui
+   noyait visuellement les anneaux. Changé pour Métatron (icosaèdre à 12
+   sommets fixes, aspect "cube de Métatron" classique) — repère central
+   calme qui ne rivalise plus avec le cadran, qui reste le seul élément
+   qu'on est censé "lire" en un coup d'œil.
+
+Le code de la forme "Densité" (v4, jugée illisible) est retiré
+entièrement — pas de code mort spéculatif à conserver.
+
+Vérifié par tests Playwright + captures d'écran à chaque étape (avant/
+après correction des rayons, avant/après changement de forme par
+défaut) : anneaux effectivement circulaires et lisibles à l'écran, textes
+de lecture visibles pour les 4 niveaux, 0 erreur JS. APK régénéré et
+re-signé avec le même pipeline, vérifié `verified=true` (API 24+).

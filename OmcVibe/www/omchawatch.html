@@ -133,10 +133,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
     </div>
     <div id="panFormes" class="dsec">
       <div class="psec">FORME</div>
-      <div class="mrow on" id="frm-density" onclick="fx3dSetForm('density')">☉ Densité (horloge)</div>
       <div class="mrow" id="frm-sphere" onclick="fx3dSetForm('sphere')">◉ Sphère</div>
       <div class="mrow" id="frm-torus" onclick="fx3dSetForm('torus')">∿ Torus</div>
-      <div class="mrow" id="frm-metatron" onclick="fx3dSetForm('metatron')">✡ Métatron (icosaèdre)</div>
+      <div class="mrow on" id="frm-metatron" onclick="fx3dSetForm('metatron')">✡ Métatron (icosaèdre)</div>
       <div class="mrow" id="frm-merkaba" onclick="fx3dSetForm('merkaba')">△ Merkaba</div>
       <div class="mrow" id="frm-fractal" onclick="fx3dSetForm('fractal')">✳ Fractal (IFS)</div>
       <div class="mrow" id="frm-arbre" onclick="fx3dSetForm('arbre')">🜍 Arbre de vie</div>
@@ -253,9 +252,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
    tous les effets sont des ajouts purement additifs.
    ═══════════════════════════════════════════════════════════════════ */
 
-const GEO_NAMES=['Densité','Sphère','Torus','Métatron','Merkaba','Fractal','Arbre'];
-const GEO_IDS  =['density','sphere','torus','metatron','merkaba','fractal','arbre'];
-let activeGeometry=0; // Densité (horloge) par défaut sur OmchaWatch
+const GEO_NAMES=['Sphère','Torus','Métatron','Merkaba','Fractal','Arbre'];
+const GEO_IDS  =['sphere','torus','metatron','merkaba','fractal','arbre'];
+let activeGeometry=0; // Sphère par défaut sur OmchaWatch — discrète, le cadran (anneaux) porte l'horloge
 
 const V={rx:.28,ry:0,trx:.28,try_:0,zoom:2.2,tzoom:2.2,drag:false,lmx:0,lmy:0,t:0,spd:.8,autoRot:true};
 const HP={ex:.18,pa:true,ma:true,gl:.65,f:1,breathe:1};
@@ -620,27 +619,10 @@ function genFormPoints(formId,N,t,p){
   }else if(formId==='fractal'){
     pts=genFractalIFS(N,p.fractalDepth).map(pt=>[pt[0]*E*1.3,pt[1]*E*1.3,pt[2]*E*1.3]);
     pairs=[]; // nuage de points pur, pas de lignes — le motif fractal émerge de la densité
-  }else if(formId==='arbre'){
+  }else{ // 'arbre'
     const tr=genTreeLSystem(p.fractalDepth,N);
     pts=tr.nodes.map(pt=>[pt[0]*E*1.4,pt[1]*E*1.4,pt[2]*E*1.4]);
     edges=tr.edges;pairs=null;
-  }else{ // 'density' — sphère de densité Omc : même spirale dorée que 'sphere'
-    // (répartition uniforme, cf. formId==='sphere' ci-dessus) mais chaque
-    // point porte SA propre couleur arc-en-ciel (teinte = position/N) et
-    // s'allume progressivement et cumulativement à mesure qu'Omc avance
-    // dans le jour (CLOCK_OMC, 0-432, alimenté par le calage solaire).
-    const ga=Math.PI*(3-Math.sqrt(5));
-    const active=Math.min(N-1,Math.floor((CLOCK_OMC/432)*N));
-    colors=[];
-    for(let i=0;i<N;i++){
-      const yy=1-(i/((N-1)||1))*2,rad=Math.sqrt(Math.max(0,1-yy*yy)),th=ga*i;
-      pts.push([Math.cos(th)*rad*E,yy*E*0.85,Math.sin(th)*rad*E]);
-      const hue=i/N*360;
-      if(i<active){const c=_hsl2rgb(hue,0.82,0.56);colors.push([c[0],c[1],c[2],0.9]);}
-      else if(i===active){const c=_hsl2rgb(hue,0.92,0.7);colors.push([c[0],c[1],c[2],1]);}
-      else colors.push([220,210,255,0.16]);
-    }
-    pairs=[]; // pas de lignes — la couleur/allumage par point porte l'information
   }
   pts=applyNoise(pts,p.noiseAmt,t);
   pts=applyJitter(pts,p.jitterAmt);
@@ -904,6 +886,108 @@ function toggleTrails(){
   TRAILS.on=!TRAILS.on;
   const el=document.getElementById('ck-trails');if(el)el.classList.toggle('on',TRAILS.on);
   if(!TRAILS.on){const pc=document.getElementById('parts-canvas');if(pc)pc.width=0;}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CADRAN — anneaux concentriques lisibles (pas un nuage de points).
+// Chaque anneau est une bande arc-en-ciel continue : la portion déjà
+// parcourue est colorée (dégradé complet 0→360°), le reste reste terne.
+// Une tête lumineuse ("comète") marque la position actuelle — c'est ELLE
+// qu'on lit, exactement comme l'aiguille d'une montre. L'anneau Omc porte
+// en plus les 4 repères solaires (108/216/324/432) sur un croisillon doré,
+// et 144 points dorés le long de son tracé (texture "tissée" comme la
+// référence visuelle) qui s'allument un à un avec la progression.
+// ═══════════════════════════════════════════════════════════════════
+function ringPoint(r,angle,y){return proj(r*Math.cos(angle),y||0,r*Math.sin(angle));}
+function angleForFrac(f){return -Math.PI/2+f*Math.PI*2;}
+
+function drawRainbowRing(ctx,r,progress,opts){
+  opts=opts||{};
+  const segs=144,lw=opts.lw||4;
+  progress=Math.max(0,Math.min(1,progress));
+  for(let i=0;i<segs;i++){
+    const frac=i/segs;
+    const a0=angleForFrac(frac),a1=angleForFrac((i+1)/segs);
+    const p0=ringPoint(r,a0),p1=ringPoint(r,a1);
+    ctx.beginPath();ctx.moveTo(p0.sx,p0.sy);ctx.lineTo(p1.sx,p1.sy);
+    if(frac<progress){
+      const hue=frac*360;
+      ctx.strokeStyle=`hsla(${hue},85%,60%,0.9)`;
+      ctx.lineWidth=lw;ctx.shadowColor=`hsl(${hue},90%,65%)`;ctx.shadowBlur=opts.glow||7;
+    }else{
+      ctx.strokeStyle='rgba(255,255,255,0.09)';
+      ctx.lineWidth=lw*0.55;ctx.shadowBlur=0;
+    }
+    ctx.stroke();
+  }
+  ctx.shadowBlur=0;
+  const ang=angleForFrac(progress),hue=(progress%1)*360;
+  const pm=ringPoint(r,ang);
+  ctx.save();
+  ctx.fillStyle=`hsl(${hue},95%,74%)`;ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=opts.markerGlow||16;
+  ctx.beginPath();ctx.arc(pm.sx,pm.sy,opts.markerR||5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';ctx.globalAlpha=.85;
+  ctx.beginPath();ctx.arc(pm.sx,pm.sy,(opts.markerR||5)*0.4,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+  return pm;
+}
+
+function drawRingDots(ctx,r,progress,n){
+  const active=Math.floor(progress*n);
+  for(let i=0;i<n;i++){
+    const p=ringPoint(r,angleForFrac(i/n));
+    const lit=i<active;
+    ctx.globalAlpha=lit?0.95:0.22;
+    ctx.fillStyle=lit?`hsl(${i/n*360},90%,68%)`:'rgba(255,220,150,.5)';
+    if(lit){ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=4;}
+    ctx.beginPath();ctx.arc(p.sx,p.sy,lit?1.9:1.1,0,Math.PI*2);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  ctx.globalAlpha=1;
+}
+
+const CLOCK_MARKERS=[{f:0.25,label:'Lever'},{f:0.5,label:'Zénith'},{f:0.75,label:'Coucher'},{f:0,label:'Zén. polaire'}];
+function drawClockCross(ctx,r){
+  ctx.strokeStyle='rgba(255,210,120,.22)';ctx.lineWidth=1;
+  const p1=ringPoint(r,angleForFrac(0)),p2=ringPoint(r,angleForFrac(.5));
+  const p3=ringPoint(r,angleForFrac(.25)),p4=ringPoint(r,angleForFrac(.75));
+  ctx.beginPath();ctx.moveTo(p1.sx,p1.sy);ctx.lineTo(p2.sx,p2.sy);ctx.moveTo(p3.sx,p3.sy);ctx.lineTo(p4.sx,p4.sy);ctx.stroke();
+  ctx.font="9px var(--orb)";ctx.fillStyle='#FFD27A';ctx.globalAlpha=.8;ctx.textAlign='center';
+  CLOCK_MARKERS.forEach(m=>{
+    const p=ringPoint(r*1.06,angleForFrac(m.f));
+    ctx.fillText(m.label,p.sx,p.sy);
+  });
+  ctx.textAlign='left';ctx.globalAlpha=1;
+}
+function ringLabel(ctx,r,txt,color,size){
+  const p=ringPoint(r,angleForFrac(0.5));
+  ctx.font=(size||10)+"px var(--orb)";ctx.fillStyle=color;ctx.globalAlpha=.85;ctx.textAlign='center';
+  ctx.fillText(txt,p.sx,p.sy+14);
+  ctx.textAlign='left';ctx.globalAlpha=1;
+}
+
+function drawClockRings(ctx){
+  const omc=computeOmc(),j0=computeJ0Cycles(),yearPos=computeYearPos();
+  // Rayons calés sur l'échelle de proj() (sc≈V.zoom*_gH*.38) pour que le
+  // grand anneau tienne confortablement dans la largeur de l'écran portrait
+  // (pas juste la hauteur) — sans ce calage les anneaux débordaient de
+  // l'écran et n'apparaissaient plus que comme des bandes tronquées.
+  const rOmc=0.12,rAnnee=0.17,rOrg=0.21,rGrand=0.26;
+
+  if(j0){
+    drawRainbowRing(ctx,rGrand,j0.posGrand/15552,{lw:1.6,glow:3,markerR:1.6});
+    ringLabel(ctx,rGrand,'GRAND CYCLE · '+(Math.floor(j0.posGrand/432)+1)+'/36','#FFD27A',9);
+    drawRainbowRing(ctx,rOrg,j0.pos432/432,{lw:1.8,glow:3,markerR:1.8});
+    ringLabel(ctx,rOrg,'ORGANIQUE · '+j0.pos432+'/432','#D8B8FF',9);
+  }
+
+  drawRainbowRing(ctx,rAnnee,yearPos/360,{lw:2,glow:3.5,markerR:2});
+  ringLabel(ctx,rAnnee,'ANNÉE · jour '+yearPos+'/360','#C9E8C0',10);
+
+  drawClockCross(ctx,rOmc);
+  drawRingDots(ctx,rOmc,omc.value/432,144);
+  drawRainbowRing(ctx,rOmc,omc.value/432,{lw:3,glow:6,markerR:2.6});
+  ringLabel(ctx,rOmc,'OMC · '+omc.value.toFixed(1)+'/432'+(omc.calibrated?'':' (est.)'),'#FFD27A',11);
 }
 
 // ── Centre solaire — pulse comme un battement cardiaque (lub-dub) ───
@@ -1266,6 +1350,7 @@ function drawGeo(ts){
   }else{
     drawParts(ctx);
   }
+  drawClockRings(ctx);
   drawCenter(ctx);
   V.t+=.016*V.spd;
 }
@@ -1273,7 +1358,7 @@ function drawGeo(ts){
 loadCal();
 updateSunUI();
 loadNaissance();
-fx3dSetForm('density');
+fx3dSetForm('metatron'); // repère central calme (12 sommets fixes) — les anneaux portent l'horloge, le centre ne doit pas rivaliser visuellement
 fx3dSetRatio('432/360');
 initParts();
 g3dInitDrag();
