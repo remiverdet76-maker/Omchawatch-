@@ -2174,3 +2174,68 @@ minimaliste↔3D dans les deux sens, réglages flux/particules/détail
 géométrique fonctionnels, aucune erreur JS après plusieurs secondes
 d'exécution continue. Captures d'écran (face + orbite + zoom) vérifiées
 visuellement. APK régénéré et re-signé avec le même pipeline.
+
+## #96 : OmchaWatch v4 — pivot sur le moteur de geometrie.html
+
+Nouveau retour, plus net que les précédents : "ça me plaît pas du tout".
+Question de clarification posée avant de retenter à l'aveugle — réponse :
+le problème n'était pas le style ni le fouillis, c'était de ne pas être
+assez proche des HTML de référence (l'app avait reconstruit une
+approximation du moteur de `sphere432.html` au lieu de littéralement
+partir du fichier). Décision de l'utilisateur ensuite : repartir de
+`geometrie.html` directement, désigné comme le plus abouti visuellement
+des trois modules de référence.
+
+**Choix technique** : `geometrie.html` est *purement visuel* (aucun
+moteur audio, contrairement à `sphere432.html`) — c'est ce qui a permis
+cette fois de littéralement forker le fichier (`cp`) et de greffer
+l'horloge dessus par ajouts, sans aucune suppression risquée de code
+audio profondément imbriqué (le problème rencontré en tentant d'abord de
+partir de `sphere432.html`, abandonné à mi-parcours à la demande de
+l'utilisateur). Tout le moteur FX3D existant (6 formes, mandala sacré
+génératif, particules orbitales/boids/traînées, distorsion organique,
+vibration, profondeur de champ, lumière rotative, plan de coupe, formes
+composites, évolution automatique morphée, presets, export image) reste
+strictement intact.
+
+**Ajouts, tous additifs :**
+- **7ᵉ forme "Densité"** (nouvelle, sélectionnée par défaut) —
+  `genFormPoints()` étendu avec un cas `'density'` : même répartition en
+  spirale dorée que la forme Sphère existante, mais chaque point porte SA
+  PROPRE couleur arc-en-ciel (teinte = position/N) et s'allume
+  progressivement et cumulativement selon la lecture Omc du jour (0-432,
+  calage solaire repris tel quel des versions précédentes). `FX3D.render()`
+  étendu pour dessiner ces couleurs par point quand elles existent (les 6
+  formes d'origine, qui n'en fournissent pas, sont rendues exactement
+  comme avant).
+- **Nouvel onglet "☉ Horloge"** (premier onglet, ouvert par défaut) :
+  lecture Omc/cV/Année en direct, 4 boutons de calage solaire
+  (lever/zénith/coucher/zénith polaire), champ de naissance → J0 avec
+  jours écoulés et position dans le cycle organique (432) — texte "Cycle
+  N · X/432" comme demandé (quotient ET reste, pas juste le reste comme
+  dans une version précédente). Entièrement construit avec les classes
+  CSS déjà existantes du fichier (`.pcard`/`.pr`/`.chip`/`.hint`) —
+  aucune nouvelle règle de style, fidélité visuelle totale à la
+  référence.
+- **Centre solaire → battement cardiaque réel** : `drawCenter()` reprend
+  la double impulsion gaussienne "lub-dub" (rythme fixe ~52/min,
+  indépendant du curseur "Vitesse" décoratif) à la place du simple sinus
+  d'origine ; couleur qui vire au chaud sur le pic.
+  - `AE.on` (évolution automatique des formes) passé à `false` par
+    défaut : le foyer d'OmchaWatch est la sphère Densité, elle ne doit
+    pas dériver seule vers une autre forme (réactivable manuellement).
+- En-tête ("hdr-sub") affiche la lecture Omc en direct au lieu du
+  sous-titre statique d'origine.
+
+Vérifié par tests Playwright : rendu non vide, forme par défaut =
+`density`, `AE.on=false` par défaut, calcul Omc/J0 identiques aux
+versions précédentes (mêmes valeurs de référence), navigation complète
+du tiroir (Horloge/Formes/Paramètres/Effets/Presets), bascule vers une
+autre forme (Torus) puis retour à Densité sans erreur, tableau de
+couleurs par point bien généré pour la forme Densité, glisser-caméra
+fonctionnel, battement cardiaque vérifié à deux instants. 0 erreur JS.
+Captures d'écran (vue par défaut, orbite, tiroir Horloge) vérifiées
+visuellement — mandala + fond cosmique + points arc-en-ciel + centre
+pulsant, cohérent avec l'identité visuelle de `geometrie.html`. APK
+régénéré et re-signé avec le même pipeline `repack.py`/`jarsigner`/
+`apksig`, vérifié `verified=true` (API 24+).
