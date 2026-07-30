@@ -2104,3 +2104,73 @@ molette-zoom modifient bien la caméra, bascule de visibilité d'anneau et
 intensité fonctionnelles, réinitialisation de vue. 0 erreur JS. APK
 régénéré avec le même pipeline `repack.py`/`jarsigner`/`apksig` que
 d'habitude, vérifié `verified=true` (API 24+).
+
+## #95 : OmchaWatch v3 — sphères imbriquées, respiration fractale, flux/particules
+
+Retour direct après la v2 : les anneaux plats ne respiraient pas "comme
+dans Sphère", pas de glow flux paramétrable, le centre ne "pulsait pas
+comme un battement cardiaque". Demande explicite de repartir du moteur
+de `sphere432.html` tel quel plutôt que de réinventer un rendu plus
+léger, et d'ajouter un vrai mode minimaliste/mode 3D complet au choix.
+
+**Respiration fractale par niveau** — la déformation à volume préservé
+de `sphere432.html` (`BREATH2`/`breathScale()` : Y×s, X·Z×1/√s, avec
+s×(1/√s)²=1 donc le volume de chaque sphère est rigoureusement conservé
+pendant qu'elle respire) est reprise à l'identique (`sphereBreath()`,
+même formule `s = ratio^sin(phase)`), mais appliquée **indépendamment à
+chacun des 6 niveaux de densité** plutôt qu'à toute la scène d'un bloc —
+chaque niveau a sa propre période (2,2s pour Solônde → 38s pour le grand
+cycle), ce qui matérialise littéralement la respiration fractale
+(mêmes proportions, vitesses différentes à chaque échelle).
+
+**Sphères imbriquées** (au lieu des anneaux plats de la v2) : les 6
+niveaux redeviennent des sphères concentriques centrées sur l'origine,
+comme dans `sphere432.html`. Chaque "sphère de densité" (Omc, Année,
+Grand cycle) est peuplée par une répartition en spirale dorée
+(`fibPoint()`, même technique que les distributions de points uniformes
+sur sphère) — 432/10/36 points selon le niveau, chacun = une unité de
+densité, toujours avec l'allumage cumulatif arc-en-ciel déjà en place.
+Le cycle organique (432) devient une vraie spirale 3D pôle-à-pôle sur la
+sphère plutôt qu'un tracé plat — la cadence angulaire reste calée sur
+l'anneau Année (360), donc elle déborde visiblement du pôle après un
+tour complet : "un cercle qui ne suit pas la linéarité du cercle" rendu
+en 3D plutôt qu'en 2D.
+
+**Flux paramétrable sur l'anneau Omc** (le "focus" demandé) : portage
+direct de `drawFlux()` de `sphere432.html` (mêmes formules de rayon/angle
+oscillants, même halo `shadowBlur` en bout de traînée) — c'est le "glow
+très flash mais pas agressif" demandé, avec un curseur d'intensité dédié
+dans les réglages (indépendant de l'intensité globale).
+
+**Particules ambiantes** : portage direct de `drawParticles()` de
+`sphere432.html` (tri par profondeur pour l'ordre de dessin, pulsation de
+taille, halo), une population dédiée par niveau de densité (plus dense
+sur Omc), réglable/désactivable.
+
+**Sphère solaire centrale — battement cardiaque** : `heartbeat()` simule
+un vrai battement (deux impulsions gaussiennes rapprochées, "lub-dub",
+rythme délibérément calme ~52/min) qui pilote la taille, le halo et la
+teinte (plus chaude au pic) de la sphère dorée ; chaque battement émet un
+anneau doré qui se propage et s'estompe vers l'extérieur — la "danse
+cosmique" reliant visuellement le centre au reste du cadran.
+
+**Détail géométrique** : bras en spirale logarithmique en arrière-plan
+(même technique que `buildMC()` de `geometrie.html`), très faible
+opacité, purement décoratif, activable/désactivable.
+
+**Deux modes, un raccourci direct** dans la barre du haut (icône ◉,
+bascule immédiate sans passer par les réglages) : "minimaliste" (le rendu
+v2, anneaux plats, conservé intact comme option légère) et "3D complet"
+(nouveau rendu ci-dessus, actif par défaut). Chaque sphère de densité
+reste affichable/masquable indépendamment dans les deux modes (repris de
+`V.vis[]` de `sphere432.html`).
+
+Vérifié par tests Playwright : rendu non vide en mode 3D, formule de
+respiration mathématiquement vérifiée (volume préservé, s×(1/√s)²=1),
+répartition en spirale dorée vérifiée par calcul indépendant (premier
+point), battement cardiaque vérifié à deux instants (pic vs creux),
+78 particules et 14 flux initialisés comme attendu, bascule
+minimaliste↔3D dans les deux sens, réglages flux/particules/détail
+géométrique fonctionnels, aucune erreur JS après plusieurs secondes
+d'exécution continue. Captures d'écran (face + orbite + zoom) vérifiées
+visuellement. APK régénéré et re-signé avec le même pipeline.
