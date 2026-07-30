@@ -689,8 +689,22 @@ body{
 .btn-magic-rand:hover{box-shadow:0 0 40px rgba(200,100,255,.5);border-color:#F3D9FF;transform:scale(1.03);}
 .btn-magic-rand:active{transform:scale(.97);}
 .random-table{display:flex;flex-direction:column;gap:.3rem;}
-.rand-row{display:grid;grid-template-columns:26px 8px 1fr 1fr 1fr;gap:.1rem .4rem;align-items:center;padding:.5rem .6rem;border-radius:8px;}
+.rand-row{display:flex;flex-direction:column;gap:.35rem;padding:.5rem .6rem;border-radius:8px;}
+.rand-row-top{display:grid;grid-template-columns:26px 8px 1fr 1fr 1fr auto auto;gap:.1rem .35rem;align-items:center;}
 .rand-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+/* #91 : ligne fréquence libre (±9 Hz) + raccourci menu + barre de volume */
+.rand-menu-btn{background:transparent;border:1px solid rgba(200,170,255,.22);color:rgba(200,170,255,.55);
+  border-radius:6px;font-size:.72rem;padding:.15rem .4rem;cursor:pointer;line-height:1;transition:all .18s;}
+.rand-menu-btn:active{transform:scale(.9);background:rgba(200,170,255,.12);}
+.rand-freqline{display:flex;align-items:center;gap:.4rem;}
+.rand-freq-step{flex:1;font-family:'IM Fell English',serif;font-size:.72rem;font-weight:bold;
+  padding:.25rem .3rem;border-radius:6px;border:1px solid rgba(200,170,255,.28);
+  background:rgba(255,255,255,.04);color:rgba(220,200,255,.75);cursor:pointer;transition:all .15s;text-align:center;}
+.rand-freq-step:active{transform:scale(.94);background:rgba(200,170,255,.15);}
+/* Piste/curseur : hérite volontairement du style fader agrandi commun à
+   TOUTE l'app (règle input[type=range] globale, cf. plus haut — cohérence
+   tactile) plutôt que de le redéfinir en plus petit ici. */
+.rand-vol{width:100%;display:block;margin:0;}
 .rand-freq{font-family:'IM Fell English',serif;font-size:1rem;font-weight:bold;opacity:.95;}
 .rand-ratio{font-family:'IM Fell English',serif;font-size:.85rem;opacity:.8;text-align:center;}
 .rand-n{font-family:'IM Fell English',serif;font-size:.85rem;opacity:.7;text-align:right;}
@@ -4776,8 +4790,13 @@ function _vpStart(i,e){
   _vpTimer=setTimeout(()=>{
     _vpLongFired=true; _vpTimer=null;
     try{navigator.vibrate&&navigator.vibrate(16);}catch(x){}
-    if(i===MASTER_IDX) triggerMagicAuto();
-    else _openQuickMenu(i);
+    // #89 : le maître suit désormais EXACTEMENT le même geste que les
+    // satellites (appui long = menu rapide) — avant, le maître ouvrait le
+    // menu rapide sur TAP COURT (comme un random reroll global), ce qui
+    // rendait le mute/unmute par simple tap impossible sur la sphère
+    // centrale (bug remonté). Le random global reste accessible par
+    // ailleurs (bouton dédié "⚄ Omchaléatoire"), donc rien n'est perdu.
+    _openQuickMenu(i);
   },VP_LONG_MS);
 }
 function _vpMove(i,e){
@@ -4788,8 +4807,9 @@ function _vpMove(i,e){
 function _vpEnd(i){
   if(_vpTimer){
     clearTimeout(_vpTimer);_vpTimer=null;
-    if(i===MASTER_IDX) _openQuickMenu(i);
-    else toggleMutePair(i);
+    // #89 : tap court = mute/unmute direct pour TOUTES les sphères, y
+    // compris le maître (cohérence — cf. commentaire ci-dessus).
+    toggleMutePair(i);
   }
   // sinon : l'appui long a déjà déclenché son action
 }
@@ -6520,15 +6540,27 @@ function buildRandomTable() {
     const lk = (typeof isLocked === 'function' && isLocked(i));
     const isMaster = i === MASTER_IDX;
     const muted = !!mutedOscs[pair.pingala.id];
+    const volUI = (pair.pingala.vol / VOL_UI_SCALE).toFixed(2);
     return `<div class="rand-row" style="background:${pair.color}11;border:1px solid ${pair.color}33;">
-      <button class="rand-play${muted?'':' on'}" id="rt-play-${i}" onclick="_rtToggleMute(${i})" title="${muted?'Activer':'Couper'} cet oscillateur">${muted?'▶':'⏸'}</button>
-      <span class="rand-dot" style="background:${pair.color}"></span>
-      <span class="rand-freq"  id="rt-f-${i}" style="color:${pair.color}">${pF.toFixed(1)} Hz</span>
-      <span class="rand-ratio${isMaster?'':' rand-editable'}" id="rt-r-${i}" style="color:${pair.color}bb" ${isMaster?'':`onclick="_rtCycleRatio(${i})" title="Toucher pour changer le ratio"`}>${isMaster?'racine':RATIO_OPTS[pair.pingala.ri].l}</span>
-      <span class="rand-n${isMaster?'':' rand-editable'}" id="rt-n-${i}" style="color:${pair.color}88" ${isMaster?'':`onclick="_rtOpenNEdit(${i})" title="Toucher pour saisir une valeur"`}>×${(+pair.pingala.n).toFixed(2)}</span>
-      <input type="number" class="rand-n-input" id="rt-n-input-${i}" style="display:none;color:${pair.color};" min="0.1" max="${N_MAX}" step="0.01"
-        onkeydown="_rtHandleNKey(${i},event)" onblur="_rtExitNEdit(${i},true)">
-      <button class="rand-lock${lk?' locked':''}" id="lock-${i}" onclick="toggleLock(${i})" title="Verrouiller la fréquence">${lk?'◉':'◎'}</button>
+      <div class="rand-row-top">
+        <button class="rand-play${muted?'':' on'}" id="rt-play-${i}" onclick="_rtToggleMute(${i})" title="${muted?'Activer':'Couper'} cet oscillateur">${muted?'▶':'⏸'}</button>
+        <span class="rand-dot" style="background:${pair.color}"></span>
+        <span class="rand-freq rand-editable" id="rt-f-${i}" style="color:${pair.color}" onclick="_rtOpenFreqEdit(${i})" title="Toucher pour saisir une fréquence exacte (Hz)">${pF.toFixed(1)} Hz</span>
+        <input type="number" class="rand-n-input" id="rt-f-input-${i}" style="display:none;color:${pair.color};" min="${F_MIN}" max="${F_MAX}" step="0.1"
+          onkeydown="_rtHandleFreqKey(${i},event)" onblur="_rtExitFreqEdit(${i},true)">
+        <span class="rand-ratio${isMaster?'':' rand-editable'}" id="rt-r-${i}" style="color:${pair.color}bb" ${isMaster?'':`onclick="_rtCycleRatio(${i})" title="Toucher pour changer le ratio"`}>${isMaster?'racine':RATIO_OPTS[pair.pingala.ri].l}</span>
+        <span class="rand-n${isMaster?'':' rand-editable'}" id="rt-n-${i}" style="color:${pair.color}88" ${isMaster?'':`onclick="_rtOpenNEdit(${i})" title="Toucher pour saisir une valeur"`}>×${(+pair.pingala.n).toFixed(2)}</span>
+        <input type="number" class="rand-n-input" id="rt-n-input-${i}" style="display:none;color:${pair.color};" min="0.1" max="${N_MAX}" step="0.01"
+          onkeydown="_rtHandleNKey(${i},event)" onblur="_rtExitNEdit(${i},true)">
+        <button class="rand-lock${lk?' locked':''}" id="lock-${i}" onclick="toggleLock(${i})" title="Verrouiller la fréquence">${lk?'◉':'◎'}</button>
+        <button class="rand-menu-btn" id="rt-menu-${i}" onclick="_openQuickMenu(${i})" title="Ouvrir le menu de cet oscillateur">☰</button>
+      </div>
+      <div class="rand-freqline">
+        <button class="rand-freq-step" onclick="_rtStepFreq(${i},-9)" title="−9 Hz">−9 Hz</button>
+        <button class="rand-freq-step" onclick="_rtStepFreq(${i},9)" title="+9 Hz">+9 Hz</button>
+      </div>
+      <input type="range" class="rand-vol" id="rt-vol-${i}" min="0" max="1" step="0.01" value="${volUI}"
+        style="color:${pair.color};" oninput="setVolP(${i},parseFloat(this.value))" title="Volume">
     </div>`;
   }).join('');
 }
@@ -6543,7 +6575,61 @@ function patchRandomTable() {
     if (lk && typeof isLocked === 'function') { const on = isLocked(i); lk.textContent = on?'◉':'◎'; lk.classList.toggle('locked', on); }
     const pl = document.getElementById('rt-play-'+i);
     if (pl) { const muted = !!mutedOscs[pair.pingala.id]; pl.textContent = muted?'▶':'⏸'; pl.classList.toggle('on', !muted); pl.title = (muted?'Activer':'Couper')+' cet oscillateur'; }
+    // #91 : ne jamais écraser la valeur pendant que l'utilisateur glisse le
+    // curseur (document.activeElement) — sinon le doigt "saute" en arrière.
+    const vol = document.getElementById('rt-vol-'+i);
+    if (vol && document.activeElement !== vol) vol.value = (pair.pingala.vol / VOL_UI_SCALE).toFixed(2);
   });
+}
+// #91 : fréquence libre par oscillateur, SANS la marge de sécurité 36 Hz du
+// tirage aléatoire (celle-ci ne s'applique — comme déjà pour les éditeurs
+// ratio/×n existants — qu'au tirage automatique, jamais à une saisie
+// manuelle). Calcule le n nécessaire pour atteindre EXACTEMENT la
+// fréquence demandée (ratio inchangé) ; pour le maître, retune directement
+// masterFreq (pas de modèle ratio×n pour la racine).
+function _rtSetFreqDirect(i, targetHz) {
+  if (typeof isLocked === 'function' && isLocked(i)) return;
+  if (isNaN(targetHz)) return;
+  if (i === MASTER_IDX) { setMasterFreq(Math.round(targetHz)); return; }
+  const pair = PAIRS[i];
+  const clamped = Math.max(F_MIN, Math.min(F_MAX, targetHz));
+  const ratio = RATIO_OPTS[pair.pingala.ri].r;
+  pair.pingala.n = Math.max(0.1, Math.min(N_MAX, clamped / (masterFreq * ratio)));
+  if (flowing) { tuneOsc(pair.pingala.id, calcPFreq(i)); tuneOsc(pair.ida.id, calcIFreq(i)); }
+  if (typeof updatePairUI === 'function') updatePairUI(i);
+  saveState();
+}
+function _rtStepFreq(i, delta) {
+  if (typeof isLocked === 'function' && isLocked(i)) return;
+  if (i === MASTER_IDX) { masterStep(delta); patchRandomTable(); return; }
+  _rtSetFreqDirect(i, calcPFreq(i) + delta);
+  patchRandomTable();
+}
+function _rtOpenFreqEdit(i) {
+  if (typeof isLocked === 'function' && isLocked(i)) return;
+  const disp = document.getElementById('rt-f-' + i);
+  const inp  = document.getElementById('rt-f-input-' + i);
+  if (!disp || !inp) return;
+  disp.style.display = 'none';
+  inp.style.display = 'inline-block';
+  inp.value = calcPFreq(i).toFixed(1);
+  inp.focus(); inp.select();
+}
+function _rtHandleFreqKey(i, e) {
+  if (e.key === 'Enter')  { e.preventDefault(); _rtExitFreqEdit(i, true); }
+  if (e.key === 'Escape') _rtExitFreqEdit(i, false);
+}
+function _rtExitFreqEdit(i, apply) {
+  const disp = document.getElementById('rt-f-' + i);
+  const inp  = document.getElementById('rt-f-input-' + i);
+  if (!disp || !inp) return;
+  if (apply && inp.value !== '') {
+    const v = parseFloat(inp.value);
+    if (!isNaN(v)) _rtSetFreqDirect(i, v);
+  }
+  inp.style.display = 'none';
+  disp.style.display = '';
+  patchRandomTable();
 }
 // #83 : lecture/pause directe depuis la table (mute/unmute la paire entière,
 // même fonction que le tap sur une sphère satellite).
@@ -7501,6 +7587,17 @@ function _syncRandOptsUI() {
   const sdSlider = document.querySelector('input[oninput="setSubDroneVol(this.value)"]'); if (sdSlider) sdSlider.value = SUBDRONE_STATE.vol;
   document.querySelectorAll('[id^="dch-"]').forEach(b => b.classList.remove('active'));
   const dchBtn = document.getElementById('dch-' + DELTA_CHARACTER_MODE); if (dchBtn) dchBtn.classList.add('active');
+  // #90 : la sélection Ratio⌀/Identique/Harmonique/Personnalisé n'était
+  // JAMAIS resynchronisée ici (contrairement au caractère du battement
+  // juste au-dessus) — après rechargement de l'app (mise en arrière-plan
+  // Android, redémarrage), le réglage réel restait correctement chargé
+  // (RAND_OPTS.ratioMode) mais le bouton affichait "Ratio⌀" par défaut,
+  // donnant l'impression trompeuse que le choix avait été "décoché".
+  document.querySelectorAll('[id^="rrm-"]').forEach(b => b.classList.remove('active'));
+  const rrmBtn = document.getElementById('rrm-' + (RAND_OPTS.ratioMode === 'random' ? 'random' : RAND_OPTS.ratioMode));
+  if (rrmBtn) rrmBtn.classList.add('active');
+  const customHint = document.getElementById('custom-mode-hint');
+  if (customHint) customHint.style.display = (RAND_OPTS.ratioMode === 'custom') ? 'block' : 'none';
   setCk('ck-breath-anchor', BREATH_ANCHOR_STATE.on);
   // STRICT_HEADPHONE_MODE n'est connu qu'après loadState() (appelé avant la
   // construction d'OSC_PAN au chargement du script) — le recalculer ici.

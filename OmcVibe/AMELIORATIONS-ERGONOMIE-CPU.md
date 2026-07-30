@@ -1862,3 +1862,58 @@ d'OmchaVibe 432 reste `flowing` tout du long). Captures d'écran
 inspectées visuellement pour chacun des 17 points — 2 défauts réels
 repérés et corrigés avant cette livraison (voir ci-dessus). Suite de
 régression complète (18 fichiers) à 0 erreur JS.
+
+## #89/#90/#91 : OmcVibe 432 — mute maître, persistance random, fréquence libre + volume par oscillateur
+
+Retour terrain, 4 points sur OmcVibe 432 lui-même (pas sur Géométrie) :
+
+1. **Bug : sphère maître impossible à mute/unmute par tap (#89)** — le
+   maître était le SEUL oscillateur dont le tap court ouvrait le menu
+   rapide au lieu de couper/rétablir directement (les satellites, eux,
+   faisaient déjà mute/unmute au tap court depuis #35/#41). Depuis #85,
+   TOUTES les sphères démarrent mute par défaut, y compris le maître — cette
+   incohérence de geste devenait un vrai bug d'usage quotidien. Corrigé :
+   le maître suit désormais EXACTEMENT le même geste que les satellites
+   (tap court = mute/unmute, appui long = menu rapide). Le random global
+   auparavant lancé par l'appui long sur le maître reste accessible via le
+   bouton dédié "⚄ Omchaléatoire" déjà existant — rien n'est perdu.
+2. **Bug : les modes de tirage (Ratio⌀/Identique/Harmonique/Personnalisé)
+   semblaient se décocher, combinés à un Caractère (Apaisé/Équilibré/
+   Immersif) (#90)** — vérifié : en session, les deux réglages persistent
+   déjà parfaitement à travers des tirages répétés (aucun code ne les
+   réinitialise). Le vrai bug survient après un RECHARGEMENT de l'app
+   (mise en arrière-plan Android, redémarrage) : `_syncRandOptsUI()`
+   resynchronisait déjà le bouton Caractère actif après un `loadState()`,
+   mais PAS le bouton de mode de tirage — le réglage réel restait bien
+   chargé (le prochain tirage l'utilisait correctement) mais le bouton
+   affichait "Ratio⌀" par défaut, donnant l'impression trompeuse d'un
+   choix perdu. Corrigé : `_syncRandOptsUI()` resynchronise maintenant
+   aussi le bouton de mode de tirage (et l'indice "Mode Personnalisé
+   actif" associé) à partir de `RAND_OPTS.ratioMode`.
+3. **Fréquence libre par oscillateur + raccourci menu (#91)** — dans la
+   table Options Aléatoire, chaque ligne a maintenant : la fréquence
+   elle-même touchable pour saisir une valeur EXACTE en Hz (calcule le ×n
+   nécessaire pour l'atteindre, sans jamais appliquer la marge de sécurité
+   36 Hz du tirage aléatoire — comme déjà pour les éditeurs ratio/×n
+   existants, une saisie manuelle reste toujours volontaire et n'est
+   jamais contrainte par cette marge), deux boutons −9 Hz / +9 Hz pour un
+   ajustement rapide, et un raccourci "☰" qui ouvre directement le menu
+   rapide de cet oscillateur (solo, FX, random ciblé, modal complet).
+   Fonctionne aussi pour le maître (retune `masterFreq` directement, pas
+   de modèle ratio×n pour la racine).
+4. **Barre de volume large sous chaque ligne (#91)** — curseur pleine
+   largeur, branché sur `setVolP()` (même mécanisme que le fader du
+   panneau oscillateur complet), hérite du style fader agrandi commun à
+   toute l'app plutôt que d'en redéfinir un plus petit ici (cohérence
+   tactile).
+
+Vérifié par tests Playwright : tap court sur le maître bascule
+`mutedOscs` (true→false→true), appui long ouvre bien le menu rapide sans
+toucher au mute ; mode de tirage + caractère survivent à un rechargement
+complet AVEC bouton correctement resynchronisé (testé Harmonique+Apaisé et
+Personnalisé+Immersif) ; saisie de fréquence directe sur une paire
+satellite volontairement à moins de 36 Hz d'une autre confirmée non
+bloquée ; ±9 Hz et saisie directe fonctionnent pour le maître et les
+satellites, respectent le verrou ; curseur de volume branché et
+resynchronisé sans interférer avec un glissé en cours. 0 erreur JS, 0
+régression sur l'ensemble des suites existantes.
