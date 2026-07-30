@@ -2379,3 +2379,37 @@ J0 réglé, mouvement/bloc identifiés avec la bonne progression locale
 de toutes les fonctions Solônde vérifié sans aucune trace de
 `getHours`/`setHours`/`toLocaleTimeString`. 0 erreur JS. APK régénéré
 et re-signé, vérifié `verified=true` (API 24+).
+
+## #100 : fond d'écran personnalisé avec retouche de centrage
+
+Deux demandes en une : un widget Android 2×2 (écran d'accueil) et un
+fond d'écran personnalisable avec recentrage. Le widget a été décliné
+explicitement — vérification concrète (pas de mémoire) faite dans cette
+session : aucun SDK Android installé (`ANDROID_HOME` vide, pas de
+`aapt2`/`build-tools`), pas d'`apktool`, et le réseau de l'environnement
+rejette explicitement les serveurs de distribution du SDK Android
+(`dl.google.com`, `redirector.gvt1.com` → 403 côté passerelle). Un
+widget natif nécessite un `AppWidgetProvider` compilé (Kotlin/Java) et
+enregistré dans un `AndroidManifest.xml` recompilé — hors de portée du
+pipeline de repackaging au niveau fichiers utilisé pour cet APK, quels
+que soient les précédents dans d'autres sessions/environnements.
+
+**Fond d'écran personnalisé** (réalisé) : nouvel onglet "🖼 Fond" dans le
+tiroir. Import d'image (`FileReader`→dataURL, persistée si < ~3,8 Mo),
+mode retouche activé automatiquement après import — les mêmes gestes
+qui orbitent normalement la caméra 3D (glisser, pincer/molette)
+repositionnent et zooment l'image importée à la place tant que le mode
+est actif, sans toucher à la caméra. Le tiroir se ferme automatiquement
+à l'import pour voir l'écran en entier pendant le cadrage. `background-
+position` en pourcentage pour le centrage, `transform:scale()` sur
+`#cosmic-bg` pour le zoom (60-300%, curseur ou pincement) — persistés
+ensemble en `localStorage`, restaurés identiques au rechargement.
+Réversible à tout moment ("Revenir au fond cosmique").
+
+Vérifié par tests Playwright : import déclenche bien le mode retouche +
+fermeture du tiroir, glisser modifie l'offset du fond SANS changer
+`V.trx`/`V.try_` (caméra 3D confirmée inchangée pendant la retouche),
+molette modifie le zoom, état intégralement restauré après rechargement
+de page (image, offset, zoom identiques), réinitialisation revient bien
+à `img/cosmic-flux.jpg`. 0 erreur JS. APK régénéré et re-signé, vérifié
+`verified=true` (API 24+).
