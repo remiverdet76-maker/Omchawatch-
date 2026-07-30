@@ -339,12 +339,32 @@ function _hueShiftRGB(rgb,deg){
 // forme 'density' ci-dessous et l'en-tête.
 // ═══════════════════════════════════════════════════════════════════
 const EQUINOX_REF=new Date('2026-03-20T00:00:00');
-let CLOCK_OMC=0;
 let CAL={lever:null,zenith:null,coucher:null,minuit:null};
-function loadCal(){try{const s=localStorage.getItem('omchawatch-cal');if(s)CAL=JSON.parse(s);}catch(e){}}
+// #97 (transparence) : AUCUNE constante de jour fixe ici (plus de 86400000,
+// plus de lecture d'heure civile). DAY_LOG ne mesure que des événements
+// solaires réels : un jour "mesuré" = un nouveau lever détecté à plus de
+// 20h du précédent (marge large pour ignorer un double-tap accidentel sans
+// jamais manquer un vrai cycle). Avant le premier tap, il n'existe tout
+// simplement aucune donnée — l'horloge l'affiche honnêtement plutôt que
+// d'inventer une lecture via le calendrier.
+let DAY_LOG={firstTap:null,daysTapped:0,lastLever:null};
+function loadCal(){
+  try{const s=localStorage.getItem('omchawatch-cal');if(s)CAL=JSON.parse(s);}catch(e){}
+  try{const s=localStorage.getItem('omchawatch-daylog');if(s)DAY_LOG=JSON.parse(s);}catch(e){}
+}
 function saveCal(){try{localStorage.setItem('omchawatch-cal',JSON.stringify(CAL));}catch(e){}}
+function saveDayLog(){try{localStorage.setItem('omchawatch-daylog',JSON.stringify(DAY_LOG));}catch(e){}}
 function fmtTime(ts){if(!ts)return'--:--';const d=new Date(ts);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
-function tapSun(key){CAL[key]=Date.now();saveCal();updateSunUI();}
+function tapSun(key){
+  const now=Date.now();
+  if(!DAY_LOG.firstTap)DAY_LOG.firstTap=now;
+  if(key==='lever'){
+    if(DAY_LOG.lastLever&&(now-DAY_LOG.lastLever)>20*3600*1000)DAY_LOG.daysTapped++;
+    DAY_LOG.lastLever=now;
+  }
+  CAL[key]=now;
+  saveCal();saveDayLog();updateSunUI();
+}
 function updateSunUI(){
   ['lever','zenith','coucher','minuit'].forEach(k=>{
     const b=document.getElementById('cw-btn-'+k);
@@ -352,25 +372,30 @@ function updateSunUI(){
     if(b)b.textContent=b.textContent.replace(/ \(\d\d:\d\d\)$/,'')+(CAL[k]?' ('+fmtTime(CAL[k])+')':'');
   });
 }
+// Interpolation d'un quart : uniquement à partir de DEUX taps réels de
+// l'utilisateur — jamais d'assomption de durée. La portion coucher→zénith
+// polaire reste une estimation quand le zénith polaire n'a pas été tapé
+// (moitié de la durée mesurée du matin), signalée comme telle dans l'UI.
 function currentSolarStep(){
   const now=Date.now(),c=CAL;
   if(c.minuit&&c.lever&&c.minuit<c.lever&&now>=c.minuit&&now<=c.lever)
-    return 0+(now-c.minuit)/(c.lever-c.minuit)*108;
+    return{step:0+(now-c.minuit)/(c.lever-c.minuit)*108,exact:true};
   if(c.lever&&c.zenith&&now>=c.lever&&now<=c.zenith)
-    return 108+(now-c.lever)/(c.zenith-c.lever)*108;
+    return{step:108+(now-c.lever)/(c.zenith-c.lever)*108,exact:true};
   if(c.zenith&&c.coucher&&now>=c.zenith&&now<=c.coucher)
-    return 216+(now-c.zenith)/(c.coucher-c.zenith)*108;
+    return{step:216+(now-c.zenith)/(c.coucher-c.zenith)*108,exact:true};
   const minuitEst=c.minuit&&c.minuit>(c.coucher||0)?c.minuit
     :(c.coucher&&c.zenith&&c.lever?c.coucher+(c.zenith-c.lever)/2:null);
   if(c.coucher&&minuitEst&&now>=c.coucher&&now<=minuitEst)
-    return 324+(now-c.coucher)/(minuitEst-c.coucher)*108;
+    return{step:324+(now-c.coucher)/(minuitEst-c.coucher)*108,exact:!!c.minuit};
   return null;
 }
+// Aucun secours calendaire : sans calage suffisant, il n'y a pas de
+// lecture Omc — plutôt inventer une valeur via l'heure civile.
 function computeOmc(){
-  const step=currentSolarStep();
-  if(step!=null)return{value:step,calibrated:true};
-  const now=new Date(),midnight=new Date(now);midnight.setHours(0,0,0,0);
-  return{value:(now-midnight)/86400000*432,calibrated:false};
+  const r=currentSolarStep();
+  if(!r)return{value:null,calibrated:false};
+  return{value:r.step,calibrated:r.exact};
 }
 function resetCal(){CAL={lever:null,zenith:null,coucher:null,minuit:null};saveCal();updateSunUI();}
 
@@ -385,34 +410,57 @@ function setNaissance(v){
   J0_DATE=new Date(birth.getTime()-288*86400000);
   updateJ0UI();
 }
+// Jours écoulés depuis une référence (équinoxe ou J0) = estimation
+// calendaire pour la période AVANT le premier tap (aucune autre donnée
+// n'existe pour cette période passée) + comptage RÉEL (DAY_LOG.daysTapped)
+// pour tout ce qui a été effectivement observé depuis. `measured` indique
+// combien de ces jours sont de vraies mesures, pas une hypothèse.
+function daysSinceRef(refMs){
+  const now=Date.now();
+  if(!DAY_LOG.firstTap){
+    return{days:Math.floor((now-refMs)/86400000),measured:0,calibrated:false};
+  }
+  const calendarBefore=Math.floor((DAY_LOG.firstTap-refMs)/86400000);
+  return{days:calendarBefore+DAY_LOG.daysTapped,measured:DAY_LOG.daysTapped,calibrated:true};
+}
 function computeJ0Cycles(){
   if(!J0_DATE)return null;
-  const days=Math.floor((Date.now()-J0_DATE.getTime())/86400000);
-  if(days<0)return null;
-  return{days,pos432:days%432,lap432:Math.floor(days/432),posGrand:days%15552,lapGrand:Math.floor(days/15552)};
+  const d=daysSinceRef(J0_DATE.getTime());
+  if(d.days<0)return null;
+  return{days:d.days,measured:d.measured,pos432:d.days%432,lap432:Math.floor(d.days/432),posGrand:d.days%15552,lapGrand:Math.floor(d.days/15552)};
 }
 function computeYearPos(){
-  const days=Math.floor((Date.now()-EQUINOX_REF.getTime())/86400000);
-  return((days%360)+360)%360;
+  const d=daysSinceRef(EQUINOX_REF.getTime());
+  return{pos:((d.days%360)+360)%360,measured:d.measured};
 }
 function updateJ0UI(){
-  const jours=J0_DATE?Math.floor((Date.now()-J0_DATE.getTime())/86400000):null;
+  const j0=computeJ0Cycles();
   const setTxt=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
   setTxt('cw-j0',J0_DATE?J0_DATE.toLocaleDateString('fr-FR'):'--');
-  setTxt('cw-jours',(jours!=null&&jours>=0)?jours:'--');
-  setTxt('cw-organique',(jours!=null&&jours>=0)?('Cycle '+(Math.floor(jours/432)+1)+' · '+(jours%432)+'/432'):'--');
+  setTxt('cw-jours',j0?(j0.days+' ('+j0.measured+' mesurés)'):'--');
+  setTxt('cw-organique',j0?('Cycle '+(j0.lap432+1)+' · '+j0.pos432+'/432'):'--');
 }
 function updateClockUI(omc){
   const setTxt=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
-  setTxt('cw-omc',omc.value.toFixed(1)+(omc.calibrated?'':' (estimation)'));
-  setTxt('cw-cv','+'+Math.round((omc.value-Math.floor(omc.value))*100)+'%');
-  setTxt('cw-annee','jour '+computeYearPos()+'/360');
+  const yr=computeYearPos();
+  if(omc.value==null){
+    setTxt('cw-omc','pas encore calé');
+    setTxt('cw-cv','--');
+  }else{
+    setTxt('cw-omc',omc.value.toFixed(1)+(omc.calibrated?'':' (estimation)'));
+    setTxt('cw-cv','+'+Math.round((omc.value-Math.floor(omc.value))*100)+'%');
+  }
+  setTxt('cw-annee','jour '+yr.pos+'/360'+(yr.measured?' ('+yr.measured+' mesurés)':' (estimation calendaire)'));
   const hdr=document.getElementById('hdr-sub');
-  if(hdr)hdr.textContent='Omc '+omc.value.toFixed(1)+(omc.calibrated?'':' (est.)')+' · Année '+computeYearPos()+'/360';
+  if(hdr)hdr.textContent=omc.value==null
+    ?'Pas encore calé — appuie au lever du soleil (☉)'
+    :('Omc '+omc.value.toFixed(1)+(omc.calibrated?'':' (est.)')+' · Année '+yr.pos+'/360');
   const hint=document.getElementById('cw-cal-hint');
-  if(hint)hint.textContent=omc.calibrated
-    ?'Calage actif — lecture Omc précise.'
-    :'Estimation depuis minuit local — appuie au lever/zénith/coucher pour caler précisément.';
+  if(hint)hint.textContent=omc.value==null
+    ?"Aucune estimation tant qu'aucun repère n'est calé — pas de secours via l'heure du téléphone : 0 GPS, 0 horloge civile, vraiment."
+    :(omc.calibrated
+      ?'Calage actif — lecture Omc mesurée entre deux repères réels.'
+      :'Coucher calé, zénith polaire estimé (moitié de la durée mesurée du matin) — tape ☾ pour une lecture exacte.');
 }
 
 // ── Bruit de valeur 3D compact (#6 distorsion organique) ───────────
@@ -967,7 +1015,7 @@ function ringLabel(ctx,r,txt,color,size){
 }
 
 function drawClockRings(ctx){
-  const omc=computeOmc(),j0=computeJ0Cycles(),yearPos=computeYearPos();
+  const omc=computeOmc(),j0=computeJ0Cycles(),yr=computeYearPos();
   // Rayons calés sur l'échelle de proj() (sc≈V.zoom*_gH*.38) pour que le
   // grand anneau tienne confortablement dans la largeur de l'écran portrait
   // (pas juste la hauteur) — sans ce calage les anneaux débordaient de
@@ -981,13 +1029,20 @@ function drawClockRings(ctx){
     ringLabel(ctx,rOrg,'ORGANIQUE · '+j0.pos432+'/432','#D8B8FF',9);
   }
 
-  drawRainbowRing(ctx,rAnnee,yearPos/360,{lw:2,glow:3.5,markerR:2});
-  ringLabel(ctx,rAnnee,'ANNÉE · jour '+yearPos+'/360','#C9E8C0',10);
+  drawRainbowRing(ctx,rAnnee,yr.pos/360,{lw:2,glow:3.5,markerR:2});
+  ringLabel(ctx,rAnnee,'ANNÉE · jour '+yr.pos+'/360'+(yr.measured?' ('+yr.measured+' mesurés)':' (estimation calendaire)'),'#C9E8C0',10);
 
   drawClockCross(ctx,rOmc);
-  drawRingDots(ctx,rOmc,omc.value/432,144);
-  drawRainbowRing(ctx,rOmc,omc.value/432,{lw:3,glow:6,markerR:2.6});
-  ringLabel(ctx,rOmc,'OMC · '+omc.value.toFixed(1)+'/432'+(omc.calibrated?'':' (est.)'),'#FFD27A',11);
+  if(omc.value==null){
+    // Pas de secours calendaire : sans calage, l'anneau Omc reste éteint
+    // et le dit explicitement plutôt que d'inventer une position.
+    drawRainbowRing(ctx,rOmc,0,{lw:2,glow:0,markerR:0});
+    ringLabel(ctx,rOmc,'OMC · pas encore calé','#FFD27A',11);
+  }else{
+    drawRingDots(ctx,rOmc,omc.value/432,144);
+    drawRainbowRing(ctx,rOmc,omc.value/432,{lw:3,glow:6,markerR:2.6});
+    ringLabel(ctx,rOmc,'OMC · '+omc.value.toFixed(1)+'/432'+(omc.calibrated?'':' (est.)'),'#FFD27A',11);
+  }
 }
 
 // ── Centre solaire — pulse comme un battement cardiaque (lub-dub) ───
@@ -1297,9 +1352,7 @@ function drawGeo(ts){
 
   applyMasterHueToFlux(_getMasterFreq());
 
-  const _omcNow=computeOmc();
-  CLOCK_OMC=_omcNow.value;
-  updateClockUI(_omcNow);
+  updateClockUI(computeOmc());
   HB_T+=.016;
 
   V.rx+=(V.trx-V.rx)*.06;V.ry+=(V.try_-V.ry)*.06;V.zoom+=(V.tzoom-V.zoom)*.08;

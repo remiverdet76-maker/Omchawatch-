@@ -2293,3 +2293,49 @@ après correction des rayons, avant/après changement de forme par
 défaut) : anneaux effectivement circulaires et lisibles à l'écran, textes
 de lecture visibles pour les 4 niveaux, 0 erreur JS. APK régénéré et
 re-signé avec le même pipeline, vérifié `verified=true` (API 24+).
+
+## #98 : OmchaWatch — retrait de toute assomption 24/60/60 cachée
+
+Question directe de l'utilisateur : "comment est calculé le cycle vu
+qu'il n'y a aucun repère solaire/lunaire/équinoxe/solstice — une horloge
+24/60/60 cachée ?". Audit honnête du code : oui, à trois endroits.
+1. Le mode "non calé" de `computeOmc()` lisait `new Date().getHours()`
+   (minuit civil local) et divisait par `86400000` — une hypothèse de
+   jour fixe, pas une mesure.
+2. `computeYearPos()`/`computeJ0Cycles()` divisaient `(maintenant −
+   référence)` par `86400000` pour compter des "jours" — même défaut,
+   posture calendaire déguisée en solaire.
+3. L'interpolation entre deux taps réels (`currentSolarStep()`), elle,
+   était déjà honnête — elle mesure la durée RÉELLE entre deux
+   événements tapés par l'utilisateur, aucune constante de jour.
+
+**Correction (pas un compromis, un changement de nature)** :
+- Le mode "non calé" n'existe plus. Sans repère réel posé, `computeOmc()`
+  renvoie `null` et l'anneau Omc l'affiche explicitement ("pas encore
+  calé", anneau éteint) plutôt que d'inventer une lecture via l'horloge
+  civile du téléphone.
+- Nouveau `DAY_LOG` (persisté) : compte les **jours réellement observés**
+  — un jour "mesuré" = un nouveau tap "Lever" détecté à plus de 20h du
+  précédent (marge large anti-double-tap, jamais un vrai cycle raté).
+  Zéro constante de durée.
+- `daysSinceRef()` : pour toute période AVANT le premier tap de
+  l'utilisateur, il n'existe tout simplement aucune donnée solaire — la
+  seule option honnête est une estimation calendaire, clairement
+  étiquetée comme telle ("estimation calendaire"). Pour tout ce qui a été
+  observé DEPUIS le premier tap, c'est un comptage réel, étiqueté "(N
+  mesurés)". Les deux ne sont jamais confondus dans l'UI.
+
+Limite assumée et expliquée à l'utilisateur en amont de ce correctif :
+aucun logiciel sur un appareil numérique ne peut s'affranchir d'un
+oscillateur physique (le quartz du téléphone) pour mesurer une durée
+écoulée — c'est le sablier lui-même, inévitable et sans rapport avec le
+24/60/60. Ce qui EST évitable, et qui l'a été ici, c'est l'interprétation
+en heure civile et l'hypothèse de durée fixe posées par-dessus.
+
+Vérifié par tests Playwright : `computeOmc()` renvoie bien `{value:null}`
+avant tout calage (aucun texte fabriqué), `DAY_LOG.daysTapped` s'incrémente
+correctement sur un nouveau cycle simulé (>20h), J0/Année affichent
+"(N mesurés)" après calage, retour à "pas encore calé" après
+réinitialisation, code source de `computeOmc`/`currentSolarStep` vérifié
+sans trace de `86400000` ni `getHours`/`setHours`. 0 erreur JS. APK
+régénéré et re-signé, vérifié `verified=true` (API 24+).
