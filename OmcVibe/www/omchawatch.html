@@ -112,6 +112,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
         <div class="pr"><div class="pl">Année (360)</div><div class="pv" id="cw-annee">--</div></div>
       </div>
       <div class="pcard">
+        <div class="pct">ONDE SOLÔNDE</div>
+        <div class="pr"><div class="pl">Cycles depuis J0</div><div class="pv" id="cw-solonde" style="font-size:.82rem;">--</div></div>
+        <div class="hint">Pas une horloge : un compteur de cycles d'onde (11/10 → 6/5 → 10/11 → 5/6), ancré sur J0. La période est un choix délibéré (numériquement une demi-seconde) — jamais lue ni affichée en heure civile.</div>
+      </div>
+      <div class="pcard">
         <div class="pct">CALAGE SOLAIRE DU JOUR</div>
         <div class="chiprow">
           <span class="chip" id="cw-btn-lever" onclick="tapSun('lever')">☉↑ Lever</span>
@@ -451,6 +456,8 @@ function updateClockUI(omc){
     setTxt('cw-cv','+'+Math.round((omc.value-Math.floor(omc.value))*100)+'%');
   }
   setTxt('cw-annee','jour '+yr.pos+'/360'+(yr.measured?' ('+yr.measured+' mesurés)':' (estimation calendaire)'));
+  const sCount=solondeCount(),sMove=solondeMovement(sCount);
+  setTxt('cw-solonde',sCount==null?'--':(sCount.toLocaleString('fr-FR')+' · '+sMove.name));
   const hdr=document.getElementById('hdr-sub');
   if(hdr)hdr.textContent=omc.value==null
     ?'Pas encore calé — appuie au lever du soleil (☉)'
@@ -1045,21 +1052,43 @@ function drawClockRings(ctx){
   }
 }
 
-// ── Centre solaire — pulse comme un battement cardiaque (lub-dub) ───
-// Rythme réel indépendant de V.spd (la "vitesse" ne doit accélérer que
-// la géométrie décorative, pas le cœur du cadran) : deux impulsions
-// gaussiennes rapprochées par cycle, calme et délibérément méditatif.
-let HB_T=0;
-const BEAT_PERIOD=1.15;
-function heartbeat(){
-  const tt=(HB_T%BEAT_PERIOD)/BEAT_PERIOD;
-  const lub=Math.exp(-Math.pow((tt-0.06)*20,2));
-  const dub=Math.exp(-Math.pow((tt-0.22)*16,2))*0.65;
-  return lub+dub;
+// ═══════════════════════════════════════════════════════════════════
+// SOLÔNDE — onde centrale, PAS une horloge. On ne mesure jamais "combien
+// de temps" ici : on COMPTE des cycles d'onde depuis J0 (ou, à défaut, le
+// premier repère solaire jamais posé). SOLONDE_MS=500 est un choix
+// délibéré — numériquement une demi-seconde — mais ce nombre n'est ni lu
+// ni affiché en heure civile nulle part : seul le compteur de cycles
+// existe, et son unité est la Solônde, pas la seconde. Chaque cycle
+// traverse les 4 mouvements du modèle (expansion douce 11/10, expansion
+// charmante 6/5, contraction douce 10/11, contraction charmante 5/6),
+// répartis en 4 blocs de 9 (36 Solônde/tour) — même schéma déjà validé
+// pour la respiration fractale, ici piloté par un vrai compteur d'ondes
+// plutôt que par le temps d'animation écoulé.
+const SOLONDE_MS=500;
+const SOLONDE_RATIOS=[11/10,6/5,10/11,5/6];
+const SOLONDE_NAMES=['Expansion douce','Expansion charmante','Contraction douce','Contraction charmante'];
+function solondeAnchor(){return J0_DATE?J0_DATE.getTime():(DAY_LOG.firstTap||null);}
+function solondeCount(){
+  const a=solondeAnchor();
+  return a==null?null:Math.floor((Date.now()-a)/SOLONDE_MS);
+}
+function solondeMovement(count){
+  if(count==null)return null;
+  const pos=((count%36)+36)%36,block=Math.floor(pos/9);
+  return{block,local:(pos%9)/9,name:SOLONDE_NAMES[block]};
+}
+function solondeScale(count){
+  const m=solondeMovement(count);
+  if(!m)return 1;
+  let cum=1;
+  for(let i=0;i<m.block;i++)cum*=SOLONDE_RATIOS[i];
+  return cum*Math.pow(SOLONDE_RATIOS[m.block],m.local);
 }
 function drawCenter(ctx){
   const p0=proj(0,0,0);
-  const hb=heartbeat();
+  const sCount=solondeCount();
+  const scale=solondeScale(sCount); // oscille 1.0 → 1.32 → 1.0 sur 36 Solônde, jamais en dessous de 1
+  const hb=Math.min(1,(scale-1)/0.32);
   const pulse=.55+.65*hb;
   for(let ri=0;ri<5;ri++){
     const ph=(V.t*.7*V.spd+ri*.21)%1;
@@ -1353,7 +1382,6 @@ function drawGeo(ts){
   applyMasterHueToFlux(_getMasterFreq());
 
   updateClockUI(computeOmc());
-  HB_T+=.016;
 
   V.rx+=(V.trx-V.rx)*.06;V.ry+=(V.try_-V.ry)*.06;V.zoom+=(V.tzoom-V.zoom)*.08;
   if(V.autoRot)V.try_+=.0025*V.spd;

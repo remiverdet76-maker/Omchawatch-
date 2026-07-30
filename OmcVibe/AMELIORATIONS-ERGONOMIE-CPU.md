@@ -2339,3 +2339,43 @@ correctement sur un nouveau cycle simulé (>20h), J0/Année affichent
 réinitialisation, code source de `computeOmc`/`currentSolarStep` vérifié
 sans trace de `86400000` ni `getHours`/`setHours`. 0 erreur JS. APK
 régénéré et re-signé, vérifié `verified=true` (API 24+).
+
+## #99 : onde Solônde — compteur de cycles réel, plus une horloge du tout
+
+Suite du #98 : l'utilisateur propose sa propre issue au problème du
+sablier — ne plus mesurer "du temps" mais compter des cycles d'une onde
+(la Solônde), dont la période vaut "par coïncidence" une demi-seconde.
+Objection technique soulevée puis retirée en cours d'échange : fixer une
+période à 500ms revient forcément à caler ce nombre sur la seconde SI
+(500ms = une demi-seconde par définition), donc annoncer "ce n'est pas
+une seconde" sans le dire serait aussi malhonnête que le point #98 —
+MAIS rien n'empêche d'assumer ce choix explicitement (la période est une
+constante délibérée, pas une redécouverte technique) tout en respectant
+la vraie demande : ne plus JAMAIS lire ni afficher quoi que ce soit en
+heure civile, ne compter que des cycles.
+
+**Implémentation** : `SOLONDE_MS=500` (documenté comme choix assumé, pas
+comme indépendance technique). `solondeCount()` = nombre de cycles
+Solônde écoulés depuis J0 (ou, à défaut, le premier repère solaire
+jamais posé) — un entier pur, jamais formaté en heure. `solondeMovement()`
+répartit ce compteur sur 36 Solônde/tour en 4 blocs de 9, un par
+mouvement (Expansion douce 11/10 → Expansion charmante 6/5 → Contraction
+douce 10/11 → Contraction charmante 5/6 — l'ordre exact du modèle).
+`solondeScale()` reprend le produit cumulatif déjà vérifié pour la
+respiration fractale (retour exact à 1 après un tour complet, propriété
+mathématique : 11/10 × 6/5 × 10/11 × 5/6 = 1). Le pouls du centre
+(`drawCenter`) est désormais piloté par ce compteur réel plutôt que par
+un temps d'animation arbitraire — la sphère respire littéralement au
+rythme de l'onde Solônde. Nouvel encart "Onde Solônde" dans l'onglet
+Horloge : nombre de cycles + mouvement en cours, avec le rappel explicite
+que ce n'est pas une horloge.
+
+Vérifié par tests Playwright : compteur `null` tant qu'aucune ancre
+n'existe (ni J0 ni premier tap), résout correctement après un tap ou un
+J0 réglé, mouvement/bloc identifiés avec la bonne progression locale
+(9 Solônde par bloc), `solondeScale(0)=1`, `solondeScale(9)=1.1`
+(=11/10 exact), `solondeScale(18)=1.32` (=11/10×6/5 exact),
+`solondeScale(36)=1` (retour exact après un tour complet), code source
+de toutes les fonctions Solônde vérifié sans aucune trace de
+`getHours`/`setHours`/`toLocaleTimeString`. 0 erreur JS. APK régénéré
+et re-signé, vérifié `verified=true` (API 24+).
