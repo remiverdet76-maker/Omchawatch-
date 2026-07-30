@@ -6,27 +6,47 @@
 <style>
 :root{
   --void:#02010D;--gold:#E8A020;--goldBright:#FFD27A;--text:#B8A8D0;
-  --bright:#F0E0FF;--panel:rgba(20,12,4,.62);--border:rgba(255,190,90,.28);
+  --bright:#F0E0FF;--panel:rgba(14,9,4,.72);--border:rgba(255,190,90,.28);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
 html,body{width:100%;height:100%;overflow:hidden;background:var(--void);color:var(--text);
   font-family:'IM Fell English',serif;}
-body{background:
-  radial-gradient(circle at 12% 8%, rgba(130,60,220,.12), transparent 42%),
-  radial-gradient(circle at 88% 92%, rgba(20,120,220,.12), transparent 42%),
-  radial-gradient(circle at 50% 20%,#160a20,#000 78%);}
-#wrap{position:fixed;inset:0;display:flex;flex-direction:column;}
-#hdr{padding:.9rem 1rem .5rem;flex-shrink:0;text-align:center;}
-#hdr-title{font-family:'Cinzel Decorative',serif;font-size:1.15rem;font-weight:700;
-  color:var(--goldBright);letter-spacing:.14em;text-shadow:0 0 18px rgba(255,200,90,.4);}
-#hdr-sub{font-size:.66rem;letter-spacing:.1em;opacity:.55;text-transform:uppercase;margin-top:2px;}
-#body{flex:1;overflow-y:auto;padding:.6rem 1rem 1rem;}
-#dialWrap{display:flex;justify-content:center;margin:.3rem 0 .9rem;}
-#dial{width:min(92vw,440px);height:min(92vw,440px);}
+#wrap{position:fixed;inset:0;}
+canvas{position:absolute;inset:0;width:100%;height:100%;}
+#cvBg{z-index:1;}
+#cvClock{z-index:2;touch-action:none;}
+
+#topbar{position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;
+  justify-content:space-between;padding:.7rem .8rem;pointer-events:none;}
+#topbar .grp{display:flex;gap:.4rem;pointer-events:auto;}
+.icobtn{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);
+  background:rgba(14,9,4,.55);backdrop-filter:blur(6px);color:var(--goldBright);
+  display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;}
+#title{position:absolute;top:.85rem;left:50%;transform:translateX(-50%);z-index:9;
+  font-family:'Cinzel Decorative',serif;font-size:.78rem;letter-spacing:.16em;
+  color:var(--goldBright);text-shadow:0 0 14px rgba(255,200,90,.5);pointer-events:none;
+  text-align:center;}
+#drag-hint{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);z-index:9;
+  font-size:.62rem;letter-spacing:.08em;color:var(--text);opacity:.5;pointer-events:none;
+  transition:opacity 1.2s;text-align:center;}
+#drag-hint.hide{opacity:0;}
+#j0hint{position:absolute;bottom:2.6rem;left:50%;transform:translateX(-50%);z-index:9;
+  font-size:.6rem;color:var(--goldBright);opacity:.65;pointer-events:none;text-align:center;
+  max-width:80vw;font-style:italic;}
+
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:none;
+  align-items:flex-end;justify-content:center;}
+.sheet-bg.open{display:flex;}
+.sheet{width:100%;max-width:460px;max-height:82vh;overflow-y:auto;background:#0c0806;
+  border:1.5px solid var(--border);border-radius:16px 16px 0 0;padding:1rem 1rem 1.4rem;}
+.sheet-t{font-family:'Cinzel Decorative',serif;font-size:.72rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:.7rem;display:flex;
+  justify-content:space-between;align-items:center;}
+.sheet-t .x{cursor:pointer;opacity:.6;font-size:1rem;}
 .card{background:var(--panel);border:1.5px solid var(--border);border-radius:12px;
-  padding:.9rem;margin-bottom:.7rem;backdrop-filter:blur(8px);}
-.sec-t{font-family:'Cinzel Decorative',serif;font-size:.64rem;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--gold);opacity:.85;margin-bottom:.6rem;}
+  padding:.85rem;margin-bottom:.65rem;}
+.sec-t{font-family:'Cinzel Decorative',serif;font-size:.62rem;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--gold);opacity:.85;margin-bottom:.55rem;}
 .sun-row{display:flex;gap:.4rem;}
 .sun-btn{flex:1;padding:.5rem .15rem;border-radius:10px;border:1.5px solid var(--border);
   background:rgba(20,12,4,.5);text-align:center;cursor:pointer;}
@@ -36,11 +56,6 @@ body{background:
 .sun-btn .sv{font-size:.6rem;opacity:.6;margin-top:2px;display:block;}
 .sun-btn.set{border-color:var(--gold);background:rgba(232,160,32,.14);}
 .sun-btn.set .sn{color:var(--goldBright);}
-.dens-gauge{position:relative;height:10px;border-radius:6px;background:rgba(255,255,255,.06);
-  margin:.5rem 0 .3rem;overflow:hidden;}
-.dens-fill{position:absolute;top:0;bottom:0;left:50%;width:0;background:linear-gradient(90deg,#FF8A6A,#FFD27A);}
-.dens-mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--gold);}
-.dens-lbl{display:flex;justify-content:space-between;font-size:.58rem;opacity:.5;}
 .hint{font-size:.6rem;opacity:.45;font-style:italic;margin-top:.4rem;line-height:1.4;}
 .j0-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;}
 input[type=date]{flex:1;background:rgba(20,12,4,.5);border:1.5px solid var(--border);
@@ -48,104 +63,138 @@ input[type=date]{flex:1;background:rgba(20,12,4,.5);border:1.5px solid var(--bor
   font-size:.85rem;}
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
 .stat{background:rgba(255,255,255,.03);border-radius:8px;padding:.5rem .6rem;}
-.stat-n{font-family:'Cinzel Decorative',serif;font-size:1.05rem;color:var(--bright);}
+.stat-n{font-family:'Cinzel Decorative',serif;font-size:.95rem;color:var(--bright);}
 .stat-l{font-size:.58rem;opacity:.55;text-transform:uppercase;letter-spacing:.05em;margin-top:1px;}
-#dock{display:flex;gap:.5rem;padding:.6rem 1rem calc(.6rem + env(safe-area-inset-bottom));
-  flex-shrink:0;border-top:1px solid var(--border);}
-.dbtn{flex:1;padding:.6rem .3rem;border-radius:10px;border:1.5px solid var(--border);
+.dbtn{padding:.55rem .3rem;border-radius:10px;border:1.5px solid var(--border);
   background:rgba(20,12,4,.5);color:var(--text);font-family:'Cinzel Decorative',serif;
-  font-size:.64rem;text-align:center;cursor:pointer;}
+  font-size:.62rem;text-align:center;cursor:pointer;}
 .dbtn.reset{border-color:rgba(255,90,90,.4);color:#FF9090;}
+.row2{display:flex;gap:.5rem;}
+.row2 .dbtn{flex:1;}
+.togrow{display:flex;align-items:center;justify-content:space-between;padding:.4rem 0;
+  border-bottom:1px solid rgba(255,255,255,.06);font-size:.72rem;}
+.togrow:last-child{border-bottom:none;}
+.tog{width:38px;height:20px;border-radius:10px;background:rgba(255,255,255,.12);
+  position:relative;cursor:pointer;border:1px solid var(--border);flex-shrink:0;}
+.tog.on{background:rgba(232,160,32,.5);}
+.tog::after{content:'';position:absolute;top:1px;left:1px;width:16px;height:16px;
+  border-radius:50%;background:#fff;transition:left .15s;}
+.tog.on::after{left:19px;background:var(--goldBright);}
+input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:2px;
+  background:rgba(232,160,32,.18);outline:none;margin:.3rem 0;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;
+  border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 8px rgba(232,160,32,.6);}
+.ctl-lv{display:flex;justify-content:space-between;font-size:.68rem;margin-bottom:.1rem;}
+.filebtn{display:block;text-align:center;padding:.55rem;border-radius:10px;
+  border:1.5px dashed var(--border);color:var(--text);font-size:.68rem;cursor:pointer;
+  margin-bottom:.5rem;}
+#bgFileInput{display:none;}
 </style>
 </head><body>
 <div id="wrap">
-  <div id="hdr">
-    <div id="hdr-title">OMCHAWATCH</div>
-    <div id="hdr-sub">Horloge solaire fractale · cadran 432</div>
-  </div>
-  <div id="body">
-    <div id="dialWrap"><canvas id="dial"></canvas></div>
-
-    <div class="card">
-      <div class="sec-t">Calage solaire du jour</div>
-      <div class="sun-row">
-        <div class="sun-btn" id="btn-lever" onclick="tapSun('lever')">
-          <span class="si">&#9737;&#8593;</span><span class="sn">Lever</span><span class="sv" id="v-lever">--:--</span>
-        </div>
-        <div class="sun-btn" id="btn-zenith" onclick="tapSun('zenith')">
-          <span class="si">&#9737;</span><span class="sn">Zénith</span><span class="sv" id="v-zenith">--:--</span>
-        </div>
-        <div class="sun-btn" id="btn-coucher" onclick="tapSun('coucher')">
-          <span class="si">&#9737;&#8595;</span><span class="sn">Coucher</span><span class="sv" id="v-coucher">--:--</span>
-        </div>
-        <div class="sun-btn" id="btn-minuit" onclick="tapSun('minuit')">
-          <span class="si">&#9789;</span><span class="sn">Zén. polaire</span><span class="sv" id="v-minuit">--:--</span>
-        </div>
-      </div>
-      <div class="hint">Appuie au moment exact de l'événement solaire observé pour caler les repères 108/216/324/432 du jour. Le zénith polaire est optionnel — estimé sinon depuis lever/zénith/coucher.</div>
-    </div>
-
-    <div class="card">
-      <div class="sec-t">Densité du jour (matin ↔ après-midi)</div>
-      <div id="dens-quarter-lbl" style="font-size:.72rem;opacity:.8;">--</div>
-      <div class="dens-gauge"><div class="dens-fill" id="dens-fill"></div><div class="dens-mid"></div></div>
-      <div class="dens-lbl"><span>5/6 · contraction</span><span>396 · centre</span><span>6/5 · expansion</span></div>
-      <div class="hint" id="dens-detail">En attente de calage (lever + zénith + coucher).</div>
-    </div>
-
-    <div class="card">
-      <div class="sec-t">Personnalisation · J0</div>
-      <div class="j0-row"><input type="date" id="in-naissance" onchange="setNaissance(this.value)"></div>
-      <div class="stat-grid">
-        <div class="stat"><div class="stat-n" id="st-j0">--</div><div class="stat-l">J0 (conception)</div></div>
-        <div class="stat"><div class="stat-n" id="st-jours">--</div><div class="stat-l">Jours depuis J0</div></div>
-        <div class="stat"><div class="stat-n" id="st-annee">--/360</div><div class="stat-l">Position année</div></div>
-        <div class="stat"><div class="stat-n" id="st-organique">--/432</div><div class="stat-l">Cycle organique</div></div>
-      </div>
-      <div class="hint">J0 = date de naissance − 288 jours. Référence zéro de l'horloge : équinoxe du 20 mars 2026.</div>
+  <canvas id="cvBg"></canvas>
+  <canvas id="cvClock"></canvas>
+  <div id="title">OMCHAWATCH<br><span style="font-size:.6rem;opacity:.6;letter-spacing:.1em;">horloge solaire fractale</span></div>
+  <div id="topbar">
+    <div class="grp"><div class="icobtn" onclick="location.href='index.html'">&larr;</div></div>
+    <div class="grp">
+      <div class="icobtn" onclick="openSheet('calSheet')">&#9737;</div>
+      <div class="icobtn" onclick="openSheet('setSheet')">&#9881;</div>
     </div>
   </div>
-  <div id="dock">
-    <div class="dbtn" onclick="location.href='index.html'">&larr; Retour</div>
-    <div class="dbtn reset" onclick="resetCal()">Réinitialiser le calage</div>
+  <div id="j0hint"></div>
+  <div id="drag-hint">Glisser orbiter &middot; Pincer/molette zoom</div>
+
+  <div class="sheet-bg" id="calSheet-bg" onclick="if(event.target===this)closeSheet('calSheet')">
+    <div class="sheet">
+      <div class="sheet-t"><span>Calage &amp; Personnalisation</span><span class="x" onclick="closeSheet('calSheet')">&times;</span></div>
+
+      <div class="card">
+        <div class="sec-t">Calage solaire du jour</div>
+        <div class="sun-row">
+          <div class="sun-btn" id="btn-lever" onclick="tapSun('lever')">
+            <span class="si">&#9737;&#8593;</span><span class="sn">Lever</span><span class="sv" id="v-lever">--:--</span>
+          </div>
+          <div class="sun-btn" id="btn-zenith" onclick="tapSun('zenith')">
+            <span class="si">&#9737;</span><span class="sn">Zénith</span><span class="sv" id="v-zenith">--:--</span>
+          </div>
+          <div class="sun-btn" id="btn-coucher" onclick="tapSun('coucher')">
+            <span class="si">&#9737;&#8595;</span><span class="sn">Coucher</span><span class="sv" id="v-coucher">--:--</span>
+          </div>
+          <div class="sun-btn" id="btn-minuit" onclick="tapSun('minuit')">
+            <span class="si">&#9789;</span><span class="sn">Zén. polaire</span><span class="sv" id="v-minuit">--:--</span>
+          </div>
+        </div>
+        <div class="hint">Appuie au moment exact de l'événement observé. La lecture "Omc" centrale et l'anneau Omc s'affinent avec ce calage — sans lui, l'horloge affiche une estimation depuis minuit local.</div>
+        <div class="row2" style="margin-top:.5rem;">
+          <div class="dbtn reset" onclick="resetCal()">Réinitialiser le calage</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sec-t">Personnalisation · J0</div>
+        <div class="j0-row"><input type="date" id="in-naissance" onchange="setNaissance(this.value)"></div>
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-n" id="st-j0">--</div><div class="stat-l">J0 (conception)</div></div>
+          <div class="stat"><div class="stat-n" id="st-jours">--</div><div class="stat-l">Jours depuis J0</div></div>
+          <div class="stat"><div class="stat-n" id="st-annee">--</div><div class="stat-l">Cycle année (360)</div></div>
+          <div class="stat"><div class="stat-n" id="st-organique">--</div><div class="stat-l">Cycle organique (432)</div></div>
+        </div>
+        <div class="hint">J0 = naissance − 288 jours. Active la spirale 432 et le grand cycle (15552) sur le cadran — sans J0, ces deux anneaux restent masqués. Référence de l'année/équinoxe : 20 mars 2026.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-bg" id="setSheet-bg" onclick="if(event.target===this)closeSheet('setSheet')">
+    <div class="sheet">
+      <div class="sheet-t"><span>Réglages visuels</span><span class="x" onclick="closeSheet('setSheet')">&times;</span></div>
+
+      <div class="card">
+        <div class="sec-t">Fond d'écran</div>
+        <label class="filebtn" for="bgFileInput">Importer une image</label>
+        <input type="file" id="bgFileInput" accept="image/*" onchange="onBgImageFile(this.files[0])">
+        <div class="row2"><div class="dbtn" onclick="clearBgImage()">Revenir au fond étoilé</div></div>
+      </div>
+
+      <div class="card">
+        <div class="sec-t">Anneaux visibles</div>
+        <div class="togrow"><span>Solônde (centre)</span><div class="tog" id="tog-solonde" onclick="toggleVis('solonde')"></div></div>
+        <div class="togrow"><span>Chavibe (cV)</span><div class="tog" id="tog-cv" onclick="toggleVis('cv')"></div></div>
+        <div class="togrow"><span>Omc</span><div class="tog" id="tog-omc" onclick="toggleVis('omc')"></div></div>
+        <div class="togrow"><span>Année (360)</span><div class="tog" id="tog-y360" onclick="toggleVis('y360')"></div></div>
+        <div class="togrow"><span>Cycle organique (432)</span><div class="tog" id="tog-y432" onclick="toggleVis('y432')"></div></div>
+        <div class="togrow"><span>Grand cycle (15552)</span><div class="tog" id="tog-grand" onclick="toggleVis('grand')"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="sec-t">Animation</div>
+        <div class="togrow"><span>Rotation automatique</span><div class="tog" id="tog-autorot" onclick="toggleAutoRot()"></div></div>
+        <div class="ctl-lv"><span>Intensité lumineuse</span><span id="v-intensity">100%</span></div>
+        <input type="range" min="30" max="150" id="in-intensity" oninput="setIntensity(this.value)">
+        <div class="row2" style="margin-top:.5rem;">
+          <div class="dbtn" onclick="resetView()">Réinitialiser la vue</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 <script>
-// ── Modèle : cadran fixe 432 (108 lever / 216 zénith / 324 coucher / 432
-// zénith polaire), 4 anneaux fractals imbriqués au-delà (année/cycle
-// organique/grand cycle) + 3 en-deçà (Omc/Chavibe/Solônde). Chaque anneau
-// respire selon le même micro-cycle 9×[11/10,6/5,10/11,5/6] — dont le
-// produit vaut exactement 1, donc chaque anneau revient pile à son rayon
-// de départ à la fin de son cycle de respiration.
-const RATIOS = [11/10, 6/5, 10/11, 5/6];
-const SCALES = [
-  {key:'solonde',   name:'Solônde',           period: 2.4},
-  {key:'cv',        name:'Chavibe (cV)',      period: 5.6},
-  {key:'omc',       name:'Omc',               period: 13},
-  {key:'omcv',      name:'OmcV · jour',       period: 30, main:true},
-  {key:'annee',     name:'Année (360 OmcV)',  period: 70},
-  {key:'organique', name:'Cycle organique',   period: 160},
-  {key:'grand',     name:'Grand cycle',       period: 380},
-];
-const MARKERS = [
-  {step:108, label:'Lever'},
-  {step:216, label:'Zénith'},
-  {step:324, label:'Coucher'},
-  {step:432, label:'Zén. polaire'},
-];
+// ═══════════════════════════════════════════════════════════
+// Modèle : cadran fixe 432 (108 lever / 216 zénith / 324 coucher / 432
+// zénith polaire) = la lecture "Omc" (0-432, précision 0.1). 6 anneaux
+// réels autour du centre : Solônde (sphère centrale = lecture Omc),
+// cV (précision/dixièmes), Omc (432 micro-sphères, flux arc-en-ciel),
+// Année 360 (10 sphères saisonnières), Cycle organique 432 (spirale
+// non-fermée, calée sur J0), Grand cycle 15552 (36 divisions groupées
+// par 3 = 12 couleurs). Les 2 derniers n'existent qu'une fois J0 réglé.
+const EQUINOX_REF = new Date('2026-03-20T00:00:00');
+const MERK_A = [[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]];
+const MERK_B = [[-1,-1,-1],[-1,1,1],[1,-1,1],[1,1,-1]];
+const MERK_EDGES = [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
+const SEASON_HUES = [108,95,70,48,32,18,355,300,235,175];
+const GRAND_HUES = Array.from({length:12}, (_,i)=> i/12*360);
 
-function ringBreath(tSec, period){
-  const p = (tSec % period) / period;
-  const seg = Math.min(3, Math.floor(p*4));
-  let cum = 1;
-  for (let i=0;i<seg;i++) cum *= RATIOS[i];
-  const localT = p*4 - seg;
-  cum *= Math.pow(RATIOS[seg], localT);
-  return cum;
-}
-function angleForStep(step){ return -Math.PI/2 + (step/432)*Math.PI*2; }
-
-// ── Calage solaire ──────────────────────────────────────────────────
+// ── Calage solaire (repris du modèle v1, réutilisé comme lecture Omc) ──
 let CAL = {lever:null, zenith:null, coucher:null, minuit:null};
 function loadCal(){
   try{ const s = localStorage.getItem('omchawatch-cal'); if (s) CAL = JSON.parse(s); }catch(e){}
@@ -160,40 +209,13 @@ function tapSun(key){
   CAL[key] = Date.now();
   saveCal();
   updateSunUI();
-  updateDensityUI();
 }
 function updateSunUI(){
   ['lever','zenith','coucher','minuit'].forEach(k=>{
-    document.getElementById('v-'+k).textContent = fmtTime(CAL[k]);
-    document.getElementById('btn-'+k).classList.toggle('set', !!CAL[k]);
+    const v = document.getElementById('v-'+k), b = document.getElementById('btn-'+k);
+    if (v) v.textContent = fmtTime(CAL[k]);
+    if (b) b.classList.toggle('set', !!CAL[k]);
   });
-}
-function computeDensity(){
-  const c = CAL;
-  if (!(c.lever && c.zenith && c.coucher)) return null;
-  const matin = c.zenith - c.lever;
-  const aprem = c.coucher - c.zenith;
-  if (matin <= 0 || aprem <= 0) return null;
-  return aprem / matin;
-}
-function updateDensityUI(){
-  const ratio = computeDensity();
-  const fill = document.getElementById('dens-fill');
-  const lbl = document.getElementById('dens-quarter-lbl');
-  const detail = document.getElementById('dens-detail');
-  if (ratio == null){
-    fill.style.left = '50%'; fill.style.width = '0%';
-    lbl.textContent = '--';
-    detail.textContent = 'En attente de calage (lever + zénith + coucher).';
-    return;
-  }
-  const norm = Math.max(-1, Math.min(1, (ratio-1)/0.2));
-  if (norm >= 0){ fill.style.left = '50%'; fill.style.width = (norm*50)+'%'; }
-  else { fill.style.left = (50+norm*50)+'%'; fill.style.width = (-norm*50)+'%'; }
-  lbl.textContent = 'Après-midi / Matin = ' + ratio.toFixed(3);
-  if (Math.abs(ratio-1) < 0.01) detail.textContent = 'Proche du centre stable (396) — journée équilibrée.';
-  else if (ratio > 1) detail.textContent = 'Tendance expansion (6/5) — après-midi plus long que le matin.';
-  else detail.textContent = 'Tendance contraction (5/6) — matin plus long que l\'après-midi.';
 }
 function currentSolarStep(){
   const now = Date.now(), c = CAL;
@@ -209,12 +231,21 @@ function currentSolarStep(){
     return 324 + (now-c.coucher)/(minuitEst-c.coucher)*108;
   return null;
 }
+function computeOmc(){
+  const step = currentSolarStep();
+  if (step != null) return {value: step, calibrated: true};
+  const now = new Date();
+  const midnight = new Date(now); midnight.setHours(0,0,0,0);
+  const frac = (now - midnight) / 86400000;
+  return {value: frac*432, calibrated: false};
+}
 function resetCal(){
   CAL = {lever:null, zenith:null, coucher:null, minuit:null};
-  saveCal(); updateSunUI(); updateDensityUI();
+  saveCal(); updateSunUI();
 }
 
 // ── J0 / personnalisation ────────────────────────────────────────────
+let J0_DATE = null;
 function loadNaissance(){
   try{
     const s = localStorage.getItem('omchawatch-naissance');
@@ -225,131 +256,423 @@ function setNaissance(v){
   if (!v) return;
   try{ localStorage.setItem('omchawatch-naissance', v); }catch(e){}
   const birth = new Date(v+'T00:00:00');
-  const j0 = new Date(birth.getTime() - 288*86400000);
-  const jours = Math.floor((Date.now() - j0.getTime())/86400000);
-  document.getElementById('st-j0').textContent = j0.toLocaleDateString('fr-FR');
+  J0_DATE = new Date(birth.getTime() - 288*86400000);
+  updateJ0UI();
+}
+function updateJ0UI(){
+  if (!J0_DATE){
+    document.getElementById('st-j0').textContent = '--';
+    document.getElementById('st-jours').textContent = '--';
+    document.getElementById('st-annee').textContent = '--';
+    document.getElementById('st-organique').textContent = '--';
+    return;
+  }
+  const jours = Math.floor((Date.now() - J0_DATE.getTime())/86400000);
+  document.getElementById('st-j0').textContent = J0_DATE.toLocaleDateString('fr-FR');
   document.getElementById('st-jours').textContent = jours >= 0 ? jours : '--';
   if (jours >= 0){
-    document.getElementById('st-annee').textContent = (jours%360)+'/360';
-    document.getElementById('st-organique').textContent = (jours%432)+'/432';
+    document.getElementById('st-annee').textContent = 'Cycle '+(Math.floor(jours/360)+1)+' · '+(jours%360)+'/360';
+    document.getElementById('st-organique').textContent = 'Cycle '+(Math.floor(jours/432)+1)+' · '+(jours%432)+'/432';
   }
 }
-
-// ── Rendu du cadran ──────────────────────────────────────────────────
-const cv = document.getElementById('dial');
-const ctx = cv.getContext('2d');
-let W=0, H=0, DPR=1;
-function fitCanvas(){
-  const r = cv.getBoundingClientRect();
-  DPR = Math.min(window.devicePixelRatio||1, 2);
-  W = r.width; H = r.height;
-  cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
-  ctx.setTransform(DPR,0,0,DPR,0,0);
+function computeJ0Cycles(){
+  if (!J0_DATE) return null;
+  const days = Math.floor((Date.now() - J0_DATE.getTime())/86400000);
+  if (days < 0) return null;
+  return {
+    days,
+    pos432: days%432, lap432: Math.floor(days/432),
+    posGrand: days%15552, lapGrand: Math.floor(days/15552)
+  };
 }
-window.addEventListener('resize', fitCanvas);
+function computeYearPos(){
+  const days = Math.floor((Date.now() - EQUINOX_REF.getTime())/86400000);
+  return ((days%360)+360)%360;
+}
 
-function drawCross(cx,cy,maxR){
-  ctx.save();
-  ctx.strokeStyle = 'rgba(255,210,120,.16)';
-  ctx.lineWidth = 1.2;
+// ── Réglages visuels ─────────────────────────────────────────────────
+let SETTINGS = {bgImage:null, autoRot:true, intensity:1,
+  vis:{solonde:true, cv:true, omc:true, y360:true, y432:true, grand:true}};
+function loadSettings(){
+  try{
+    const s = localStorage.getItem('omchawatch-settings');
+    if (s){ const parsed = JSON.parse(s); Object.assign(SETTINGS, parsed); if (parsed.vis) Object.assign(SETTINGS.vis, parsed.vis); }
+    const bg = localStorage.getItem('omchawatch-bg');
+    if (bg) SETTINGS.bgImage = bg;
+  }catch(e){}
+}
+function saveSettings(){
+  try{ localStorage.setItem('omchawatch-settings', JSON.stringify({autoRot:SETTINGS.autoRot, intensity:SETTINGS.intensity, vis:SETTINGS.vis})); }catch(e){}
+}
+function syncSettingsUI(){
+  Object.keys(SETTINGS.vis).forEach(k=>{
+    const el = document.getElementById('tog-'+k);
+    if (el) el.classList.toggle('on', SETTINGS.vis[k]);
+  });
+  document.getElementById('tog-autorot').classList.toggle('on', SETTINGS.autoRot);
+  document.getElementById('in-intensity').value = Math.round(SETTINGS.intensity*100);
+  document.getElementById('v-intensity').textContent = Math.round(SETTINGS.intensity*100)+'%';
+}
+function toggleVis(key){
+  SETTINGS.vis[key] = !SETTINGS.vis[key];
+  document.getElementById('tog-'+key).classList.toggle('on', SETTINGS.vis[key]);
+  saveSettings();
+}
+function toggleAutoRot(){
+  SETTINGS.autoRot = !SETTINGS.autoRot;
+  document.getElementById('tog-autorot').classList.toggle('on', SETTINGS.autoRot);
+  saveSettings();
+}
+function setIntensity(v){
+  SETTINGS.intensity = v/100;
+  document.getElementById('v-intensity').textContent = v+'%';
+  saveSettings();
+}
+function onBgImageFile(file){
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    SETTINGS.bgImage = e.target.result;
+    try{
+      if (SETTINGS.bgImage.length < 3800000) localStorage.setItem('omchawatch-bg', SETTINGS.bgImage);
+      else localStorage.removeItem('omchawatch-bg');
+    }catch(err){}
+    applyBgImage();
+  };
+  reader.readAsDataURL(file);
+}
+function clearBgImage(){
+  SETTINGS.bgImage = null;
+  try{ localStorage.removeItem('omchawatch-bg'); }catch(e){}
+  initStars();
+}
+function applyBgImage(){
+  if (!SETTINGS.bgImage) return;
+  const img = new Image();
+  img.onload = function(){
+    bgCtx.clearRect(0,0,W,H);
+    const scale = Math.max(W/img.width, H/img.height);
+    const iw = img.width*scale, ih = img.height*scale;
+    bgCtx.drawImage(img, (W-iw)/2, (H-ih)/2, iw, ih);
+    bgCtx.fillStyle = 'rgba(2,1,10,0.55)';
+    bgCtx.fillRect(0,0,W,H);
+  };
+  img.src = SETTINGS.bgImage;
+}
+
+// ── Sheets ───────────────────────────────────────────────────────────
+function openSheet(id){ document.getElementById(id+'-bg').classList.add('open'); }
+function closeSheet(id){ document.getElementById(id+'-bg').classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════════
+// CANVAS / CAMÉRA 3D — même moteur (rotation + perspective) que
+// sphere432.html : proj(x,y,z), drag orbite, molette/pincement zoom.
+// ═══════════════════════════════════════════════════════════
+const bgCanvas = document.getElementById('cvBg');
+const cvCanvas = document.getElementById('cvClock');
+const bgCtx = bgCanvas.getContext('2d');
+const ctx = cvCanvas.getContext('2d');
+let W=0, H=0, cx=0, cy=0, DPR=1;
+let stars = [];
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cx = W/2; cy = H/2;
+  [bgCanvas, cvCanvas].forEach(c=>{
+    c.width = Math.round(W*DPR); c.height = Math.round(H*DPR);
+  });
+  bgCtx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  if (SETTINGS.bgImage) applyBgImage(); else initStars();
+}
+window.addEventListener('resize', resize);
+
+function initStars(){
+  stars = [];
+  for (let i=0; i<140; i++){
+    stars.push({x:Math.random()*W, y:Math.random()*H, r:.3+Math.random()*1.2,
+      tw:Math.random()*6.28, sp:.01+Math.random()*.03,
+      c:['#fff','#c8e0ff','#ffe0b0','#d0b0ff'][Math.floor(Math.random()*4)]});
+  }
+}
+function drawBg(){
+  if (SETTINGS.bgImage) return;
+  bgCtx.fillStyle = 'rgba(2,1,10,0.32)';
+  bgCtx.fillRect(0,0,W,H);
+  stars.forEach(s=>{
+    s.tw += s.sp;
+    bgCtx.globalAlpha = .3+.7*Math.abs(Math.sin(s.tw));
+    bgCtx.fillStyle = s.c;
+    bgCtx.beginPath(); bgCtx.arc(s.x,s.y,s.r,0,Math.PI*2); bgCtx.fill();
+  });
+  bgCtx.globalAlpha = 1;
+}
+
+let CAM = {rx:.32, ry:0, trx:.32, try_:0, zoom:1, tzoom:1, drag:false, lmx:0, lmy:0};
+function resetView(){ CAM.trx=.32; CAM.try_=0; CAM.tzoom=1; }
+function proj(x,y,z){
+  const cx_=Math.cos(CAM.rx), sx=Math.sin(CAM.rx);
+  const cy_=Math.cos(CAM.ry), sy=Math.sin(CAM.ry);
+  const y2=y*cx_-z*sx, z2=y*sx+z*cx_;
+  const x2=x*cy_+z2*sy, z3=-x*sy+z2*cy_;
+  const sc=CAM.zoom*(Math.min(W,H)*0.40), fov=600/(600+z3*80);
+  return {sx: cx+x2*sc*fov, sy: cy+y2*sc*fov, fov, z:z3};
+}
+
+cvCanvas.addEventListener('mousedown', e=>{ CAM.drag=true; CAM.lmx=e.clientX; CAM.lmy=e.clientY; });
+window.addEventListener('mouseup', ()=>{ CAM.drag=false; });
+window.addEventListener('mousemove', e=>{
+  if (!CAM.drag) return;
+  const dx=e.clientX-CAM.lmx, dy=e.clientY-CAM.lmy;
+  CAM.try_ += dx*.008;
+  CAM.trx = Math.max(-1.5, Math.min(1.5, CAM.trx+dy*.008));
+  CAM.lmx = e.clientX; CAM.lmy = e.clientY;
+});
+cvCanvas.addEventListener('wheel', e=>{
+  e.preventDefault();
+  CAM.tzoom = Math.max(.35, Math.min(3, CAM.tzoom*(e.deltaY>0?.92:1.09)));
+}, {passive:false});
+let ltd = 0;
+cvCanvas.addEventListener('touchstart', e=>{
+  if (e.touches.length===1){ CAM.drag=true; CAM.lmx=e.touches[0].clientX; CAM.lmy=e.touches[0].clientY; }
+  else if (e.touches.length===2){ ltd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY); }
+}, {passive:true});
+cvCanvas.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  if (e.touches.length===1 && CAM.drag){
+    const dx=e.touches[0].clientX-CAM.lmx, dy=e.touches[0].clientY-CAM.lmy;
+    CAM.try_ += dx*.008; CAM.trx = Math.max(-1.5, Math.min(1.5, CAM.trx+dy*.008));
+    CAM.lmx = e.touches[0].clientX; CAM.lmy = e.touches[0].clientY;
+  } else if (e.touches.length===2){
+    const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+    CAM.tzoom = Math.max(.35, Math.min(3, CAM.tzoom*d/ltd)); ltd = d;
+  }
+}, {passive:false});
+cvCanvas.addEventListener('touchend', ()=>{ CAM.drag=false; });
+
+// ── Primitives de rendu ─────────────────────────────────────────────
+function strokeRing(r, color, alpha, lw, y){
+  const segs=96;
+  ctx.strokeStyle=color; ctx.globalAlpha=alpha; ctx.lineWidth=lw||1;
   ctx.beginPath();
-  ctx.moveTo(cx-maxR,cy); ctx.lineTo(cx+maxR,cy);
-  ctx.moveTo(cx,cy-maxR); ctx.lineTo(cx,cy+maxR);
-  ctx.stroke();
+  for (let i=0;i<=segs;i++){
+    const a=i/segs*Math.PI*2;
+    const p=proj(r*Math.cos(a), y||0, r*Math.sin(a));
+    i? ctx.lineTo(p.sx,p.sy) : ctx.moveTo(p.sx,p.sy);
+  }
+  ctx.stroke(); ctx.globalAlpha=1;
+}
+function glowDot(p, rad, color, alpha, blur){
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  if (blur){ ctx.shadowColor=color; ctx.shadowBlur=blur; }
+  ctx.fillStyle=color;
+  ctx.beginPath(); ctx.arc(p.sx,p.sy,rad,0,Math.PI*2); ctx.fill();
   ctx.restore();
 }
-function drawRing(cx,cy,baseR,i,tSec){
-  const sc = SCALES[i];
-  const amp = 0.35 * Math.pow(0.8, i);
-  const breath = ringBreath(tSec, sc.period);
-  const r = baseR * (1 + (breath-1)*amp);
-  const rot = tSec * (0.05/(i+1));
-  const segs = 36;
-  const hueBase = (i*47) % 360;
-  ctx.lineWidth = sc.main ? 5 : 3;
-  for (let s=0; s<segs; s++){
-    const a0 = rot + s/segs*Math.PI*2;
-    const a1 = rot + (s+1)/segs*Math.PI*2;
-    const hue = (hueBase + s*(360/segs)) % 360;
-    ctx.strokeStyle = 'hsla(' + hue + ',80%,60%,' + (sc.main?0.95:0.5) + ')';
-    ctx.beginPath();
-    ctx.arc(cx,cy,r,a0,a1);
+function ringLabel(r, y, txt, color, alpha, size){
+  const p = proj(0, y||0, -r*1.06);
+  ctx.font=(size||11)+"px 'Cinzel Decorative',serif";
+  ctx.fillStyle=color; ctx.globalAlpha=alpha; ctx.textAlign='center';
+  ctx.fillText(txt, p.sx, p.sy);
+  ctx.textAlign='left'; ctx.globalAlpha=1;
+}
+
+// ── 1. Solônde — sphère centrale (lecture Omc, ×3 échelle) ──────────
+function drawSolonde(omc){
+  const R = 0.30;
+  const p0 = proj(0,0,0), pEdge = proj(R,0,0);
+  const appR = Math.max(18, Math.hypot(pEdge.sx-p0.sx, pEdge.sy-p0.sy));
+  const grad = ctx.createRadialGradient(p0.sx-appR*.25, p0.sy-appR*.25, appR*.05, p0.sx, p0.sy, appR);
+  grad.addColorStop(0, '#FFF6DE'); grad.addColorStop(.5, '#FFD27A'); grad.addColorStop(1, 'rgba(184,121,15,.18)');
+  ctx.beginPath(); ctx.arc(p0.sx, p0.sy, appR, 0, Math.PI*2); ctx.fillStyle=grad; ctx.fill();
+  ctx.strokeStyle='rgba(255,225,160,.4)'; ctx.lineWidth=1;
+  for (let m=0; m<3; m++){
+    const phi=(m/3)*Math.PI;
+    ctx.beginPath(); let f=true;
+    for (let i=0;i<=48;i++){
+      const th=i/48*Math.PI*2;
+      const pp=proj(R*Math.sin(th)*Math.cos(phi), R*Math.cos(th), R*Math.sin(th)*Math.sin(phi));
+      f? ctx.moveTo(pp.sx,pp.sy) : ctx.lineTo(pp.sx,pp.sy); f=false;
+    }
     ctx.stroke();
   }
-  return r;
-}
-function drawMarkers(cx,cy,r){
-  if (!r) return;
-  MARKERS.forEach(m=>{
-    const a = angleForStep(m.step);
-    const x = cx+Math.cos(a)*r, y = cy+Math.sin(a)*r;
-    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2);
-    ctx.fillStyle = '#FFD27A'; ctx.fill();
-  });
-}
-function drawSunNeedle(cx,cy,r){
-  if (!r) return;
-  const step = currentSolarStep();
-  if (step == null) return;
-  const a = angleForStep(step);
-  ctx.save();
-  ctx.strokeStyle = '#FFF3D0'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx+Math.cos(a)*r, cy+Math.sin(a)*r, 6, 0, Math.PI*2);
-  ctx.fillStyle = '#FFF3D0'; ctx.fill();
-  ctx.restore();
-}
-function drawCenter(cx,cy,r){
-  ctx.save();
-  ctx.strokeStyle = 'rgba(255,200,90,.35)'; ctx.lineWidth = 1;
-  const petalR = r*0.62;
-  for (let ring=0; ring<2; ring++){
-    const n = ring===0 ? 6 : 12;
-    const dist = petalR*(ring+1);
-    for (let k=0; k<n; k++){
-      const a = k/n*Math.PI*2 + (ring? Math.PI/12 : 0);
-      const x = cx+Math.cos(a)*dist, y = cy+Math.sin(a)*dist;
-      ctx.beginPath(); ctx.arc(x,y,petalR,0,Math.PI*2); ctx.stroke();
-    }
+  ctx.textAlign='center';
+  ctx.font="bold "+Math.max(20, appR*.4)+"px 'Cinzel Decorative',serif";
+  ctx.fillStyle='#3A2205'; ctx.globalAlpha=.92;
+  ctx.fillText(omc.value.toFixed(1), p0.sx, p0.sy+appR*.1);
+  ctx.font=Math.max(9, appR*.1)+"px 'Cinzel Decorative',serif";
+  ctx.fillText('OMC', p0.sx, p0.sy+appR*.3);
+  if (!omc.calibrated){
+    ctx.font=Math.max(8, appR*.075)+"px 'IM Fell English',serif";
+    ctx.globalAlpha=.75;
+    ctx.fillText('estimation', p0.sx, p0.sy+appR*.46);
   }
-  ctx.beginPath(); ctx.arc(cx,cy,petalR,0,Math.PI*2); ctx.stroke();
-  const grad = ctx.createRadialGradient(cx-r*0.22,cy-r*0.22,r*0.05, cx,cy,r*0.55);
-  grad.addColorStop(0,'#FFF3D0'); grad.addColorStop(.45,'#FFD27A'); grad.addColorStop(1,'#B8790F');
-  ctx.beginPath(); ctx.arc(cx,cy,r*0.5,0,Math.PI*2); ctx.fillStyle = grad; ctx.fill();
-  ctx.restore();
+  ctx.textAlign='left'; ctx.globalAlpha=1;
 }
 
-let animRunning = true, _lastFrame = 0;
-function render(tMs){
-  if (!animRunning) return;
-  if (tMs - _lastFrame < 33){ requestAnimationFrame(render); return; }
-  _lastFrame = tMs;
-  const tSec = tMs/1000;
-  ctx.clearRect(0,0,W,H);
-  const cx = W/2, cy = H/2;
-  const maxR = Math.min(W,H)/2 - 8;
-  const ringGap = maxR / (SCALES.length + 0.3);
-  drawCross(cx,cy,maxR);
-  let mainR = 0;
-  for (let i=SCALES.length-1; i>=0; i--){
-    const baseR = ringGap*(i+1);
-    const r = drawRing(cx,cy,baseR,i,tSec);
-    if (SCALES[i].main) mainR = r;
+// ── 2. Chavibe (cV) — anneau de précision, dixièmes en % ────────────
+function drawCV(omc){
+  const R = 0.44;
+  strokeRing(R, 'rgba(200,220,255,.3)', .55, 1.1);
+  const frac = omc.value - Math.floor(omc.value);
+  const segs = 48, n = Math.max(1, Math.round(segs*frac));
+  ctx.beginPath();
+  for (let i=0;i<=n;i++){
+    const a=i/segs*Math.PI*2;
+    const p=proj(R*Math.cos(a), 0, R*Math.sin(a));
+    i? ctx.lineTo(p.sx,p.sy) : ctx.moveTo(p.sx,p.sy);
   }
-  drawMarkers(cx,cy,mainR);
-  drawSunNeedle(cx,cy,mainR);
-  drawCenter(cx,cy,ringGap*0.85);
-  requestAnimationFrame(render);
+  ctx.strokeStyle='#8ED8FF'; ctx.lineWidth=2.2; ctx.globalAlpha=.9; ctx.stroke(); ctx.globalAlpha=1;
+  const ang = frac*Math.PI*2;
+  glowDot(proj(R*Math.cos(ang),0,R*Math.sin(ang)), 3.2, '#D8F0FF', 1, 9*SETTINGS.intensity);
+  ringLabel(R, 0, 'cV · +'+Math.round(frac*100)+'%', '#B8E0FF', .82, 10);
+}
+
+// ── 3. Omc — anneau principal, 432 micro-sphères, flux arc-en-ciel + Merkaba ─
+let merkSpin = 0;
+function drawMerkaba(R){
+  merkSpin += .012;
+  const s = .05, ca=Math.cos(merkSpin), sa=Math.sin(merkSpin);
+  function xf(v){
+    const x=v[0]*s, y=v[1]*s, z=v[2]*s;
+    const rx=x*ca-z*sa, rz=x*sa+z*ca;
+    return proj(R+rx, .1+y, rz);
+  }
+  ctx.strokeStyle='#FFE9B0'; ctx.lineWidth=1.3; ctx.globalAlpha=.85;
+  ctx.shadowColor='#FFD27A'; ctx.shadowBlur=6;
+  [MERK_A, MERK_B].forEach(tet=>{
+    const pts = tet.map(xf);
+    MERK_EDGES.forEach(([i,j])=>{
+      ctx.beginPath(); ctx.moveTo(pts[i].sx,pts[i].sy); ctx.lineTo(pts[j].sx,pts[j].sy); ctx.stroke();
+    });
+  });
+  ctx.shadowBlur=0; ctx.globalAlpha=1;
+}
+function drawOmcRing(omc){
+  const R = 0.64;
+  const active = Math.min(431, Math.floor(omc.value));
+  strokeRing(R, 'rgba(255,255,255,.07)', 1, 1);
+  for (let i=0;i<432;i++){
+    const a = i/432*Math.PI*2;
+    const p = proj(R*Math.cos(a), 0, R*Math.sin(a));
+    const hue = i/432*360;
+    if (i < active){
+      ctx.globalAlpha=.75; ctx.fillStyle='hsl('+hue+',80%,55%)';
+      ctx.beginPath(); ctx.arc(p.sx,p.sy,2.3,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+    } else if (i === active){
+      glowDot(p, 3.4, 'hsl('+hue+',90%,65%)', 1, 11*SETTINGS.intensity);
+    } else {
+      ctx.globalAlpha=.16; ctx.fillStyle='rgba(255,255,255,.5)';
+      ctx.beginPath(); ctx.arc(p.sx,p.sy,1.2,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+    }
+  }
+  ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=1;
+  for (let g=0; g<12; g++){
+    const a=g/12*Math.PI*2;
+    const p1=proj(R*.96*Math.cos(a),0,R*.96*Math.sin(a));
+    const p2=proj(R*1.05*Math.cos(a),0,R*1.05*Math.sin(a));
+    ctx.beginPath(); ctx.moveTo(p1.sx,p1.sy); ctx.lineTo(p2.sx,p2.sy); ctx.stroke();
+  }
+  drawMerkaba(R);
+  ringLabel(R, 0, 'OMC · '+active+'/432', '#FFD27A', .92, 13);
+}
+
+// ── 4. Année (360) — 10 sphères, palette saisonnière ─────────────────
+function draw360Ring(){
+  const R = 0.84;
+  const pos = computeYearPos();
+  const active = Math.min(9, Math.floor(pos/36));
+  strokeRing(R, 'rgba(255,255,255,.045)', 1, .8);
+  for (let i=0;i<10;i++){
+    const a = i/10*Math.PI*2;
+    const p = proj(R*Math.cos(a), 0, R*Math.sin(a));
+    const hue = SEASON_HUES[i];
+    const lit = i <= active;
+    glowDot(p, lit?4.4:2.8, 'hsl('+hue+',68%,'+(lit?56:28)+'%)', lit?.85:.32, lit?7*SETTINGS.intensity:0);
+  }
+  ringLabel(R, 0, 'ANNÉE · jour '+pos+'/360', '#C9E8C0', .8, 11);
+}
+
+// ── 5. Cycle organique (432) — spirale non-fermée, option J0 ────────
+function draw432Spiral(j0){
+  const R = 0.84;
+  const n = j0.pos432;
+  ctx.beginPath();
+  let started=false;
+  for (let d=0; d<=n; d++){
+    const a = d/360*Math.PI*2;
+    const over = d>360 ? (d-360)/72 : 0;
+    const rr = R*(1+over*.1), yy = over*.06;
+    const p = proj(rr*Math.cos(a), yy, rr*Math.sin(a));
+    started? ctx.lineTo(p.sx,p.sy) : ctx.moveTo(p.sx,p.sy);
+    started=true;
+  }
+  ctx.strokeStyle='#D8B8FF'; ctx.lineWidth=2; ctx.globalAlpha=.85;
+  ctx.shadowColor='#B080FF'; ctx.shadowBlur=6*SETTINGS.intensity;
+  ctx.stroke(); ctx.shadowBlur=0; ctx.globalAlpha=1;
+  const overEnd = n>360 ? (n-360)/72 : 0;
+  const aEnd = n/360*Math.PI*2, rrEnd = R*(1+overEnd*.1);
+  glowDot(proj(rrEnd*Math.cos(aEnd), overEnd*.06, rrEnd*Math.sin(aEnd)), 3.6, '#EBD8FF', 1, 10*SETTINGS.intensity);
+  ringLabel(R, .18, 'ORGANIQUE · '+n+'/432 (tour '+(j0.lap432+1)+')', '#D8B8FF', .85, 11);
+}
+
+// ── 6. Grand cycle (15552) — 36 divisions, groupes de 3 = 12 couleurs ─
+function drawGrandRing(j0){
+  const R = 1.08;
+  const active = Math.min(35, Math.floor(j0.posGrand/432));
+  strokeRing(R, 'rgba(255,255,255,.035)', 1, .8);
+  for (let i=0;i<36;i++){
+    const a = i/36*Math.PI*2;
+    const p = proj(R*Math.cos(a), 0, R*Math.sin(a));
+    const group = Math.floor(i/3), within = i%3;
+    const hue = GRAND_HUES[group], light = 42+within*11;
+    const lit = i <= active;
+    glowDot(p, lit?3.6:2, 'hsl('+hue+',75%,'+light+'%)', lit?.85:.25, lit?6*SETTINGS.intensity:0);
+  }
+  ringLabel(R, 0, 'GRAND CYCLE · '+(active+1)+'/36 · groupe '+(Math.floor(active/3)+1)+'/12', '#FFD27A', .72, 10);
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOUCLE PRINCIPALE
+// ═══════════════════════════════════════════════════════════
+let animRunning = true, _lastFrame = 0;
+function draw(tMs){
+  if (!animRunning) return;
+  if (tMs - _lastFrame < 33){ requestAnimationFrame(draw); return; }
+  _lastFrame = tMs;
+  drawBg();
+  ctx.clearRect(0,0,W,H);
+  CAM.rx += (CAM.trx-CAM.rx)*.06; CAM.ry += (CAM.try_-CAM.ry)*.06; CAM.zoom += (CAM.tzoom-CAM.zoom)*.08;
+  if (SETTINGS.autoRot) CAM.try_ += .0016;
+
+  const omc = computeOmc();
+  const j0 = computeJ0Cycles();
+
+  if (j0 && SETTINGS.vis.grand) drawGrandRing(j0);
+  if (j0 && SETTINGS.vis.y432) draw432Spiral(j0);
+  if (SETTINGS.vis.y360) draw360Ring();
+  if (SETTINGS.vis.omc) drawOmcRing(omc);
+  if (SETTINGS.vis.cv) drawCV(omc);
+  if (SETTINGS.vis.solonde) drawSolonde(omc);
+
+  const hint = document.getElementById('j0hint');
+  hint.textContent = j0 ? '' : 'Ajoute ta date de naissance (⚙) pour activer les cycles organique (432) et grand cycle (15552)';
+
+  requestAnimationFrame(draw);
 }
 
 function init(){
-  loadCal(); updateSunUI(); updateDensityUI();
+  loadCal(); updateSunUI();
   loadNaissance();
-  fitCanvas();
-  requestAnimationFrame(render);
+  loadSettings(); syncSettingsUI();
+  resize();
+  requestAnimationFrame(draw);
+  setTimeout(()=>{ document.getElementById('drag-hint').classList.add('hide'); }, 4200);
   document.addEventListener('visibilitychange', () => {
     animRunning = !document.hidden;
-    if (animRunning) requestAnimationFrame(render);
+    if (animRunning) requestAnimationFrame(draw);
   });
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

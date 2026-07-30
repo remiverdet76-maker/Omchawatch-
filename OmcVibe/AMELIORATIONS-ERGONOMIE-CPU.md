@@ -2042,3 +2042,65 @@ au comportement de l'APK précédemment livré (`v1=false` par construction
 de ce pipeline — limite déjà documentée, pas une régression). Contenu du
 fichier dans le zip vérifié (`assets/public/omchawatch.html` présent,
 lien vers le module bien présent dans `index.html`).
+
+## #94 : OmchaWatch v2 — refonte 3D complète (retour utilisateur)
+
+Retour direct après livraison de la v1 : "aucun chiffre, aucun flux et
+aucun repère" (trop superficiel), mauvaise structure d'anneaux (7 au lieu
+de la vraie hiérarchie), et demande explicite de repartir du moteur 3D de
+`sphere432.html` plutôt que du canvas 2D plat de la v1.
+
+**Moteur 3D** : `proj(x,y,z)` (rotation Euler + perspective à FOV variable
+selon la profondeur) copié à l'identique de `sphere432.html`, même
+mécanique de glisser-orbiter/molette-pincement-zoom (`CAM.rx/ry/zoom` avec
+lissage exponentiel vers une cible `trx/try_/tzoom`). Deux canvas
+superposés (fond étoilé ou image importée + scène horaire), comme le
+`cvUniverse`/`cvSphere` de la référence.
+
+**Anneaux (6, pas 7)** — chacun avec une lecture chiffrée réelle, pas
+décorative :
+1. **Solônde (centre)** — sphère dorée agrandie (~3× la v1), affiche la
+   lecture "Omc" en cours à 0.1 près (ex. `317.2`). Réutilise le moteur
+   de calage solaire de la v1 (`currentSolarStep()`, 0-432 par
+   interpolation lever→zénith→coucher→zénith polaire) ; sans calage,
+   estimation depuis minuit local, étiquetée "estimation" pour rester
+   honnête sur la précision.
+2. **Chavibe (cV)** — anneau fin, indicateur qui boucle une fois par
+   unité Omc entière, affiche le dixième en pourcentage (`+20%` pour
+   `324.2`), exactement l'exemple donné.
+3. **Omc** — anneau principal, le plus large/visible : 432 micro-sphères
+   (12 secteurs de 36, séparateurs visuels), dégradé arc-en-ciel complet
+   (teinte = position/432), s'allument progressivement et RESTENT
+   allumées jusqu'à la fin du cycle du jour (flux cumulatif, pas un
+   simple curseur). Repère organique : mini Merkaba 3D (deux tétraèdres
+   entrelacés, tournant sur lui-même) posé sur l'anneau comme landmark.
+4. **Année (360)** — 10 sphères (10×36 jours), palette inspirée des 4
+   saisons (vert printemps → or été → rouge automne → bleu hiver),
+   volontairement plus légère/discrète que l'anneau Omc.
+5. **Cycle organique (432)** — en option, actif seulement si J0 est
+   réglé. Rendu en spirale non refermée plutôt qu'un cercle : même
+   vitesse angulaire que l'anneau Année, donc au bout de 432 jours elle a
+   parcouru 432/360 tours — le tracé déborde visiblement de 20% au-delà
+   d'un tour complet (léger décalage de rayon/hauteur), ce qui illustre
+   concrètement "un cercle qui ne suit pas la linéarité du cercle" sans
+   rien inventer d'arbitraire.
+6. **Grand cycle (15552)** — en option (J0), 36 divisions (1 par cycle
+   organique de 432 jours), regroupées par 3 → 12 couleurs arc-en-ciel
+   (15552 = 432×36 = 12 groupes de 3).
+
+**Réglages visuels** ("chaque paramètre observable modulable") : fond
+d'écran personnalisable par import d'image (persistée en `localStorage`
+si < ~3,8 Mo), interrupteur par anneau, intensité lumineuse globale,
+rotation automatique de la caméra on/off, réinitialisation de la vue. Le
+calage solaire et le panneau J0 de la v1 sont conservés à l'identique,
+déplacés dans des feuilles coulissantes (☉ et ⚙) pour laisser le cadran
+3D en plein écran.
+
+Vérifié par tests Playwright : rendu non vide, calcul Omc calibré vs
+estimation, calcul J0/cycles identique à la v1 (`Cycle 32 · 90/432` pour
+la même date de test), position année depuis l'équinoxe correcte
+(132/360 le 30/07/2026, vérifié par calcul manuel), glisser-orbiter et
+molette-zoom modifient bien la caméra, bascule de visibilité d'anneau et
+intensité fonctionnelles, réinitialisation de vue. 0 erreur JS. APK
+régénéré avec le même pipeline `repack.py`/`jarsigner`/`apksig` que
+d'habitude, vérifié `verified=true` (API 24+).
