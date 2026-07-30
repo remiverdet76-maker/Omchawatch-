@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>OmchaWatch · Horloge solaire fractale</title>
+<style>
+:root{
+  --void:#02010D;--gold:#E8A020;--goldBright:#FFD27A;--text:#B8A8D0;
+  --bright:#F0E0FF;--panel:rgba(20,12,4,.62);--border:rgba(255,190,90,.28);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--void);color:var(--text);
+  font-family:'IM Fell English',serif;}
+body{background:
+  radial-gradient(circle at 12% 8%, rgba(130,60,220,.12), transparent 42%),
+  radial-gradient(circle at 88% 92%, rgba(20,120,220,.12), transparent 42%),
+  radial-gradient(circle at 50% 20%,#160a20,#000 78%);}
+#wrap{position:fixed;inset:0;display:flex;flex-direction:column;}
+#hdr{padding:.9rem 1rem .5rem;flex-shrink:0;text-align:center;}
+#hdr-title{font-family:'Cinzel Decorative',serif;font-size:1.15rem;font-weight:700;
+  color:var(--goldBright);letter-spacing:.14em;text-shadow:0 0 18px rgba(255,200,90,.4);}
+#hdr-sub{font-size:.66rem;letter-spacing:.1em;opacity:.55;text-transform:uppercase;margin-top:2px;}
+#body{flex:1;overflow-y:auto;padding:.6rem 1rem 1rem;}
+#dialWrap{display:flex;justify-content:center;margin:.3rem 0 .9rem;}
+#dial{width:min(92vw,440px);height:min(92vw,440px);}
+.card{background:var(--panel);border:1.5px solid var(--border);border-radius:12px;
+  padding:.9rem;margin-bottom:.7rem;backdrop-filter:blur(8px);}
+.sec-t{font-family:'Cinzel Decorative',serif;font-size:.64rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gold);opacity:.85;margin-bottom:.6rem;}
+.sun-row{display:flex;gap:.4rem;}
+.sun-btn{flex:1;padding:.5rem .15rem;border-radius:10px;border:1.5px solid var(--border);
+  background:rgba(20,12,4,.5);text-align:center;cursor:pointer;}
+.sun-btn .si{font-size:1.05rem;display:block;}
+.sun-btn .sn{font-family:'Cinzel Decorative',serif;font-size:.56rem;letter-spacing:.03em;
+  color:var(--text);margin-top:2px;display:block;}
+.sun-btn .sv{font-size:.6rem;opacity:.6;margin-top:2px;display:block;}
+.sun-btn.set{border-color:var(--gold);background:rgba(232,160,32,.14);}
+.sun-btn.set .sn{color:var(--goldBright);}
+.dens-gauge{position:relative;height:10px;border-radius:6px;background:rgba(255,255,255,.06);
+  margin:.5rem 0 .3rem;overflow:hidden;}
+.dens-fill{position:absolute;top:0;bottom:0;left:50%;width:0;background:linear-gradient(90deg,#FF8A6A,#FFD27A);}
+.dens-mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--gold);}
+.dens-lbl{display:flex;justify-content:space-between;font-size:.58rem;opacity:.5;}
+.hint{font-size:.6rem;opacity:.45;font-style:italic;margin-top:.4rem;line-height:1.4;}
+.j0-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;}
+input[type=date]{flex:1;background:rgba(20,12,4,.5);border:1.5px solid var(--border);
+  border-radius:8px;color:var(--bright);padding:.4rem .5rem;font-family:'IM Fell English',serif;
+  font-size:.85rem;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.stat{background:rgba(255,255,255,.03);border-radius:8px;padding:.5rem .6rem;}
+.stat-n{font-family:'Cinzel Decorative',serif;font-size:1.05rem;color:var(--bright);}
+.stat-l{font-size:.58rem;opacity:.55;text-transform:uppercase;letter-spacing:.05em;margin-top:1px;}
+#dock{display:flex;gap:.5rem;padding:.6rem 1rem calc(.6rem + env(safe-area-inset-bottom));
+  flex-shrink:0;border-top:1px solid var(--border);}
+.dbtn{flex:1;padding:.6rem .3rem;border-radius:10px;border:1.5px solid var(--border);
+  background:rgba(20,12,4,.5);color:var(--text);font-family:'Cinzel Decorative',serif;
+  font-size:.64rem;text-align:center;cursor:pointer;}
+.dbtn.reset{border-color:rgba(255,90,90,.4);color:#FF9090;}
+</style>
+</head><body>
+<div id="wrap">
+  <div id="hdr">
+    <div id="hdr-title">OMCHAWATCH</div>
+    <div id="hdr-sub">Horloge solaire fractale · cadran 432</div>
+  </div>
+  <div id="body">
+    <div id="dialWrap"><canvas id="dial"></canvas></div>
+
+    <div class="card">
+      <div class="sec-t">Calage solaire du jour</div>
+      <div class="sun-row">
+        <div class="sun-btn" id="btn-lever" onclick="tapSun('lever')">
+          <span class="si">&#9737;&#8593;</span><span class="sn">Lever</span><span class="sv" id="v-lever">--:--</span>
+        </div>
+        <div class="sun-btn" id="btn-zenith" onclick="tapSun('zenith')">
+          <span class="si">&#9737;</span><span class="sn">Zénith</span><span class="sv" id="v-zenith">--:--</span>
+        </div>
+        <div class="sun-btn" id="btn-coucher" onclick="tapSun('coucher')">
+          <span class="si">&#9737;&#8595;</span><span class="sn">Coucher</span><span class="sv" id="v-coucher">--:--</span>
+        </div>
+        <div class="sun-btn" id="btn-minuit" onclick="tapSun('minuit')">
+          <span class="si">&#9789;</span><span class="sn">Zén. polaire</span><span class="sv" id="v-minuit">--:--</span>
+        </div>
+      </div>
+      <div class="hint">Appuie au moment exact de l'événement solaire observé pour caler les repères 108/216/324/432 du jour. Le zénith polaire est optionnel — estimé sinon depuis lever/zénith/coucher.</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-t">Densité du jour (matin ↔ après-midi)</div>
+      <div id="dens-quarter-lbl" style="font-size:.72rem;opacity:.8;">--</div>
+      <div class="dens-gauge"><div class="dens-fill" id="dens-fill"></div><div class="dens-mid"></div></div>
+      <div class="dens-lbl"><span>5/6 · contraction</span><span>396 · centre</span><span>6/5 · expansion</span></div>
+      <div class="hint" id="dens-detail">En attente de calage (lever + zénith + coucher).</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-t">Personnalisation · J0</div>
+      <div class="j0-row"><input type="date" id="in-naissance" onchange="setNaissance(this.value)"></div>
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-n" id="st-j0">--</div><div class="stat-l">J0 (conception)</div></div>
+        <div class="stat"><div class="stat-n" id="st-jours">--</div><div class="stat-l">Jours depuis J0</div></div>
+        <div class="stat"><div class="stat-n" id="st-annee">--/360</div><div class="stat-l">Position année</div></div>
+        <div class="stat"><div class="stat-n" id="st-organique">--/432</div><div class="stat-l">Cycle organique</div></div>
+      </div>
+      <div class="hint">J0 = date de naissance − 288 jours. Référence zéro de l'horloge : équinoxe du 20 mars 2026.</div>
+    </div>
+  </div>
+  <div id="dock">
+    <div class="dbtn" onclick="location.href='index.html'">&larr; Retour</div>
+    <div class="dbtn reset" onclick="resetCal()">Réinitialiser le calage</div>
+  </div>
+</div>
+<script>
+// ── Modèle : cadran fixe 432 (108 lever / 216 zénith / 324 coucher / 432
+// zénith polaire), 4 anneaux fractals imbriqués au-delà (année/cycle
+// organique/grand cycle) + 3 en-deçà (Omc/Chavibe/Solônde). Chaque anneau
+// respire selon le même micro-cycle 9×[11/10,6/5,10/11,5/6] — dont le
+// produit vaut exactement 1, donc chaque anneau revient pile à son rayon
+// de départ à la fin de son cycle de respiration.
+const RATIOS = [11/10, 6/5, 10/11, 5/6];
+const SCALES = [
+  {key:'solonde',   name:'Solônde',           period: 2.4},
+  {key:'cv',        name:'Chavibe (cV)',      period: 5.6},
+  {key:'omc',       name:'Omc',               period: 13},
+  {key:'omcv',      name:'OmcV · jour',       period: 30, main:true},
+  {key:'annee',     name:'Année (360 OmcV)',  period: 70},
+  {key:'organique', name:'Cycle organique',   period: 160},
+  {key:'grand',     name:'Grand cycle',       period: 380},
+];
+const MARKERS = [
+  {step:108, label:'Lever'},
+  {step:216, label:'Zénith'},
+  {step:324, label:'Coucher'},
+  {step:432, label:'Zén. polaire'},
+];
+
+function ringBreath(tSec, period){
+  const p = (tSec % period) / period;
+  const seg = Math.min(3, Math.floor(p*4));
+  let cum = 1;
+  for (let i=0;i<seg;i++) cum *= RATIOS[i];
+  const localT = p*4 - seg;
+  cum *= Math.pow(RATIOS[seg], localT);
+  return cum;
+}
+function angleForStep(step){ return -Math.PI/2 + (step/432)*Math.PI*2; }
+
+// ── Calage solaire ──────────────────────────────────────────────────
+let CAL = {lever:null, zenith:null, coucher:null, minuit:null};
+function loadCal(){
+  try{ const s = localStorage.getItem('omchawatch-cal'); if (s) CAL = JSON.parse(s); }catch(e){}
+}
+function saveCal(){ try{ localStorage.setItem('omchawatch-cal', JSON.stringify(CAL)); }catch(e){} }
+function fmtTime(ts){
+  if (!ts) return '--:--';
+  const d = new Date(ts);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function tapSun(key){
+  CAL[key] = Date.now();
+  saveCal();
+  updateSunUI();
+  updateDensityUI();
+}
+function updateSunUI(){
+  ['lever','zenith','coucher','minuit'].forEach(k=>{
+    document.getElementById('v-'+k).textContent = fmtTime(CAL[k]);
+    document.getElementById('btn-'+k).classList.toggle('set', !!CAL[k]);
+  });
+}
+function computeDensity(){
+  const c = CAL;
+  if (!(c.lever && c.zenith && c.coucher)) return null;
+  const matin = c.zenith - c.lever;
+  const aprem = c.coucher - c.zenith;
+  if (matin <= 0 || aprem <= 0) return null;
+  return aprem / matin;
+}
+function updateDensityUI(){
+  const ratio = computeDensity();
+  const fill = document.getElementById('dens-fill');
+  const lbl = document.getElementById('dens-quarter-lbl');
+  const detail = document.getElementById('dens-detail');
+  if (ratio == null){
+    fill.style.left = '50%'; fill.style.width = '0%';
+    lbl.textContent = '--';
+    detail.textContent = 'En attente de calage (lever + zénith + coucher).';
+    return;
+  }
+  const norm = Math.max(-1, Math.min(1, (ratio-1)/0.2));
+  if (norm >= 0){ fill.style.left = '50%'; fill.style.width = (norm*50)+'%'; }
+  else { fill.style.left = (50+norm*50)+'%'; fill.style.width = (-norm*50)+'%'; }
+  lbl.textContent = 'Après-midi / Matin = ' + ratio.toFixed(3);
+  if (Math.abs(ratio-1) < 0.01) detail.textContent = 'Proche du centre stable (396) — journée équilibrée.';
+  else if (ratio > 1) detail.textContent = 'Tendance expansion (6/5) — après-midi plus long que le matin.';
+  else detail.textContent = 'Tendance contraction (5/6) — matin plus long que l\'après-midi.';
+}
+function currentSolarStep(){
+  const now = Date.now(), c = CAL;
+  if (c.minuit && c.lever && c.minuit < c.lever && now >= c.minuit && now <= c.lever)
+    return 0 + (now-c.minuit)/(c.lever-c.minuit)*108;
+  if (c.lever && c.zenith && now >= c.lever && now <= c.zenith)
+    return 108 + (now-c.lever)/(c.zenith-c.lever)*108;
+  if (c.zenith && c.coucher && now >= c.zenith && now <= c.coucher)
+    return 216 + (now-c.zenith)/(c.coucher-c.zenith)*108;
+  const minuitEst = c.minuit && c.minuit > (c.coucher||0) ? c.minuit
+    : (c.coucher && c.zenith && c.lever ? c.coucher + (c.zenith-c.lever)/2 : null);
+  if (c.coucher && minuitEst && now >= c.coucher && now <= minuitEst)
+    return 324 + (now-c.coucher)/(minuitEst-c.coucher)*108;
+  return null;
+}
+function resetCal(){
+  CAL = {lever:null, zenith:null, coucher:null, minuit:null};
+  saveCal(); updateSunUI(); updateDensityUI();
+}
+
+// ── J0 / personnalisation ────────────────────────────────────────────
+function loadNaissance(){
+  try{
+    const s = localStorage.getItem('omchawatch-naissance');
+    if (s){ document.getElementById('in-naissance').value = s; setNaissance(s); }
+  }catch(e){}
+}
+function setNaissance(v){
+  if (!v) return;
+  try{ localStorage.setItem('omchawatch-naissance', v); }catch(e){}
+  const birth = new Date(v+'T00:00:00');
+  const j0 = new Date(birth.getTime() - 288*86400000);
+  const jours = Math.floor((Date.now() - j0.getTime())/86400000);
+  document.getElementById('st-j0').textContent = j0.toLocaleDateString('fr-FR');
+  document.getElementById('st-jours').textContent = jours >= 0 ? jours : '--';
+  if (jours >= 0){
+    document.getElementById('st-annee').textContent = (jours%360)+'/360';
+    document.getElementById('st-organique').textContent = (jours%432)+'/432';
+  }
+}
+
+// ── Rendu du cadran ──────────────────────────────────────────────────
+const cv = document.getElementById('dial');
+const ctx = cv.getContext('2d');
+let W=0, H=0, DPR=1;
+function fitCanvas(){
+  const r = cv.getBoundingClientRect();
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  W = r.width; H = r.height;
+  cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize', fitCanvas);
+
+function drawCross(cx,cy,maxR){
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,210,120,.16)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(cx-maxR,cy); ctx.lineTo(cx+maxR,cy);
+  ctx.moveTo(cx,cy-maxR); ctx.lineTo(cx,cy+maxR);
+  ctx.stroke();
+  ctx.restore();
+}
+function drawRing(cx,cy,baseR,i,tSec){
+  const sc = SCALES[i];
+  const amp = 0.35 * Math.pow(0.8, i);
+  const breath = ringBreath(tSec, sc.period);
+  const r = baseR * (1 + (breath-1)*amp);
+  const rot = tSec * (0.05/(i+1));
+  const segs = 36;
+  const hueBase = (i*47) % 360;
+  ctx.lineWidth = sc.main ? 5 : 3;
+  for (let s=0; s<segs; s++){
+    const a0 = rot + s/segs*Math.PI*2;
+    const a1 = rot + (s+1)/segs*Math.PI*2;
+    const hue = (hueBase + s*(360/segs)) % 360;
+    ctx.strokeStyle = 'hsla(' + hue + ',80%,60%,' + (sc.main?0.95:0.5) + ')';
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,a0,a1);
+    ctx.stroke();
+  }
+  return r;
+}
+function drawMarkers(cx,cy,r){
+  if (!r) return;
+  MARKERS.forEach(m=>{
+    const a = angleForStep(m.step);
+    const x = cx+Math.cos(a)*r, y = cy+Math.sin(a)*r;
+    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fillStyle = '#FFD27A'; ctx.fill();
+  });
+}
+function drawSunNeedle(cx,cy,r){
+  if (!r) return;
+  const step = currentSolarStep();
+  if (step == null) return;
+  const a = angleForStep(step);
+  ctx.save();
+  ctx.strokeStyle = '#FFF3D0'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx+Math.cos(a)*r, cy+Math.sin(a)*r, 6, 0, Math.PI*2);
+  ctx.fillStyle = '#FFF3D0'; ctx.fill();
+  ctx.restore();
+}
+function drawCenter(cx,cy,r){
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,200,90,.35)'; ctx.lineWidth = 1;
+  const petalR = r*0.62;
+  for (let ring=0; ring<2; ring++){
+    const n = ring===0 ? 6 : 12;
+    const dist = petalR*(ring+1);
+    for (let k=0; k<n; k++){
+      const a = k/n*Math.PI*2 + (ring? Math.PI/12 : 0);
+      const x = cx+Math.cos(a)*dist, y = cy+Math.sin(a)*dist;
+      ctx.beginPath(); ctx.arc(x,y,petalR,0,Math.PI*2); ctx.stroke();
+    }
+  }
+  ctx.beginPath(); ctx.arc(cx,cy,petalR,0,Math.PI*2); ctx.stroke();
+  const grad = ctx.createRadialGradient(cx-r*0.22,cy-r*0.22,r*0.05, cx,cy,r*0.55);
+  grad.addColorStop(0,'#FFF3D0'); grad.addColorStop(.45,'#FFD27A'); grad.addColorStop(1,'#B8790F');
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.5,0,Math.PI*2); ctx.fillStyle = grad; ctx.fill();
+  ctx.restore();
+}
+
+let animRunning = true, _lastFrame = 0;
+function render(tMs){
+  if (!animRunning) return;
+  if (tMs - _lastFrame < 33){ requestAnimationFrame(render); return; }
+  _lastFrame = tMs;
+  const tSec = tMs/1000;
+  ctx.clearRect(0,0,W,H);
+  const cx = W/2, cy = H/2;
+  const maxR = Math.min(W,H)/2 - 8;
+  const ringGap = maxR / (SCALES.length + 0.3);
+  drawCross(cx,cy,maxR);
+  let mainR = 0;
+  for (let i=SCALES.length-1; i>=0; i--){
+    const baseR = ringGap*(i+1);
+    const r = drawRing(cx,cy,baseR,i,tSec);
+    if (SCALES[i].main) mainR = r;
+  }
+  drawMarkers(cx,cy,mainR);
+  drawSunNeedle(cx,cy,mainR);
+  drawCenter(cx,cy,ringGap*0.85);
+  requestAnimationFrame(render);
+}
+
+function init(){
+  loadCal(); updateSunUI(); updateDensityUI();
+  loadNaissance();
+  fitCanvas();
+  requestAnimationFrame(render);
+  document.addEventListener('visibilitychange', () => {
+    animRunning = !document.hidden;
+    if (animRunning) requestAnimationFrame(render);
+  });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body></html>

@@ -1980,3 +1980,55 @@ tous les onglets). 1 bug visuel trouvé et corrigé avant livraison (bouton
 "Fermer" du panneau FX hérite du style navigateur par défaut faute de
 reset CSS sur un `<button>` — remplacé par un `<div>`, cohérent avec le
 reste du panneau). 0 erreur JS.
+
+## #93 : OmchaWatch — nouveau module d'horloge solaire fractale (v1)
+
+Nouveau module `omchawatch.html`, 4ᵉ carte du lanceur (`index.html`),
+navigation classique (comme Chaharmony) puisqu'il n'y a pas de flux audio
+à préserver en arrière-plan.
+
+Première implémentation du modèle discuté avec l'utilisateur : cadran
+fixe à 432 repères (108 lever / 216 zénith / 324 coucher / 432 zénith
+polaire), entouré d'anneaux concentriques représentant les échelles
+fractales imbriquées (Solônde → Chavibe (cV) → Omc → OmcV « jour » →
+Année (360 OmcV) → Cycle organique (432 OmcV) → Grand cycle (15552
+OmcV)), chacun animé par le même micro-cycle respiratoire à 4 temps
+9×[11/10, 6/5, 10/11, 5/6] — dont le produit vaut exactement 1, donc
+chaque anneau revient pile à son rayon de départ en fin de cycle (vérifié
+en test). Centre doré + mini mandala fleur-de-vie (compas/règle, 6+12
+pétales), croisillon doré reliant les 4 repères solaires — reprend
+l'esthétique de la référence fournie (anneaux imbriqués + sphère dorée
+centrale) sans dépendre du moteur 3D de `geometrie.html` (rendu 2D canvas
+autonome, léger).
+
+1. **Calage solaire du jour** — 4 boutons tap (Lever/Zénith/Coucher/
+   Zénith polaire) enregistrent l'heure réelle de l'observation
+   (`Date.now()`, persisté en `localStorage`). Une aiguille sur l'anneau
+   OmcV indique la position solaire actuelle interpolée entre les repères
+   calés ; le zénith polaire est estimé (coucher + demi-écart lever/
+   zénith) si non calé manuellement.
+2. **Jauge de densité du jour** — ratio après-midi/matin (coucher−zénith
+   sur zénith−lever) une fois les 3 taps posés : proche de 1 = centre
+   stable (396), >1 = tendance expansion (6/5), <1 = tendance contraction
+   (5/6). C'est la seule mesure exploitable sans référence externe
+   (conforme à la contrainte du modèle : uniquement lever/zénith/coucher
+   observés, aucun GPS ni horloge 24/60/60).
+3. **Personnalisation J0** — champ date de naissance → J0 = naissance −
+   288 jours (persisté), affiche les jours écoulés depuis J0 et la
+   position dans le cycle année (360) et cycle organique (432).
+4. **Référence zéro** — équinoxe du 20 mars 2026, affichée en rappel.
+
+Explicitement une v1 : la vitesse/amplitude de respiration des anneaux
+est un choix esthétique (les vrais rapports d'échelle, ex. 15552³, ne
+sont pas transposables à un rendu visuel perceptible), et la latitude/
+longitude par gnomon discutées en amont ne sont pas encore câblées — la
+prochaine itération pourra les ajouter une fois le calage solaire de base
+validé à l'usage.
+
+Vérifié par tests Playwright : rendu canvas non vide, taps de calage
+mettent bien à jour l'état + l'UI + `localStorage`, calcul de densité et
+détection du quart solaire courant corrects, réinitialisation du calage
+fonctionnelle, calcul J0 vérifié indépendamment (naissance 15/06/1990 →
+J0 31/08/1989), 4ᵉ carte du lanceur présente et route bien vers
+`omchawatch.html` sans régression sur les 3 modules existants. 0 erreur
+JS.

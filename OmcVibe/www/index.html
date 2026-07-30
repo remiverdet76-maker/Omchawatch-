@@ -1790,6 +1790,11 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <span class="lch-name">OmchaSphere / Flux</span>
       <span class="lch-desc">Visualisation géométrique — Sphère 432 · Torsion 432 · Géométrie</span>
     </div>
+    <div class="lch-card omchawatch" onclick="_launcherGo('omchawatch')">
+      <span class="lch-ico">☉</span>
+      <span class="lch-name">OmchaWatch</span>
+      <span class="lch-desc">Horloge solaire fractale — cadran 432, calage lever/zénith/coucher</span>
+    </div>
   </div>
 </div>
 
@@ -8106,6 +8111,7 @@ function _launcherGo(mod) {
   if (mod === 'vibe') { hideLauncher(); return; }
   if (mod === 'chaharmony') { location.href = 'chaharmony.html'; return; }
   if (mod === 'sphereflux') { hideLauncher(); _openModuleOverlay('sphere-flux.html'); return; }
+  if (mod === 'omchawatch') { location.href = 'omchawatch.html'; return; }
 }
 
 // #87 : ouvre/ferme l'overlay des modules visuels (Sphère/Flux/Géométrie)
