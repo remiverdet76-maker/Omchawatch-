@@ -1917,3 +1917,66 @@ bloquée ; ±9 Hz et saisie directe fonctionnent pour le maître et les
 satellites, respectent le verrou ; curseur de volume branché et
 resynchronisé sans interférer avec un glissé en cours. 0 erreur JS, 0
 régression sur l'ensemble des suites existantes.
+
+## #92 : Chaharmony — nouvelle boîte à rythme intégrée (108 pas)
+
+Nouveau module dans `chaharmony.html`, accessible via un 8ᵉ onglet
+"▦ RYTHME" à côté des 7 oscillateurs existants (même page, aucune
+navigation, aucun état oscillateur touché).
+
+**Important — presets Roland TR-8 :** je n'ai ni les samples ni le code
+Roland (propriété de Roland, absents de ce dépôt) et je ne peux pas les
+fabriquer à partir de rien sans reproduire du contenu protégé. Les 9 voies
+utilisent par défaut des sons **synthétisés en Web Audio, "dans l'esprit"
+TR-8/909** — techniques de synthèse génériques et bien connues
+(oscillateur + enveloppe pour kick/conga, bruit filtré pour snare/clap/
+rimshot, banc d'oscillateurs carrés à ratios inharmoniques passe-haut pour
+hi-hats/cymbale) — aucun sample ni algorithme Roland copié. L'import de
+samples perso (ci-dessous) permet de remplacer n'importe quelle voix par
+ses propres sons.
+
+1. **108 pas = 3 banques de 36** — grille 12×3 par banque, boutons A/B/C
+   pour naviguer. Le playhead pendant la lecture change automatiquement de
+   banque affichée pour suivre la position réelle sur les 108 pas.
+2. **9 voies** : Kick, Snare, HH Fermé, HH Ouvert, Cymbale, Conga Grave,
+   Conga Aigu, Clap, Rimshot. Tap sur une voix = mute/unmute direct (même
+   geste que les sphères d'OmcVibe/le mute des oscillateurs) ; appui long
+   = sélectionne cette voix pour l'éditer dans le séquenceur (la grille
+   12×3 affiche alors SES 36 pas de la banque courante).
+3. **Auto-assign** — intervalle réglable (1, 5, 9, 13… n'importe quel N) :
+   place un coup tous les N pas sur les 108 pas de la voie active en un
+   tap. Un bouton "Effacer" vide entièrement la voie active.
+4. **Import sample + découpe précise** — bouton "⚙" sous chaque voix,
+   ouvre un panneau avec import de fichier audio (`decodeAudioData`),
+   waveform dessinée sur canvas, deux poignées glissables (souris/tactile)
+   pour le point de début/fin, lecture d'aperçu, et retrait du sample
+   (retour au son synthétisé). Aucune restriction de plage — la découpe
+   va du sample entier à quelques millisecondes.
+5. **FX par voix** — même trio HPF/BPF/LPF (cutoff/résonance) que les
+   oscillateurs, + Delay et Reverb (bus de reverb PARTAGÉ entre les 9
+   voies — un seul convolveur, pas 9, pour le coût CPU ; seul le niveau
+   d'envoi change par voix) + Distortion et Overdrive comme deux étages
+   de saturation indépendants (écrêtage dur vs. saturation tanh chaude).
+6. **Tap tempo** — bouton dédié, calcule le BPM à partir de la moyenne
+   des derniers intervalles entre taps (40–240 BPM), réinitialise si
+   l'écart entre deux taps dépasse 2s.
+7. **Scheduler à anticipation** (lookahead 120ms, vérifié toutes les 25ms)
+   plutôt qu'un simple `setInterval` — évite la dérive de timing classique
+   des scheduler JS naïfs. Route dans le MÊME bus master que les
+   oscillateurs (donc protégé par la même chaîne anti-clip), fonctionne
+   indépendamment de l'état Flux des oscillateurs.
+
+Vérifié par tests Playwright : grille (36 cellules/banque, 108 pas
+total), bascule de pas + correspondance banque→index global correcte,
+auto-assign produit exactement les indices attendus (tous les N sur 108),
+tap = mute/unmute, appui long = sélection de voix, lecture démarre/
+avance/s'arrête correctement (AudioContext `running`), tap tempo converge
+vers le bon BPM, réglages FX appliqués aux nœuds live, import d'un vrai
+fichier WAV + glissé de poignée de découpe fonctionnel (testé avec un
+fichier généré, valeurs de trim vérifiées), lecture d'un sample importé
+via le scheduler sans erreur, aucune régression sur les 7 oscillateurs
+existants (fréquence/binaural/Δ/filtre/reverb/delay/mute, bascule entre
+tous les onglets). 1 bug visuel trouvé et corrigé avant livraison (bouton
+"Fermer" du panneau FX hérite du style navigateur par défaut faute de
+reset CSS sur un `<button>` — remplacé par un `<div>`, cohérent avec le
+reste du panneau). 0 erreur JS.

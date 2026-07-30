@@ -82,6 +82,49 @@ input[type=range].pink::-webkit-slider-thumb{background:#FF6FA8;box-shadow:0 0 8
 .pm-item{padding:.7rem .5rem;font-family:'Cinzel Decorative',serif;font-size:.78rem;
   color:var(--bright);border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;}
 .pm-item:last-child{border-bottom:none;}
+
+/* ─── Boîte à rythme — 108 pas (3×36) ────────────────────────────── */
+.drum-transport{display:flex;align-items:center;justify-content:center;gap:1rem;margin-bottom:.7rem;}
+.dtrans-btn{width:52px;height:52px;border-radius:50%;border:2px solid var(--gold);cursor:pointer;
+  background:radial-gradient(circle,rgba(232,160,32,.3),rgba(232,160,32,.08));
+  color:var(--goldBright);font-size:1.2rem;display:flex;align-items:center;justify-content:center;}
+.dtrans-btn.on{border-color:#8CFFC0;color:#8CFFC0;background:radial-gradient(circle,rgba(140,255,192,.3),rgba(140,255,192,.08));}
+.dtrans-btn.tap{width:auto;height:auto;padding:.5rem .9rem;border-radius:10px;font-family:'Cinzel Decorative',serif;font-size:.68rem;letter-spacing:.08em;}
+.dtrans-btn.tap:active{background:rgba(232,160,32,.3);}
+.drum-bpm{text-align:center;min-width:70px;}
+.bpm-num{display:block;font-family:'Cinzel Decorative',serif;font-size:1.7rem;font-weight:700;color:var(--bright);line-height:1;}
+.bpm-lbl{font-size:.6rem;opacity:.5;letter-spacing:.14em;text-transform:uppercase;}
+.drum-banks{display:flex;gap:.4rem;justify-content:center;}
+.dbank{flex:1;max-width:70px;padding:.4rem 0;border-radius:8px;font-family:'Cinzel Decorative',serif;
+  font-size:.72rem;border:1.5px solid var(--border);background:rgba(20,12,4,.5);color:var(--text);cursor:pointer;text-align:center;}
+.dbank.on{border-color:var(--gold);color:var(--goldBright);background:rgba(232,160,32,.2);}
+.dvoices{display:flex;flex-wrap:wrap;gap:.5rem;}
+.dvoice-col{width:calc(33.33% - .34rem);display:flex;flex-direction:column;gap:.3rem;}
+.dvoice-pad{aspect-ratio:1.15;border-radius:10px;border:2px solid color-mix(in srgb, var(--vc) 55%, transparent);
+  background:radial-gradient(circle,color-mix(in srgb, var(--vc) 30%, transparent),color-mix(in srgb, var(--vc) 8%, transparent));
+  display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;position:relative;}
+.dvoice-pad.sel{border-color:var(--vc);box-shadow:0 0 12px color-mix(in srgb, var(--vc) 60%, transparent);}
+.dvoice-pad.muted{opacity:.35;border-style:dashed;}
+.dvoice-name{font-family:'Cinzel Decorative',serif;font-size:.62rem;letter-spacing:.03em;color:var(--vc);padding:0 .2rem;}
+.dvoice-fx{width:100%;padding:.3rem 0;border-radius:7px;border:1px solid var(--border);
+  background:rgba(20,12,4,.5);color:var(--text);font-size:.85rem;cursor:pointer;}
+.dstep-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-bottom:.6rem;}
+.dstep{aspect-ratio:1;border-radius:4px;border:1px solid var(--border);background:rgba(255,255,255,.04);cursor:pointer;padding:0;}
+.dstep.on{background:var(--gold);border-color:var(--goldBright);box-shadow:0 0 6px rgba(232,160,32,.6);}
+.dstep.playhead{outline:2px solid #63E6FF;outline-offset:1px;}
+.drum-auto{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;}
+.drum-auto input[type=number]{width:52px;background:rgba(20,12,4,.6);border:1.5px solid var(--border);
+  border-radius:6px;color:var(--bright);text-align:center;padding:.3rem 0;font-family:'IM Fell English',serif;font-size:.9rem;}
+.dauto-btn{padding:.4rem .7rem;border-radius:8px;font-family:'Cinzel Decorative',serif;font-size:.66rem;
+  border:1.5px solid var(--gold);background:rgba(232,160,32,.14);color:var(--goldBright);cursor:pointer;}
+.dauto-btn.clear{border-color:rgba(255,110,110,.5);color:#FF9E9E;background:rgba(255,80,80,.1);}
+#drumFxModal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:210;display:none;
+  align-items:flex-end;justify-content:center;}
+#drumFxModal.open{display:flex;}
+#drumFxModal .sheet{width:100%;max-width:420px;max-height:82vh;overflow-y:auto;background:#0c0806;
+  border:1.5px solid var(--border);border-radius:16px 16px 0 0;padding:1rem;}
+.dfx-import{display:block;text-align:center;padding:.6rem;border-radius:9px;border:1.5px dashed var(--gold);
+  color:var(--goldBright);font-family:'Cinzel Decorative',serif;font-size:.72rem;cursor:pointer;margin-bottom:.5rem;}
 </style>
 </head>
 <body>
@@ -106,6 +149,9 @@ input[type=range].pink::-webkit-slider-thumb{background:#FF6FA8;box-shadow:0 0 8
     <div class="pm-item" onclick="closePlusMenu()">Fermer</div>
   </div>
 </div>
+<div id="drumFxModal" onclick="if(event.target===this)closeDrumFx()">
+  <div class="sheet" id="drumFxSheet"></div>
+</div>
 <script>
 // ─── AUDIO ENGINE — 7 oscillateurs indépendants, chacun son propre moteur
 // FX (reverb + delay non partagés), normal (mono centré) ↔ binaural (L/R
@@ -127,6 +173,7 @@ for (let i = 0; i < N_OSC; i++) {
   });
 }
 let curOsc = 0;
+let curTab = 'osc'; // 'osc' | 'drum'
 
 // #74 : watchdog qualité audio (portée d'OmcVibe/index.html §2.8b) — surveille
 // la dérive du setInterval (signal universel de thread JS saturé, fiable même
@@ -416,11 +463,14 @@ function closePlusMenu() { document.getElementById('plusMenu').classList.remove(
 // ─── UI ──────────────────────────────────────────────────────────────
 function buildTabs() {
   const t = document.getElementById('tabs');
-  t.innerHTML = OSC.map((_, i) => `<button class="otab${i===curOsc?' on':''}" onclick="selectOsc(${i})">OSC ${i+1}</button>`).join('');
+  let html = OSC.map((_, i) => `<button class="otab${curTab==='osc'&&i===curOsc?' on':''}" onclick="selectOsc(${i})">OSC ${i+1}</button>`).join('');
+  html += `<button class="otab${curTab==='drum'?' on':''}" onclick="selectDrum()">▦ RYTHME</button>`;
+  t.innerHTML = html;
 }
-function selectOsc(i) { curOsc = i; buildTabs(); renderOsc(i); }
+function selectOsc(i) { curTab = 'osc'; curOsc = i; buildTabs(); renderOsc(i); }
+function selectDrum() { curTab = 'drum'; buildTabs(); renderDrum(); }
 function renderOsc(i) {
-  if (i !== curOsc) return;
+  if (curTab !== 'osc' || i !== curOsc) return;
   const o = OSC[i];
   buildTabs();
   document.getElementById('body').innerHTML = `
@@ -481,6 +531,469 @@ function renderOsc(i) {
       <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Delay</span><span class="ctl-v">${Math.round(o.delWet*100)}%</span></div>
         <input type="range" min="0" max="1" step="0.01" value="${o.delWet}" oninput="setOscDelWet(${i},this.value)"></div>
       <div class="hint">Chaque oscillateur a sa propre reverb/delay — aucun bus partagé.</div>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOÎTE À RYTHME — 108 pas (3 banques de 36), 9 voies synthétisées
+   "dans l'esprit" TR-8/909 (aucun contenu Roland copié — synthèse Web
+   Audio générique), import sample + découpe précise, FX par voix
+   (filtre HPF/BPF/LPF, delay, reverb sur bus partagé, distortion,
+   overdrive), tap tempo. Route dans le MÊME bus master que les
+   oscillateurs (chaîne de sécurité anti-clip commune).
+   ═══════════════════════════════════════════════════════════════════ */
+const DRUM_STEPS = 108, STEPS_PER_BANK = 36, DRUM_BANK_COUNT = 3;
+const DRUM_VOICES = [
+  { id:'kick', name:'Kick',        color:'#FF6B4A' },
+  { id:'snare',name:'Snare',       color:'#F2C14E' },
+  { id:'chh',  name:'HH Fermé',    color:'#63E6FF' },
+  { id:'ohh',  name:'HH Ouvert',   color:'#7FE8C8' },
+  { id:'cym',  name:'Cymbale',     color:'#F3D9FF' },
+  { id:'clo',  name:'Conga Grave', color:'#FF9EC0' },
+  { id:'chi',  name:'Conga Aigu',  color:'#FFB0CC' },
+  { id:'clap', name:'Clap',        color:'#C090FF' },
+  { id:'rim',  name:'Rimshot',     color:'#FFD060' },
+];
+const DRUM_STATE = {};
+DRUM_VOICES.forEach(v => {
+  DRUM_STATE[v.id] = {
+    pattern: new Array(DRUM_STEPS).fill(false),
+    muted: false,
+    sample: null, // { buffer, trimStart(0..1), trimEnd(0..1), name }
+    fx: { filtMode:'off', cutoff:8000, res:0, delWet:0, revSend:0, distAmt:0, overAmt:0 },
+    nodes: null,
+  };
+});
+let drumActiveVoice = 'kick';
+let drumBank = 0;
+let drumBPM = 108;
+let drumPlaying = false;
+let drumStepIdx = 0;
+let drumUiStepIdx = -1;
+let drumAutoN = 9;
+let drumFxVoice = null;
+
+// ── Bus drum (partagé, séparé des oscillateurs mais même master/sécurité) ──
+let drumMaster = null, drumReverbConv = null, drumReverbReturn = null;
+function ensureDrumBus() {
+  ensureAC();
+  if (drumMaster) return;
+  drumMaster = AC.createGain(); drumMaster.gain.value = 0.9;
+  drumMaster.connect(master);
+  // #92 : UN SEUL convolveur partagé par les 9 voies (pas 9 instances) —
+  // le coût de la convolution ne dépend pas du nombre de voix qui l'utilisent,
+  // seul le niveau d'envoi (revSend) par voix change.
+  drumReverbConv = AC.createConvolver(); drumReverbConv.buffer = _makeIR(AC, 1.3);
+  drumReverbReturn = AC.createGain(); drumReverbReturn.gain.value = 0.5;
+  drumReverbConv.connect(drumReverbReturn); drumReverbReturn.connect(drumMaster);
+}
+function _clipCurve(amt) { // Distortion : écrêtage dur, de plus en plus agressif
+  const n = 1024, curve = new Float32Array(n), drive = 1 + amt * 30;
+  for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; curve[i] = Math.max(-1, Math.min(1, x * drive)); }
+  return curve;
+}
+function _overdriveCurve(amt) { // Overdrive : saturation tanh chaude
+  const n = 1024, curve = new Float32Array(n), k = 1 + amt * 14;
+  for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; curve[i] = Math.tanh(k * x) / Math.tanh(k); }
+  return curve;
+}
+function _buildDrumVoiceChain(id) {
+  const v = DRUM_STATE[id];
+  const filt = AC.createBiquadFilter();
+  filt.type = FILTER_TYPES[v.fx.filtMode] || 'allpass';
+  filt.frequency.value = v.fx.cutoff; filt.Q.value = v.fx.res;
+  const dist = AC.createWaveShaper(); dist.curve = _clipCurve(v.fx.distAmt); dist.oversample = '2x';
+  const over = AC.createWaveShaper(); over.curve = _overdriveCurve(v.fx.overAmt); over.oversample = '2x';
+  const post = AC.createGain(); post.gain.value = 0.9;
+  const del = AC.createDelay(1.0); del.delayTime.value = 0.25;
+  const delFb = AC.createGain(); delFb.gain.value = 0.3;
+  const delGain = AC.createGain(); delGain.gain.value = v.fx.delWet;
+  del.connect(delFb); delFb.connect(del);
+  const revSend = AC.createGain(); revSend.gain.value = v.fx.revSend;
+
+  filt.connect(dist); dist.connect(over); over.connect(post);
+  post.connect(drumMaster);
+  post.connect(del); del.connect(delGain); delGain.connect(drumMaster);
+  post.connect(revSend); revSend.connect(drumReverbConv);
+
+  return { filt, dist, over, post, del, delFb, delGain, revSend };
+}
+
+// ── Synthèse "dans l'esprit" TR-8/909 — techniques génériques bien connues
+// (oscillateur+enveloppe pour kick/conga, bruit filtré pour snare/clap/rim,
+// banc d'oscillateurs carrés inharmoniques passe-haut pour hi-hats/cymbale),
+// AUCUN sample ni code Roland. ─────────────────────────────────────────
+function _noiseBuffer(dur) {
+  const len = Math.max(1, Math.floor(AC.sampleRate * dur));
+  const buf = AC.createBuffer(1, len, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  return buf;
+}
+function synthKick(dest, t) {
+  const osc = AC.createOscillator(); osc.type = 'sine';
+  const g = AC.createGain();
+  osc.frequency.setValueAtTime(150, t);
+  osc.frequency.exponentialRampToValueAtTime(48, t + 0.14);
+  g.gain.setValueAtTime(1, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+  osc.connect(g); g.connect(dest);
+  osc.start(t); osc.stop(t + 0.36);
+}
+function synthSnare(dest, t) {
+  const src = AC.createBufferSource(); src.buffer = _noiseBuffer(0.2);
+  const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 1;
+  const ng = AC.createGain(); ng.gain.setValueAtTime(0.9, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+  src.connect(bp); bp.connect(ng); ng.connect(dest);
+  src.start(t); src.stop(t + 0.2);
+  [180, 330].forEach(f => {
+    const osc = AC.createOscillator(); osc.type = 'triangle'; osc.frequency.value = f;
+    const g = AC.createGain(); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    osc.connect(g); g.connect(dest);
+    osc.start(t); osc.stop(t + 0.13);
+  });
+}
+function _metallicHat(dest, t, dur) {
+  const fund = 40, ratios = [2, 3, 4.16, 5.43, 6.79, 8.21]; // ratios inharmoniques classiques (808/909)
+  const bandpass = AC.createBiquadFilter(); bandpass.type = 'bandpass'; bandpass.frequency.value = 9000; bandpass.Q.value = 1.2;
+  const hp = AC.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000;
+  const g = AC.createGain(); g.gain.setValueAtTime(0.55, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  ratios.forEach(r => {
+    const osc = AC.createOscillator(); osc.type = 'square'; osc.frequency.value = fund * r;
+    osc.connect(bandpass);
+    osc.start(t); osc.stop(t + dur + 0.02);
+  });
+  bandpass.connect(hp); hp.connect(g); g.connect(dest);
+}
+function synthClosedHat(dest, t) { _metallicHat(dest, t, 0.07); }
+function synthOpenHat(dest, t) { _metallicHat(dest, t, 0.35); }
+function synthCymbal(dest, t) { _metallicHat(dest, t, 0.9); }
+function _synthConga(dest, t, freq) {
+  const osc = AC.createOscillator(); osc.type = 'sine';
+  const g = AC.createGain();
+  osc.frequency.setValueAtTime(freq * 1.5, t);
+  osc.frequency.exponentialRampToValueAtTime(freq, t + 0.05);
+  g.gain.setValueAtTime(0.8, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+  osc.connect(g); g.connect(dest);
+  osc.start(t); osc.stop(t + 0.3);
+}
+function synthCongaLo(dest, t) { _synthConga(dest, t, 140); }
+function synthCongaHi(dest, t) { _synthConga(dest, t, 220); }
+function synthClap(dest, t) {
+  const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 1.4;
+  bp.connect(dest);
+  [0, 0.012, 0.024, 0.038].forEach((off, idx) => {
+    const src = AC.createBufferSource(); src.buffer = _noiseBuffer(0.05);
+    const bg = AC.createGain();
+    const peakT = t + off, isLast = idx === 3;
+    bg.gain.setValueAtTime(0.0001, peakT);
+    bg.gain.linearRampToValueAtTime(isLast ? 0.8 : 0.55, peakT + 0.003);
+    bg.gain.exponentialRampToValueAtTime(0.001, peakT + (isLast ? 0.2 : 0.03));
+    src.connect(bg); bg.connect(bp);
+    src.start(peakT); src.stop(peakT + 0.06);
+  });
+}
+function synthRim(dest, t) {
+  const osc = AC.createOscillator(); osc.type = 'square'; osc.frequency.value = 420;
+  const g = AC.createGain(); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+  osc.connect(g); g.connect(dest);
+  osc.start(t); osc.stop(t + 0.06);
+  const src = AC.createBufferSource(); src.buffer = _noiseBuffer(0.03);
+  const hp = AC.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 4000;
+  const ng = AC.createGain(); ng.gain.setValueAtTime(0.4, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+  src.connect(hp); hp.connect(ng); ng.connect(dest);
+  src.start(t); src.stop(t + 0.04);
+}
+const DRUM_SYNTH = { kick:synthKick, snare:synthSnare, chh:synthClosedHat, ohh:synthOpenHat, cym:synthCymbal, clo:synthCongaLo, chi:synthCongaHi, clap:synthClap, rim:synthRim };
+
+function playDrumVoice(id, t) {
+  ensureDrumBus();
+  const v = DRUM_STATE[id];
+  if (v.muted) return;
+  if (!v.nodes) v.nodes = _buildDrumVoiceChain(id);
+  const dest = v.nodes.filt;
+  if (v.sample && v.sample.buffer) {
+    const buf = v.sample.buffer, dur = buf.duration;
+    const startOff = v.sample.trimStart * dur;
+    const playDur = Math.max(0.01, (v.sample.trimEnd - v.sample.trimStart) * dur);
+    const src = AC.createBufferSource(); src.buffer = buf;
+    src.connect(dest);
+    src.start(t, startOff, playDur);
+  } else if (DRUM_SYNTH[id]) {
+    DRUM_SYNTH[id](dest, t);
+  }
+}
+
+// ── Scheduler pas-à-pas (lookahead — évite la dérive d'un setTimeout seul) ──
+let _drumTimerId = null, _drumNextStepTime = 0;
+const DRUM_LOOKAHEAD_MS = 25, DRUM_SCHEDULE_AHEAD_S = 0.12;
+function drumStepDur() { return 60 / drumBPM / 4; } // pas = croche pointée... non, noire/4 = double-croche standard
+function drumTick() {
+  if (!drumPlaying) return;
+  while (_drumNextStepTime < AC.currentTime + DRUM_SCHEDULE_AHEAD_S) {
+    const stepTime = _drumNextStepTime, stepIdx = drumStepIdx;
+    DRUM_VOICES.forEach(vv => { if (DRUM_STATE[vv.id].pattern[stepIdx]) playDrumVoice(vv.id, stepTime); });
+    const delayMs = Math.max(0, (stepTime - AC.currentTime) * 1000);
+    setTimeout(() => _updateDrumPlayhead(stepIdx), delayMs);
+    _drumNextStepTime += drumStepDur();
+    drumStepIdx = (drumStepIdx + 1) % DRUM_STEPS;
+  }
+  _drumTimerId = setTimeout(drumTick, DRUM_LOOKAHEAD_MS);
+}
+function _updateDrumPlayhead(idx) {
+  if (!drumPlaying) return;
+  drumUiStepIdx = idx;
+  if (curTab !== 'drum') return;
+  const bankOfIdx = Math.floor(idx / STEPS_PER_BANK);
+  if (bankOfIdx !== drumBank) { drumBank = bankOfIdx; renderDrum(); return; }
+  const prev = document.querySelector('.dstep.playhead'); if (prev) prev.classList.remove('playhead');
+  const cell = document.getElementById('dstep-' + (idx % STEPS_PER_BANK));
+  if (cell) cell.classList.add('playhead');
+}
+function toggleDrumPlay() { drumPlaying ? stopDrumPlay() : startDrumPlay(); }
+function startDrumPlay() {
+  ensureDrumBus();
+  if (AC.state !== 'running') AC.resume();
+  drumPlaying = true; drumStepIdx = 0; drumUiStepIdx = -1;
+  _drumNextStepTime = AC.currentTime + 0.06;
+  drumTick();
+  renderDrum();
+}
+function stopDrumPlay() {
+  drumPlaying = false;
+  clearTimeout(_drumTimerId); _drumTimerId = null;
+  renderDrum();
+}
+
+// ── Tap tempo ────────────────────────────────────────────────────────
+let _drumTapTimes = [];
+function drumTapTempo() {
+  const now = performance.now();
+  if (_drumTapTimes.length && now - _drumTapTimes[_drumTapTimes.length - 1] > 2000) _drumTapTimes = [];
+  _drumTapTimes.push(now);
+  if (_drumTapTimes.length > 8) _drumTapTimes.shift();
+  if (_drumTapTimes.length >= 2) {
+    const intervals = [];
+    for (let i = 1; i < _drumTapTimes.length; i++) intervals.push(_drumTapTimes[i] - _drumTapTimes[i - 1]);
+    const avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    drumBPM = Math.max(40, Math.min(240, Math.round(60000 / avg)));
+    renderDrum();
+  }
+}
+
+// ── Voies : tap = mute/unmute · appui long = sélectionner + éditer ──────
+let _dvTimer = null, _dvSX = 0, _dvSY = 0;
+const DV_LONG_MS = 420;
+function _dvPt(e) { return e.touches && e.touches[0] ? e.touches[0] : e; }
+function _dvStart(id, e) {
+  if (e.type === 'touchstart') { try { e.preventDefault(); } catch (x) {} }
+  const pt = _dvPt(e); _dvSX = pt.clientX; _dvSY = pt.clientY;
+  clearTimeout(_dvTimer);
+  _dvTimer = setTimeout(() => {
+    _dvTimer = null;
+    try { navigator.vibrate && navigator.vibrate(16); } catch (x) {}
+    drumActiveVoice = id; renderDrum();
+  }, DV_LONG_MS);
+}
+function _dvMove(id, e) {
+  if (!_dvTimer) return;
+  const pt = _dvPt(e);
+  if (Math.abs(pt.clientX - _dvSX) > 14 || Math.abs(pt.clientY - _dvSY) > 14) { clearTimeout(_dvTimer); _dvTimer = null; }
+}
+function _dvEnd(id) {
+  if (_dvTimer) { clearTimeout(_dvTimer); _dvTimer = null; DRUM_STATE[id].muted = !DRUM_STATE[id].muted; renderDrum(); }
+}
+function _dvCancel() { clearTimeout(_dvTimer); _dvTimer = null; }
+
+// ── Grille de pas / banques / auto-assign ───────────────────────────
+function setDrumBank(b) { drumBank = b; renderDrum(); }
+function toggleDrumStep(localIdx) {
+  const idx = drumBank * STEPS_PER_BANK + localIdx;
+  const v = DRUM_STATE[drumActiveVoice];
+  v.pattern[idx] = !v.pattern[idx];
+  renderDrum();
+}
+function drumAutoAssign() {
+  const v = DRUM_STATE[drumActiveVoice];
+  const n = Math.max(1, Math.round(drumAutoN) || 1);
+  for (let i = 0; i < DRUM_STEPS; i++) v.pattern[i] = (i % n === 0);
+  renderDrum();
+}
+function drumClearVoice() { DRUM_STATE[drumActiveVoice].pattern.fill(false); renderDrum(); }
+
+// ── Import sample + découpe précise ─────────────────────────────────
+function handleSampleFile(id, fileInput) {
+  const file = fileInput.files[0]; if (!file) return;
+  ensureAC();
+  file.arrayBuffer().then(arrBuf => {
+    AC.decodeAudioData(arrBuf, buffer => {
+      DRUM_STATE[id].sample = { buffer, trimStart: 0, trimEnd: 1, name: file.name };
+      renderDrumFxModal();
+    }, () => { if (typeof alert === 'function') alert('Fichier audio illisible.'); });
+  });
+}
+function clearSample(id) { DRUM_STATE[id].sample = null; renderDrumFxModal(); }
+function previewSample(id) { playDrumVoice(id, AC.currentTime); }
+let _wfDrag = null;
+function _drawSampleWaveform(id) {
+  const v = DRUM_STATE[id]; if (!v.sample) return;
+  const cv = document.getElementById('sampleWave'); if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const w = cv.width = cv.clientWidth || 300, h = cv.height = 90;
+  ctx.clearRect(0, 0, w, h);
+  const data = v.sample.buffer.getChannelData(0);
+  const step = Math.max(1, Math.floor(data.length / w));
+  ctx.strokeStyle = 'rgba(232,160,32,.85)'; ctx.beginPath();
+  for (let x = 0; x < w; x++) {
+    let mn = 1, mx = -1;
+    for (let j = 0; j < step; j++) { const s = data[x * step + j] || 0; if (s < mn) mn = s; if (s > mx) mx = s; }
+    const y1 = (1 - (mx + 1) / 2) * h, y2 = (1 - (mn + 1) / 2) * h;
+    ctx.moveTo(x, y1); ctx.lineTo(x, y2);
+  }
+  ctx.stroke();
+  const sx = v.sample.trimStart * w, ex = v.sample.trimEnd * w;
+  ctx.fillStyle = 'rgba(0,0,0,.55)';
+  ctx.fillRect(0, 0, sx, h); ctx.fillRect(ex, 0, w - ex, h);
+  ctx.strokeStyle = '#63E6FF'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, h); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ex, 0); ctx.lineTo(ex, h); ctx.stroke();
+}
+function _wfPointerDown(e, id) {
+  const cv = document.getElementById('sampleWave'); if (!cv) return;
+  const rect = cv.getBoundingClientRect();
+  const pt = e.touches ? e.touches[0] : e;
+  const x = pt.clientX - rect.left;
+  const v = DRUM_STATE[id];
+  const sx = v.sample.trimStart * cv.width, ex = v.sample.trimEnd * cv.width;
+  _wfDrag = Math.abs(x - sx) < Math.abs(x - ex) ? 'start' : 'end';
+}
+function _wfPointerMove(e, id) {
+  if (!_wfDrag) return;
+  const cv = document.getElementById('sampleWave'); if (!cv) return;
+  const rect = cv.getBoundingClientRect();
+  const pt = e.touches ? e.touches[0] : e;
+  const x = pt.clientX - rect.left;
+  const frac = Math.max(0, Math.min(1, x / cv.width));
+  const v = DRUM_STATE[id];
+  if (_wfDrag === 'start') v.sample.trimStart = Math.min(frac, v.sample.trimEnd - 0.01);
+  else v.sample.trimEnd = Math.max(frac, v.sample.trimStart + 0.01);
+  _drawSampleWaveform(id);
+  _updateTrimReadout(id);
+}
+function _wfPointerUp() { _wfDrag = null; }
+function _updateTrimReadout(id) {
+  const v = DRUM_STATE[id]; if (!v.sample) return;
+  const dur = v.sample.buffer.duration;
+  const el = document.getElementById('trimReadout'); if (!el) return;
+  el.textContent = `${(v.sample.trimStart * dur * 1000).toFixed(0)} ms → ${(v.sample.trimEnd * dur * 1000).toFixed(0)} ms · durée ${((v.sample.trimEnd - v.sample.trimStart) * dur * 1000).toFixed(0)} ms`;
+}
+
+// ── FX par voix ──────────────────────────────────────────────────────
+function setDrumFilterMode(id, mode) { const v = DRUM_STATE[id]; v.fx.filtMode = mode; if (v.nodes) v.nodes.filt.type = FILTER_TYPES[mode] || 'allpass'; renderDrumFxModal(); }
+function setDrumCutoff(id, hz) { const v = DRUM_STATE[id]; v.fx.cutoff = Math.max(20, Math.min(12000, parseFloat(hz))); if (v.nodes) v.nodes.filt.frequency.setTargetAtTime(v.fx.cutoff, AC.currentTime, 0.02); renderDrumFxModal(); }
+function setDrumRes(id, q) { const v = DRUM_STATE[id]; v.fx.res = Math.max(0, Math.min(20, parseFloat(q))); if (v.nodes) v.nodes.filt.Q.setTargetAtTime(v.fx.res, AC.currentTime, 0.02); renderDrumFxModal(); }
+function setDrumDelay(id, v01) { const v = DRUM_STATE[id]; v.fx.delWet = Math.max(0, Math.min(1, parseFloat(v01))); if (v.nodes) v.nodes.delGain.gain.setTargetAtTime(v.fx.delWet, AC.currentTime, 0.05); renderDrumFxModal(); }
+function setDrumRevSend(id, v01) { const v = DRUM_STATE[id]; v.fx.revSend = Math.max(0, Math.min(1, parseFloat(v01))); if (v.nodes) v.nodes.revSend.gain.setTargetAtTime(v.fx.revSend, AC.currentTime, 0.05); renderDrumFxModal(); }
+function setDrumDist(id, v01) { const v = DRUM_STATE[id]; v.fx.distAmt = Math.max(0, Math.min(1, parseFloat(v01))); if (v.nodes) v.nodes.dist.curve = _clipCurve(v.fx.distAmt); renderDrumFxModal(); }
+function setDrumOver(id, v01) { const v = DRUM_STATE[id]; v.fx.overAmt = Math.max(0, Math.min(1, parseFloat(v01))); if (v.nodes) v.nodes.over.curve = _overdriveCurve(v.fx.overAmt); renderDrumFxModal(); }
+
+function openDrumFx(id) { drumFxVoice = id; document.getElementById('drumFxModal').classList.add('open'); renderDrumFxModal(); }
+function closeDrumFx() { document.getElementById('drumFxModal').classList.remove('open'); drumFxVoice = null; }
+function renderDrumFxModal() {
+  if (!drumFxVoice) return;
+  const id = drumFxVoice, v = DRUM_STATE[id], voiceDef = DRUM_VOICES.find(x => x.id === id);
+  const sheet = document.getElementById('drumFxSheet'); if (!sheet) return;
+  sheet.innerHTML = `
+    <div class="sec-t">${voiceDef.name} — Sample &amp; FX</div>
+    <label class="dfx-import">📥 Importer un sample
+      <input type="file" accept="audio/*" style="display:none" onchange="handleSampleFile('${id}',this)">
+    </label>
+    ${v.sample ? `
+      <div class="hint">${v.sample.name}</div>
+      <canvas id="sampleWave" style="width:100%;height:90px;touch-action:none;"
+        onmousedown="_wfPointerDown(event,'${id}')" onmousemove="_wfPointerMove(event,'${id}')" onmouseup="_wfPointerUp()" onmouseleave="_wfPointerUp()"
+        ontouchstart="_wfPointerDown(event,'${id}')" ontouchmove="_wfPointerMove(event,'${id}')" ontouchend="_wfPointerUp()"></canvas>
+      <div class="hint" id="trimReadout"></div>
+      <div style="display:flex;gap:.4rem;margin:.4rem 0;">
+        <button class="dauto-btn" onclick="previewSample('${id}')">▶ Écouter</button>
+        <button class="dauto-btn clear" onclick="clearSample('${id}')">Retirer le sample</button>
+      </div>` : `<div class="hint">Aucun sample importé — la voie utilise le son synthétisé par défaut (dans l'esprit TR-8/909).</div>`}
+    <div class="sec-t" style="margin-top:.8rem;">Filtre</div>
+    <div class="filt-row">
+      ${['off', 'hpf', 'bpf', 'lpf'].map(m => `<button class="filt-btn${v.fx.filtMode === m ? ' active' : ''}" onclick="setDrumFilterMode('${id}','${m}')">${m.toUpperCase()}</button>`).join('')}
+    </div>
+    <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Cutoff</span><span class="ctl-v">${Math.round(v.fx.cutoff)} Hz</span></div>
+      <input type="range" min="20" max="12000" step="10" value="${v.fx.cutoff}" oninput="setDrumCutoff('${id}',this.value)"></div>
+    <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Résonance</span><span class="ctl-v">${v.fx.res.toFixed(1)}</span></div>
+      <input type="range" min="0" max="20" step="0.1" value="${v.fx.res}" oninput="setDrumRes('${id}',this.value)"></div>
+    <div class="sec-t" style="margin-top:.8rem;">Delay / Reverb</div>
+    <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Delay</span><span class="ctl-v">${Math.round(v.fx.delWet * 100)}%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="${v.fx.delWet}" oninput="setDrumDelay('${id}',this.value)"></div>
+    <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Reverb (bus partagé)</span><span class="ctl-v">${Math.round(v.fx.revSend * 100)}%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="${v.fx.revSend}" oninput="setDrumRevSend('${id}',this.value)"></div>
+    <div class="sec-t" style="margin-top:.8rem;">Saturation</div>
+    <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Distortion</span><span class="ctl-v">${Math.round(v.fx.distAmt * 100)}%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="${v.fx.distAmt}" oninput="setDrumDist('${id}',this.value)"></div>
+    <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Overdrive</span><span class="ctl-v">${Math.round(v.fx.overAmt * 100)}%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="${v.fx.overAmt}" oninput="setDrumOver('${id}',this.value)"></div>
+    <div class="pm-item" style="text-align:center;margin-top:.6rem;" onclick="closeDrumFx()">Fermer</div>
+  `;
+  if (v.sample) requestAnimationFrame(() => { _drawSampleWaveform(id); _updateTrimReadout(id); });
+}
+
+// ── Rendu principal ──────────────────────────────────────────────────
+function renderDrum() {
+  buildTabs();
+  const activeV = DRUM_STATE[drumActiveVoice], activeDef = DRUM_VOICES.find(v => v.id === drumActiveVoice);
+  const bankStart = drumBank * STEPS_PER_BANK;
+  let stepsHtml = '';
+  for (let local = 0; local < STEPS_PER_BANK; local++) {
+    const idx = bankStart + local;
+    const on = activeV.pattern[idx];
+    const isPlayhead = drumPlaying && drumUiStepIdx === idx;
+    stepsHtml += `<button class="dstep${on ? ' on' : ''}${isPlayhead ? ' playhead' : ''}" id="dstep-${local}" onclick="toggleDrumStep(${local})"></button>`;
+  }
+  document.getElementById('body').innerHTML = `
+    <div class="card">
+      <div class="sec-t">Boîte à rythme · 108 pas (3×36)</div>
+      <div class="drum-transport">
+        <button class="dtrans-btn${drumPlaying ? ' on' : ''}" onclick="toggleDrumPlay()">${drumPlaying ? '◼' : '▶'}</button>
+        <div class="drum-bpm"><span class="bpm-num">${drumBPM}</span><span class="bpm-lbl">BPM</span></div>
+        <button class="dtrans-btn tap" onclick="drumTapTempo()">TAP<br>TEMPO</button>
+      </div>
+      <div class="drum-banks">
+        ${[0, 1, 2].map(b => `<button class="dbank${drumBank === b ? ' on' : ''}" onclick="setDrumBank(${b})">${['A', 'B', 'C'][b]}</button>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-t">Voies</div>
+      <div class="dvoices">
+        ${DRUM_VOICES.map(v => {
+          const st = DRUM_STATE[v.id], selected = v.id === drumActiveVoice;
+          return `<div class="dvoice-col">
+            <div class="dvoice-pad${st.muted ? ' muted' : ''}${selected ? ' sel' : ''}" style="--vc:${v.color}"
+              onmousedown="_dvStart('${v.id}',event)" onmouseup="_dvEnd('${v.id}')" onmouseleave="_dvCancel()" onmousemove="_dvMove('${v.id}',event)"
+              ontouchstart="_dvStart('${v.id}',event)" ontouchend="_dvEnd('${v.id}')" ontouchmove="_dvMove('${v.id}',event)">
+              <span class="dvoice-name">${v.name}</span>
+            </div>
+            <button class="dvoice-fx" onclick="openDrumFx('${v.id}')" title="Import sample / réglages FX">⚙</button>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="hint">Tap = mute/unmute · appui long = ouvrir le séquenceur de cette voie · ⚙ = import sample / réglages FX</div>
+    </div>
+    <div class="card">
+      <div class="sec-t">Séquenceur — ${activeDef.name} · Banque ${['A', 'B', 'C'][drumBank]}</div>
+      <div class="dstep-grid">${stepsHtml}</div>
+      <div class="drum-auto">
+        <span class="ctl-l">Auto tous les</span>
+        <input type="number" id="autoN" min="1" max="108" value="${drumAutoN}" oninput="drumAutoN=parseInt(this.value)||1">
+        <span class="ctl-l">pas</span>
+        <button class="dauto-btn" onclick="drumAutoAssign()">Appliquer</button>
+        <button class="dauto-btn clear" onclick="drumClearVoice()">Effacer</button>
+      </div>
+      <div class="hint">L'auto-assign s'applique aux 108 pas de la voie sélectionnée (les 3 banques), pas seulement à la banque affichée.</div>
     </div>
   `;
 }
