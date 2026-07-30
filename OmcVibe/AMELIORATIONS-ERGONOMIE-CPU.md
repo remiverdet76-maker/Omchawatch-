@@ -2032,3 +2032,13 @@ fonctionnelle, calcul J0 vérifié indépendamment (naissance 15/06/1990 →
 J0 31/08/1989), 4ᵉ carte du lanceur présente et route bien vers
 `omchawatch.html` sans régression sur les 3 modules existants. 0 erreur
 JS.
+
+**APK** : `omchawatch.html` ajouté à `NEW_FILES` de `repack.py` (même
+mécanisme que Chaharmony/Sphère432/Torsion432/Géométrie), `index.html`
+repris tel quel (contient déjà la 4ᵉ carte). `build/OmcVibe432-debug.apk`
+régénéré et re-signé (V1 jarsigner + V2 apksig par-dessus, même pipeline
+que d'habitude) ; vérifié `verified=true`/`v2=true` pour API 24+, identique
+au comportement de l'APK précédemment livré (`v1=false` par construction
+de ce pipeline — limite déjà documentée, pas une régression). Contenu du
+fichier dans le zip vérifié (`assets/public/omchawatch.html` présent,
+lien vers le module bien présent dans `index.html`).
