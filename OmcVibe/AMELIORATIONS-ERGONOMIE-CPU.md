@@ -2460,3 +2460,30 @@ Vérifié par tests Playwright (Chaharmony et OmcVibe séparément) :
 tabs toujours fonctionnels, `PAIRS.length` inchangé (7), panneau de
 personnalisation toujours valide. 0 erreur JS sur les deux apps. APK
 régénéré et re-signé, vérifié `verified=true` (API 24+).
+
+## #102 : correction du ratio Miaow — 512/243 au lieu de 1/15552
+
+Retour utilisateur immédiat après #101 : la définition voulue n'est pas
+« 1 Miaow = 15552 Hz » (qui réduit 432 Hz à une fraction minuscule,
+1/36 Miaow) mais l'inverse évoqué plus tôt dans la session — **1 Miaow =
+243/512 Hz**, soit **512/243 ≈ 2,10699588477 Miaow par Hz** (fraction
+exacte 32768/15552 réduite ; 32768 = fréquence du cristal RTC standard,
+15552 = Miaow par Solônde). Avec ce ratio, 432 Hz devient **8192/9 ≈
+910,22 Miaow** — la plage audible 20–20 000 Hz devient environ 42 à
+42 140 Miaow, avec une résolution numérique environ doublée par rapport
+au Hz (chaque Hz vaut ~2,107 Miaow).
+
+**Implémentation** : `MIAOW_HZ` remplacé par `MIAOW_PER_HZ = 512/243`
+dans les deux apps ; `hzToMiaow(hz) = hz * MIAOW_PER_HZ`,
+`miaowToHz(m) = m / MIAOW_PER_HZ`. Précision d'affichage réduite de 5 à
+2 décimales partout (`.toFixed(5)` → `.toFixed(2)`) — les valeurs
+étant désormais de l'ordre de plusieurs centaines à dizaines de milliers,
+5 décimales n'apportaient plus rien. Textes d'aide (encart Chaharmony,
+panneau « Personnaliser l'interface » d'OmcVibe) mis à jour avec la
+nouvelle formule et l'exemple 432 Hz = 8192/9 Miaow.
+
+Vérifié par tests Playwright (Chaharmony et OmcVibe) : `hzToMiaow(432)
+=== 910.2222...` (8192/9 exact), `miaowToHz(8192/9) ≈ 432`, édition
+manuelle en mode Miaow round-trip correcte vers 216 Hz sur les deux apps,
+bascule d'unité + persistance intactes, 0 erreur JS. APK régénéré et
+re-signé, vérifié `verified=true` (API 24+).

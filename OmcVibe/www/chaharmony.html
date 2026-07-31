@@ -343,22 +343,22 @@ function toggleSilence() {
   b.textContent = silenced ? '◼ Coupé' : '◼ Silence';
 }
 
-// ─── Unité Miaow — 1 Miaow = 15552 Hz (définition posée avec l'utilisateur :
-// la Solônde = 1 seconde civile "corrigée"/texturée par les 4 mouvements,
-// 15552 Miaow par Solônde ⇒ un signal à 15552 Hz fait exactement 1 cycle
-// par Miaow). Couche d'affichage/saisie uniquement — le moteur Web Audio
-// reste en Hz en interne (obligatoire, l'API ne connaît que le Hz).
-const MIAOW_HZ = 15552;
+// ─── Unité Miaow — 1 Miaow = 243/512 Hz, soit 512/243 Miaow par Hz
+// (= 32768/15552 réduit à sa forme la plus simple ; 32768 = crystal RTC
+// standard, 15552 = Miaow par Solônde). 432 Hz = 8192/9 Miaow exact.
+// Couche d'affichage/saisie uniquement — le moteur Web Audio reste en
+// Hz en interne (obligatoire, l'API ne connaît que le Hz).
+const MIAOW_PER_HZ = 512 / 243;
 let UNIT_MODE = 'hz';
 try { UNIT_MODE = localStorage.getItem('chaharmony-unit') || 'hz'; } catch(e) {}
-function hzToMiaow(hz) { return hz / MIAOW_HZ; }
-function miaowToHz(m) { return m * MIAOW_HZ; }
+function hzToMiaow(hz) { return hz * MIAOW_PER_HZ; }
+function miaowToHz(m) { return m / MIAOW_PER_HZ; }
 function toggleUnitMode() {
   UNIT_MODE = UNIT_MODE === 'hz' ? 'miaow' : 'hz';
   try { localStorage.setItem('chaharmony-unit', UNIT_MODE); } catch(e) {}
   renderOsc(curOsc);
 }
-function fmtFreqDisplay(hz) { return UNIT_MODE === 'miaow' ? hzToMiaow(hz).toFixed(5) : hz.toFixed(1); }
+function fmtFreqDisplay(hz) { return UNIT_MODE === 'miaow' ? hzToMiaow(hz).toFixed(2) : hz.toFixed(1); }
 function fmtUnitLabel() { return UNIT_MODE === 'miaow' ? '🐈 Miaow' : 'Hz'; }
 
 function setOscFreq(i, hz) {
@@ -377,7 +377,7 @@ function openOscFreqEdit(i) {
   const disp = inp.previousElementSibling;
   if (disp) disp.style.display = 'none';
   inp.style.display = 'block';
-  inp.value = UNIT_MODE === 'miaow' ? hzToMiaow(OSC[i].freq).toFixed(5) : OSC[i].freq.toFixed(1);
+  inp.value = UNIT_MODE === 'miaow' ? hzToMiaow(OSC[i].freq).toFixed(2) : OSC[i].freq.toFixed(1);
   inp.focus(); inp.select();
 }
 function handleOscFreqKey(i, e) {
@@ -499,14 +499,14 @@ function renderOsc(i) {
         <button class="lr-btn${o.bin?' bin':''}" onclick="toggleOscBin(${i})">L·R<span style="font-size:.5rem;opacity:.7">${o.bin?'BIN':'MONO'}</span></button>
         <div class="freq-disp">
           <div class="freq-num" onclick="openOscFreqEdit(${i})">${fmtFreqDisplay(o.freq)}</div>
-          <input type="number" class="freq-input-manual" id="freqEdit${i}" step="${UNIT_MODE==='miaow'?'0.00001':'0.1'}"
+          <input type="number" class="freq-input-manual" id="freqEdit${i}" step="${UNIT_MODE==='miaow'?'0.01':'0.1'}"
             onkeydown="handleOscFreqKey(${i},event)">
           <div class="freq-hz" onclick="toggleUnitMode()" style="cursor:pointer;" title="Tap pour changer d'unité">${fmtUnitLabel()}${UNIT_MODE==='miaow'?` · ${o.freq.toFixed(1)}Hz`:''}</div>
         </div>
         <button class="plus-btn" onclick="openPlusMenu()">+</button>
       </div>
       <input type="range" min="54" max="864" step="0.5" value="${o.freq}" oninput="setOscFreq(${i},this.value)">
-      <div class="freq-range"><span>${UNIT_MODE==='miaow'?hzToMiaow(54).toFixed(5)+' 🐈':'54Hz'}</span><span>${UNIT_MODE==='miaow'?hzToMiaow(864).toFixed(5)+' 🐈':'864Hz'}</span></div>
+      <div class="freq-range"><span>${UNIT_MODE==='miaow'?hzToMiaow(54).toFixed(2)+' 🐈':'54Hz'}</span><span>${UNIT_MODE==='miaow'?hzToMiaow(864).toFixed(2)+' 🐈':'864Hz'}</span></div>
       <div class="n-row">
         <button class="n-step" onclick="stepOscN(${i},-0.1)">−</button>
         <button class="n-mute${o.muted?' muted':''}" onclick="toggleOscMute(${i})">${o.muted?'✕':'■'}</button>
