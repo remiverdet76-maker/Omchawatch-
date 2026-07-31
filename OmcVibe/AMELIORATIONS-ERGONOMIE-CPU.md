@@ -2743,3 +2743,58 @@ retouche correcte, 0 erreur JS, aucune requête vers l'ancien
 Vérifié aussi visuellement par capture d'écran (rendu horloge + rendu
 planisphère). APK régénéré et re-signé, vérifié `verified=true` (API
 24+).
+
+## #109 : terminologie Solônde/cV/Omc/OmcV + onglet Archétypes (cycle 432)
+
+Trois demandes fusionnées après clarification (le message initial
+parlait d'"onglets du bas" et d'un "thème sombre" qui ne correspondaient
+littéralement à aucun des deux fichiers — tranché avec l'utilisateur
+plutôt que deviné, vu l'ampleur du chantier) :
+
+**Renommage des unités** — pur changement d'affichage, aucune structure
+touchée (12/36/6 divisions inchangées) : Instant→**Solônde**,
+Souffle→**cV**, Phase→**Omc**, densité totale (432/15552)→**OmcV**.
+Appliqué partout : légendes des anneaux, options, lecture au centre du
+cadran, labels de mode (`OmcV·432`/`OmcV·15552`/`Civil`).
+
+**Barre du bas simplifiée** — ne reste que le switch d'échelle **432 /
+15552 / Civil** (nouveau `setReadMode()`, remplace `setMode(deep)`
+binaire) ; la lecture détaillée, le tag saison et le tag
+expansif/neutre/contractif qui l'encombraient ont été retirés de cette
+barre (code mort nettoyé dans `loop()` — ces éléments DOM n'existent
+plus, les y référencer aurait fait planter l'app).
+
+**Onglet ARCHÉTYPES** — porté du fichier ChaThème432 fourni par
+l'utilisateur (12 archétypes, 4 états respiratoires, 36 axes, analyse
+rapide 9 phrases + profonde 36 phrases, zone spirale), réhabillé pour le
+thème sombre déjà en place (nouvelles classes `.arch-*`, pas de pastel
+clair). J0 personnel (naissance − 288j) saisi ici anime aussi un nouvel
+**anneau optionnel "Cycle 432"** (violet-magenta, nouvelle variable CSS
+`--cycle`) sur l'horloge principale — ta position dans le cycle
+biologique de 432 jours, distinct des 3 anneaux du jour en cours. Le
+petit module horloge interne du fichier source (canvas séparé,
+redondant avec l'horloge réelle) n'a pas été porté, sur demande
+explicite. La matrice de vers/poésie du fichier source n'a pas non plus
+été portée (hors scope pour ce soir, à ajouter plus tard si voulu).
+
+**Police & design** — Cinzel (titres/chiffres) + Nunito (texte courant)
+remplacent Share Tech Mono/Cormorant Garamond partout, pour un rendu
+plus organique tel que demandé, sans toucher la structure des panneaux.
+
+**Notice réécrite** — l'ancienne notice datait d'avant le retrait du
+hardcoding Paris (mentionnait encore "heure civile française UTC+1/+2")
+et ne parlait pas du nouvel anneau ni du planisphère. Réécrite
+entièrement avec la nouvelle terminologie et une explication plus
+directe de ce que chaque élément représente.
+
+Vérifié par tests Playwright : `calcDensity()` toujours valide, switch
+432/15552/Civil bascule correctement `DESIGN.deepMode`/`DESIGN.ut18`,
+labels du centre du cadran confirmés en Omc/cV/Solônde (inspection du
+code source de `drawCenter`), onglet Archétypes accessible avec ses 12
+cartes et son tableau de 36 lignes, calcul J0 correct (naissance
+1990-06-15 → J0 1989-08-31, jour 92/432, archétype 2 « Relation », état
+10/12), analyses rapide et profonde toutes deux non vides, anneau Cycle
+432 ne plante pas le rendu, persistance du J0 après rechargement, 0
+erreur JS. Vérifié aussi visuellement (capture d'écran : anneau
+magenta visible, lecture "Omc 9 · cV 14 · Solônde 1/6", barre du bas
+épurée). APK régénéré et re-signé, vérifié `verified=true` (API 24+).

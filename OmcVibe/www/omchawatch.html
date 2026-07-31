@@ -27,17 +27,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>UTC432 · Project</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --gold:#F0C060; --violet:#A060F0; --blue:#60A8F8;
+  --gold:#F0C060; --violet:#A060F0; --blue:#60A8F8; --cycle:#c45bbf;
   --frame:rgba(6,9,28,0.88); --border:rgba(140,80,220,0.20);
   --text:#E8C878; --textD:#907040; --textS:#C090D8;
 }
 html,body{
   width:100%;height:100%;overflow:hidden;
-  font-family:'Share Tech Mono',monospace;color:var(--text);
+  font-family:'Nunito',sans-serif;color:var(--text);
   background:
     radial-gradient(ellipse at 70% 15%,rgba(90,10,60,.92) 0%,transparent 42%),
     radial-gradient(ellipse at 18% 80%,rgba(20,5,80,.88) 0%,transparent 48%),
@@ -61,7 +62,7 @@ canvas{display:block;}
 .ms{padding:3px 9px;border-radius:10px;font-size:8px;letter-spacing:.18em;cursor:pointer;color:var(--textD);transition:all .22s;}
 .ms.on{background:rgba(240,192,60,.18);color:var(--gold);border:1px solid rgba(240,192,60,.38);text-shadow:0 0 12px rgba(240,192,60,.5);}
 #bar-left{color:var(--textD);}
-#bar-center{color:var(--gold);font:12px 'Cormorant Garamond',serif;letter-spacing:.12em;}
+#bar-center{color:var(--gold);font:12px 'Cinzel',serif;letter-spacing:.12em;}
 #bar-right{display:flex;gap:10px;}
 .tag{padding:2px 8px;border-radius:8px;font-size:8px;letter-spacing:.18em;border:1px solid;}
 .tag-exp{color:var(--gold);border-color:rgba(240,192,60,.35);background:rgba(240,192,60,.08);}
@@ -72,7 +73,7 @@ canvas{display:block;}
 /* ── TITRE ── */
 #title{
   position:fixed;top:12px;left:50%;transform:translateX(-50%);
-  font:300 9px/1 'Cormorant Garamond',serif;
+  font:300 9px/1 'Cinzel',serif;
   letter-spacing:.65em;color:rgba(192,144,216,.30);
   text-transform:uppercase;white-space:nowrap;pointer-events:none;
 }
@@ -136,7 +137,7 @@ canvas{display:block;}
 /* ── NOTICE CONTENT ── */
 .notice-section{margin-bottom:18px;}
 .notice-h{
-  font:600 9px/1 'Cormorant Garamond',serif;
+  font:600 9px/1 'Cinzel',serif;
   letter-spacing:.4em;text-transform:uppercase;
   color:var(--gold);margin-bottom:8px;padding-bottom:4px;
   border-bottom:1px solid rgba(240,192,60,.2);
@@ -147,7 +148,7 @@ canvas{display:block;}
   font-size:9px;line-height:1.5;
 }
 .notice-key{
-  color:var(--gold);min-width:60px;font-family:'Share Tech Mono',monospace;
+  color:var(--gold);min-width:60px;font-family:'Nunito',sans-serif;
   font-size:8.5px;letter-spacing:.05em;
 }
 .notice-val{color:var(--textS);flex:1;}
@@ -210,7 +211,7 @@ input[type=color]{
 }
 #bgRetoucheHint{
   position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:250;
-  font:11px 'Share Tech Mono',monospace;color:var(--gold);text-align:center;line-height:1.6;
+  font:11px 'Nunito',sans-serif;color:var(--gold);text-align:center;line-height:1.6;
   background:rgba(6,9,28,.72);border:1px solid var(--border);border-radius:12px;padding:14px 20px;
   pointer-events:none;opacity:0;transition:opacity .25s;letter-spacing:.05em;
 }
@@ -223,17 +224,58 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
   display:none;flex-direction:column;align-items:center;justify-content:center;
 }
 #geo-modal.open{display:flex;}
-#geo-head{position:fixed;top:14px;left:0;right:0;padding:0 46px;text-align:center;font:10px 'Share Tech Mono',monospace;color:var(--gold);letter-spacing:.08em;z-index:2;}
+#geo-head{position:fixed;top:14px;left:0;right:0;padding:0 46px;text-align:center;font:10px 'Nunito',sans-serif;color:var(--gold);letter-spacing:.08em;z-index:2;}
 #geo-close{position:fixed;top:10px;right:14px;background:none;border:none;color:var(--textD);font-size:20px;cursor:pointer;z-index:3;}
 #geo-close:hover{color:var(--gold);}
 #geoCanvas{border-radius:14px;border:1px solid var(--border);touch-action:none;cursor:grab;}
 #geo-foot{position:fixed;bottom:18px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:10px;z-index:2;}
-#geo-coords{font:12px 'Cormorant Garamond',serif;color:var(--textS);letter-spacing:.1em;}
+#geo-coords{font:12px 'Cinzel',serif;color:var(--textS);letter-spacing:.1em;}
 #geo-valider{
   padding:8px 26px;border-radius:20px;background:linear-gradient(90deg,var(--violet),var(--gold));
-  border:none;color:#140428;font:600 10px/1 'Share Tech Mono',monospace;letter-spacing:.15em;
+  border:none;color:#140428;font:600 10px/1 'Nunito',sans-serif;letter-spacing:.15em;
   cursor:pointer;text-transform:uppercase;
 }
+
+/* ── ARCHÉTYPES (cycle 432, ported/darkened from ChaThème432) ── */
+.arch-input{
+  width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border);
+  background:rgba(20,12,40,.55);color:var(--text);font-family:'Nunito',sans-serif;
+  font-size:.82rem;margin-bottom:8px;
+}
+.arch-input:focus{outline:none;border-color:var(--gold);}
+.arch-btn{
+  width:100%;padding:9px 10px;border-radius:9px;border:none;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.03em;
+  background:linear-gradient(100deg,var(--gold3,#b8882a),var(--gold),#f5d97a);color:#1a0e30;
+  margin-bottom:8px;
+}
+.arch-btn.ghost{background:rgba(140,80,220,.14);color:var(--textS);border:1px solid rgba(140,80,220,.30);}
+.arch-readout-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;}
+.arch-readout{padding:8px 10px;border-radius:9px;border-left:3px solid var(--cycle);background:rgba(24,12,50,.5);}
+.arch-readout-label{font-size:.62rem;color:var(--textD,#907040);text-transform:uppercase;letter-spacing:.06em;}
+.arch-readout-val{font-family:'Cinzel',serif;font-size:.92rem;color:var(--text);margin-top:2px;}
+.arch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
+.arch-card{padding:9px;border-radius:9px;border-top:2px solid var(--gold);background:rgba(24,12,50,.42);}
+.arch-card-num{font-family:'Cinzel',serif;font-size:1rem;font-weight:700;color:var(--gold);}
+.arch-card-name{font-weight:700;font-size:.76rem;margin-top:1px;}
+.arch-card-desc{font-size:.66rem;color:var(--textS);margin-top:3px;line-height:1.35;}
+.arch-tabs{display:flex;gap:6px;margin:10px 0 8px;}
+.arch-tab-btn{padding:5px 12px;border-radius:8px;border:1px solid rgba(212,168,67,.30);
+  background:rgba(212,168,67,.08);color:var(--textS);font-family:'Nunito',sans-serif;
+  font-size:.74rem;font-weight:700;cursor:pointer;}
+.arch-tab-btn.on{background:rgba(240,192,60,.20);color:var(--gold);border-color:var(--gold);}
+.arch-analysis{margin-top:8px;font-size:.80rem;color:var(--textS);line-height:1.6;}
+.arch-analysis li{list-style:none;padding:5px 0 5px 4px;border-bottom:1px solid rgba(255,255,255,.05);}
+.arch-dim{margin-top:10px;padding:9px 10px;border-radius:9px;background:rgba(24,12,50,.42);border-left:3px solid var(--violet);}
+.arch-dim-title{font-family:'Cinzel',serif;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--gold);margin-bottom:5px;}
+.arch-axis-table{width:100%;border-collapse:collapse;font-size:.70rem;margin-top:8px;}
+.arch-axis-table th{padding:6px 6px;text-align:left;font-family:'Cinzel',serif;font-size:.60rem;
+  text-transform:uppercase;color:var(--gold);background:rgba(212,168,67,.10);position:sticky;top:0;}
+.arch-axis-table td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.05);color:var(--textS);}
+.arch-axis-table tr.active-row td{background:rgba(240,192,60,.14);color:var(--text);font-weight:700;}
+.arch-table-wrap{max-height:260px;overflow-y:auto;border-radius:9px;border:1px solid var(--border);}
+.arch-spiral-badge{display:inline-block;padding:3px 10px;border-radius:14px;font-size:.68rem;font-weight:700;
+  background:rgba(196,91,191,.18);border:1px solid rgba(196,91,191,.4);color:#e8a0d0;}
 </style>
 </head>
 <body>
@@ -242,16 +284,12 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
 <canvas id="c"></canvas>
 <div id="bgRetoucheHint">Glisse pour centrer ton image · pince/molette pour zoomer<br>Termine dans Options → Fond</div>
 
-<!-- BARRE BAS -->
+<!-- BARRE BAS : uniquement le choix d'échelle de lecture -->
 <div id="bar">
   <div id="mode-sw">
-    <div class="ms on" id="ms-432"   onclick="setMode(false)">UT432</div>
-    <div class="ms"    id="ms-15552" onclick="setMode(true)">UT15552</div>
-  </div>
-  <div id="bar-center">— UT432</div>
-  <div id="bar-right">
-    <div class="tag tag-seas" id="tag-seas">—</div>
-    <div class="tag tag-neu"  id="tag-mode">—</div>
+    <div class="ms on" id="ms-432"    onclick="setReadMode('432')">432</div>
+    <div class="ms"    id="ms-15552"  onclick="setReadMode('15552')">15552</div>
+    <div class="ms"    id="ms-civil"  onclick="setReadMode('civil')">Civil</div>
   </div>
 </div>
 <div id="pulse-ring"></div>
@@ -269,6 +307,7 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
     <button class="mtab"    id="mt-options" onclick="setTab('options')">OPTIONS</button>
     <button class="mtab"    id="mt-design"  onclick="setTab('design')">DESIGN</button>
     <button class="mtab"    id="mt-lieu"    onclick="setTab('lieu')">LIEU</button>
+    <button class="mtab"    id="mt-arch"    onclick="setTab('arch')">ARCHÉTYPES</button>
   </div>
 
   <!-- CONTENU -->
@@ -277,38 +316,41 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
     <!-- ══ NOTICE ══ -->
     <div id="tab-notice">
       <div class="notice-section">
-        <div class="notice-h">Ce que tu vois</div>
-        <div class="notice-row"><div class="notice-key">Grand chiffre</div><div class="notice-val">Ta position dans la journée. 0 = minuit. 216 = midi solaire. 432 = minuit suivant.</div></div>
-        <div class="notice-row"><div class="notice-key">Phase X</div><div class="notice-val">L'heure en cours (1 à 12). Phase 6 = il est environ 6h solaire.</div></div>
-        <div class="notice-row"><div class="notice-key">Souffle X</div><div class="notice-val">La minute en cours dans l'heure. 1 souffle = 100 secondes. 36 souffles = 1 heure.</div></div>
-        <div class="notice-row"><div class="notice-key">Instant X</div><div class="notice-val">La seconde en cours dans le souffle. 1 instant = ~17 sec. 6 instants = 1 souffle.</div></div>
-        <div class="notice-row"><div class="notice-key">Sphère or</div><div class="notice-val">Centre fixe, toujours présent. C'est le point 396 — le centre de vie.</div></div>
+        <div class="notice-h">L'idée en une phrase</div>
+        <div class="notice-row"><div class="notice-key">En bref</div><div class="notice-val">Une journée de 24h réelles est redécoupée en 432 parts égales — comme des minutes, mais 432 au lieu de 1440. Le point qui tourne sur les anneaux te montre où tu en es dans cette journée redécoupée, en continu.</div></div>
       </div>
       <div class="notice-section">
-        <div class="notice-h">Les trois anneaux</div>
-        <div class="notice-row"><div class="notice-key" style="color:var(--gold)">● Or</div><div class="notice-val">Anneau externe — les heures. Tourne en 12 heures. Chiffres = unités UT36 (36, 72 … 432).</div></div>
-        <div class="notice-row"><div class="notice-key" style="color:var(--violet)">● Violet</div><div class="notice-val">Anneau moyen — les minutes. Tourne en 1 heure (36 souffles).</div></div>
-        <div class="notice-row"><div class="notice-key" style="color:var(--blue)">● Bleu</div><div class="notice-val">Anneau interne — les secondes. Tourne en 100 secondes (1 souffle).</div></div>
+        <div class="notice-h">Ce que tu vois</div>
+        <div class="notice-row"><div class="notice-key">Grand chiffre</div><div class="notice-val">Ta position dans le jour OmcV (0 à 432). 0 = minuit solaire. 216 = midi solaire (pas midi civil — corrigé par l'équation du temps + ta longitude, réglable dans l'onglet LIEU). 432 = minuit suivant.</div></div>
+        <div class="notice-row"><div class="notice-key">Omc N</div><div class="notice-val">La grande division du jour (1 à 12, comme une heure). Omc 6 ≈ tu es à la moitié du jour solaire.</div></div>
+        <div class="notice-row"><div class="notice-key">cV N</div><div class="notice-val">La division dans l'Omc en cours (comme une minute). 1 cV = 100 secondes. 36 cV = 1 Omc.</div></div>
+        <div class="notice-row"><div class="notice-key">Solônde N</div><div class="notice-val">La plus petite division, dans le cV en cours (comme une seconde). 1 Solônde ≈ 17 sec. 6 Solônde = 1 cV.</div></div>
+        <div class="notice-row"><div class="notice-key">Sphère or</div><div class="notice-val">Centre fixe, toujours présent. C'est le point 396 — le centre de vie, ni expansion ni contraction.</div></div>
+      </div>
+      <div class="notice-section">
+        <div class="notice-h">Les anneaux</div>
+        <div class="notice-row"><div class="notice-key" style="color:var(--gold)">● Or</div><div class="notice-val">Anneau externe — les Omc. Fait un tour en 12 Omc (un demi-jour). Chiffres = unités du cycle (36, 72 … 432).</div></div>
+        <div class="notice-row"><div class="notice-key" style="color:var(--violet)">● Violet</div><div class="notice-val">Anneau moyen — les cV. Fait un tour en 1 Omc (36 cV).</div></div>
+        <div class="notice-row"><div class="notice-key" style="color:var(--blue)">● Bleu</div><div class="notice-val">Anneau interne — les Solônde. Fait un tour en 1 cV (100 secondes).</div></div>
+        <div class="notice-row"><div class="notice-key" style="color:var(--cycle)">● Magenta (option)</div><div class="notice-val">Anneau "Cycle 432" — ta position dans le cycle biologique de 432 jours calculé depuis ton J0 (onglet Archétypes). Fait un tour en 432 jours, pas en 432 unités du jour.</div></div>
         <div class="notice-row"><div class="notice-key">Traîne</div><div class="notice-val">La queue lumineuse = le passé récent du point. Plus elle est longue, plus le mouvement est lent.</div></div>
       </div>
       <div class="notice-section">
         <div class="notice-h">Les 36 bulles</div>
-        <div class="notice-row"><div class="notice-key">1 à 36</div><div class="notice-val">Les 36 souffles de l'heure en cours. La bulle allumée = le souffle actuel.</div></div>
+        <div class="notice-row"><div class="notice-key">1 à 36</div><div class="notice-val">Les 36 cV de l'Omc en cours. La bulle allumée = le cV actuel.</div></div>
         <div class="notice-row"><div class="notice-key">Pulse</div><div class="notice-val">Quand une bulle s'allume, une onde s'étend = nouveau nœud d'énergie.</div></div>
         <div class="notice-row"><div class="notice-key">Respiration</div><div class="notice-val">Chaque bulle grandit et rétrécit entre 0.833× et 1.2× — le ratio 360/432 de la sphère.</div></div>
       </div>
       <div class="notice-section">
         <div class="notice-h">Barre du bas</div>
-        <div class="notice-row"><div class="notice-key">Heure</div><div class="notice-val">Heure civile française (UTC+1 hiver / UTC+2 été). Repère uniquement.</div></div>
-        <div class="notice-row"><div class="notice-key">Saison</div><div class="notice-val">Cycle solaire actuel avec sa densité UT36 (396×360, 432×360 etc.).</div></div>
-        <div class="notice-row"><div class="notice-key">Mode</div><div class="notice-val">EXPANSIF (été + matin), NEUTRE (équinoxes + aube/crépuscule), CONTRACTIF (hiver + nuit).</div></div>
+        <div class="notice-row"><div class="notice-key">432 / 15552 / Civil</div><div class="notice-val">Trois façons de lire le même mouvement. <strong>432</strong> = échelle standard (1 unité = 100 sec). <strong>15552</strong> = zoom profond (36 Omc × 432 cV, 1 cV ≈ 5,6 sec). <strong>Civil</strong> = même échelle 0-432 mais sur l'heure civile du téléphone, sans aucune correction solaire — un mode brut, pour comparer.</div></div>
       </div>
       <div class="notice-section">
         <div class="notice-h">Logique des chiffres</div>
-        <div class="notice-row"><div class="notice-key">432</div><div class="notice-val">Un cycle complet. 12h = 432 unités. 1 unité = 100 secondes.</div></div>
-        <div class="notice-row"><div class="notice-key">216</div><div class="notice-val">Midi solaire = moitié du cycle. La sphère à l'équilibre.</div></div>
+        <div class="notice-row"><div class="notice-key">432</div><div class="notice-val">Un jour OmcV complet. 12 Omc = 432 unités. 1 unité = 100 secondes.</div></div>
+        <div class="notice-row"><div class="notice-key">216</div><div class="notice-val">Midi solaire = moitié du jour. La sphère à l'équilibre.</div></div>
         <div class="notice-row"><div class="notice-key">396</div><div class="notice-val">Le centre. Ni expansion ni contraction. La Terre elle-même.</div></div>
-        <div class="notice-row"><div class="notice-key">UT18</div><div class="notice-val">Mode simplifié : même échelle 0–432 mais sur 24h civiles, sans correction solaire.</div></div>
+        <div class="notice-row"><div class="notice-key">Civil</div><div class="notice-val">Mode brut : même échelle 0–432 mais sur 24h civiles, sans correction solaire — utile pour comparer au mode corrigé.</div></div>
       </div>
     </div>
 
@@ -321,23 +363,27 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
           <input type="checkbox" class="sw" checked disabled>
         </label>
         <label class="opt-row">
-          <span><span class="dot" style="background:var(--gold);display:inline-block"></span>Anneau Or — Phases</span>
+          <span><span class="dot" style="background:var(--gold);display:inline-block"></span>Anneau Or — Omc</span>
           <input type="checkbox" class="sw" id="o-ringPhase" checked onchange="OPTS.ringPhase=this.checked">
         </label>
         <label class="opt-row">
-          <span><span class="dot" style="background:var(--violet);display:inline-block"></span>Anneau Violet — Souffles</span>
+          <span><span class="dot" style="background:var(--violet);display:inline-block"></span>Anneau Violet — cV</span>
           <input type="checkbox" class="sw" id="o-ringSouffle" checked onchange="OPTS.ringSouffle=this.checked">
         </label>
         <label class="opt-row">
-          <span><span class="dot" style="background:var(--blue);display:inline-block"></span>Anneau Bleu — Instants</span>
+          <span><span class="dot" style="background:var(--blue);display:inline-block"></span>Anneau Bleu — Solônde</span>
           <input type="checkbox" class="sw" id="o-ringInstant" checked onchange="OPTS.ringInstant=this.checked">
+        </label>
+        <label class="opt-row">
+          <span><span class="dot" style="background:var(--cycle);display:inline-block"></span>Anneau Cycle 432 (J0)</span>
+          <input type="checkbox" class="sw" id="o-ringCycle432" checked onchange="OPTS.ringCycle432=this.checked">
         </label>
         <label class="opt-row">
           <span>Traînes des pointeurs</span>
           <input type="checkbox" class="sw" id="o-trails" checked onchange="OPTS.trails=this.checked">
         </label>
         <label class="opt-row">
-          <span>Graduations + labels UT36</span>
+          <span>Graduations + labels</span>
           <input type="checkbox" class="sw" id="o-ticks" checked onchange="OPTS.ticks=this.checked">
         </label>
       </div>
@@ -359,11 +405,11 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
       <div class="opt-section">
         <div class="opt-h">Centre</div>
         <label class="opt-row">
-          <span>Densité UT36 (grand chiffre)</span>
+          <span>Densité OmcV (grand chiffre)</span>
           <input type="checkbox" class="sw" id="o-densityNum" checked onchange="OPTS.densityNum=this.checked">
         </label>
         <label class="opt-row">
-          <span>Phase · Souffle · Instant</span>
+          <span>Omc · cV · Solônde</span>
           <input type="checkbox" class="sw" id="o-readings" checked onchange="OPTS.readings=this.checked">
         </label>
       </div>
@@ -378,7 +424,7 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
           <input type="checkbox" class="sw" id="o-stars" checked onchange="OPTS.stars=this.checked">
         </label>
         <label class="opt-row">
-          <span>Barre d'information (bas)</span>
+          <span>Barre du bas (432 / 15552 / Civil)</span>
           <input type="checkbox" class="sw" id="o-infobar" checked onchange="OPTS.infoBar=this.checked;document.getElementById('bar').style.display=this.checked?'flex':'none'">
         </label>
       </div>
@@ -398,17 +444,17 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
       <div class="des-section">
         <div class="des-h">Couleurs des flux</div>
         <div class="des-row">
-          <span>● Phases (or)</span>
+          <span>● Omc (or)</span>
           <input type="color" id="d-cPhase" value="#F0C060"
             oninput="DESIGN.colorPhase=this.value;document.documentElement.style.setProperty('--gold',this.value)">
         </div>
         <div class="des-row">
-          <span>● Souffles (violet)</span>
+          <span>● cV (violet)</span>
           <input type="color" id="d-cSouffle" value="#A060F0"
             oninput="DESIGN.colorSouffle=this.value;document.documentElement.style.setProperty('--violet',this.value)">
         </div>
         <div class="des-row">
-          <span>● Instants (bleu)</span>
+          <span>● Solônde (bleu)</span>
           <input type="color" id="d-cInstant" value="#60A8F8"
             oninput="DESIGN.colorInstant=this.value;document.documentElement.style.setProperty('--blue',this.value)">
         </div>
@@ -440,22 +486,8 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
         </div>
       </div>
       <div class="des-section">
-        <div class="des-h">Mode lecture</div>
-        <label class="opt-row">
-          <div>
-            <div style="margin-bottom:3px">Mode UT18 neutre</div>
-            <div style="font-size:8px;color:var(--textD)">Heure civile · sans correction solaire</div>
-          </div>
-          <input type="checkbox" class="sw" id="d-ut18" onchange="DESIGN.ut18=this.checked">
-        </label>
-        <label class="opt-row" style="margin-top:6px">
-          <div>
-            <div style="margin-bottom:3px;color:var(--gold)">Mode UT15552 profond</div>
-            <div style="font-size:8px;color:var(--textD)">36 phases × 432 souffles = 15 552 / jour</div>
-            <div style="font-size:8px;color:var(--textD);margin-top:2px">1 phase = 40 min · 1 souffle ≈ 5.6 sec</div>
-          </div>
-          <input type="checkbox" class="sw" id="d-deep" onchange="DESIGN.deepMode=this.checked;lastSouffle=-1">
-        </label>
+        <div class="des-h">Mode de lecture</div>
+        <p class="small">Choix déplacé dans la barre du bas : 432 (standard) · 15552 (zoom profond, 1 cV ≈ 5,6 sec) · Civil (heure du téléphone, sans correction solaire).</p>
       </div>
     </div>
 
@@ -482,6 +514,57 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
       </div>
     </div>
 
+    <!-- ══ ARCHÉTYPES — cycle 432 (J0), porté de ChaThème432 ══ -->
+    <div id="tab-arch" style="display:none">
+      <div class="opt-section">
+        <div class="opt-h">Ton J0 (naissance − 288 jours)</div>
+        <p class="small" style="margin-bottom:6px">Anime aussi l'anneau optionnel "Cycle 432" sur l'horloge. Rien n'est envoyé nulle part.</p>
+        <label style="font-size:.72rem;color:var(--textD);display:block;margin-bottom:3px">Date de naissance</label>
+        <input type="date" id="arch-birth" class="arch-input">
+        <button class="arch-btn" onclick="archCalcJ0()">Calculer J0 (−288 jours)</button>
+        <label style="font-size:.72rem;color:var(--textD);display:block;margin-bottom:3px">Ou saisir J0 libre</label>
+        <input type="date" id="arch-j0" class="arch-input">
+        <button class="arch-btn ghost" onclick="archApplyJ0()">Appliquer ce J0</button>
+        <div class="arch-readout-grid">
+          <div class="arch-readout"><div class="arch-readout-label">J0</div><div class="arch-readout-val" id="a-j0">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Jours depuis J0</div><div class="arch-readout-val" id="a-days">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Cycle (1-108)</div><div class="arch-readout-val" id="a-cycle">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Jour dans cycle</div><div class="arch-readout-val" id="a-day">—</div></div>
+          <div class="arch-readout" id="a-arch-box"><div class="arch-readout-label">Archétype (1-12)</div><div class="arch-readout-val" id="a-arch">—</div><div class="small" id="a-arch-name"></div></div>
+          <div class="arch-readout"><div class="arch-readout-label">État respiratoire</div><div class="arch-readout-val" id="a-state">—</div><div class="small" id="a-state-name"></div></div>
+        </div>
+        <div id="a-spiral-wrap" style="margin-top:8px;display:none"><span class="arch-spiral-badge">🌀 Zone Spirale active — phases 11-12</span></div>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Analyse</div>
+        <div class="arch-tabs">
+          <button class="arch-tab-btn on" id="atb-quick" onclick="archSetAnalysisTab('quick')">Rapide · 9</button>
+          <button class="arch-tab-btn" id="atb-deep" onclick="archSetAnalysisTab('deep')">Profonde · 36</button>
+        </div>
+        <div id="a-analysis-quick"><p class="small">Saisis une date de naissance ou un J0 pour obtenir l'analyse.</p></div>
+        <div id="a-analysis-deep" style="display:none"></div>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Les 12 archétypes</div>
+        <div class="arch-grid" id="a-arch-grid"></div>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Tableau — 36 axes du cycle 432</div>
+        <p class="small">9 archétypes × 4 états. La ligne dorée = ta position actuelle.</p>
+        <div class="arch-table-wrap">
+          <table class="arch-axis-table">
+            <thead><tr><th>#</th><th>Archétype</th><th>État</th><th>P</th></tr></thead>
+            <tbody id="a-table36-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Zone Spirale — phases 11 &amp; 12</div>
+        <p class="small">Jours 361-432. Densification, intégration, préparation du cycle suivant. Le pivot J+288 (2/3 du cycle) initie ce mouvement ; J0 en est le miroir.</p>
+        <div id="a-spiral-status" class="small" style="margin-top:6px">Applique un J0 pour connaître ta position par rapport à la zone spirale.</div>
+      </div>
+    </div>
+
   </div><!-- /panel-content -->
 </div><!-- /panel -->
 
@@ -500,7 +583,7 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
 'use strict';
 // ─── OPTS & DESIGN ───────────────────────────────────
 const OPTS = {
-  ringPhase:true, ringSouffle:true, ringInstant:true,
+  ringPhase:true, ringSouffle:true, ringInstant:true, ringCycle432:true,
   trails:true, ticks:true,
   nodes:true, nodeNums:true, pulse:true,
   densityNum:true, readings:true,
@@ -538,7 +621,7 @@ function togglePanel(){
   setTimeout(resize,360);
 }
 function setTab(name){
-  ['notice','options','design','lieu'].forEach(t=>{
+  ['notice','options','design','lieu','arch'].forEach(t=>{
     document.getElementById('tab-'+t).style.display=t===name?'block':'none';
     document.getElementById('mt-'+t).classList.toggle('on',t===name);
   });
@@ -575,7 +658,7 @@ function calcDensity(now){
 function getModeConfig(){
   if(DESIGN.deepMode) return {
     daily:15552, phases:36, souffles:432, instants:36,
-    label:'UT15552',
+    label:'OmcV·15552',
     ringPN:36,  ringPL:i=>i>0&&i%9===0?i+'':null,
     ringSN:432, ringSL:i=>i>0&&i%108===0?i+'':null,
     ringIN:36,  ringIL:i=>i>0&&i%9===0?i+'':null,
@@ -583,7 +666,7 @@ function getModeConfig(){
   };
   return {
     daily:432,  phases:12,  souffles:36,  instants:6,
-    label:'UT432',
+    label:'OmcV·432',
     ringPN:12,  ringPL:i=>i===0?'432':(i*36)+'',
     ringSN:36,  ringSL:i=>i>0&&i%6===0?i+'':null,
     ringIN:6,   ringIL:i=>i>0?i+'':null,
@@ -621,13 +704,15 @@ function getSeason(date){
   return {season,density,mode};
 }
 
-// ─── MODE SWITCHER ───────────────────────────────────
-function setMode(deep){
-  DESIGN.deepMode=deep; lastSouffle=-1;
-  document.getElementById('ms-432').classList.toggle('on',!deep);
-  document.getElementById('ms-15552').classList.toggle('on',deep);
-  const cb=document.getElementById('d-deep');
-  if(cb) cb.checked=deep;
+// ─── MODE SWITCHER — 432 / 15552 / Civil (barre du bas) ──────────
+function setReadMode(mode){
+  DESIGN.deepMode = mode==='15552';
+  DESIGN.ut18 = mode==='civil';
+  lastSouffle=-1;
+  ['ms-432','ms-15552','ms-civil'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('on', id==='ms-'+mode);
+  });
 }
 
 // ─── ARC ARC-EN-CIEL ─────────────────────────────────
@@ -717,7 +802,7 @@ function drawTicks(radius,n,col,majEvery,labelFn,fs){
     X.strokeStyle=rgba(col,maj?.60:.18);X.lineWidth=maj?1.4:.45;X.stroke();
     if(maj&&labelFn&&OPTS.ticks){
       const lbl=labelFn(i);
-      if(lbl){const lr=radius+tL+fs+3;X.font=`300 ${fs}px 'Cormorant Garamond',serif`;X.fillStyle=rgba(col,.65);X.textAlign='center';X.textBaseline='middle';X.fillText(lbl,cx+Math.cos(a)*lr,cy+Math.sin(a)*lr);}
+      if(lbl){const lr=radius+tL+fs+3;X.font=`300 ${fs}px 'Cinzel',serif`;X.fillStyle=rgba(col,.65);X.textAlign='center';X.textBaseline='middle';X.fillText(lbl,cx+Math.cos(a)*lr,cy+Math.sin(a)*lr);}
     }
   }
 }
@@ -780,7 +865,7 @@ function draw36Nodes(readings,t,cfg){
     X.beginPath();X.arc(bx,by,br,0,TAU);X.strokeStyle=hsl(hue,65,50,al*.4);X.lineWidth=.5;X.stroke();
     if(OPTS.nodeNums){
       const fs=Math.max(5,Math.round(br*.80*DESIGN.nodeFontScale));
-      X.font=`${act>.55?'600 ':'300 '}${fs}px 'Cormorant Garamond',serif`;
+      X.font=`${act>.55?'600 ':'300 '}${fs}px 'Cinzel',serif`;
       X.fillStyle=hsl(hue,10,96,(.28+.72*act)*DESIGN.intensity);
       X.textAlign='center';X.textBaseline='middle';X.fillText(i+1,bx,by);
     }
@@ -790,7 +875,7 @@ function draw36Nodes(readings,t,cfg){
 // ─── SPHÈRE CENTRALE ─────────────────────────────────
 function drawCenter(ut36,readings,t,cfg){
   const{phase,souffle,instant,density}=readings;
-  const modeLabel = DESIGN.ut18?'UT18': cfg.label;
+  const modeLabel = DESIGN.ut18?'Civil': cfg.label;
   const r=R*.195, rb=r*(1+.07*Math.sin(t*TAU/T_BRE));
   const h1=X.createRadialGradient(cx,cy,0,cx,cy,rb*4.5);
   h1.addColorStop(0,rgba(DESIGN.colorPhase,.20));h1.addColorStop(.5,rgba(DESIGN.colorPhase,.06));h1.addColorStop(1,rgba(DESIGN.colorPhase,0));
@@ -805,30 +890,30 @@ function drawCenter(ut36,readings,t,cfg){
     X.beginPath();X.ellipse(0,0,rb,rb*.27,0,0,TAU);
     X.strokeStyle=`rgba(255,255,255,.10)`;X.lineWidth=.6;X.stroke();X.restore();
   }
-  X.font=`7px 'Share Tech Mono',monospace`;X.fillStyle=rgba(DESIGN.colorPhase,.40);X.textAlign='center';X.textBaseline='top';X.fillText('396',cx,cy+rb+3);
+  X.font=`7px 'Nunito',sans-serif`;X.fillStyle=rgba(DESIGN.colorPhase,.40);X.textAlign='center';X.textBaseline='top';X.fillText('396',cx,cy+rb+3);
   if(OPTS.densityNum){
     const fsMain=Math.max(22,R*.13*DESIGN.centerFontScale|0);
-    X.font=`300 ${fsMain}px 'Cormorant Garamond',serif`;
+    X.font=`300 ${fsMain}px 'Cinzel',serif`;
     X.fillStyle=rgba(DESIGN.colorPhase,1);X.textBaseline='middle';
     const densityStr = DESIGN.deepMode
       ? Math.round(density).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'\u202F')
       : density.toFixed(1);
     X.fillText(densityStr,cx,cy+rb+fsMain*.88);
-    X.font=`8px 'Share Tech Mono',monospace`;X.fillStyle=rgba(DESIGN.colorPhase,.42);X.textBaseline='top';
+    X.font=`8px 'Nunito',sans-serif`;X.fillStyle=rgba(DESIGN.colorPhase,.42);X.textBaseline='top';
     X.fillText(modeLabel,cx,cy+rb+fsMain*1.72+2);
   }
   if(OPTS.readings){
     const fsR=Math.max(9,R*.030*DESIGN.centerFontScale|0);
     const y2=cy+rb+(OPTS.densityNum?R*.13*DESIGN.centerFontScale*2.3:6)+16;
-    X.font=`300 ${fsR}px 'Cormorant Garamond',serif`;
+    X.font=`300 ${fsR}px 'Cinzel',serif`;
     X.fillStyle=rgba(DESIGN.colorPhase,.78);X.textAlign='right';
-    X.fillText(`Phase ${phase}`,cx-4,y2);
+    X.fillText(`Omc ${phase}`,cx-4,y2);
     X.fillStyle='rgba(255,255,255,.18)';X.textAlign='center';X.fillText('·',cx,y2);
     X.fillStyle=rgba(DESIGN.colorSouffle,.78);X.textAlign='left';
-    X.fillText(`Souffle ${souffle}`,cx+4,y2);
-    X.font=`300 ${Math.max(8,R*.024*DESIGN.centerFontScale|0)}px 'Cormorant Garamond',serif`;
+    X.fillText(`cV ${souffle}`,cx+4,y2);
+    X.font=`300 ${Math.max(8,R*.024*DESIGN.centerFontScale|0)}px 'Cinzel',serif`;
     X.fillStyle=rgba(DESIGN.colorInstant,.62);X.textAlign='center';
-    X.fillText(`Instant ${instant} / ${cfg.instants}`,cx,y2+fsR+5);
+    X.fillText(`Solônde ${instant} / ${cfg.instants}`,cx,y2+fsR+5);
   }
 }
 
@@ -847,26 +932,15 @@ function loop(){
   const ut36=calcDensity(fd);
   const cfg=getModeConfig();
   const r=getReadings(ut36,cfg);
-  const seas=getSeason(fd);
   X.setTransform(dpr,0,0,dpr,0,0);
   X.clearRect(0,0,CW,CH);
   drawBg(t);
   drawReadingArcs(r,cfg);
   draw36Nodes(r,t,cfg);
   drawCenter(ut36,r,t,cfg);
+  if(OPTS.ringCycle432 && J0_ARCH) drawCycle432Ring(fd);
   if(r.souffle!==lastSouffle&&lastSouffle!==-1)triggerPulse();
   lastSouffle=r.souffle;
-  if(OPTS.infoBar){
-    const hh=String(fd.getHours()).padStart(2,'0'),mm=String(fd.getMinutes()).padStart(2,'0'),ss=String(fd.getSeconds()).padStart(2,'0');
-    const dStr=DESIGN.deepMode
-      ? Math.round(r.density).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'\u202F')
-      : r.density.toFixed(1);
-    document.getElementById('bar-center').textContent=`${dStr} ${cfg.label}  ·  ${hh}:${mm}:${ss}`;
-    document.getElementById('tag-seas').textContent=seas.season;
-    const mEl=document.getElementById('tag-mode');
-    const mMap={exp:{t:'EXPANSIF',c:'tag-exp'},neu:{t:'NEUTRE',c:'tag-neu'},cnt:{t:'CONTRACTIF',c:'tag-cnt'}};
-    mEl.textContent=mMap[seas.mode].t; mEl.className='tag '+mMap[seas.mode].c;
-  }
   requestAnimationFrame(loop);
 }
 
@@ -960,7 +1034,7 @@ function geoDraw(){
     const x=lon2x(c.lon), y=lat2y(c.lat);
     if(x<-20||x>GEO.w+20||y<-20||y>GEO.h+20)return;
     geoX.beginPath();geoX.arc(x,y,3,0,Math.PI*2);geoX.fillStyle='rgba(240,192,96,.75)';geoX.fill();
-    geoX.font='9px "Share Tech Mono",monospace';geoX.fillStyle='rgba(200,180,230,.7)';
+    geoX.font='9px "Nunito",sans-serif';geoX.fillStyle='rgba(200,180,230,.7)';
     geoX.textAlign='left';geoX.textBaseline='middle';geoX.fillText(c.n,x+6,y);
   });
   const px=lon2x(GEO.pick.lon), py=lat2y(GEO.pick.lat);
@@ -1082,8 +1156,223 @@ document.body.addEventListener('wheel',e=>{
   applyBgState();saveBgState();
 },{passive:false});
 
+// ─── ARCHÉTYPES — cycle 432 (J0), porté de ChaThème432, réhabillé sombre ──
+// Contenu original : 12 archétypes, 4 états respiratoires, 36 axes,
+// analyse rapide (9) + profonde (36). La matrice de vers/poésie du
+// fichier source n'a pas été portée (hors scope pour ce soir).
+var ARCHETYPES=[
+  {id:1,name:'Mobilité',color:'#e84a6f',tone:'Mouvement, communication, adaptation rapide',tension:'Dispersion mentale, agitation',action:'Marche, échauffement, prise de notes ciblée'},
+  {id:2,name:'Relation',color:'#f07b38',tone:'Échange affectif, valeur, harmonie sociale',tension:'Dépendance affective, sensibilité accrue',action:'Écoute active, clarifier limites relationnelles'},
+  {id:3,name:'Matière',color:'#f5c842',tone:'Incarnation, sécurité, besoins concrets',tension:'Résistance au changement, sur-ancrage',action:'Routines corporelles, alimentation consciente'},
+  {id:4,name:'Action',color:'#6ab84e',tone:'Impulsion, courage, mise en mouvement',tension:'Impulsivité, épuisement possible',action:'Pause avant décision, activité physique structurée'},
+  {id:5,name:'Expansion',color:'#3ab8a0',tone:'Vision, croissance, confiance',tension:'Surestimation, engagements trop larges',action:'Tester à petite échelle, limiter les promesses'},
+  {id:6,name:'Structure',color:'#4a8fe8',tone:'Limites, discipline, responsabilité',tension:'Rigidité, poids des obligations',action:'Déléguer, réévaluer obligations, poser limites'},
+  {id:7,name:'Innovation',color:'#7b58d4',tone:'Rupture, liberté, originalité',tension:'Instabilité, ruptures brusques',action:'Prototyper avant rupture, sécuriser les bases'},
+  {id:8,name:'Sensibilité',color:'#c45bbf',tone:'Rêve, intuition, dissolution des frontières',tension:'Flou, confusion, idéalisation',action:'Journaling, pratiques de discernement'},
+  {id:9,name:'Transformation',color:'#d44a4a',tone:'Profondeur, régénération, intensité',tension:'Crises profondes, remises en question',action:'Rituels d\'intégration, accompagnement progressif'},
+  {id:10,name:'Synthèse',color:'#8b6e3c',tone:'Intégration des cycles, mémoire longue',tension:'Rumination, difficulté à clore',action:'Bilan de cycle, archivage, tri symbolique',spiral:true},
+  {id:11,name:'Incubation',color:'#9b59b6',tone:'Densification, retour au centre, préparation',tension:'Isolement, fermeture excessive',action:'Repos profond, intention pour le cycle suivant',spiral:true},
+  {id:12,name:'Germination',color:'#e8a0d0',tone:'Potentiel silencieux, naissance imminente',tension:'Impatience, surcharge avant départ',action:'Silence actif, rituel de clôture de cycle',spiral:true}
+];
+var ARCH_STATES=[
+  {key:'11/10',name:'Expansion douce',color:'#f5c842',desc:'Ouverture progressive, activation contrôlée'},
+  {key:'12/10',name:'Expansion maximale',color:'#e84a6f',desc:'Pic d\'extériorisation, intensité élevée'},
+  {key:'10/11',name:'Contraction douce',color:'#3ab8a0',desc:'Retour intérieur, consolidation'},
+  {key:'10/12',name:'Contraction maximale',color:'#7b58d4',desc:'Incubation, profondeur, densité'}
+];
+var ARCH_PHRASES={
+  1:{corps:['Le corps s\'éveille dans un flux léger, rapide, prêt à saisir chaque signal du milieu.','Le corps cherche à se poser, à ralentir la cadence pour laisser les informations se décanter.'],
+    psyche:['Le mental s\'active et multiplie les connexions.','Le mental observe ses propres mouvements, trie ce qui mérite d\'être retenu.'],
+    lien:['La communication est fluide, les échanges s\'enchaînent naturellement.','Les échanges gagnent en profondeur ce qu\'ils perdent en volume.'],
+    invitation:['Choisir une direction et la tenir jusqu\'au bout.','Revenir à l\'essentiel : qu\'est-ce qui mérite vraiment d\'être poursuivi ?']},
+  2:{corps:['Le corps est finement calibré sur les présences autour de lui.','Le corps se referme doucement, comme pour protéger ce qui est précieux à l\'intérieur.'],
+    psyche:['Le registre affectif est ouvert : on donne facilement, on reçoit avec intensité.','On évalue, on pèse, on cherche à comprendre ce qui a de la valeur.'],
+    lien:['Les rencontres portent une charge émotionnelle forte.','Les liens existants sont passés au tamis : lesquels nourrissent vraiment ?'],
+    invitation:['Cultiver un équilibre entre donner et recevoir.','Nommer ce qui fait mal, sans l\'enfouir.']},
+  3:{corps:['Le corps revendique son espace concret : ancrage, nourriture, rythme.','Le corps ralentit et demande à être servi en priorité.'],
+    psyche:['L\'esprit cherche le tangible : plans, listes, résultats mesurables.','L\'esprit fait le point sur ce qui est réellement solide.'],
+    lien:['On exprime son affection par des actes concrets plutôt que par des mots.','On ressent le besoin d\'être entouré de stabilité.'],
+    invitation:['Investir le corps consciemment : marche, alimentation, gestes lents.','Distinguer la sécurité réelle de la sécurité illusoire.']},
+  4:{corps:['Le corps est sous tension préparatoire, une énergie cherche à se décharger.','Le corps enregistre la fatigue des efforts passés et réclame du repos actif.'],
+    psyche:['La volonté est tranchante, l\'intention claire.','On réévalue les actions entreprises : lesquelles méritent d\'être poursuivies ?'],
+    lien:['L\'entourage perçoit une présence affirmée, directe.','On a besoin d\'espace pour traiter en solo.'],
+    invitation:['Canaliser l\'impulsion par une pratique physique.','Faire une pause avant toute décision engageante.']},
+  5:{corps:['La cage thoracique s\'ouvre, le corps veut prendre de l\'espace.','Le corps cherche à digérer une expansion récente.'],
+    psyche:['La vision porte loin : on projette, on imagine.','On reconsidère les ambitions passées avec lucidité.'],
+    lien:['On inspire les autres par son enthousiasme.','On a besoin de calme pour ne pas se laisser emporter.'],
+    invitation:['Tester à petite échelle avant d\'étendre.','Revenir à l\'essentiel de la vision.']},
+  6:{corps:['Le corps tient droit, la posture se structure.','Le corps ressent le poids des structures portées.'],
+    psyche:['L\'esprit classe, hiérarchise, avec une rigueur inhabituelle.','L\'esprit examine les règles qu\'il s\'est données.'],
+    lien:['On occupe naturellement une position de référence.','On perçoit la lourdeur des rôles tenus.'],
+    invitation:['Introduire de la souplesse dans une routine tenue fermement.','Déléguer une responsabilité et observer ce que cela libère.']},
+  7:{corps:['Le corps est électrique, traversé d\'impulsions.','Le corps a besoin de silence et de sol ferme.'],
+    psyche:['L\'esprit remet en question les cadres établis.','L\'esprit trie les ruptures passées.'],
+    lien:['On apporte une vibration originale qui déplace les habitudes.','On ressent le besoin de souffler loin des attentes habituelles.'],
+    invitation:['Canaliser la rupture créatrice dans un domaine précis.','Ancrer les bases avant de remettre en jeu ce qui fonctionne.']},
+  8:{corps:['Le corps est poreux, finement réceptif.','Le corps cherche à se recentrer, à retrouver ses contours.'],
+    psyche:['L\'intuition est à son pic.','L\'esprit revient du flou et cherche à remettre du discernement.'],
+    lien:['On perçoit l\'état intérieur des autres avec acuité.','On a besoin de frontières claires.'],
+    invitation:['Nommer ce qui est ressenti sans le mélanger à ce qui est perçu.','Clarifier un engagement ambigu.']},
+  9:{corps:['Le corps est habité d\'une intensité sourde.','Le corps sort d\'une crise et cherche à récupérer lentement.'],
+    psyche:['L\'esprit plonge dans les couches denses de l\'expérience.','L\'esprit intègre une transformation récente.'],
+    lien:['Les liens superficiels tombent d\'eux-mêmes.','On a besoin de relations capables de tenir ce qui se recompose.'],
+    invitation:['Trouver un rituel qui honore ce qui se transforme.','Reconnaître le chemin parcouru.']},
+  10:{corps:['Le corps enregistre silencieusement tout ce que le cycle a traversé.','Le corps demande à être libéré des tensions accumulées.'],
+    psyche:['L\'esprit fait la synthèse : les fils du cycle se raccordent.','L\'esprit revient sur les décisions prises.'],
+    lien:['Les relations portent l\'empreinte de ce qui a été vécu.','On ressent le besoin de mettre des mots sur ce qui a changé.'],
+    invitation:['Écrire un bilan de cycle, aussi court soit-il.','Identifier une chose à déposer avant que le cycle ne se referme.']},
+  11:{corps:['Le corps entre en phase de densification, loin du bruit.','Le corps a besoin d\'obscurité et de silence.'],
+    psyche:['L\'esprit se retire dans ses couches les plus denses.','L\'esprit prépare silencieusement ce qui ne peut pas encore être dit.'],
+    lien:['Les liens s\'apaisent d\'eux-mêmes.','Seuls les liens qui n\'exigent rien trouvent leur place ici.'],
+    invitation:['Honorer ce silence sans chercher à le remplir.','Formuler intérieurement l\'intention pour le prochain cycle.']},
+  12:{corps:['Le corps est au seuil, une énergie nouvelle point sous la surface.','Le corps tient encore dans le silence mais quelque chose frémit.'],
+    psyche:['L\'esprit perçoit confusément ce qui cherche à naître.','L\'esprit finit de dégager le terrain.'],
+    lien:['Les liens anciens se redéfinissent naturellement.','On commence à ressentir qui mérite d\'être emmené dans le prochain cycle.'],
+    invitation:['Tenir encore dans le silence — le prochain J0 est proche.','Poser une intention simple, claire.']}
+};
+var ARCH_STATE_PHRASES={
+  0:{polarite:'L\'énergie monte doucement — l\'ouverture est progressive et contrôlée.',action:'Moment des premières actions, explorations prudentes.',saison:'Équivaut à l\'équinoxe de printemps : le mouvement commence.'},
+  1:{polarite:'L\'énergie est à son pic d\'extériorisation.',action:'Moment d\'agir fortement, de communiquer clairement.',saison:'Équivaut au solstice d\'été : tout est dehors, tout brille.'},
+  2:{polarite:'L\'énergie commence son retour vers l\'intérieur.',action:'Moment de consolider, de réfléchir, d\'ajuster.',saison:'Équivaut à l\'équinoxe d\'automne : on récolte, on trie.'},
+  3:{polarite:'L\'énergie est pleinement retournée vers le centre.',action:'Moment de l\'intégration profonde, des rituels de clôture.',saison:'Équivaut au solstice d\'hiver : tout se tient dans l\'obscurité, chargé de potentiel.'}
+};
+var ARCH_AXIS_PHRASES=[
+  'L\'axe d\'émergence porte les premières découvertes.',
+  'L\'axe de consolidation demande de structurer ce qui a été découvert.',
+  'L\'axe d\'intégration est celui de la maturité — on transmet ce que l\'on a traversé.'
+];
+function archParseDate(v){if(!v)return null;var d=new Date(v+'T00:00:00');return isNaN(d)?null:d;}
+function archFmtDate(d){if(!d)return'—';return d.toISOString().slice(0,10);}
+function archAddDays(d,n){var x=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));x.setUTCDate(x.getUTCDate()+n);return x;}
+function archDaysBetween(a,b){return Math.floor((Date.UTC(b.getUTCFullYear(),b.getUTCMonth(),b.getUTCDate())-Date.UTC(a.getUTCFullYear(),a.getUTCMonth(),a.getUTCDate()))/86400000);}
+function computeFromJ0(j0,ref){
+  ref=ref||new Date();
+  var daysSince=archDaysBetween(j0,ref);
+  var cycleIndex=Math.floor(daysSince/432)+1;
+  var dayInCycle=(daysSince%432)+1;
+  var cycle108=((cycleIndex-1)%108)+1;
+  var phaseIndex=Math.floor((dayInCycle-1)/36)+1;
+  var archId=((dayInCycle-1)%9)+1;
+  var stateIdx=(dayInCycle-1)%4;
+  var state=ARCH_STATES[stateIdx];
+  var axisIndex=((cycle108-1)%36)+1;
+  var axisCyclePos=Math.floor((cycle108-1)/36)+1;
+  var isSpiral=dayInCycle>=361;
+  var displayArch=archId;
+  if(phaseIndex===11)displayArch=10; else if(phaseIndex===12)displayArch=11;
+  return{daysSince:daysSince,dayInCycle:dayInCycle,phaseIndex:phaseIndex,cycle108:cycle108,archId:archId,displayArch:displayArch,stateIdx:stateIdx,state:state,axisIndex:axisIndex,axisCyclePos:axisCyclePos,isSpiral:isSpiral};
+}
+function generateArchAnalysis(comp){
+  var arch=ARCHETYPES[comp.displayArch-1], state=comp.state, ap=ARCH_PHRASES[comp.displayArch], sp=ARCH_STATE_PHRASES[comp.stateIdx];
+  var isExp=comp.stateIdx<=1, expIdx=isExp?0:1;
+  var axeLabel=ARCH_AXIS_PHRASES[comp.axisCyclePos-1]||ARCH_AXIS_PHRASES[0];
+  var header='J0 · Jour '+comp.daysSince+' · Cycle '+comp.cycle108+' · Jour '+comp.dayInCycle+'/432';
+  var quick=[
+    '① Archétype — '+arch.name+' ('+comp.displayArch+'/12) : '+arch.tone+'.',
+    '② État respiratoire — '+state.key+' ('+state.name+') : '+sp.polarite,
+    '③ Corps — '+ap.corps[expIdx],
+    '④ Psyché — '+ap.psyche[expIdx],
+    '⑤ Lien — '+ap.lien[expIdx],
+    '⑥ Tension principale — '+arch.tension,
+    '⑦ Invitation — '+ap.invitation[expIdx],
+    '⑧ Phase '+comp.phaseIndex+'/12 — '+(comp.isSpiral?'zone spirale, hors du temps ordinaire du cycle.':comp.phaseIndex<=4?'phase initiale, l\'énergie cherche sa direction.':comp.phaseIndex<=8?'phase médiane, le cycle est en pleine activité.':'phase tardive, prépare la transition.'),
+    '⑨ Axe '+comp.axisIndex+' — position '+comp.axisCyclePos+'/3 — '+axeLabel
+  ];
+  var deep=[
+    {titre:'Archétype '+comp.displayArch+' — '+arch.name,phrases:[arch.tone,ap.corps[expIdx],ap.psyche[expIdx],'Action concrète : '+arch.action+'.']},
+    {titre:'État — '+state.key+' ('+state.name+')',phrases:[sp.polarite,sp.action,sp.saison,state.desc]},
+    {titre:'Registre relationnel',phrases:[ap.lien[expIdx],isExp?'L\'entourage perçoit une présence active, rayonnante.':'L\'entourage perçoit un retrait qui n\'est pas un rejet.','Tonalité relationnelle ancrée dans : '+arch.tone+'.']},
+    {titre:'Tension & ombre',phrases:[arch.tension,'Tension structurelle de cet état : '+(isExp?'trop projeter sans revenir se recentrer.':'trop se retirer sans maintenir le contact.'),comp.isSpiral?'La zone spirale amplifie les tensions non digérées.':'Chaque tension non adressée se reportera sur la phase suivante.']},
+    {titre:'Invitation concrète',phrases:[ap.invitation[expIdx],'Action recommandée : '+arch.action+'.','À se demander d\'ici ce soir : qu\'est-ce que cette énergie me demande de commencer, poursuivre ou terminer ?']},
+    {titre:'Phase '+comp.phaseIndex+'/12 · Cycle '+comp.cycle108+'/108',phrases:['Jour '+comp.dayInCycle+'/432 : le cycle est à '+(Math.round(comp.dayInCycle/4.32))+'% de son déroulement.',comp.isSpiral?'Zone spirale commencée au jour 361 — '+(comp.dayInCycle-360)+' jours dans cette densification.':'Zone spirale (jours 361-432) dans '+(361-comp.dayInCycle)+' jours.']},
+    {titre:'Axe '+comp.axisIndex+' — position '+comp.axisCyclePos+'/3',phrases:[axeLabel,comp.axisCyclePos===1?'Position 1 : phase d\'apprentissage — les erreurs sont des données.':comp.axisCyclePos===2?'Position 2 : phase de structuration.':'Position 3 : phase de transmission.']}
+  ];
+  return{header:header,quick:quick,deep:deep};
+}
+let J0_ARCH=null, lastArchComp=null, archAnalysisTab='quick';
+function loadArch(){
+  try{
+    const s=localStorage.getItem('chawatch-j0');
+    if(s){J0_ARCH=new Date(s); const el=document.getElementById('arch-j0'); if(el)el.value=s.slice(0,10); archApplyJ0(true);}
+  }catch(e){}
+  buildArchGrid(); buildArchTable36();
+}
+function archCalcJ0(){
+  const b=archParseDate(document.getElementById('arch-birth').value);
+  if(!b){alert('Saisis une date de naissance valide.');return;}
+  const j0=archAddDays(b,-288);
+  document.getElementById('arch-j0').value=j0.toISOString().slice(0,10);
+  J0_ARCH=j0; try{localStorage.setItem('chawatch-j0',j0.toISOString());}catch(e){}
+  archApplyJ0();
+}
+function archApplyJ0(silent){
+  const j0=silent?J0_ARCH:archParseDate(document.getElementById('arch-j0').value);
+  if(!j0){if(!silent)alert('Saisis un J0 valide.');return;}
+  J0_ARCH=j0;
+  if(!silent){try{localStorage.setItem('chawatch-j0',j0.toISOString());}catch(e){}}
+  const comp=computeFromJ0(j0,new Date()); lastArchComp=comp;
+  const arch=ARCHETYPES[comp.displayArch-1];
+  const setTxt=(id,v)=>{const el=document.getElementById(id); if(el)el.textContent=v;};
+  setTxt('a-j0',archFmtDate(j0)); setTxt('a-days',comp.daysSince); setTxt('a-cycle',comp.cycle108);
+  setTxt('a-day',comp.dayInCycle+' / 432'); setTxt('a-arch',comp.displayArch); setTxt('a-arch-name',arch.name);
+  setTxt('a-state',comp.state.key); setTxt('a-state-name',comp.state.name);
+  const box=document.getElementById('a-arch-box'); if(box)box.style.borderLeftColor=arch.color;
+  const spiralWrap=document.getElementById('a-spiral-wrap'); if(spiralWrap)spiralWrap.style.display=comp.isSpiral?'block':'none';
+  const analysis=generateArchAnalysis(comp);
+  document.getElementById('a-analysis-quick').innerHTML='<p class="small" style="color:var(--text);font-weight:700;margin-bottom:6px">'+analysis.header+'</p><ul class="arch-analysis">'+analysis.quick.map(s=>'<li>'+s+'</li>').join('')+'</ul>';
+  document.getElementById('a-analysis-deep').innerHTML='<p class="small" style="color:var(--text);font-weight:700;margin-bottom:6px">'+analysis.header+'</p>'+analysis.deep.map(dim=>'<div class="arch-dim"><div class="arch-dim-title">'+dim.titre+'</div><ul class="arch-analysis">'+dim.phrases.map(p=>'<li>'+p+'</li>').join('')+'</ul></div>').join('');
+  buildArchTable36(comp.stateIdx*9+comp.archId);
+  const ss=document.getElementById('a-spiral-status');
+  if(ss){
+    if(comp.isSpiral){const dins=comp.dayInCycle-360; ss.innerHTML='<span class="arch-spiral-badge">🌀 Zone Spirale active</span><br><br><strong>'+(comp.phaseIndex===11?'Phase 11 — Incubation':'Phase 12 — Germination')+'</strong> — Jour '+dins+'/72 dans la spirale.';}
+    else{ss.innerHTML='Position : jour '+comp.dayInCycle+'/432 (phase '+comp.phaseIndex+'/12). Zone spirale dans <strong>'+(361-comp.dayInCycle)+' jours</strong>.';}
+  }
+}
+function archSetAnalysisTab(t){
+  archAnalysisTab=t;
+  document.getElementById('atb-quick').classList.toggle('on',t==='quick');
+  document.getElementById('atb-deep').classList.toggle('on',t==='deep');
+  document.getElementById('a-analysis-quick').style.display=t==='quick'?'block':'none';
+  document.getElementById('a-analysis-deep').style.display=t==='deep'?'block':'none';
+}
+function buildArchGrid(){
+  const g=document.getElementById('a-arch-grid'); if(!g)return; g.innerHTML='';
+  ARCHETYPES.forEach(a=>{
+    const el=document.createElement('div'); el.className='arch-card'; el.style.borderTopColor=a.color;
+    el.innerHTML='<div class="arch-card-num" style="color:'+a.color+'">'+a.id+'</div><div class="arch-card-name">'+a.name+(a.spiral?' <span style="font-size:.6rem;color:var(--cycle)">spirale</span>':'')+'</div><div class="arch-card-desc">'+a.tone+'</div>';
+    g.appendChild(el);
+  });
+}
+function buildArchTable36(activeRow){
+  activeRow=activeRow||0;
+  const tbody=document.getElementById('a-table36-body'); if(!tbody)return; tbody.innerHTML='';
+  let idx=1;
+  for(let si=0;si<4;si++)for(let ai=0;ai<9;ai++){
+    const arch=ARCHETYPES[ai], state=ARCH_STATES[si];
+    const tr=document.createElement('tr'); if(idx===activeRow)tr.classList.add('active-row');
+    tr.innerHTML='<td>'+idx+'</td><td style="color:'+arch.color+'">'+arch.name+'</td><td>'+state.key+'</td><td>P'+(si*9+ai+1)+'</td>';
+    tbody.appendChild(tr); idx++;
+  }
+}
+function drawCycle432Ring(now){
+  const comp=computeFromJ0(J0_ARCH,now);
+  const arch=ARCHETYPES[comp.displayArch-1];
+  const rD=R*1.02;
+  const frac=(comp.dayInCycle-1)/432;
+  X.beginPath();X.arc(cx,cy,rD,0,TAU);X.strokeStyle='rgba(196,91,191,.14)';X.lineWidth=2;X.stroke();
+  const ang=frac*TAU-Math.PI/2;
+  const px=cx+Math.cos(ang)*rD, py=cy+Math.sin(ang)*rD;
+  const gg=X.createRadialGradient(px,py,0,px,py,10);
+  gg.addColorStop(0,arch.color+'CC'); gg.addColorStop(1,arch.color+'00');
+  X.beginPath();X.arc(px,py,10,0,TAU);X.fillStyle=gg;X.fill();
+  X.beginPath();X.arc(px,py,3,0,TAU);X.fillStyle=arch.color;X.fill();
+  X.font=`8px 'Nunito',sans-serif`;X.fillStyle='rgba(232,160,208,.55)';X.textAlign='center';X.textBaseline='top';
+  X.fillText('Cycle 432 · '+arch.name+' · j'+comp.dayInCycle,cx,cy+rD+8);
+}
+
 loadLocation();
 loadBgState();
+loadArch();
 resize(); loop();
 </script>
 </body>
