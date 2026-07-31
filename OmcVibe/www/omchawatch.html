@@ -88,13 +88,22 @@ canvas{display:block;}
 }
 #menu-btn:hover{background:rgba(140,80,240,.35);color:var(--gold);}
 
+/* ── BOUTON PLEIN ÉCRAN ── */
+#fs-btn{
+  position:fixed;bottom:5px;right:52px;width:30px;height:30px;
+  background:rgba(100,60,200,.22);border:1px solid rgba(160,96,240,.40);
+  border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:var(--textS);transition:all .25s;z-index:200;
+}
+#fs-btn:hover{background:rgba(140,80,240,.35);color:var(--gold);}
+
 /* ── PANNEAU MENU ── */
 #panel{
-  position:fixed;top:0;right:0;bottom:0;width:290px;
-  background:rgba(6,9,28,.94);
-  border-left:1px solid var(--border);
+  position:fixed;top:0;right:0;bottom:0;left:0;width:100%;
+  background:rgba(6,9,28,.97);
   backdrop-filter:blur(22px);
-  transform:translateX(290px);transition:transform .35s cubic-bezier(.4,0,.2,1);
+  transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
   z-index:300;display:flex;flex-direction:column;overflow:hidden;
 }
 #panel.open{transform:translateX(0);}
@@ -298,6 +307,7 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
 
 <!-- BOUTON MENU -->
 <button id="menu-btn" onclick="togglePanel()">≡</button>
+<button id="fs-btn" onclick="toggleFullscreen()" title="Plein écran">⤢</button>
 
 <!-- PANNEAU -->
 <div id="panel">
@@ -1325,6 +1335,35 @@ function drawCycle432Ring(now){
   X.font=`8px 'Nunito',sans-serif`;X.fillStyle='rgba(232,160,208,.55)';X.textAlign='center';X.textBaseline='top';
   X.fillText('Cycle 432 · '+mv.name+' · j'+comp.dayInCycle,cx,cy+rD+8);
 }
+
+// ─── PLEIN ÉCRAN / IMMERSIF — même comportement que le module OmcVibe ──
+function toggleFullscreen(){
+  if(document.fullscreenElement||document.webkitFullscreenElement){
+    (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+    try{screen.orientation.unlock();}catch(e){}
+  }else{
+    const el=document.documentElement;
+    (el.requestFullscreen||el.webkitRequestFullscreen).call(el);
+  }
+}
+document.addEventListener('fullscreenchange',()=>{
+  const btn=document.getElementById('fs-btn');
+  if(btn)btn.textContent=document.fullscreenElement?'✕':'⤢';
+});
+// La Fullscreen API exige un vrai geste utilisateur — on tente quand même
+// tout de suite (best-effort, peut réussir hors contexte navigateur strict),
+// ET on arme un déclenchement de secours sur le tout premier appui de la
+// session, qui satisfait la contrainte de geste dans tous les cas.
+function _autoRequestFullscreen(){
+  if(document.fullscreenElement||document.webkitFullscreenElement)return;
+  const el=document.documentElement;
+  try{
+    const p=(el.requestFullscreen||el.webkitRequestFullscreen).call(el);
+    if(p&&p.catch)p.catch(()=>{});
+  }catch(e){}
+}
+_autoRequestFullscreen();
+document.addEventListener('pointerdown',_autoRequestFullscreen,{once:true,capture:true});
 
 loadLocation();
 loadBgState();
