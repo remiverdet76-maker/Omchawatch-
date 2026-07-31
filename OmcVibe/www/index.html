@@ -2571,14 +2571,16 @@ let masterFreq  = 144;
 window.getMasterFreq = () => masterFreq;
 
 // ─── Unité Miaow — 1 Miaow = 243/512 Hz, soit 512/243 Miaow par Hz
-// (= 32768/15552 réduit ; 432 Hz = 8192/9 Miaow exact). Couche
-// d'affichage/saisie sur le SEUL nombre maître (sphère centrale) ; le
-// moteur audio et tous les calculs satellites (ratio×n, teintes,
-// presets) restent en Hz partout ailleurs, intacts. cf. Chaharmony
-// (même définition, même principe).
+// (= 32768/15552 réduit ; 432 Hz = 8192/9 Miaow exact). Unité d'affichage
+// et de saisie définitive de l'app (#124) : Miaow par défaut, et toutes
+// les lectures de fréquence (maître, satellites, tables, presets, etc.)
+// passent par elle. Le moteur audio (Web Audio) reste en Hz en interne
+// — c'est une obligation de l'API, pas un choix — donc les calculs
+// ratio×n/teintes/persistance restent en Hz partout, intacts ; seule la
+// couche de présentation change. cf. Chaharmony (même définition).
 const MIAOW_PER_HZ = 512 / 243;
-let UNIT_MODE = 'hz';
-try { UNIT_MODE = localStorage.getItem('fbf432-unit') || 'hz'; } catch(e) {}
+let UNIT_MODE = 'miaow';
+try { UNIT_MODE = localStorage.getItem('fbf432-unit') || 'miaow'; } catch(e) {}
 function hzToMiaow(hz) { return hz * MIAOW_PER_HZ; }
 function miaowToHz(m) { return m / MIAOW_PER_HZ; }
 function setUnitMode(mode) {
@@ -2588,6 +2590,21 @@ function setUnitMode(mode) {
   if (typeof updateDisplay === 'function') updateDisplay();
 }
 function fmtMasterFreqDisplay() { return UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(2) + ' 🐈' : masterFreq; }
+// #124 : bornes min/max/step d'un <input> de fréquence maître, recalculées
+// selon UNIT_MODE — évite qu'un champ affiche encore "432" en mode Miaow
+// (ce nombre-là veut dire tout autre chose une fois converti).
+function _syncFreqInputBounds(el) {
+  if (!el) return;
+  if (UNIT_MODE === 'miaow') {
+    el.min = hzToMiaow(F_MIN).toFixed(2);
+    el.max = hzToMiaow(432).toFixed(2);
+    el.step = '0.01';
+  } else {
+    el.min = F_MIN;
+    el.max = 432;
+    el.step = '1';
+  }
+}
 let globalDelta = DELTA_DEFAULT;   // #35 : référence Delta (n'impose plus le même battement à tous)
 let masterVol   = 0.70;  // #62 : ramené de 0.85 à 0.70 (retour terrain "gains trop forts")
 // #38 : remonté 0.5→1.0 (+6 dB). Le plafond à 0.5 datait d'avant la chaîne
@@ -2630,8 +2647,8 @@ function harmonicRandomInit() {
   const ratio = HARMONIC_RATIOS[Math.floor(Math.random() * HARMONIC_RATIOS.length)];
   masterFreq  = Math.min(432, Math.max(36, Math.round(root * ratio)));
 }
-function fmtFreq(f)  { return f.toFixed(1) + ' Hz'; }
-function fmtShort(f) { return f.toFixed(1); }
+function fmtFreq(f)  { return UNIT_MODE === 'miaow' ? hzToMiaow(f).toFixed(2) + ' 🐈' : f.toFixed(1) + ' Hz'; }
+function fmtShort(f) { return UNIT_MODE === 'miaow' ? hzToMiaow(f).toFixed(2) : f.toFixed(1); }
 
 // Couleur organique selon la fréquence : grave = violet/indigo → aigu = ambre/or
 function freqHue(f) {
@@ -5553,18 +5570,24 @@ function setMasterFreqMiaow(miaowVal) {
 // Le bouton "Valider" a été retiré (#52) : Entrée (clavier) ou perte de focus
 // appliquent déjà la saisie via _purpleFreqValidate, les pas -9/+9 s'appliquent
 // immédiatement — ce bouton était redondant.
+// #124 : le pas ±9 reste un pas en Hz (nudge musical inchangé) — seul
+// l'affichage dans le champ bascule en Miaow ; on repart toujours de
+// masterFreq (état validé), jamais de inp.value qui peut être un Miaow
+// non-committé.
 function _purpleFreqStep(delta) {
-  const inp = document.getElementById('dcell-purple-input');
-  const cur = inp && inp.value !== '' && !isNaN(parseFloat(inp.value)) ? parseFloat(inp.value) : masterFreq;
-  const next = Math.round(Math.max(F_MIN, Math.min(432, cur + delta)));
+  const next = Math.round(Math.max(F_MIN, Math.min(432, masterFreq + delta)));
   setMasterFreq(next);
-  if (inp) inp.value = masterFreq;
+  const inp = document.getElementById('dcell-purple-input');
+  if (inp) inp.value = UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(2) : masterFreq;
 }
 function _purpleFreqValidate() {
   const inp = document.getElementById('dcell-purple-input');
-  if (!inp || inp.value === '' || isNaN(parseFloat(inp.value))) { if (inp) inp.value = masterFreq; return; }
-  setMasterFreq(Math.round(parseFloat(inp.value)));
-  inp.value = masterFreq;
+  const fallback = UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(2) : masterFreq;
+  if (!inp || inp.value === '' || isNaN(parseFloat(inp.value))) { if (inp) inp.value = fallback; return; }
+  const raw = parseFloat(inp.value);
+  const hz  = UNIT_MODE === 'miaow' ? miaowToHz(raw) : raw;
+  setMasterFreq(Math.round(hz));
+  inp.value = UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(2) : masterFreq;
 }
 function _purpleFreqKey(e) {
   if (e.key === 'Enter') { e.preventDefault(); _purpleFreqValidate(); e.target.blur(); }
@@ -5629,13 +5652,17 @@ function masterStep(delta) {
 // visuel (aucun accès au moteur audio) ; seul onMasterChange retune, une
 // fois, à la validation.
 function onMasterInput(raw) {
-  const v = parseInt(raw);
-  if (isNaN(v) || v < F_MIN || v > 432) return;
-  const msf = document.getElementById('ms-freq'); if (msf) msf.textContent = UNIT_MODE === 'miaow' ? hzToMiaow(v).toFixed(2) + ' 🐈' : v;
+  const v = parseFloat(raw);
+  if (isNaN(v)) return;
+  const hz = UNIT_MODE === 'miaow' ? miaowToHz(v) : v;
+  if (hz < F_MIN || hz > 432) return;
+  const msf = document.getElementById('ms-freq'); if (msf) msf.textContent = UNIT_MODE === 'miaow' ? v.toFixed(2) + ' 🐈' : v;
 }
 function onMasterChange(raw) {
-  const v = Math.max(F_MIN, Math.min(432, parseInt(raw)));
-  if (!isNaN(v)) setMasterFreq(v);
+  const v = parseFloat(raw);
+  if (isNaN(v)) return;
+  const hz = Math.max(F_MIN, Math.min(432, UNIT_MODE === 'miaow' ? miaowToHz(v) : v));
+  setMasterFreq(Math.round(hz));
 }
 
 // FBF toggle — Rayonner / Dissoudre
@@ -6559,7 +6586,7 @@ function buildFreqMini() {
 function patchFreqMini() {
   PAIRS.forEach((pair, i) => {
     const pF = calcPFreq(i);
-    const f = document.getElementById('fmini-f-'+i); if (f) f.textContent = pF.toFixed(0)+' Hz';
+    const f = document.getElementById('fmini-f-'+i); if (f) f.textContent = fmtFreq(pF);
     const r = document.getElementById('fmini-r-'+i); if (r) r.textContent = RATIO_OPTS[pair.pingala.ri].l;
     const n = document.getElementById('fmini-n-'+i); if (n) n.textContent = '×'+(+pair.pingala.n).toFixed(2);
   });
@@ -6613,7 +6640,7 @@ function buildRandomTable() {
 function patchRandomTable() {
   PAIRS.forEach((pair, i) => {
     const pF = calcPFreq(i);
-    const f = document.getElementById('rt-f-'+i); if (f) f.textContent = pF.toFixed(1)+' Hz';
+    const f = document.getElementById('rt-f-'+i); if (f) f.textContent = fmtFreq(pF);
     const r = document.getElementById('rt-r-'+i); if (r && i !== MASTER_IDX) r.textContent = RATIO_OPTS[pair.pingala.ri].l;
     const n = document.getElementById('rt-n-'+i); if (n) n.textContent = '×'+(+pair.pingala.n).toFixed(2);
     const lk = document.getElementById('lock-'+i);
@@ -7122,9 +7149,12 @@ function updateMasterState() {
 function updateDisplay() {
   const msf = document.getElementById('ms-freq'); if (msf) msf.textContent = fmtMasterFreqDisplay();
   const mi  = document.getElementById('master-input');
-  if (mi && document.activeElement!==mi) mi.value = masterFreq;
+  if (mi && document.activeElement!==mi) {
+    _syncFreqInputBounds(mi);
+    mi.value = UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(2) : masterFreq;
+  }
   const pmi = document.getElementById('dcell-purple-input'); // #40
-  if (pmi && document.activeElement!==pmi) pmi.value = masterFreq;
+  if (pmi && document.activeElement!==pmi) pmi.value = UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(2) : masterFreq;
   // #65 : nom d'app figé (plus de suffixe fréquence, illisible en switcher/notif)
   PAIRS.forEach((_,i) => updatePairUI(i));
   updateMasterState();
@@ -7141,7 +7171,7 @@ function updatePairUI(i) {
 
   const pfreq=document.getElementById('pfreq-'+i); if(pfreq) pfreq.textContent=fmtFreq(pF);
   const ifreq=document.getElementById('ifreq-'+i); if(ifreq) ifreq.textContent=fmtFreq(iF);
-  const bmf  =document.getElementById('bmf-'+i);   if(bmf)   bmf.textContent  =masterFreq;
+  const bmf  =document.getElementById('bmf-'+i);   if(bmf)   bmf.textContent  =fmtShort(masterFreq);
   const brl  =document.getElementById('brl-'+i);   if(brl)   brl.textContent  =RATIO_OPTS[pair.pingala.ri].l;
   const bfn  =document.getElementById('bfn-'+i);   if(bfn)   bfn.textContent  =pair.pingala.n;
   const bfr  =document.getElementById('bfr-'+i);   if(bfr)   bfr.textContent  =fmtFreq(pF);
@@ -7528,7 +7558,7 @@ function progStep() {
   updateDisplay();
   if (flowing) PAIRS.forEach((pair,i) => { tuneOsc(pair.pingala.id,calcPFreq(i)); tuneOsc(pair.ida.id,calcIFreq(i)); });
   const disp = document.getElementById('prog-display');
-  if (disp) { disp.textContent=masterFreq+' Hz · '+RATIO_OPTS[ri].l; disp.classList.add('active'); }
+  if (disp) { disp.textContent=fmtFreq(masterFreq)+' · '+RATIO_OPTS[ri].l; disp.classList.add('active'); }
   saveState();
 }
 function startProgression() {
@@ -7538,7 +7568,7 @@ function startProgression() {
   if (on) on.classList.add('running');
   if (off) off.classList.remove('running');
   const disp = document.getElementById('prog-display');
-  if (disp) disp.textContent = masterFreq+' Hz — départ';
+  if (disp) disp.textContent = fmtFreq(masterFreq)+' — départ';
   progStep();
   progTimer = setInterval(progStep, dur);
 }
@@ -7548,7 +7578,7 @@ function stopProgression() {
   const on = document.getElementById('btn-prog-on'), off = document.getElementById('btn-prog-off');
   if (on) on.classList.remove('running');
   const disp = document.getElementById('prog-display');
-  if (disp) { disp.textContent=masterFreq+' Hz — arrêté'; disp.classList.remove('active'); }
+  if (disp) { disp.textContent=fmtFreq(masterFreq)+' — arrêté'; disp.classList.remove('active'); }
 }
 
 // ── Persistance localStorage ──────────────────────────────────────
@@ -7837,13 +7867,13 @@ function updateInfobar() {
   const ibGeo  = document.getElementById('ib-geo');
   const hdrFreq = document.getElementById('hdr-freq');
 
-  if (ibFreq) ibFreq.textContent = masterFreq + ' Hz';
+  if (ibFreq) ibFreq.textContent = fmtFreq(masterFreq);
   if (ibFlux) {
     ibFlux.textContent = flowing ? 'ON' : 'OFF';
     ibFlux.className   = 'ib-v ' + (flowing ? 'ib-live' : 'ib-off');
   }
   if (ibGeo) ibGeo.textContent = GEO_NAMES[activeGeometry] || '—';
-  if (hdrFreq) hdrFreq.textContent = masterFreq + ' Hz · ' + (GEO_NAMES[activeGeometry] || '');
+  if (hdrFreq) hdrFreq.textContent = fmtFreq(masterFreq) + ' · ' + (GEO_NAMES[activeGeometry] || '');
 }
 
 // ── Oscillator modal ───────────────────────────────────────────────
@@ -8007,7 +8037,7 @@ function presetSwitchBank(bankId) {
 
 // Sauvegarde nommée, depuis le panneau Presets
 function presetSaveNew() {
-  const def = 'OmcVibe ' + masterFreq + 'Hz';
+  const def = 'OmcVibe ' + fmtFreq(masterFreq);
   const name = window.prompt('Nom du preset :', def) || def;
   const bank = _activeBank(); if (!bank) return;
   bank.presets.push(Object.assign({ id:_uid(), ts:Date.now() }, _snapshotGame(name)));
@@ -8017,7 +8047,7 @@ function presetSaveNew() {
 
 // Ajout rapide sans invite — sphère extra BLEUE : "Ajouter le jeu au preset"
 function presetQuickAdd() {
-  const name = 'Jeu ' + masterFreq + 'Hz · ' + new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  const name = 'Jeu ' + fmtFreq(masterFreq) + ' · ' + new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
   const bank = _activeBank(); if (!bank) return;
   bank.presets.push(Object.assign({ id:_uid(), ts:Date.now() }, _snapshotGame(name)));
   _savePresetBanks();
@@ -8058,7 +8088,7 @@ function buildPresetsPanelHTML() {
   const rows = (bank && bank.presets.length) ? bank.presets.map(p => `
     <div class="fx-preset-row">
       <span class="fx-preset-name">${p.name}</span>
-      <span class="preset-freq-badge">${p.masterFreq!=null ? p.masterFreq+' Hz' : '—'}</span>
+      <span class="preset-freq-badge">${p.masterFreq!=null ? fmtFreq(p.masterFreq) : '—'}</span>
       <button class="fx-preset-btn load" onclick="presetLoad('${bank.id}','${p.id}')" title="Charger">▶</button>
       <button class="fx-preset-btn edit" onclick="presetRename('${bank.id}','${p.id}')" title="Renommer">✎</button>
       <button class="fx-preset-btn del" onclick="presetDelete('${bank.id}','${p.id}')" title="Supprimer">✕</button>

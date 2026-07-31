@@ -2524,3 +2524,47 @@ Vérifié par tests Playwright : `miaowToHz(432)===205.03125`,
 mode Miaow (113.78/910.22), boutons presets présents et fonctionnels sur
 les deux apps, 0 erreur JS. APK régénéré et re-signé, vérifié
 `verified=true` (API 24+).
+
+## #104 : le Miaow devient l'unité définitive d'OmcVibe
+
+Demande explicite et sans ambiguïté : « l'unité de mesure sur OmcVibe
+devient définitivement le Miaow, c'est pas une blague. Tout doit être
+converti en Miaow. » Jusqu'ici (#101-#103) la conversion ne touchait que
+la fréquence maître, en Hz par défaut, Miaow en option. Ce soir : Miaow
+devient le mode par défaut (`UNIT_MODE='miaow'` sauf choix explicite
+contraire déjà enregistré), et la conversion s'étend à **toutes** les
+lectures de fréquence visibles de l'app, pas seulement le nombre
+central.
+
+**Étendu à** : labels de fréquence sur chaque sphère satellite
+(`vp-pf-i`, le plus visible de tous), formule masterFreq×ratio×n=résultat
+de chaque oscillateur (`bmf-i`/`bfr-i`/`ibf-p-i`/`ibf-r-i`, via `fmtFreq`/
+`fmtShort` désormais unit-aware), table du tirage aléatoire et vue
+compacte (`patchRandomTable`/`patchFreqMini`), afficheur de la
+Progression Harmonique, barre d'info (`ib-freq`/`hdr-freq`), noms par
+défaut et badges des presets sauvegardés. Le mini-panneau `#master-input`
+et la cellule violette du dock (`#dcell-purple-input`) basculent aussi
+leurs bornes/valeurs affichées, avec la même logique de bornes que
+`#freq-input-master` (#101).
+
+**Choix de conception, assumé** : les *pas* de nudge (`masterStep`
+±18/36/72/108, `_purpleFreqStep` ±9) restent des pas en Hz, inchangés —
+ce sont des incréments harmoniques pensés comme fractions de 432 Hz, les
+convertir aurait cassé leur logique musicale. Seul ce qui est *affiché*
+change ; ce qui est *retuné* reste en Hz, comme le veut le moteur Web
+Audio. Volontairement laissés en Hz (hors sujet du Miaow, qui ne
+concerne que la hauteur/le "carrier") : le Δ binaural (battement,
+`ibf-d-i`/`sv-delta-drift`/LFO), les fréquences de filtre (Cutoff/HPF),
+et la fréquence fondamentale détectée d'un sample importé (feature #77,
+déjà signalée instable côté #55 — non retouchée pour ne pas mélanger les
+deux chantiers).
+
+Vérifié par tests Playwright : `UNIT_MODE==='miaow'` sur une install
+neuve (localStorage vidé), lecture d'une sphère satellite exacte dans les
+deux sens (Hz→Miaow et retour, `hzToMiaow(calcPFreq(0))` ===
+texte affiché, aux deux décimales près), saisie manuelle via
+`#master-input`/`#dcell-purple-input` interprétée correctement selon
+l'unité affichée, pas ±9 toujours en Hz réel (vérifié à la borne 432),
+bascule Hz↔Miaow sans régression sur `PAIRS.length`/panneau
+personnalisation, 0 erreur JS. APK régénéré et re-signé, vérifié
+`verified=true` (API 24+).
