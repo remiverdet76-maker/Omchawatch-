@@ -8198,6 +8198,16 @@ function _launcherGo(mod) {
   if (mod === 'sphereflux') { hideLauncher(); _openModuleOverlay('sphere-flux.html'); return; }
   if (mod === 'omchawatch') { location.href = 'omchawatch.html'; return; }
 }
+// #125 : raccourci dock "Retour au menu principal" — ré-affiche le lanceur
+// 3 modules SANS quitter index.html (le binaural continue de jouer en
+// dessous, exactement comme _launcherGo('vibe') le masque sans jamais
+// recharger la page).
+function _showLauncher() {
+  const l = document.getElementById('omc-launcher');
+  if (!l) return;
+  l.style.display = 'flex';
+  requestAnimationFrame(() => l.classList.remove('hide'));
+}
 
 // #87 : ouvre/ferme l'overlay des modules visuels (Sphère/Flux/Géométrie)
 // SANS jamais quitter index.html — c'est ce qui permet au binaural
@@ -8493,6 +8503,9 @@ const DOCK_ACTIONS = {
   breathAnchorToggle:    { label: 'Ancre respiratoire on/off',   fn: () => setBreathAnchor(!BREATH_ANCHOR_STATE.on) },
   breathRandomToggle:    { label: 'Respiration par paire on/off', fn: () => setRandBreath(!RAND_OPTS.breathRandom) },
   undoRandom:            { label: 'Annuler le dernier tirage',   fn: () => { if (typeof undoLastRandom === 'function') undoLastRandom(); } },
+  // #125 : retour au lanceur 3 modules sans quitter index.html (le
+  // binaural continue de jouer en dessous, cf. _launcherGo('vibe')).
+  backToMenu:            { label: '↩ Retour au menu principal',  fn: () => _showLauncher() },
 };
 
 // #32 : retour à 1 seule sphère raccourci par case (comme à l'origine, mais
@@ -8502,7 +8515,7 @@ const DOCK_ACTIONS = {
 const DOCK_MAP_DEFAULT = {
   red:    { tap: 'openRand',    hold: 'soloMaster',    extra: 'toggleAdvanced' },
   orange: { tap: 'openSamples', hold: 'sampleAnchor',  extra: 'sampleSoloMaster' },
-  flux:   { tap: 'fluxToggle',  hold: 'randomAll',     extra: 'none' },
+  flux:   { tap: 'fluxToggle',  hold: 'randomAll',     extra: 'backToMenu' },
   green:  { tap: 'openFX',      hold: 'randomFXQuick', extra: 'openGeo' },
   blue:   { tap: 'openParams',  hold: 'openPresets',   extra: 'presetQuickAdd' },
 };

@@ -2568,3 +2568,34 @@ l'unité affichée, pas ±9 toujours en Hz réel (vérifié à la borne 432),
 bascule Hz↔Miaow sans régression sur `PAIRS.length`/panneau
 personnalisation, 0 erreur JS. APK régénéré et re-signé, vérifié
 `verified=true` (API 24+).
+
+## #105 : raccourci dock — retour au menu principal (OmcVibe)
+
+Demande : un raccourci depuis OmcVibe pour revenir au lanceur 3 modules
+sans quitter l'app. `_launcherGo('vibe')` masquait déjà le lanceur au
+lancement (`classList.add('hide')` + `display:none` après transition)
+mais rien ne faisait l'inverse — nouvelle fonction `_showLauncher()`
+(remet `display:flex`, retire `.hide` au frame suivant pour laisser la
+transition CSS jouer), sans jamais recharger `index.html` : le binaural
+continue de tourner en dessous exactement comme au premier lancement.
+
+Ajouté au registre existant `DOCK_ACTIONS` (`backToMenu`, "↩ Retour au
+menu principal") plutôt qu'un bouton dédié codé en dur — cohérent avec
+tous les autres raccourcis du dock (personnalisables tap/appui long/
+bouton extra depuis Paramètres → Personnaliser l'interface). Mappé par
+défaut sur le bouton extra de la case Flux (`flux.extra`), jusqu'ici
+`'none'` — donc disponible immédiatement sur une installation neuve, sans
+toucher aux 14 autres raccourcis déjà assignés par défaut. **Sur un
+appareil qui a déjà de l'usage** (mapping déjà enregistré en
+localStorage), le nouveau défaut ne s'applique pas automatiquement : il
+faut l'assigner soi-même dans Personnaliser → Case → slot (ou
+"Réinitialiser" la carte du dock).
+
+Vérifié par tests Playwright : `DOCK_ACTIONS.backToMenu` enregistrée,
+`DOCK_MAP_DEFAULT.flux.extra==='backToMenu'` sur install neuve, cycle
+complet `_launcherGo('vibe')` → lanceur masqué → `_runDockAction
+('backToMenu')` → lanceur réaffiché → re-`_launcherGo('vibe')` → masqué
+à nouveau, sans erreur ; confirmation que le bouton extra réel du dock
+route bien vers `_runDockAction(map.extra)` (même mécanisme que
+tap/appui long, lu dans `_bindDock()`). 0 erreur JS. APK régénéré et
+re-signé, vérifié `verified=true` (API 24+).
