@@ -272,10 +272,12 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
 .arch-axis-table th{padding:6px 6px;text-align:left;font-family:'Cinzel',serif;font-size:.60rem;
   text-transform:uppercase;color:var(--gold);background:rgba(212,168,67,.10);position:sticky;top:0;}
 .arch-axis-table td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.05);color:var(--textS);}
-.arch-axis-table tr.active-row td{background:rgba(240,192,60,.14);color:var(--text);font-weight:700;}
+.arch-axis-table tr.row-cycle td{background:rgba(155,89,182,.16);color:var(--text);font-weight:700;}
+.arch-axis-table tr.row-jour36 td{background:rgba(240,192,60,.16);color:var(--text);font-weight:700;}
+.arch-axis-table tr.row-both td{background:linear-gradient(90deg,rgba(155,89,182,.20),rgba(240,192,60,.20));color:var(--text);font-weight:700;}
 .arch-table-wrap{max-height:260px;overflow-y:auto;border-radius:9px;border:1px solid var(--border);}
-.arch-spiral-badge{display:inline-block;padding:3px 10px;border-radius:14px;font-size:.68rem;font-weight:700;
-  background:rgba(196,91,191,.18);border:1px solid rgba(196,91,191,.4);color:#e8a0d0;}
+.arch-mark{display:inline-block;font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:9px;margin:0 4px 4px 0;
+  background:rgba(232,74,111,.18);color:#e8a0d0;}
 </style>
 </head>
 <body>
@@ -514,7 +516,7 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
       </div>
     </div>
 
-    <!-- ══ ARCHÉTYPES — cycle 432 (J0), porté de ChaThème432 ══ -->
+    <!-- ══ ARCHÉTYPES — lecture fractale à 3 niveaux (cycle 432, J0) ══ -->
     <div id="tab-arch" style="display:none">
       <div class="opt-section">
         <div class="opt-h">Ton J0 (naissance − 288 jours)</div>
@@ -530,38 +532,47 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
           <div class="arch-readout"><div class="arch-readout-label">Jours depuis J0</div><div class="arch-readout-val" id="a-days">—</div></div>
           <div class="arch-readout"><div class="arch-readout-label">Cycle (1-108)</div><div class="arch-readout-val" id="a-cycle">—</div></div>
           <div class="arch-readout"><div class="arch-readout-label">Jour dans cycle</div><div class="arch-readout-val" id="a-day">—</div></div>
-          <div class="arch-readout" id="a-arch-box"><div class="arch-readout-label">Archétype (1-12)</div><div class="arch-readout-val" id="a-arch">—</div><div class="small" id="a-arch-name"></div></div>
-          <div class="arch-readout"><div class="arch-readout-label">État respiratoire</div><div class="arch-readout-val" id="a-state">—</div><div class="small" id="a-state-name"></div></div>
         </div>
-        <div id="a-spiral-wrap" style="margin-top:8px;display:none"><span class="arch-spiral-badge">🌀 Zone Spirale active — phases 11-12</span></div>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Lecture fractale à 3 niveaux</div>
+        <p class="small" style="margin-bottom:6px">Les 4 mêmes mouvements du souffle (lever · zénith · coucher · zénith polaire) se répètent à chaque échelle du cycle.</p>
+        <div class="arch-readout" id="a-lvl-cycle-box" style="margin-bottom:7px">
+          <div class="arch-readout-label">① Cycle/36 — position du cycle-108 dans son groupe de 36</div>
+          <div class="arch-readout-val" id="a-lvl-cycle">—</div>
+        </div>
+        <div class="arch-readout" id="a-lvl-jour432-box" style="margin-bottom:7px">
+          <div class="arch-readout-label">② Jour/432 — position dans le cycle de 432 jours (quarté 108/216/324)</div>
+          <div class="arch-readout-val" id="a-lvl-jour432">—</div>
+        </div>
+        <div class="arch-readout" id="a-lvl-jour36-box">
+          <div class="arch-readout-label">③ Jour/36 — position dans la sous-phase de 36 jours en cours</div>
+          <div class="arch-readout-val" id="a-lvl-jour36">—</div>
+        </div>
       </div>
       <div class="opt-section">
         <div class="opt-h">Analyse</div>
         <div class="arch-tabs">
-          <button class="arch-tab-btn on" id="atb-quick" onclick="archSetAnalysisTab('quick')">Rapide · 9</button>
-          <button class="arch-tab-btn" id="atb-deep" onclick="archSetAnalysisTab('deep')">Profonde · 36</button>
+          <button class="arch-tab-btn on" id="atb-quick" onclick="archSetAnalysisTab('quick')">Rapide</button>
+          <button class="arch-tab-btn" id="atb-deep" onclick="archSetAnalysisTab('deep')">Détaillée</button>
         </div>
         <div id="a-analysis-quick"><p class="small">Saisis une date de naissance ou un J0 pour obtenir l'analyse.</p></div>
         <div id="a-analysis-deep" style="display:none"></div>
       </div>
       <div class="opt-section">
-        <div class="opt-h">Les 12 archétypes</div>
+        <div class="opt-h">Les 4 mouvements</div>
+        <p class="small" style="margin-bottom:6px">Les badges indiquent quel(s) niveau (Cycle/36, Jour/432, Jour/36) est actuellement sur ce mouvement.</p>
         <div class="arch-grid" id="a-arch-grid"></div>
       </div>
       <div class="opt-section">
-        <div class="opt-h">Tableau — 36 axes du cycle 432</div>
-        <p class="small">9 archétypes × 4 états. La ligne dorée = ta position actuelle.</p>
+        <div class="opt-h">Tableau — 36 positions (4 mouvements × 9)</div>
+        <p class="small">Grille commune aux niveaux Cycle/36 et Jour/36. Violet = Cycle/36, doré = Jour/36.</p>
         <div class="arch-table-wrap">
           <table class="arch-axis-table">
-            <thead><tr><th>#</th><th>Archétype</th><th>État</th><th>P</th></tr></thead>
+            <thead><tr><th>#</th><th>Mouvement</th><th>Ratio</th></tr></thead>
             <tbody id="a-table36-body"></tbody>
           </table>
         </div>
-      </div>
-      <div class="opt-section">
-        <div class="opt-h">Zone Spirale — phases 11 &amp; 12</div>
-        <p class="small">Jours 361-432. Densification, intégration, préparation du cycle suivant. Le pivot J+288 (2/3 du cycle) initie ce mouvement ; J0 en est le miroir.</p>
-        <div id="a-spiral-status" class="small" style="margin-top:6px">Applique un J0 pour connaître ta position par rapport à la zone spirale.</div>
       </div>
     </div>
 
@@ -1156,136 +1167,76 @@ document.body.addEventListener('wheel',e=>{
   applyBgState();saveBgState();
 },{passive:false});
 
-// ─── ARCHÉTYPES — cycle 432 (J0), porté de ChaThème432, réhabillé sombre ──
-// Contenu original : 12 archétypes, 4 états respiratoires, 36 axes,
-// analyse rapide (9) + profonde (36). La matrice de vers/poésie du
-// fichier source n'a pas été portée (hors scope pour ce soir).
-var ARCHETYPES=[
-  {id:1,name:'Mobilité',color:'#e84a6f',tone:'Mouvement, communication, adaptation rapide',tension:'Dispersion mentale, agitation',action:'Marche, échauffement, prise de notes ciblée'},
-  {id:2,name:'Relation',color:'#f07b38',tone:'Échange affectif, valeur, harmonie sociale',tension:'Dépendance affective, sensibilité accrue',action:'Écoute active, clarifier limites relationnelles'},
-  {id:3,name:'Matière',color:'#f5c842',tone:'Incarnation, sécurité, besoins concrets',tension:'Résistance au changement, sur-ancrage',action:'Routines corporelles, alimentation consciente'},
-  {id:4,name:'Action',color:'#6ab84e',tone:'Impulsion, courage, mise en mouvement',tension:'Impulsivité, épuisement possible',action:'Pause avant décision, activité physique structurée'},
-  {id:5,name:'Expansion',color:'#3ab8a0',tone:'Vision, croissance, confiance',tension:'Surestimation, engagements trop larges',action:'Tester à petite échelle, limiter les promesses'},
-  {id:6,name:'Structure',color:'#4a8fe8',tone:'Limites, discipline, responsabilité',tension:'Rigidité, poids des obligations',action:'Déléguer, réévaluer obligations, poser limites'},
-  {id:7,name:'Innovation',color:'#7b58d4',tone:'Rupture, liberté, originalité',tension:'Instabilité, ruptures brusques',action:'Prototyper avant rupture, sécuriser les bases'},
-  {id:8,name:'Sensibilité',color:'#c45bbf',tone:'Rêve, intuition, dissolution des frontières',tension:'Flou, confusion, idéalisation',action:'Journaling, pratiques de discernement'},
-  {id:9,name:'Transformation',color:'#d44a4a',tone:'Profondeur, régénération, intensité',tension:'Crises profondes, remises en question',action:'Rituels d\'intégration, accompagnement progressif'},
-  {id:10,name:'Synthèse',color:'#8b6e3c',tone:'Intégration des cycles, mémoire longue',tension:'Rumination, difficulté à clore',action:'Bilan de cycle, archivage, tri symbolique',spiral:true},
-  {id:11,name:'Incubation',color:'#9b59b6',tone:'Densification, retour au centre, préparation',tension:'Isolement, fermeture excessive',action:'Repos profond, intention pour le cycle suivant',spiral:true},
-  {id:12,name:'Germination',color:'#e8a0d0',tone:'Potentiel silencieux, naissance imminente',tension:'Impatience, surcharge avant départ',action:'Silence actif, rituel de clôture de cycle',spiral:true}
-];
-var ARCH_STATES=[
-  {key:'11/10',name:'Expansion douce',color:'#f5c842',desc:'Ouverture progressive, activation contrôlée'},
-  {key:'12/10',name:'Expansion maximale',color:'#e84a6f',desc:'Pic d\'extériorisation, intensité élevée'},
-  {key:'10/11',name:'Contraction douce',color:'#3ab8a0',desc:'Retour intérieur, consolidation'},
-  {key:'10/12',name:'Contraction maximale',color:'#7b58d4',desc:'Incubation, profondeur, densité'}
-];
-var ARCH_PHRASES={
-  1:{corps:['Le corps s\'éveille dans un flux léger, rapide, prêt à saisir chaque signal du milieu.','Le corps cherche à se poser, à ralentir la cadence pour laisser les informations se décanter.'],
-    psyche:['Le mental s\'active et multiplie les connexions.','Le mental observe ses propres mouvements, trie ce qui mérite d\'être retenu.'],
-    lien:['La communication est fluide, les échanges s\'enchaînent naturellement.','Les échanges gagnent en profondeur ce qu\'ils perdent en volume.'],
-    invitation:['Choisir une direction et la tenir jusqu\'au bout.','Revenir à l\'essentiel : qu\'est-ce qui mérite vraiment d\'être poursuivi ?']},
-  2:{corps:['Le corps est finement calibré sur les présences autour de lui.','Le corps se referme doucement, comme pour protéger ce qui est précieux à l\'intérieur.'],
-    psyche:['Le registre affectif est ouvert : on donne facilement, on reçoit avec intensité.','On évalue, on pèse, on cherche à comprendre ce qui a de la valeur.'],
-    lien:['Les rencontres portent une charge émotionnelle forte.','Les liens existants sont passés au tamis : lesquels nourrissent vraiment ?'],
-    invitation:['Cultiver un équilibre entre donner et recevoir.','Nommer ce qui fait mal, sans l\'enfouir.']},
-  3:{corps:['Le corps revendique son espace concret : ancrage, nourriture, rythme.','Le corps ralentit et demande à être servi en priorité.'],
-    psyche:['L\'esprit cherche le tangible : plans, listes, résultats mesurables.','L\'esprit fait le point sur ce qui est réellement solide.'],
-    lien:['On exprime son affection par des actes concrets plutôt que par des mots.','On ressent le besoin d\'être entouré de stabilité.'],
-    invitation:['Investir le corps consciemment : marche, alimentation, gestes lents.','Distinguer la sécurité réelle de la sécurité illusoire.']},
-  4:{corps:['Le corps est sous tension préparatoire, une énergie cherche à se décharger.','Le corps enregistre la fatigue des efforts passés et réclame du repos actif.'],
-    psyche:['La volonté est tranchante, l\'intention claire.','On réévalue les actions entreprises : lesquelles méritent d\'être poursuivies ?'],
-    lien:['L\'entourage perçoit une présence affirmée, directe.','On a besoin d\'espace pour traiter en solo.'],
-    invitation:['Canaliser l\'impulsion par une pratique physique.','Faire une pause avant toute décision engageante.']},
-  5:{corps:['La cage thoracique s\'ouvre, le corps veut prendre de l\'espace.','Le corps cherche à digérer une expansion récente.'],
-    psyche:['La vision porte loin : on projette, on imagine.','On reconsidère les ambitions passées avec lucidité.'],
-    lien:['On inspire les autres par son enthousiasme.','On a besoin de calme pour ne pas se laisser emporter.'],
-    invitation:['Tester à petite échelle avant d\'étendre.','Revenir à l\'essentiel de la vision.']},
-  6:{corps:['Le corps tient droit, la posture se structure.','Le corps ressent le poids des structures portées.'],
-    psyche:['L\'esprit classe, hiérarchise, avec une rigueur inhabituelle.','L\'esprit examine les règles qu\'il s\'est données.'],
-    lien:['On occupe naturellement une position de référence.','On perçoit la lourdeur des rôles tenus.'],
-    invitation:['Introduire de la souplesse dans une routine tenue fermement.','Déléguer une responsabilité et observer ce que cela libère.']},
-  7:{corps:['Le corps est électrique, traversé d\'impulsions.','Le corps a besoin de silence et de sol ferme.'],
-    psyche:['L\'esprit remet en question les cadres établis.','L\'esprit trie les ruptures passées.'],
-    lien:['On apporte une vibration originale qui déplace les habitudes.','On ressent le besoin de souffler loin des attentes habituelles.'],
-    invitation:['Canaliser la rupture créatrice dans un domaine précis.','Ancrer les bases avant de remettre en jeu ce qui fonctionne.']},
-  8:{corps:['Le corps est poreux, finement réceptif.','Le corps cherche à se recentrer, à retrouver ses contours.'],
-    psyche:['L\'intuition est à son pic.','L\'esprit revient du flou et cherche à remettre du discernement.'],
-    lien:['On perçoit l\'état intérieur des autres avec acuité.','On a besoin de frontières claires.'],
-    invitation:['Nommer ce qui est ressenti sans le mélanger à ce qui est perçu.','Clarifier un engagement ambigu.']},
-  9:{corps:['Le corps est habité d\'une intensité sourde.','Le corps sort d\'une crise et cherche à récupérer lentement.'],
-    psyche:['L\'esprit plonge dans les couches denses de l\'expérience.','L\'esprit intègre une transformation récente.'],
-    lien:['Les liens superficiels tombent d\'eux-mêmes.','On a besoin de relations capables de tenir ce qui se recompose.'],
-    invitation:['Trouver un rituel qui honore ce qui se transforme.','Reconnaître le chemin parcouru.']},
-  10:{corps:['Le corps enregistre silencieusement tout ce que le cycle a traversé.','Le corps demande à être libéré des tensions accumulées.'],
-    psyche:['L\'esprit fait la synthèse : les fils du cycle se raccordent.','L\'esprit revient sur les décisions prises.'],
-    lien:['Les relations portent l\'empreinte de ce qui a été vécu.','On ressent le besoin de mettre des mots sur ce qui a changé.'],
-    invitation:['Écrire un bilan de cycle, aussi court soit-il.','Identifier une chose à déposer avant que le cycle ne se referme.']},
-  11:{corps:['Le corps entre en phase de densification, loin du bruit.','Le corps a besoin d\'obscurité et de silence.'],
-    psyche:['L\'esprit se retire dans ses couches les plus denses.','L\'esprit prépare silencieusement ce qui ne peut pas encore être dit.'],
-    lien:['Les liens s\'apaisent d\'eux-mêmes.','Seuls les liens qui n\'exigent rien trouvent leur place ici.'],
-    invitation:['Honorer ce silence sans chercher à le remplir.','Formuler intérieurement l\'intention pour le prochain cycle.']},
-  12:{corps:['Le corps est au seuil, une énergie nouvelle point sous la surface.','Le corps tient encore dans le silence mais quelque chose frémit.'],
-    psyche:['L\'esprit perçoit confusément ce qui cherche à naître.','L\'esprit finit de dégager le terrain.'],
-    lien:['Les liens anciens se redéfinissent naturellement.','On commence à ressentir qui mérite d\'être emmené dans le prochain cycle.'],
-    invitation:['Tenir encore dans le silence — le prochain J0 est proche.','Poser une intention simple, claire.']}
-};
-var ARCH_STATE_PHRASES={
-  0:{polarite:'L\'énergie monte doucement — l\'ouverture est progressive et contrôlée.',action:'Moment des premières actions, explorations prudentes.',saison:'Équivaut à l\'équinoxe de printemps : le mouvement commence.'},
-  1:{polarite:'L\'énergie est à son pic d\'extériorisation.',action:'Moment d\'agir fortement, de communiquer clairement.',saison:'Équivaut au solstice d\'été : tout est dehors, tout brille.'},
-  2:{polarite:'L\'énergie commence son retour vers l\'intérieur.',action:'Moment de consolider, de réfléchir, d\'ajuster.',saison:'Équivaut à l\'équinoxe d\'automne : on récolte, on trie.'},
-  3:{polarite:'L\'énergie est pleinement retournée vers le centre.',action:'Moment de l\'intégration profonde, des rituels de clôture.',saison:'Équivaut au solstice d\'hiver : tout se tient dans l\'obscurité, chargé de potentiel.'}
-};
-var ARCH_AXIS_PHRASES=[
-  'L\'axe d\'émergence porte les premières découvertes.',
-  'L\'axe de consolidation demande de structurer ce qui a été découvert.',
-  'L\'axe d\'intégration est celui de la maturité — on transmet ce que l\'on a traversé.'
+// ─── ARCHÉTYPES — lecture fractale à 3 niveaux (cycle 432, J0) ──────────
+// Les 4 mêmes mouvements du souffle (11/10 lever, 6/5 zénith, 10/11
+// coucher, 5/6 zénith polaire — cf. R_EXP/R_CNT du moteur Solônde plus
+// haut) se répètent à 3 échelles imbriquées :
+//  ① Cycle/36 — position du cycle-108 courant dans son groupe de 36 (108=3×36)
+//  ② Jour/432 — position dans le cycle de 432 jours, quarté à 108/216/324,
+//     miroir exact de la structure lever/zénith/coucher/zénith-polaire du cadran
+//  ③ Jour/36 — position dans la sous-phase de 36 jours en cours (432=12×36)
+var MOVEMENTS=[
+  {key:'11/10',name:'Lever',color:'#f5c842',
+    desc:'Ouverture progressive — l\'énergie s\'éveille et cherche sa direction.',
+    corps:'Le corps s\'éveille, la cadence s\'accélère doucement.',
+    invitation:'Choisir une direction sans se disperser.'},
+  {key:'6/5',name:'Zénith',color:'#e84a6f',
+    desc:'Expansion maximale — pic d\'extériorisation, tout est dehors.',
+    corps:'Le corps est en pleine amplitude, l\'énergie rayonne au dehors.',
+    invitation:'Agir, communiquer, en gardant un fil vers le centre.'},
+  {key:'10/11',name:'Coucher',color:'#3ab8a0',
+    desc:'Contraction douce — retour intérieur, consolidation.',
+    corps:'Le corps ralentit, cherche à se poser et à digérer.',
+    invitation:'Trier, ajuster, laisser décanter ce qui a été vécu.'},
+  {key:'5/6',name:'Zénith polaire',color:'#7b58d4',
+    desc:'Contraction maximale — densité, silence, profondeur.',
+    corps:'Le corps est au repos le plus dense, tourné vers l\'intérieur.',
+    invitation:'Se taire, intégrer, préparer sans agir.'}
 ];
 function archParseDate(v){if(!v)return null;var d=new Date(v+'T00:00:00');return isNaN(d)?null:d;}
 function archFmtDate(d){if(!d)return'—';return d.toISOString().slice(0,10);}
 function archAddDays(d,n){var x=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));x.setUTCDate(x.getUTCDate()+n);return x;}
 function archDaysBetween(a,b){return Math.floor((Date.UTC(b.getUTCFullYear(),b.getUTCMonth(),b.getUTCDate())-Date.UTC(a.getUTCFullYear(),a.getUTCMonth(),a.getUTCDate()))/86400000);}
+function movementFor(pos,total){
+  var q=total/4, idx=Math.min(3,Math.floor((pos-1)/q));
+  return {mv:MOVEMENTS[idx],mvIdx:idx,pos:((pos-1)%q)+1,size:q};
+}
 function computeFromJ0(j0,ref){
   ref=ref||new Date();
   var daysSince=archDaysBetween(j0,ref);
   var cycleIndex=Math.floor(daysSince/432)+1;
   var dayInCycle=(daysSince%432)+1;
   var cycle108=((cycleIndex-1)%108)+1;
-  var phaseIndex=Math.floor((dayInCycle-1)/36)+1;
-  var archId=((dayInCycle-1)%9)+1;
-  var stateIdx=(dayInCycle-1)%4;
-  var state=ARCH_STATES[stateIdx];
-  var axisIndex=((cycle108-1)%36)+1;
-  var axisCyclePos=Math.floor((cycle108-1)/36)+1;
-  var isSpiral=dayInCycle>=361;
-  var displayArch=archId;
-  if(phaseIndex===11)displayArch=10; else if(phaseIndex===12)displayArch=11;
-  return{daysSince:daysSince,dayInCycle:dayInCycle,phaseIndex:phaseIndex,cycle108:cycle108,archId:archId,displayArch:displayArch,stateIdx:stateIdx,state:state,axisIndex:axisIndex,axisCyclePos:axisCyclePos,isSpiral:isSpiral};
+  var group36=Math.floor((cycle108-1)/36)+1;
+  var cyclePos36=((cycle108-1)%36)+1;
+  var dayPhaseIdx=Math.floor((dayInCycle-1)/36)+1;
+  var dayPos36=((dayInCycle-1)%36)+1;
+  return{
+    daysSince:daysSince,cycleIndex:cycleIndex,dayInCycle:dayInCycle,cycle108:cycle108,
+    group36:group36,cyclePos36:cyclePos36,dayPhaseIdx:dayPhaseIdx,dayPos36:dayPos36,
+    lvlCycle:movementFor(cyclePos36,36),
+    lvlJour432:movementFor(dayInCycle,432),
+    lvlJour36:movementFor(dayPos36,36)
+  };
 }
 function generateArchAnalysis(comp){
-  var arch=ARCHETYPES[comp.displayArch-1], state=comp.state, ap=ARCH_PHRASES[comp.displayArch], sp=ARCH_STATE_PHRASES[comp.stateIdx];
-  var isExp=comp.stateIdx<=1, expIdx=isExp?0:1;
-  var axeLabel=ARCH_AXIS_PHRASES[comp.axisCyclePos-1]||ARCH_AXIS_PHRASES[0];
-  var header='J0 · Jour '+comp.daysSince+' · Cycle '+comp.cycle108+' · Jour '+comp.dayInCycle+'/432';
+  var lc=comp.lvlCycle, lj=comp.lvlJour432, ld=comp.lvlJour36;
+  var header='J0 · Jour '+comp.daysSince+' · Cycle '+comp.cycle108+'/108 · Jour '+comp.dayInCycle+'/432';
   var quick=[
-    '① Archétype — '+arch.name+' ('+comp.displayArch+'/12) : '+arch.tone+'.',
-    '② État respiratoire — '+state.key+' ('+state.name+') : '+sp.polarite,
-    '③ Corps — '+ap.corps[expIdx],
-    '④ Psyché — '+ap.psyche[expIdx],
-    '⑤ Lien — '+ap.lien[expIdx],
-    '⑥ Tension principale — '+arch.tension,
-    '⑦ Invitation — '+ap.invitation[expIdx],
-    '⑧ Phase '+comp.phaseIndex+'/12 — '+(comp.isSpiral?'zone spirale, hors du temps ordinaire du cycle.':comp.phaseIndex<=4?'phase initiale, l\'énergie cherche sa direction.':comp.phaseIndex<=8?'phase médiane, le cycle est en pleine activité.':'phase tardive, prépare la transition.'),
-    '⑨ Axe '+comp.axisIndex+' — position '+comp.axisCyclePos+'/3 — '+axeLabel
+    '① Cycle/36 — groupe '+comp.group36+'/3, position '+lc.pos+'/9 sur '+lc.mv.name+' ('+lc.mv.key+') : '+lc.mv.desc,
+    '② Jour/432 — '+lj.mv.name+' ('+lj.mv.key+'), jour '+lj.pos+'/108 de ce quart : '+lj.mv.desc,
+    '③ Jour/36 — sous-phase '+comp.dayPhaseIdx+'/12, '+ld.mv.name+' ('+ld.mv.key+'), jour '+ld.pos+'/9 : '+ld.mv.desc
   ];
   var deep=[
-    {titre:'Archétype '+comp.displayArch+' — '+arch.name,phrases:[arch.tone,ap.corps[expIdx],ap.psyche[expIdx],'Action concrète : '+arch.action+'.']},
-    {titre:'État — '+state.key+' ('+state.name+')',phrases:[sp.polarite,sp.action,sp.saison,state.desc]},
-    {titre:'Registre relationnel',phrases:[ap.lien[expIdx],isExp?'L\'entourage perçoit une présence active, rayonnante.':'L\'entourage perçoit un retrait qui n\'est pas un rejet.','Tonalité relationnelle ancrée dans : '+arch.tone+'.']},
-    {titre:'Tension & ombre',phrases:[arch.tension,'Tension structurelle de cet état : '+(isExp?'trop projeter sans revenir se recentrer.':'trop se retirer sans maintenir le contact.'),comp.isSpiral?'La zone spirale amplifie les tensions non digérées.':'Chaque tension non adressée se reportera sur la phase suivante.']},
-    {titre:'Invitation concrète',phrases:[ap.invitation[expIdx],'Action recommandée : '+arch.action+'.','À se demander d\'ici ce soir : qu\'est-ce que cette énergie me demande de commencer, poursuivre ou terminer ?']},
-    {titre:'Phase '+comp.phaseIndex+'/12 · Cycle '+comp.cycle108+'/108',phrases:['Jour '+comp.dayInCycle+'/432 : le cycle est à '+(Math.round(comp.dayInCycle/4.32))+'% de son déroulement.',comp.isSpiral?'Zone spirale commencée au jour 361 — '+(comp.dayInCycle-360)+' jours dans cette densification.':'Zone spirale (jours 361-432) dans '+(361-comp.dayInCycle)+' jours.']},
-    {titre:'Axe '+comp.axisIndex+' — position '+comp.axisCyclePos+'/3',phrases:[axeLabel,comp.axisCyclePos===1?'Position 1 : phase d\'apprentissage — les erreurs sont des données.':comp.axisCyclePos===2?'Position 2 : phase de structuration.':'Position 3 : phase de transmission.']}
+    {titre:'① Cycle/36 — '+lc.mv.name+' ('+lc.mv.key+')',phrases:[
+      'Le cycle 108 en cours ('+comp.cycle108+'/108) occupe la position '+comp.cyclePos36+'/36 dans son groupe (groupe '+comp.group36+'/3).',
+      lc.mv.desc, lc.mv.corps, 'À l\'échelle des cycles : '+lc.mv.invitation]},
+    {titre:'② Jour/432 — '+lj.mv.name+' ('+lj.mv.key+')',phrases:[
+      'Jour '+comp.dayInCycle+'/432, soit le jour '+lj.pos+'/108 du quart '+lj.mv.name+'.',
+      lj.mv.desc, lj.mv.corps, 'À l\'échelle du cycle : '+lj.mv.invitation]},
+    {titre:'③ Jour/36 — '+ld.mv.name+' ('+ld.mv.key+')',phrases:[
+      'Sous-phase '+comp.dayPhaseIdx+'/12 (jours '+((comp.dayPhaseIdx-1)*36+1)+'-'+(comp.dayPhaseIdx*36)+' du cycle), jour '+ld.pos+'/9 sur '+ld.mv.name+'.',
+      ld.mv.desc, ld.mv.corps, 'À l\'échelle de la sous-phase : '+ld.mv.invitation]}
   ];
   return{header:header,quick:quick,deep:deep};
 }
@@ -1311,22 +1262,20 @@ function archApplyJ0(silent){
   J0_ARCH=j0;
   if(!silent){try{localStorage.setItem('chawatch-j0',j0.toISOString());}catch(e){}}
   const comp=computeFromJ0(j0,new Date()); lastArchComp=comp;
-  const arch=ARCHETYPES[comp.displayArch-1];
   const setTxt=(id,v)=>{const el=document.getElementById(id); if(el)el.textContent=v;};
   setTxt('a-j0',archFmtDate(j0)); setTxt('a-days',comp.daysSince); setTxt('a-cycle',comp.cycle108);
-  setTxt('a-day',comp.dayInCycle+' / 432'); setTxt('a-arch',comp.displayArch); setTxt('a-arch-name',arch.name);
-  setTxt('a-state',comp.state.key); setTxt('a-state-name',comp.state.name);
-  const box=document.getElementById('a-arch-box'); if(box)box.style.borderLeftColor=arch.color;
-  const spiralWrap=document.getElementById('a-spiral-wrap'); if(spiralWrap)spiralWrap.style.display=comp.isSpiral?'block':'none';
+  setTxt('a-day',comp.dayInCycle+' / 432');
+  setTxt('a-lvl-cycle',comp.lvlCycle.mv.name+' ('+comp.lvlCycle.mv.key+') · '+comp.lvlCycle.pos+'/9');
+  setTxt('a-lvl-jour432',comp.lvlJour432.mv.name+' ('+comp.lvlJour432.mv.key+') · '+comp.lvlJour432.pos+'/108');
+  setTxt('a-lvl-jour36',comp.lvlJour36.mv.name+' ('+comp.lvlJour36.mv.key+') · '+comp.lvlJour36.pos+'/9');
+  const bc=document.getElementById('a-lvl-cycle-box'); if(bc)bc.style.borderLeftColor=comp.lvlCycle.mv.color;
+  const bj=document.getElementById('a-lvl-jour432-box'); if(bj)bj.style.borderLeftColor=comp.lvlJour432.mv.color;
+  const bd=document.getElementById('a-lvl-jour36-box'); if(bd)bd.style.borderLeftColor=comp.lvlJour36.mv.color;
   const analysis=generateArchAnalysis(comp);
   document.getElementById('a-analysis-quick').innerHTML='<p class="small" style="color:var(--text);font-weight:700;margin-bottom:6px">'+analysis.header+'</p><ul class="arch-analysis">'+analysis.quick.map(s=>'<li>'+s+'</li>').join('')+'</ul>';
   document.getElementById('a-analysis-deep').innerHTML='<p class="small" style="color:var(--text);font-weight:700;margin-bottom:6px">'+analysis.header+'</p>'+analysis.deep.map(dim=>'<div class="arch-dim"><div class="arch-dim-title">'+dim.titre+'</div><ul class="arch-analysis">'+dim.phrases.map(p=>'<li>'+p+'</li>').join('')+'</ul></div>').join('');
-  buildArchTable36(comp.stateIdx*9+comp.archId);
-  const ss=document.getElementById('a-spiral-status');
-  if(ss){
-    if(comp.isSpiral){const dins=comp.dayInCycle-360; ss.innerHTML='<span class="arch-spiral-badge">🌀 Zone Spirale active</span><br><br><strong>'+(comp.phaseIndex===11?'Phase 11 — Incubation':'Phase 12 — Germination')+'</strong> — Jour '+dins+'/72 dans la spirale.';}
-    else{ss.innerHTML='Position : jour '+comp.dayInCycle+'/432 (phase '+comp.phaseIndex+'/12). Zone spirale dans <strong>'+(361-comp.dayInCycle)+' jours</strong>.';}
-  }
+  buildArchGrid(comp);
+  buildArchTable36(comp.cyclePos36,comp.dayPos36);
 }
 function archSetAnalysisTab(t){
   archAnalysisTab=t;
@@ -1335,39 +1284,46 @@ function archSetAnalysisTab(t){
   document.getElementById('a-analysis-quick').style.display=t==='quick'?'block':'none';
   document.getElementById('a-analysis-deep').style.display=t==='deep'?'block':'none';
 }
-function buildArchGrid(){
+function buildArchGrid(comp){
   const g=document.getElementById('a-arch-grid'); if(!g)return; g.innerHTML='';
-  ARCHETYPES.forEach(a=>{
-    const el=document.createElement('div'); el.className='arch-card'; el.style.borderTopColor=a.color;
-    el.innerHTML='<div class="arch-card-num" style="color:'+a.color+'">'+a.id+'</div><div class="arch-card-name">'+a.name+(a.spiral?' <span style="font-size:.6rem;color:var(--cycle)">spirale</span>':'')+'</div><div class="arch-card-desc">'+a.tone+'</div>';
+  MOVEMENTS.forEach((mv,i)=>{
+    const marks=[];
+    if(comp){
+      if(comp.lvlCycle.mvIdx===i)marks.push('<span class="arch-mark" style="background:rgba(155,89,182,.20);color:var(--violet)">Cycle/36</span>');
+      if(comp.lvlJour432.mvIdx===i)marks.push('<span class="arch-mark">Jour/432</span>');
+      if(comp.lvlJour36.mvIdx===i)marks.push('<span class="arch-mark" style="background:rgba(240,192,60,.20);color:var(--gold)">Jour/36</span>');
+    }
+    const el=document.createElement('div'); el.className='arch-card'; el.style.borderTopColor=mv.color;
+    el.innerHTML='<div class="arch-card-num" style="color:'+mv.color+'">'+mv.key+'</div><div class="arch-card-name">'+mv.name+'</div><div class="arch-card-desc">'+mv.desc+'</div>'+(marks.length?'<div style="margin-top:5px">'+marks.join('')+'</div>':'');
     g.appendChild(el);
   });
 }
-function buildArchTable36(activeRow){
-  activeRow=activeRow||0;
+function buildArchTable36(activeCyclePos,activeJourPos){
+  activeCyclePos=activeCyclePos||0; activeJourPos=activeJourPos||0;
   const tbody=document.getElementById('a-table36-body'); if(!tbody)return; tbody.innerHTML='';
-  let idx=1;
-  for(let si=0;si<4;si++)for(let ai=0;ai<9;ai++){
-    const arch=ARCHETYPES[ai], state=ARCH_STATES[si];
-    const tr=document.createElement('tr'); if(idx===activeRow)tr.classList.add('active-row');
-    tr.innerHTML='<td>'+idx+'</td><td style="color:'+arch.color+'">'+arch.name+'</td><td>'+state.key+'</td><td>P'+(si*9+ai+1)+'</td>';
-    tbody.appendChild(tr); idx++;
+  for(let p=1;p<=36;p++){
+    const mv=MOVEMENTS[Math.floor((p-1)/9)];
+    const tr=document.createElement('tr');
+    const isC=p===activeCyclePos, isJ=p===activeJourPos;
+    if(isC&&isJ)tr.classList.add('row-both'); else if(isC)tr.classList.add('row-cycle'); else if(isJ)tr.classList.add('row-jour36');
+    tr.innerHTML='<td>'+p+'</td><td style="color:'+mv.color+'">'+mv.name+'</td><td>'+mv.key+'</td>';
+    tbody.appendChild(tr);
   }
 }
 function drawCycle432Ring(now){
   const comp=computeFromJ0(J0_ARCH,now);
-  const arch=ARCHETYPES[comp.displayArch-1];
+  const mv=comp.lvlJour432.mv;
   const rD=R*1.02;
   const frac=(comp.dayInCycle-1)/432;
   X.beginPath();X.arc(cx,cy,rD,0,TAU);X.strokeStyle='rgba(196,91,191,.14)';X.lineWidth=2;X.stroke();
   const ang=frac*TAU-Math.PI/2;
   const px=cx+Math.cos(ang)*rD, py=cy+Math.sin(ang)*rD;
   const gg=X.createRadialGradient(px,py,0,px,py,10);
-  gg.addColorStop(0,arch.color+'CC'); gg.addColorStop(1,arch.color+'00');
+  gg.addColorStop(0,mv.color+'CC'); gg.addColorStop(1,mv.color+'00');
   X.beginPath();X.arc(px,py,10,0,TAU);X.fillStyle=gg;X.fill();
-  X.beginPath();X.arc(px,py,3,0,TAU);X.fillStyle=arch.color;X.fill();
+  X.beginPath();X.arc(px,py,3,0,TAU);X.fillStyle=mv.color;X.fill();
   X.font=`8px 'Nunito',sans-serif`;X.fillStyle='rgba(232,160,208,.55)';X.textAlign='center';X.textBaseline='top';
-  X.fillText('Cycle 432 · '+arch.name+' · j'+comp.dayInCycle,cx,cy+rD+8);
+  X.fillText('Cycle 432 · '+mv.name+' · j'+comp.dayInCycle,cx,cy+rD+8);
 }
 
 loadLocation();
