@@ -2682,3 +2682,64 @@ latitude approximative — bonne piste si un jour on veut un vrai calcul
 astronomique par latitude (option 2 déjà évoquée), et pourrait doubler
 comme correcteur rapide en voyage. Pas nécessaire pour le modèle
 saisonnier actuel, qui ne demande que l'hémisphère.
+
+## #108 : OmchaWatch remplacé par le design UTC432 (ChaWatch432), amélioré
+
+Rebondissement de la nuit : l'utilisateur a retrouvé un fichier autonome
+qu'il avait fait faire il y a un mois ("UTC432 · Project") et réalisé
+qu'il contenait déjà presque toute l'architecture conceptuelle
+reconstruite ce soir — cycle 432 fractal (12 phases × 36 souffles × 6
+instants), le même triangle 396/432/360 utilisé pour les presets Miaow,
+les mêmes modes EXPANSIF/NEUTRE/CONTRACTIF que les mouvements Solônde, et
+même un mode "brut" (UT18, heure civile sans correction) face à un mode
+corrigé — exactement le geste Hz/Miaow. Décision : plutôt que de
+continuer à développer le moteur FX3D/3D construit plus tôt cette nuit,
+**ce fichier devient le nouveau `omchawatch.html`**, amélioré sur
+demande. L'ancienne version (moteur `geometrie.html`, anneaux Omc/cV/
+Année/Solônde, calage solaire par tap, J0 personnalisé, modèle
+saisonnier hémisphère) reste entièrement récupérable dans l'historique
+git — rien n'est perdu, juste remplacé au fichier de tête.
+
+**Retrait de Paris** : l'ancien fichier calculait un vrai midi solaire
+via l'équation du temps (formule astronomique réelle, ne dépend que du
+jour de l'année — aucun GPS) + une longitude fixée en dur à 2,35°
+(Paris) + les règles de l'heure d'été française câblées en dur
+(`frenchOffset`/`frenchNow`, tout un mécanisme de reconstruction de faux
+"temps français"). Remplacé par un calcul générique et plus simple :
+heure UTC réelle (`getUTCHours()`, toujours correcte quel que soit le
+fuseau du téléphone) + longitude choisie × 4 min/° + équation du temps —
+fonctionne n'importe où sur Terre, sans base de données de fuseaux
+horaires. Le mode UT18 ("neutre") utilise l'heure civile locale du
+téléphone directement (`getHours()`), portable par construction.
+
+**Planisphère** : nouvel onglet "LIEU" — grille équirectangulaire
+(pas de tracé côtier réel, juste graticule + 21 villes repères
+mondiales, pour rester honnête sur ce qui est vraiment dessiné),
+zoomable (molette/pincement, ×1 à ×8), pannable (glisser), tape pour
+poser un repère ou pour attraper une ville proche (rayon de capture
+14px). Curseurs latitude/longitude manuels en complément pour la
+précision. Persisté en local, jamais envoyé nulle part — sert
+uniquement à la correction de longitude du midi solaire.
+
+**Fond personnalisé** : import d'image + mode retouche (glisser pour
+centrer, molette/pincement pour zoomer 60-300%), repris du même schéma
+que la version précédente d'OmchaWatch, adapté à ce fichier (pas de
+caméra 3D à ménager ici — le geste de glisser peut se brancher
+directement).
+
+**Design** : anneaux repoussés vers le bord (.875/.750/.630 → .94/.80/
+.66 de R) pour mieux les séparer et remplir l'espace ; bandes
+arc-en-ciel épaissies (5/3.5/2.5 → 7/5/3.5) ; comète (le point lumineux
+marquant la position actuelle sur chaque anneau) largement agrandie —
+halo ×6.5 (était ×4.5), noyau ×1.3 (était ×0.9), traînée-repère étendue.
+
+Vérifié par tests Playwright : titre sans "Paris", `calcDensity()`
+renvoie une valeur valide 0-432, planisphère s'ouvre/se ferme, tap sur
+la grille pose bien un repère lat/lon cohérent, "Valider" persiste dans
+`LOCATION` (confirmé après rechargement), curseurs manuels fonctionnels,
+import/application de fond personnalisé opérationnel, bascule du mode
+retouche correcte, 0 erreur JS, aucune requête vers l'ancien
+`bg-rotator.css/js` (fichiers qui n'existaient déjà pas dans ce dépôt).
+Vérifié aussi visuellement par capture d'écran (rendu horloge + rendu
+planisphère). APK régénéré et re-signé, vérifié `verified=true` (API
+24+).
