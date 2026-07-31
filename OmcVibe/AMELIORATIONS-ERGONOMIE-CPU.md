@@ -2630,3 +2630,55 @@ Vérifié par tests Playwright : `SOLONDE_MS === 500*12/11` exact,
 `solondeScale(36)=1` toujours vrais, compteur de cycles réel avancé de 2
 ticks sur ~1200ms écoulées (cohérent avec 1200/545,45 ≈ 2,2), 0 erreur
 JS. APK régénéré et re-signé, vérifié `verified=true` (API 24+).
+
+## #107 : OmchaWatch — J0 avec heure précise + modèle saisonnier hémisphère
+
+Demande : pouvoir donner un "temps biologique" via J0 + heure précise, et
+avoir un repère 108/216/324/432 (lever/zénith/coucher/zénith polaire)
+disponible toute l'année, pas seulement quand un calage réel existe. Point
+bloquant identifié ensemble : une heure de lever de soleil *réelle*
+dépend de la latitude — sans elle, impossible de la calculer honnêtement
+(la déclinaison solaire ne dépend que du jour de l'année, mais la traduire
+en durée de jour à un endroit précis exige la position). Décision : pas de
+GPS, pas de latitude — un **modèle saisonnier assumé**, séparé et
+clairement labellisé comme tel, qui ne remplace jamais le calage réel et
+ne s'active que si l'utilisateur le demande explicitement.
+
+**Heure de naissance** : nouveau champ `<input type="time">` à côté de la
+date, persisté séparément (`omchawatch-naissance-heure`). `J0_DATE` se
+recalcule désormais via `_recomputeJ0()` (date + heure, minuit par défaut
+si l'heure n'est pas renseignée) — `setNaissance`/`setNaissanceHeure`
+partagent ce même calcul.
+
+**Modèle saisonnier** (nouveau toggle "🌊 Modèle saisonnier", off par
+défaut) : `theoreticalSolarStep()` calcule une fraction "jour" continue —
+`0.5 + signe×0.15×sin(2π×(jour_de_l'année − 79.5)/365.25)` — ancrée
+exactement à 216/216 aux deux équinoxes (sin=0 par construction) et
+respirant vers ~15,6h/8,4h au solstice le plus favorable selon
+l'hémisphère (signe +1 Nord, −1 Sud). L'heure civile locale sert de proxy
+approximatif à l'heure solaire — assumé et affiché comme tel, jamais
+présenté comme une mesure. `computeOmc()` n'utilise ce modèle qu'en
+dernier recours, seulement quand `currentSolarStep()` (le calage réel)
+rend `null` — la garantie "0 GPS, 0 horloge civile, vraiment" reste
+intacte tant que le modèle n'est pas activé, exactement comme avant
+(`omcNullByDefault` vérifié). Nouveau sélecteur d'hémisphère (Nord/Sud,
+persisté) détermine le sens de la respiration. `updateClockUI` distingue
+maintenant trois états visuellement (calé / modèle saisonnier /
+estimation partielle), jamais confondus.
+
+Vérifié par tests Playwright : comportement par défaut inchangé
+(`SEASON_MODEL_ON=false` ⇒ `computeOmc().value===null`, régression
+zéro), modèle activé donne une valeur 0-432 qui recoupe exactement une
+réimplémentation indépendante de la formule, `dayFrac===0.5` pile au jour
+de l'équinoxe pour les deux hémisphères, bascule Nord/Sud donne des
+lectures différentes (miroir), `J0_DATE` exact avec date+heure
+(`1997-06-12T14:32` − 288j), persistance intégrale après rechargement
+(saisonnier, hémisphère, J0), 0 erreur JS. APK régénéré et re-signé,
+vérifié `verified=true` (API 24+).
+
+**Non retenu pour l'instant, noté pour plus tard** : la proposition d'un
+"planisphère rond" (un par hémisphère) comme sélecteur visuel de
+latitude approximative — bonne piste si un jour on veut un vrai calcul
+astronomique par latitude (option 2 déjà évoquée), et pourrait doubler
+comme correcteur rapide en voyage. Pas nécessaire pour le modèle
+saisonnier actuel, qui ne demande que l'hémisphère.

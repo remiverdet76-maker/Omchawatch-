@@ -136,14 +136,24 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
         </div>
         <div class="hint" id="cw-cal-hint">Appuie au moment exact de l'événement observé — la sphère de densité s'affine avec ce calage.</div>
         <div class="pbtn" onclick="resetCal()">↺ Réinitialiser le calage</div>
+        <div class="chiprow" style="margin-top:10px;">
+          <span class="chip" id="cw-btn-seasonmodel" onclick="toggleSeasonModel()">🌊 Modèle saisonnier</span>
+        </div>
+        <div class="hint">Estimation continue (108/216/324/432 toute l'année, respiration sinusoïdale par hémisphère) utilisée SEULEMENT quand aucun calage réel n'existe pour l'instant présent — jamais une mesure, jamais du GPS. Utilise l'heure civile du téléphone comme proxy approximatif de l'heure solaire (assumé, réglable plus tard si besoin d'une vraie précision par latitude).</div>
       </div>
       <div class="pcard">
         <div class="pct">PERSONNALISATION · J0</div>
-        <input type="date" id="in-naissance" onchange="setNaissance(this.value)" style="width:100%;background:rgba(20,12,4,.5);border:1px solid var(--border);border-radius:8px;color:var(--bright);padding:.45rem .55rem;font-family:var(--mono);font-size:.8rem;margin-bottom:10px;">
+        <input type="date" id="in-naissance" onchange="setNaissance(this.value)" style="width:100%;background:rgba(20,12,4,.5);border:1px solid var(--border);border-radius:8px;color:var(--bright);padding:.45rem .55rem;font-family:var(--mono);font-size:.8rem;margin-bottom:6px;">
+        <input type="time" id="in-naissance-heure" onchange="setNaissanceHeure(this.value)" style="width:100%;background:rgba(20,12,4,.5);border:1px solid var(--border);border-radius:8px;color:var(--bright);padding:.45rem .55rem;font-family:var(--mono);font-size:.8rem;margin-bottom:10px;">
         <div class="pr"><div class="pl">J0 (conception)</div><div class="pv" id="cw-j0">--</div></div>
         <div class="pr"><div class="pl">Jours depuis J0</div><div class="pv" id="cw-jours">--</div></div>
         <div class="pr"><div class="pl">Cycle organique (432)</div><div class="pv" id="cw-organique">--</div></div>
-        <div class="hint">J0 = naissance − 288 jours. Référence de l'année : équinoxe du 20 mars 2026.</div>
+        <div class="hint">J0 = naissance (date + heure si connue) − 288 jours. Référence de l'année : équinoxe du 20 mars 2026.</div>
+        <div class="chiprow" style="margin-top:8px;">
+          <span class="chip" id="cw-btn-hemi-nord" onclick="setHemisphere('nord')">❄️ Hémisphère Nord</span>
+          <span class="chip" id="cw-btn-hemi-sud" onclick="setHemisphere('sud')">☀️ Hémisphère Sud</span>
+        </div>
+        <div class="hint">Détermine quelle saison (donc quel sens de respiration jour/nuit) s'applique au modèle saisonnier ci-dessus.</div>
       </div>
     </div>
     <div id="panFormes" class="dsec">
@@ -421,19 +431,100 @@ function currentSolarStep(){
 // lecture Omc — plutôt inventer une valeur via l'heure civile.
 function computeOmc(){
   const r=currentSolarStep();
-  if(!r)return{value:null,calibrated:false};
-  return{value:r.step,calibrated:r.exact};
+  if(r)return{value:r.step,calibrated:r.exact,modeled:false};
+  if(SEASON_MODEL_ON){const m=theoreticalSolarStep();return{value:m.step,calibrated:false,modeled:true};}
+  return{value:null,calibrated:false,modeled:false};
 }
 function resetCal(){CAL={lever:null,zenith:null,coucher:null,minuit:null};saveCal();updateSunUI();}
 
+// ── Modèle saisonnier (estimation, jamais du GPS) ───────────────────
+// Comble les moments où aucun calage réel n'existe encore pour "maintenant"
+// (currentSolarStep() rend null) : au lieu de rester muet, on propose une
+// respiration jour/nuit sinusoïdale, ancrée exactement à 216/216 aux deux
+// équinoxes, qui s'étire vers l'été et se resserre vers l'hiver selon
+// l'hémisphère déclaré — 108/216/324/432 toute l'année, sans jamais
+// bouger les repères eux-mêmes. Amplitude fixe assumée (±3,6h autour de
+// 12h, climat tempéré) — pas une mesure de ton lieu réel, un modèle
+// continu (la Solônde respire ; une seconde ne pourrait pas faire ça).
+// Utilise l'heure civile locale du téléphone comme proxy approximatif de
+// l'heure solaire — assumé et déclaré comme tel, jamais présenté comme du
+// GPS ni une mesure indépendante. Désactivé par défaut : n'affaiblit en
+// rien la garantie "0 GPS, 0 horloge civile" tant qu'on ne l'active pas
+// explicitement.
+const SEASON_AMPLITUDE=0.15; // fraction de 24h ajoutée/retirée au pic (±3,6h)
+const SPRING_EQUINOX_DOY=79.5; // ~20 mars, jour de l'année (moyenne, non bissextile)
+let HEMISPHERE='nord';
+function loadHemisphere(){
+  try{const s=localStorage.getItem('omchawatch-hemisphere');if(s)HEMISPHERE=s;}catch(e){}
+}
+function setHemisphere(h){
+  HEMISPHERE=(h==='sud')?'sud':'nord';
+  try{localStorage.setItem('omchawatch-hemisphere',HEMISPHERE);}catch(e){}
+  updateSeasonModelUI();
+}
+let SEASON_MODEL_ON=false;
+function loadSeasonModel(){
+  try{SEASON_MODEL_ON=localStorage.getItem('omchawatch-seasonmodel')==='1';}catch(e){}
+}
+function toggleSeasonModel(){
+  SEASON_MODEL_ON=!SEASON_MODEL_ON;
+  try{localStorage.setItem('omchawatch-seasonmodel',SEASON_MODEL_ON?'1':'0');}catch(e){}
+  updateSeasonModelUI();
+  updateClockUI(computeOmc());
+}
+function updateSeasonModelUI(){
+  const b=document.getElementById('cw-btn-seasonmodel');if(b)b.classList.toggle('on',SEASON_MODEL_ON);
+  const bn=document.getElementById('cw-btn-hemi-nord');if(bn)bn.classList.toggle('on',HEMISPHERE==='nord');
+  const bs=document.getElementById('cw-btn-hemi-sud');if(bs)bs.classList.toggle('on',HEMISPHERE==='sud');
+}
+function _dayOfYear(d){
+  const start=new Date(d.getFullYear(),0,0);
+  return Math.floor((d-start)/86400000);
+}
+function theoreticalSolarStep(){
+  const now=new Date();
+  const doy=_dayOfYear(now);
+  const sign=HEMISPHERE==='sud'?-1:1;
+  const dayFrac=0.5+sign*SEASON_AMPLITUDE*Math.sin(2*Math.PI*(doy-SPRING_EQUINOX_DOY)/365.25);
+  const half=dayFrac/2;
+  const sunrise=0.5-half,sunset=0.5+half;
+  const tod=(now.getHours()*3600+now.getMinutes()*60+now.getSeconds())/86400;
+  if(tod>=sunrise&&tod<=sunset)
+    return{step:108+(tod-sunrise)/dayFrac*216,modeled:true};
+  const nightTotal=1-dayFrac;
+  const nightElapsed=tod>sunset?(tod-sunset):(1-sunset)+tod;
+  return{step:(324+(nightElapsed/nightTotal)*108)%432,modeled:true};
+}
+
 let J0_DATE=null;
 function loadNaissance(){
-  try{const s=localStorage.getItem('omchawatch-naissance');if(s){const el=document.getElementById('in-naissance');if(el)el.value=s;setNaissance(s);}}catch(e){}
+  try{
+    const s=localStorage.getItem('omchawatch-naissance');
+    if(s){const el=document.getElementById('in-naissance');if(el)el.value=s;}
+    const h=localStorage.getItem('omchawatch-naissance-heure');
+    if(h){const el=document.getElementById('in-naissance-heure');if(el)el.value=h;}
+    if(s)_recomputeJ0();
+  }catch(e){}
 }
 function setNaissance(v){
   if(!v)return;
   try{localStorage.setItem('omchawatch-naissance',v);}catch(e){}
-  const birth=new Date(v+'T00:00:00');
+  _recomputeJ0();
+}
+// Heure de naissance : précise le J0 au-delà du simple jour (par défaut
+// minuit si non renseignée) — sert le calcul "temps biologique" personnel,
+// distinct du J0 Terrestre (équinoxe) utilisé pour l'année 0-360.
+function setNaissanceHeure(v){
+  try{localStorage.setItem('omchawatch-naissance-heure',v||'');}catch(e){}
+  _recomputeJ0();
+}
+function _recomputeJ0(){
+  let dateStr='';
+  try{dateStr=localStorage.getItem('omchawatch-naissance')||'';}catch(e){}
+  if(!dateStr)return;
+  let heureStr='';
+  try{heureStr=localStorage.getItem('omchawatch-naissance-heure')||'';}catch(e){}
+  const birth=new Date(dateStr+'T'+(heureStr||'00:00')+':00');
   J0_DATE=new Date(birth.getTime()-288*86400000);
   updateJ0UI();
 }
@@ -474,7 +565,8 @@ function updateClockUI(omc){
     setTxt('cw-omc','pas encore calé');
     setTxt('cw-cv','--');
   }else{
-    setTxt('cw-omc',omc.value.toFixed(1)+(omc.calibrated?'':' (estimation)'));
+    const suffix=omc.calibrated?'':(omc.modeled?' (modèle saisonnier)':' (estimation)');
+    setTxt('cw-omc',omc.value.toFixed(1)+suffix);
     setTxt('cw-cv','+'+Math.round((omc.value-Math.floor(omc.value))*100)+'%');
   }
   setTxt('cw-annee','jour '+yr.pos+'/360'+(yr.measured?' ('+yr.measured+' mesurés)':' (estimation calendaire)'));
@@ -483,13 +575,16 @@ function updateClockUI(omc){
   const hdr=document.getElementById('hdr-sub');
   if(hdr)hdr.textContent=omc.value==null
     ?'Pas encore calé — appuie au lever du soleil (☉)'
-    :('Omc '+omc.value.toFixed(1)+(omc.calibrated?'':' (est.)')+' · Année '+yr.pos+'/360');
+    :('Omc '+omc.value.toFixed(1)+(omc.calibrated?'':(omc.modeled?' (modèle)':' (est.)'))+' · Année '+yr.pos+'/360');
   const hint=document.getElementById('cw-cal-hint');
   if(hint)hint.textContent=omc.value==null
     ?"Aucune estimation tant qu'aucun repère n'est calé — pas de secours via l'heure du téléphone : 0 GPS, 0 horloge civile, vraiment."
     :(omc.calibrated
       ?'Calage actif — lecture Omc mesurée entre deux repères réels.'
-      :'Coucher calé, zénith polaire estimé (moitié de la durée mesurée du matin) — tape ☾ pour une lecture exacte.');
+      :(omc.modeled
+        ?'Modèle saisonnier actif (estimation continue, pas une mesure) — tape un repère solaire réel pour une lecture calée.'
+        :'Coucher calé, zénith polaire estimé (moitié de la durée mesurée du matin) — tape ☾ pour une lecture exacte.'));
+  updateSeasonModelUI();
 }
 
 // ── Bruit de valeur 3D compact (#6 distorsion organique) ───────────
@@ -1553,6 +1648,9 @@ function drawGeo(ts){
 loadCal();
 updateSunUI();
 loadNaissance();
+loadHemisphere();
+loadSeasonModel();
+updateSeasonModelUI();
 loadBgState();
 fx3dSetForm('metatron'); // repère central calme (12 sommets fixes) — les anneaux portent l'horloge, le centre ne doit pas rivaliser visuellement
 fx3dSetRatio('432/360');
