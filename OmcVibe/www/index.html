@@ -5032,7 +5032,19 @@ function openFreqEdit() {
   if (!freq || !inp) return;
   freq.style.display = 'none';
   inp.style.display = 'block';
-  inp.value = UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(2) : masterFreq;
+  if (UNIT_MODE === 'miaow') {
+    inp.min = hzToMiaow(F_MIN).toFixed(2);
+    inp.max = hzToMiaow(432).toFixed(2);
+    inp.step = '0.01';
+    inp.value = hzToMiaow(masterFreq).toFixed(2);
+    inp.placeholder = hzToMiaow(masterFreq).toFixed(2);
+  } else {
+    inp.min = F_MIN;
+    inp.max = 432;
+    inp.step = '1';
+    inp.value = masterFreq;
+    inp.placeholder = masterFreq;
+  }
   inp.focus(); inp.select();
 }
 function handleFreqKey(e) {
@@ -5530,6 +5542,11 @@ function setMasterFreq(f) {
   });
   _retuneSubDrone(); // #16 (roadmap)
   saveState();
+}
+// #102 : presets "rock star binaurale" — 432/396/360 pensés en Miaow (pas
+// convertis depuis les anciens 432/396/360 Hz), ronds dans cette unité-là.
+function setMasterFreqMiaow(miaowVal) {
+  setMasterFreq(Math.round(miaowToHz(miaowVal)));
 }
 
 // #40/#52 : cellule violette du dock — saisie directe de la fréquence maître.
@@ -6975,6 +6992,14 @@ function buildCustomizeHTML() {
     <div class="cust-bg-grid" style="grid-template-columns:repeat(2,1fr);">
       <button class="cust-bg-btn unit-btn${UNIT_MODE==='hz'?' on':''}" data-unit="hz" onclick="setUnitMode('hz')">Hz</button>
       <button class="cust-bg-btn unit-btn${UNIT_MODE==='miaow'?' on':''}" data-unit="miaow" onclick="setUnitMode('miaow')">🐈 Miaow</button>
+    </div>
+
+    <div class="pct" style="margin-top:.9rem">🐈 Rock star binaurale</div>
+    <div class="cust-hint">432 / 396 / 360 Miaow — les nouveaux nombres sacrés, pensés directement en Miaow plutôt que convertis depuis le Hz.</div>
+    <div class="cust-bg-grid" style="grid-template-columns:repeat(3,1fr);">
+      <button class="cust-bg-btn" onclick="setMasterFreqMiaow(432)">432<br><span style="font-size:.65rem;opacity:.65">${miaowToHz(432).toFixed(1)}Hz</span></button>
+      <button class="cust-bg-btn" onclick="setMasterFreqMiaow(396)">396<br><span style="font-size:.65rem;opacity:.65">${miaowToHz(396).toFixed(1)}Hz</span></button>
+      <button class="cust-bg-btn" onclick="setMasterFreqMiaow(360)">360<br><span style="font-size:.65rem;opacity:.65">${miaowToHz(360).toFixed(1)}Hz</span></button>
     </div>
 
     <div class="pct" style="margin-top:1.1rem">Apparence</div>

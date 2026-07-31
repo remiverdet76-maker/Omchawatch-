@@ -2487,3 +2487,40 @@ Vérifié par tests Playwright (Chaharmony et OmcVibe) : `hzToMiaow(432)
 manuelle en mode Miaow round-trip correcte vers 216 Hz sur les deux apps,
 bascule d'unité + persistance intactes, 0 erreur JS. APK régénéré et
 re-signé, vérifié `verified=true` (API 24+).
+
+## #103 : presets « rock star binaurale » 432/396/360 Miaow + plage adaptée
+
+Deux demandes liées : (1) le champ de saisie de la fréquence maître
+(OmcVibe) gardait des bornes `min`/`max` en Hz même en mode Miaow — un
+utilisateur tapant en Miaow voyait un plafond HTML toujours annoncé
+« 432 » alors que ce nombre-là signifie maintenant tout autre chose (le
+nouveau nombre sacré 432 **Miaow** ≈ 205 Hz, à ne pas confondre avec
+l'ancien plafond 432 **Hz** ≈ 910 Miaow) ; (2) demande explicite de faire
+de 432 / 396 / 360 **Miaow** — pensés directement dans cette unité, pas
+convertis depuis les anciens 432/396/360 Hz — les nouvelles fréquences de
+référence de l'app.
+
+**Plage adaptée** (`index.html`, `openFreqEdit()`) : `min`/`max`/`step`/
+`placeholder` de `#freq-input-master` recalculés à l'ouverture de
+l'édition selon `UNIT_MODE` — bornes Hz (`F_MIN`–432) en mode Hz, bornes
+Miaow (`hzToMiaow(F_MIN)`–`hzToMiaow(432)` ≈ 113,78–910,22) en mode
+Miaow.
+
+**Presets rock star** : nouvelle fonction `setMasterFreqMiaow(miaowVal)`
+(OmcVibe) / `setOscFreqMiaow(i, miaowVal)` (Chaharmony), toutes deux de
+simples wrappers `setMasterFreq(Math.round(miaowToHz(v)))` /
+`setOscFreq(i, miaowToHz(v))` — aucune nouvelle logique de tuning, juste
+la conversion. Trois boutons 432/396/360 (→ 205,0/187,9/170,9 Hz, tous
+confortablement dans la plage existante 54-432 Hz / 54-864 Hz, donc pas
+besoin d'élargir le moteur audio) : sur OmcVibe dans le panneau
+« Personnaliser l'interface », juste sous le sélecteur Hz/Miaow ; sur
+Chaharmony directement sous le curseur de fréquence de chaque
+oscillateur (s'applique à l'oscillateur affiché).
+
+Vérifié par tests Playwright : `miaowToHz(432)===205.03125`,
+`miaowToHz(396)===187.9453125`, `miaowToHz(360)===170.859375` (exacts),
+`setMasterFreqMiaow(432)` → `masterFreq===205`, bornes de
+`#freq-input-master` correctement basculées entre mode Hz (54/432) et
+mode Miaow (113.78/910.22), boutons presets présents et fonctionnels sur
+les deux apps, 0 erreur JS. APK régénéré et re-signé, vérifié
+`verified=true` (API 24+).

@@ -48,6 +48,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
   border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 8px rgba(232,160,32,.6);}
 input[type=range].pink::-webkit-slider-thumb{background:#FF6FA8;box-shadow:0 0 8px rgba(255,111,168,.6);}
 .freq-range{display:flex;justify-content:space-between;font-size:.6rem;opacity:.4;margin-top:2px;}
+.miaow-presets{display:flex;gap:.4rem;margin-top:.5rem;}
+.miaow-preset-btn{flex:1;padding:.35rem .2rem;border-radius:8px;border:1.5px solid var(--border);
+  background:rgba(20,12,4,.5);color:var(--goldBright);font-size:.72rem;cursor:pointer;text-align:center;line-height:1.3;}
+.miaow-preset-btn span{display:block;font-size:.58rem;opacity:.6;}
 .n-row{display:flex;align-items:center;justify-content:center;gap:.9rem;margin:.7rem 0;}
 .n-step{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--border);
   background:rgba(20,12,4,.5);color:var(--goldBright);font-size:1rem;cursor:pointer;
@@ -370,6 +374,10 @@ function setOscFreq(i, hz) {
   }
   renderOsc(i);
 }
+// #102 : presets "rock star binaurale" — 432/396/360 pensés en Miaow.
+function setOscFreqMiaow(i, miaowVal) {
+  setOscFreq(i, miaowToHz(miaowVal));
+}
 // #66 : entrée manuelle de la fréquence (tap sur la valeur → clavier)
 function openOscFreqEdit(i) {
   const inp = document.getElementById('freqEdit' + i);
@@ -507,6 +515,11 @@ function renderOsc(i) {
       </div>
       <input type="range" min="54" max="864" step="0.5" value="${o.freq}" oninput="setOscFreq(${i},this.value)">
       <div class="freq-range"><span>${UNIT_MODE==='miaow'?hzToMiaow(54).toFixed(2)+' 🐈':'54Hz'}</span><span>${UNIT_MODE==='miaow'?hzToMiaow(864).toFixed(2)+' 🐈':'864Hz'}</span></div>
+      <div class="miaow-presets">
+        <button class="miaow-preset-btn" onclick="setOscFreqMiaow(${i},432)">432🐈<span>${miaowToHz(432).toFixed(1)}Hz</span></button>
+        <button class="miaow-preset-btn" onclick="setOscFreqMiaow(${i},396)">396🐈<span>${miaowToHz(396).toFixed(1)}Hz</span></button>
+        <button class="miaow-preset-btn" onclick="setOscFreqMiaow(${i},360)">360🐈<span>${miaowToHz(360).toFixed(1)}Hz</span></button>
+      </div>
       <div class="n-row">
         <button class="n-step" onclick="stepOscN(${i},-0.1)">−</button>
         <button class="n-mute${o.muted?' muted':''}" onclick="toggleOscMute(${i})">${o.muted?'✕':'■'}</button>
