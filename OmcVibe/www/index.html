@@ -2569,6 +2569,23 @@ let masterFreq  = 144;
 // la frontière de fenêtre). Pont explicite pour Géométrie (qui lit la
 // fréquence maître RÉELLEMENT en cours de lecture pour teinter son flux).
 window.getMasterFreq = () => masterFreq;
+
+// ─── Unité Miaow — 1 Miaow = 15552 Hz. Couche d'affichage/saisie sur le
+// SEUL nombre maître (sphère centrale) ; le moteur audio et tous les
+// calculs satellites (ratio×n, teintes, presets) restent en Hz partout
+// ailleurs, intacts. cf. Chaharmony (même définition, même principe).
+const MIAOW_HZ = 15552;
+let UNIT_MODE = 'hz';
+try { UNIT_MODE = localStorage.getItem('fbf432-unit') || 'hz'; } catch(e) {}
+function hzToMiaow(hz) { return hz / MIAOW_HZ; }
+function miaowToHz(m) { return m * MIAOW_HZ; }
+function setUnitMode(mode) {
+  UNIT_MODE = mode === 'miaow' ? 'miaow' : 'hz';
+  try { localStorage.setItem('fbf432-unit', UNIT_MODE); } catch(e) {}
+  document.querySelectorAll('.unit-btn').forEach(b => b.classList.toggle('on', b.dataset.unit === UNIT_MODE));
+  if (typeof updateDisplay === 'function') updateDisplay();
+}
+function fmtMasterFreqDisplay() { return UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(5) + ' 🐈' : masterFreq; }
 let globalDelta = DELTA_DEFAULT;   // #35 : référence Delta (n'impose plus le même battement à tous)
 let masterVol   = 0.70;  // #62 : ramené de 0.85 à 0.70 (retour terrain "gains trop forts")
 // #38 : remonté 0.5→1.0 (+6 dB). Le plafond à 0.5 datait d'avant la chaîne
@@ -4989,7 +5006,7 @@ function buildVesicaPairs() {
          style="border-color:${mc};background:radial-gradient(circle,${mcSoft} 0%,${mcGlow.replace('0.5','0.18')} 55%,rgba(20,5,38,.6) 100%);box-shadow:0 0 30px ${mcGlow};backdrop-filter:blur(4px);cursor:pointer;user-select:none;"
          onmousedown="_vpStart(${MASTER_IDX},event)" onmouseup="_vpEnd(${MASTER_IDX})" onmouseleave="_vpCancel()" onmousemove="_vpMove(${MASTER_IDX},event)"
          ontouchstart="_vpStart(${MASTER_IDX},event)" ontouchend="_vpEnd(${MASTER_IDX})" ontouchmove="_vpMove(${MASTER_IDX},event)">
-      <span class="ms-freq" id="ms-freq" onclick="event.stopPropagation();openFreqEdit();">${masterFreq}</span>
+      <span class="ms-freq" id="ms-freq" onclick="event.stopPropagation();openFreqEdit();">${fmtMasterFreqDisplay()}</span>
       <input type="number" id="freq-input-master" min="${F_MIN}" max="432" placeholder="${masterFreq}" autocomplete="off"
              onkeydown="handleFreqKey(event);">
       <span class="ms-state" id="ms-state">Binaural</span>
@@ -5012,7 +5029,9 @@ function openFreqEdit() {
   const inp  = document.getElementById('freq-input-master');
   if (!freq || !inp) return;
   freq.style.display = 'none';
-  inp.style.display = 'block'; inp.value = masterFreq; inp.focus(); inp.select();
+  inp.style.display = 'block';
+  inp.value = UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(5) : masterFreq;
+  inp.focus(); inp.select();
 }
 function handleFreqKey(e) {
   if (e.key === 'Enter') { e.preventDefault(); exitEditMaster(true); }
@@ -5025,8 +5044,10 @@ function exitEditMaster(apply) {
   inp.style.display = 'none';
   freq.style.display = 'block';
   if (!apply) return;
-  const v = parseInt(inp.value);
-  if (isNaN(v) || v < F_MIN || v > 432) return;
+  const raw = parseFloat(inp.value);
+  if (isNaN(raw)) return;
+  const v = UNIT_MODE === 'miaow' ? Math.round(miaowToHz(raw)) : Math.round(raw);
+  if (v < F_MIN || v > 432) return;
   setMasterFreq(v);
 }
 
@@ -5591,7 +5612,7 @@ function masterStep(delta) {
 function onMasterInput(raw) {
   const v = parseInt(raw);
   if (isNaN(v) || v < F_MIN || v > 432) return;
-  const msf = document.getElementById('ms-freq'); if (msf) msf.textContent = v;
+  const msf = document.getElementById('ms-freq'); if (msf) msf.textContent = UNIT_MODE === 'miaow' ? hzToMiaow(v).toFixed(5) + ' 🐈' : v;
 }
 function onMasterChange(raw) {
   const v = Math.max(F_MIN, Math.min(432, parseInt(raw)));
@@ -6690,7 +6711,7 @@ function _rtExitNEdit(i, apply) {
 // ── FBF hz + state ────────────────────────────────────────────────
 function patchFBFHz() {
   const el = document.getElementById('fbf-hz');
-  if (el) el.textContent = masterFreq;
+  if (el) el.textContent = fmtMasterFreqDisplay();
 }
 
 function patchFBFState() {
@@ -6947,6 +6968,13 @@ function buildCustomizeHTML() {
       <button class="cust-bg-btn" id="aq-btn-light" onclick="setAudioQuality('light')">Légère</button>
     </div>
 
+    <div class="pct" style="margin-top:1.1rem">Unité de fréquence</div>
+    <div class="cust-hint">Miaow = 15552 Hz (1 Solônde = 1 seconde, 15552 Miaow par Solônde). N'affecte que la lecture/saisie de la fréquence maître — le moteur audio reste en Hz.</div>
+    <div class="cust-bg-grid" style="grid-template-columns:repeat(2,1fr);">
+      <button class="cust-bg-btn unit-btn${UNIT_MODE==='hz'?' on':''}" data-unit="hz" onclick="setUnitMode('hz')">Hz</button>
+      <button class="cust-bg-btn unit-btn${UNIT_MODE==='miaow'?' on':''}" data-unit="miaow" onclick="setUnitMode('miaow')">🐈 Miaow</button>
+    </div>
+
     <div class="pct" style="margin-top:1.1rem">Apparence</div>
     <div class="sl-row">
       <label>Taille du texte <span id="uisize-val">${uisize}%</span></label>
@@ -7065,7 +7093,7 @@ function updateMasterState() {
 
 // ── updateDisplay ─────────────────────────────────────────────────
 function updateDisplay() {
-  const msf = document.getElementById('ms-freq'); if (msf) msf.textContent = masterFreq;
+  const msf = document.getElementById('ms-freq'); if (msf) msf.textContent = fmtMasterFreqDisplay();
   const mi  = document.getElementById('master-input');
   if (mi && document.activeElement!==mi) mi.value = masterFreq;
   const pmi = document.getElementById('dcell-purple-input'); // #40
@@ -7119,7 +7147,7 @@ function updateOrbUI(i) {
     vcp.classList.toggle('vp-muted',isMutedP);
     vcp.classList.toggle('vp-live', flowing&&!isMutedP);
     if(i===MASTER_IDX){
-      const msf=document.getElementById('ms-freq'); if(msf) msf.textContent=fmtShort(pF);
+      const msf=document.getElementById('ms-freq'); if(msf) msf.textContent=fmtMasterFreqDisplay();
     } else {
       const f=document.getElementById('vp-pf-'+i); if(f) f.textContent=fmtShort(pF);
     }

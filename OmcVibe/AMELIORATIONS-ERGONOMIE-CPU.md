@@ -2413,3 +2413,50 @@ molette modifie le zoom, état intégralement restauré après rechargement
 de page (image, offset, zoom identiques), réinitialisation revient bien
 à `img/cosmic-flux.jpg`. 0 erreur JS. APK régénéré et re-signé, vérifié
 `verified=true` (API 24+).
+
+## #101 : unité Miaow — 1er générateur de fréquence en Miaow (Chaharmony + OmcVibe)
+
+Suite directe du travail sur l'onde Solônde : puisque la Solônde est
+désormais 1 seconde SI "revivifiée" (et non une durée indépendante), et
+qu'il y a 15552 Solônde dans 1 cV, la fréquence associée à une Solônde
+vaut 15552 Hz — définie comme **1 Miaow**. Vérifié par le calcul : 432 Hz
+= 1/36 Miaow exact, 108 Hz = 1/144 Miaow exact (15552 = 432×36 = 108×144),
+396 Hz = 11/432 Miaow, 360 Hz = 5/216 Miaow. Demande explicite : « on ne
+parle plus en Hz [...] pour faire le 1er générateur de Fréquence Miaow »,
+appliqué à Chaharmony ET OmcVibe.
+
+**Chaharmony** (`chaharmony.html`) : `MIAOW_HZ=15552`, `UNIT_MODE`
+persisté (`chaharmony-unit`), `hzToMiaow`/`miaowToHz`, `toggleUnitMode()`
+déclenché en tapant sur le label d'unité (`.freq-hz`) sous chaque
+oscillateur. Affichage principal (`.freq-num`) et curseur (min/max)
+convertis selon le mode ; en mode Miaow, le libellé secondaire rappelle
+la valeur Hz (`🐈 Miaow · 432.0Hz`). Saisie manuelle de fréquence
+convertie dans les deux sens à l'entrée/sortie de l'édition.
+
+**OmcVibe** (`index.html`) : même paire `MIAOW_HZ`/`UNIT_MODE` (persisté
+`fbf432-unit`), portée volontairement limitée à l'affichage/saisie de la
+**fréquence maître** (`#ms-freq`, `openFreqEdit`/`exitEditMaster`) — les
+fréquences des paires satellites et les mirroirs `master-input`/
+`dcell-purple-input` restent en Hz brut, le moteur audio (Web Audio)
+n'ayant de toute façon jamais eu besoin de connaître le Miaow. Nouveau
+sélecteur Hz/🐈Miaow dans le panneau « Personnaliser l'interface »
+(réutilise le style `.cust-bg-grid`/`.cust-bg-btn` existant).
+
+**Bug trouvé et corrigé en cours de route** : `updatePairUI(i)`, appelée
+en boucle sur toutes les paires par `updateDisplay()`, réécrivait
+`#ms-freq` juste après mon nouvel affichage — mais avec `fmtShort(pF)`
+(toujours en Hz brut, `.toFixed(1)`), quel que soit `UNIT_MODE`. Résultat
+observé : "432.0" au lieu de "432" en mode Hz, et aucune conversion en
+mode Miaow. Corrigé en faisant utiliser à cette écriture la même fonction
+centrale `fmtMasterFreqDisplay()` que partout ailleurs. Un second site
+d'écriture (`onMasterInput`, aperçu live pendant le glissé du curseur
+`#master-input`) a été aligné de la même façon pour rester cohérent
+pendant le geste, avant la validation par `onMasterChange`.
+
+Vérifié par tests Playwright (Chaharmony et OmcVibe séparément) :
+`hzToMiaow(432)===1/36` exact, bascule d'unité + persistance
+`localStorage`, édition manuelle en mode Miaow round-trip correcte
+(0.02778 Miaow → 216 Hz sur OmcVibe, → ~432 Hz sur Chaharmony), onglets/
+tabs toujours fonctionnels, `PAIRS.length` inchangé (7), panneau de
+personnalisation toujours valide. 0 erreur JS sur les deux apps. APK
+régénéré et re-signé, vérifié `verified=true` (API 24+).
