@@ -2599,3 +2599,34 @@ complet `_launcherGo('vibe')` → lanceur masqué → `_runDockAction
 route bien vers `_runDockAction(map.extra)` (même mécanisme que
 tap/appui long, lu dans `_bindDock()`). 0 erreur JS. APK régénéré et
 re-signé, vérifié `verified=true` (API 24+).
+
+## #106 : OmchaWatch — SOLONDE_MS corrigé par le ratio fractal 12/11
+
+Retour sur un point resté en suspens depuis la nuit précédente : la plus
+petite unité du système (`SOLONDE_MS`, jusqu'ici une demi-seconde brute,
+500) restait un nombre "mort", non texturé par le reste du modèle
+fractal — incohérent avec le principe déjà posé pour la Solônde elle-même
+("on ne remplace pas la seconde, on la revivifie"). Proposition de
+l'utilisateur : appliquer à cette brique le même ratio 12/11 déjà utilisé
+ailleurs dans la numérologie du modèle (correction 365,2524j civil → 360
+OmcV), plutôt que de la laisser telle quelle.
+
+Deux paramètres restaient à trancher (base 500 vs 1000ms, direction
+12/11 vs 11/12) — posés à l'utilisateur plutôt que devinés, vu l'impact
+sur tout le système de comptage. Choix retenu : **500 × 12/11 ≈ 545,45
+ms**. `SOLONDE_MS` passe de la constante littérale `500` à l'expression
+`500*12/11`, gardée non arrondie dans le code pour que le raisonnement
+reste lisible à la source. Aucune autre fonction (`solondeCount`,
+`solondeMovement`, `solondeScale`) n'a besoin d'être modifiée — leur
+math ne dépend que du *nombre de cycles*, jamais de la durée d'un cycle
+en ms, donc les identités déjà vérifiées (retour exact à 1 après 36
+cycles, etc.) restent intactes par construction. Texte d'aide du panneau
+Horloge et commentaire de code mis à jour pour rester transparents sur
+cette convention (ni cachée, ni présentée comme une mesure indépendante
+— même standard que l'audit 24/60/60).
+
+Vérifié par tests Playwright : `SOLONDE_MS === 500*12/11` exact,
+`solondeScale(0)=1`/`solondeScale(9)=1.1`/`solondeScale(18)=1.32`/
+`solondeScale(36)=1` toujours vrais, compteur de cycles réel avancé de 2
+ticks sur ~1200ms écoulées (cohérent avec 1200/545,45 ≈ 2,2), 0 erreur
+JS. APK régénéré et re-signé, vérifié `verified=true` (API 24+).

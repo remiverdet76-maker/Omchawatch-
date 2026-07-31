@@ -124,7 +124,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
       <div class="pcard">
         <div class="pct">ONDE SOLÔNDE</div>
         <div class="pr"><div class="pl">Cycles depuis J0</div><div class="pv" id="cw-solonde" style="font-size:.82rem;">--</div></div>
-        <div class="hint">Pas une horloge : un compteur de cycles d'onde (11/10 → 6/5 → 10/11 → 5/6), ancré sur J0. La période est un choix délibéré (numériquement une demi-seconde) — jamais lue ni affichée en heure civile.</div>
+        <div class="hint">Pas une horloge : un compteur de cycles d'onde (11/10 → 6/5 → 10/11 → 5/6), ancré sur J0. La période est un choix délibéré — une demi-seconde corrigée par le ratio fractal 12/11 (≈545,45 ms) — jamais lue ni affichée en heure civile.</div>
       </div>
       <div class="pcard">
         <div class="pct">CALAGE SOLAIRE DU JOUR</div>
@@ -1077,16 +1077,19 @@ function drawClockRings(ctx){
 // ═══════════════════════════════════════════════════════════════════
 // SOLÔNDE — onde centrale, PAS une horloge. On ne mesure jamais "combien
 // de temps" ici : on COMPTE des cycles d'onde depuis J0 (ou, à défaut, le
-// premier repère solaire jamais posé). SOLONDE_MS=500 est un choix
-// délibéré — numériquement une demi-seconde — mais ce nombre n'est ni lu
-// ni affiché en heure civile nulle part : seul le compteur de cycles
-// existe, et son unité est la Solônde, pas la seconde. Chaque cycle
-// traverse les 4 mouvements du modèle (expansion douce 11/10, expansion
-// charmante 6/5, contraction douce 10/11, contraction charmante 5/6),
-// répartis en 4 blocs de 9 (36 Solônde/tour) — même schéma déjà validé
-// pour la respiration fractale, ici piloté par un vrai compteur d'ondes
-// plutôt que par le temps d'animation écoulé.
-const SOLONDE_MS=500;
+// premier repère solaire jamais posé). SOLONDE_MS n'est ni lu ni affiché
+// en heure civile nulle part : seul le compteur de cycles existe, et son
+// unité est la Solônde, pas la seconde. Chaque cycle traverse les 4
+// mouvements du modèle (expansion douce 11/10, expansion charmante 6/5,
+// contraction douce 10/11, contraction charmante 5/6), répartis en 4
+// blocs de 9 (36 Solônde/tour) — même schéma déjà validé pour la
+// respiration fractale, ici piloté par un vrai compteur d'ondes plutôt
+// que par le temps d'animation écoulé. La plus petite unité elle-même
+// n'est pas laissée "morte" (demi-seconde brute non texturée) : on lui
+// applique la même correction fractale 12/11 déjà utilisée ailleurs dans
+// le modèle (365.2524j civil → 360 OmcV) — convention assumée et
+// affichée comme telle, jamais présentée comme une mesure indépendante.
+const SOLONDE_MS=500*12/11; // ≈ 545.4545... ms (500 × 12/11)
 const SOLONDE_RATIOS=[11/10,6/5,10/11,5/6];
 const SOLONDE_NAMES=['Expansion douce','Expansion charmante','Contraction douce','Contraction charmante'];
 function solondeAnchor(){return J0_DATE?J0_DATE.getTime():(DAY_LOG.firstTap||null);}
