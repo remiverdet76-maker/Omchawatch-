@@ -103,7 +103,11 @@ body{
   display:flex;flex-direction:row;align-items:center;justify-content:center;
   gap:.5rem;padding:0 .5rem;
   z-index:100;
-  background:rgba(10,4,26,.24); /* #73 : encore plus transparent (retour terrain : .58 pas assez) */
+  /* #137 : vignette radiale douce derrière le yin-yang, en plus de l'aplat
+     transparent existant — reste tout aussi transparent au repos (même
+     alpha de base, cf. #73), juste moins "plat" derrière la pièce
+     maîtresse du dock. */
+  background:radial-gradient(120px 90px at 50% -8%,rgba(255,222,150,.10),rgba(255,222,150,0) 72%),rgba(10,4,26,.24); /* #73 : encore plus transparent (retour terrain : .58 pas assez) */
   border-top:1px solid rgba(200,100,255,.22);
   /* #81 : 20px→9px — un flou aussi fort aplatit le fond étoilé en une masse
      sombre uniforme quel que soit l'alpha au-dessus, recréant la "barrière
@@ -111,7 +115,7 @@ body{
      seul). Un flou plus léger laisse deviner la nébuleuse/les étoiles au
      travers, tout en gardant le texte des cellules lisible. */
   backdrop-filter:blur(9px);
-  box-shadow:0 -4px 24px rgba(80,40,160,.18);
+  box-shadow:0 -4px 24px rgba(80,40,160,.18),inset 0 1px 0 rgba(255,255,255,.06);
   transition:transform .35s cubic-bezier(.4,0,.2,1);
 }
 #bottom-dock.collapsed{transform:translateY(148px);}
@@ -790,12 +794,14 @@ body{
   flex:1 1 0;max-width:253px;min-width:0; } /* #32 : +25% vs origine (202px→253px) */
 
 .dcell{
+  position:relative;
   display:flex;align-items:center;justify-content:center;gap:.35rem;
   flex:1 1 0;min-width:0;width:auto;height:58px;padding:0 .4rem; /* #52 : +36% vs #32 (43px→58px), le texte tenait pas dans les cellules */
-  border-radius:11px;border:1.5px solid;
+  border-radius:18px;border:1.5px solid; /* #137 : 11px→18px, galbe plus organique qu'un rectangle strict */
   cursor:pointer;user-select:none;-webkit-user-select:none;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
   backdrop-filter:blur(10px);
+  box-shadow:0 3px 12px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.09),inset 0 -10px 16px rgba(0,0,0,.14); /* #137 : sheen + profondeur — moins plat/minimaliste */
   transition:transform .12s,box-shadow .2s,background .2s,border-color .2s;
   overflow:hidden;
 }
@@ -872,35 +878,56 @@ body{
 .dcell-extra-green{ background:radial-gradient(circle at 34% 30%, #D0FFE8, #5AFFA0 45%, #1CA860 100%); box-shadow:0 0 9px rgba(90,255,160,.55),inset 0 1px 2px rgba(255,255,255,.35); }
 .dcell-extra-blue{ background:radial-gradient(circle at 34% 30%, #C8E8FF, #3CAAFF 45%, #1560A8 100%); box-shadow:0 0 9px rgba(60,170,255,.55),inset 0 1px 2px rgba(255,255,255,.35); }
 
-/* CENTRE — Flux : cercle jaune surélevé, plus gros — reste en position
-   absolue (seule sphère de la case, pas de risque de chevauchement). */
-.dcell-wrap-flux{ position:relative;flex-shrink:0;width:auto; }
-.dcell-extra-flux{ position:absolute;top:6px;left:-15px;transform:none;
+/* CENTRE — Flux : yin-yang organique, pièce maîtresse du dock — plus de
+   chip on/off séparé (#137 : "pas besoin de bouton on/off", l'appui long
+   reste le geste pour couper/activer le flux). Le cercle porte à lui seul
+   toute l'affordance : plus gros, une aura blanche respire autour de lui
+   au rythme de la fréquence maître (cf. _updateFluxAuraPulse), et son
+   propre halo doré s'intensifie quand le flux est actif. */
+.dcell-wrap-flux{ position:relative;flex-shrink:0;width:auto;overflow:visible; }
+.dcell-extra-flux{ position:absolute;top:2px;left:-17px;transform:none;z-index:3;
   border-color:rgba(255,215,0,.65);color:#FFD700;
   background:radial-gradient(circle at 34% 30%, #FFF0C0, #FFB020 45%, #B0740A 100%);
   box-shadow:0 0 9px rgba(255,176,32,.55),inset 0 1px 2px rgba(255,255,255,.35); }
 .dcell-extra-flux:hover{ transform:scale(1.12); }
 .dcell-extra-flux:active{ transform:scale(.88); }
+
+/* Aura blanche douce, respire en synchro avec la fréquence maître —
+   toujours visible (même flux coupé) : c'est elle qui dit "c'est ici que
+   ça se passe", indépendamment de l'état on/off du flux. */
+.flux-aura{
+  position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);
+  width:172px;height:172px;border-radius:50%;pointer-events:none;z-index:1;
+  background:radial-gradient(circle,rgba(255,255,255,.32) 0%,rgba(255,246,220,.14) 42%,rgba(255,246,220,0) 72%);
+  animation:fluxAuraBreathe var(--flux-pulse-dur,2.4s) ease-in-out infinite;
+  will-change:transform,opacity;
+}
+@keyframes fluxAuraBreathe{
+  0%,100%{ transform:translate(-50%,-50%) scale(.86); opacity:.55; }
+  50%{ transform:translate(-50%,-50%) scale(1.14); opacity:1; }
+}
+body.vis-lite .flux-aura{ animation:none;opacity:.7; }
+
 .dcell-flux{
-  flex-shrink:0;width:80px;height:80px;margin-bottom:8px; /* #132 : "plus gros et plus réactif" — remonté depuis 61px */
+  position:relative;z-index:2;
+  flex-shrink:0;width:118px;height:118px;margin-bottom:10px; /* #137 : pièce maîtresse — bien plus gros que les autres cellules */
   border-radius:50%;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.05rem;
-  background:radial-gradient(circle at 40% 34%,rgba(255,222,120,.34),rgba(40,28,4,.9));
-  border:2.5px solid rgba(255,210,90,.7);color:#FFDE78;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 38% 32%,rgba(255,226,150,.22),rgba(18,10,28,.96) 70%);
+  border:3px solid rgba(255,214,120,.75);color:#FFDE78;
   cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
-  box-shadow:0 0 22px rgba(255,200,80,.35),0 6px 18px rgba(0,0,0,.5);
+  box-shadow:0 0 26px rgba(255,205,110,.4),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.25);
   animation:fluxIdleGold 3s ease-in-out infinite;
   transition:transform .14s;
 }
 @keyframes fluxIdleGold{
-  0%,100%{ box-shadow:0 0 16px rgba(255,200,80,.3),0 6px 18px rgba(0,0,0,.5); }
-  50%{ box-shadow:0 0 34px rgba(255,210,90,.6),0 6px 18px rgba(0,0,0,.5); }
+  0%,100%{ box-shadow:0 0 20px rgba(255,200,80,.32),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.25); }
+  50%{ box-shadow:0 0 38px rgba(255,214,120,.62),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.25); }
 }
-.dcell-flux:active{ transform:scale(.93); }
+.dcell-flux:active{ transform:scale(.94); }
 .dcell-flux.flowing{
-  border-color:#FFE9A0;color:#FFF0C0;
-  background:radial-gradient(circle at 40% 34%,rgba(255,235,150,.5),rgba(60,42,6,.9));
+  border-color:#FFEBB0;color:#FFF3D0;
   animation:fluxPulseGold 1.6s ease-in-out infinite;
 }
 /* Mode "Visuel léger" : ces animations CSS `infinite` (box-shadow, donc
@@ -911,32 +938,26 @@ body{
 body.vis-lite .dcell-flux,
 body.vis-lite .dcell-flux.flowing{ animation:none; }
 @keyframes fluxPulseGold{
-  0%,100%{ box-shadow:0 0 22px rgba(255,220,110,.5),0 6px 18px rgba(0,0,0,.5); }
-  50%{ box-shadow:0 0 46px rgba(255,230,140,.9),0 6px 18px rgba(0,0,0,.5); }
+  0%,100%{ box-shadow:0 0 26px rgba(255,220,110,.5),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.3); }
+  50%{ box-shadow:0 0 52px rgba(255,230,140,.9),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.3); }
 }
-.dcell-flux .flux-icon{ font-size:1.5rem;line-height:1; }
-.dcell-flux .flux-state{ font-size:.5rem;letter-spacing:.14em;font-weight:700;opacity:.9; }
+/* Symbole yin-yang (SVG) — remplace l'ancien glyphe texte, thème doré/nuit
+   cohérent avec le reste du dock plutôt que le noir/blanc traditionnel. */
+.dcell-flux .flux-yy{ width:70%;height:70%;filter:drop-shadow(0 2px 5px rgba(0,0,0,.5)); }
+.flux-state{
+  position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);
+  font-size:.58rem;letter-spacing:.2em;font-weight:700;
+  color:rgba(255,228,165,.88);text-shadow:0 0 8px rgba(255,200,100,.5);
+  white-space:nowrap;pointer-events:none;
+}
 /* #132 : flash de réactivité au tap (nouveau jeu aléatoire) — distinct de
    l'animation d'état "flowing", one-shot, retiré en JS après ~420ms. */
 .dcell-flux.tap-pulse{ animation:fluxTapPulse .42s ease-out; }
 @keyframes fluxTapPulse{
-  0%{ transform:scale(1); box-shadow:0 0 22px rgba(255,220,110,.5),0 6px 18px rgba(0,0,0,.5); }
-  35%{ transform:scale(1.14); box-shadow:0 0 60px rgba(255,235,160,1),0 6px 18px rgba(0,0,0,.5); }
-  100%{ transform:scale(1); box-shadow:0 0 22px rgba(255,220,110,.5),0 6px 18px rgba(0,0,0,.5); }
+  0%{ transform:scale(1); box-shadow:0 0 26px rgba(255,220,110,.5),0 8px 22px rgba(0,0,0,.55); }
+  35%{ transform:scale(1.16); box-shadow:0 0 66px rgba(255,235,160,1),0 8px 22px rgba(0,0,0,.55); }
+  100%{ transform:scale(1); box-shadow:0 0 26px rgba(255,220,110,.5),0 8px 22px rgba(0,0,0,.55); }
 }
-/* #132 : on/off distinct du bouton "nouveau jeu aléatoire" — petit chip
-   ancré au bord du gros cercle Flux, pour ne pas prendre de hauteur en
-   plus dans un dock déjà serré. */
-.dcell-wrap-flux{ position:relative; }
-.flux-onoff-chip{
-  position:absolute;right:-6px;bottom:6px;width:28px;height:28px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(16,18,28,.92);border:2px solid rgba(140,200,255,.55);color:#9FD8FF;
-  font-size:13px;cursor:pointer;z-index:2;transition:all .15s;
-  box-shadow:0 2px 10px rgba(0,0,0,.55);user-select:none;-webkit-tap-highlight-color:transparent;
-}
-.flux-onoff-chip:active{ transform:scale(.88); }
-.flux-onoff-chip.on{ background:rgba(140,200,255,.28);border-color:#BFE6FF;color:#fff;box-shadow:0 0 14px rgba(140,200,255,.65); }
 
 /* #40 : cellule VIOLETTE — saisie directe de la fréquence maître, sous la
    sphère Flux (on/off). Même thème visuel que les 5 autres cellules
@@ -952,8 +973,9 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
 .dock-col-center{ display:flex;flex-direction:column;align-items:center;gap:.3rem;flex-shrink:0; }
 .dcell-purple{
   display:flex;align-items:center;justify-content:center;gap:.3rem;
-  width:100%;max-width:204px;padding:.3rem .41rem;border-radius:10px;border:1.5px solid rgba(190,110,255,.5); /* #52 : +36% */
+  width:100%;max-width:204px;padding:.3rem .41rem;border-radius:16px;border:1.5px solid rgba(190,110,255,.5); /* #52 : +36% ; #137 : 10px→16px, cohérent avec le reste du dock */
   background:rgba(150,60,255,.14);backdrop-filter:blur(10px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -8px 12px rgba(0,0,0,.12);
 }
 .dcell-purple-step{
   width:30px;height:30px;border-radius:6px;border:1.5px solid rgba(190,110,255,.5); /* #52 : +36% */
@@ -1865,16 +1887,22 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     </div>
   </div>
 
-  <!-- CENTRE — FLUX : cercle jaune surélevé, plus gros — tap=nouveau jeu
-       aléatoire (#132, "un tap = nouveau jeu") · long=Flux on/off ·
-       le chip bleu distinct ci-dessous reste le on/off visible en 1 tap. -->
+  <!-- CENTRE — FLUX : yin-yang organique, pièce maîtresse du dock — tap =
+       nouveau jeu aléatoire (#132) · appui long = Flux on/off (#137 :
+       plus de chip séparé, l'aura + l'intensité du halo suffisent à
+       montrer l'état). -->
   <div class="dock-col dock-col-center">
-    <div class="dcell-wrap dcell-wrap-flux" data-html-import-id="html-import-26">
-      <button class="dcell-flux canva-button" id="dcFlux" title="Tap : nouveau jeu aléatoire · Appui long : Flux on/off" data-html-import-id="html-import-27" data-template-id="button-16" style="background: radial-gradient(circle at 40% 34%, rgba(255, 222, 120, 0.34), rgba(40, 28, 4, 0.9)); color: rgb(255, 222, 120);">
-        <span class="flux-icon canva-text" id="flux-icon" data-html-import-id="html-import-28" data-template-id="span-17" style="color: rgb(255, 222, 120); font-size: 24px;">◎</span>
-        <span class="flux-state canva-text" id="flux-state-side" data-html-import-id="html-import-29" data-template-id="span-18" style="color: rgb(255, 222, 120); font-weight: 700; font-size: 8px;">OFF</span>
+    <div class="dcell-wrap dcell-wrap-flux">
+      <div class="flux-aura" id="fluxAura" aria-hidden="true"></div>
+      <button class="dcell-flux canva-button" id="dcFlux" title="Tap : nouveau jeu aléatoire · Appui long : Flux on/off">
+        <svg class="flux-yy" id="flux-icon" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="47" fill="#150A24" stroke="rgba(255,222,150,.6)" stroke-width="2"/>
+          <path d="M50,3 A47,47 0 0,1 50,97 A23.5,23.5 0 0,1 50,50 A23.5,23.5 0 0,0 50,3 Z" fill="#FFDE96"/>
+          <circle cx="50" cy="26.5" r="7.8" fill="#150A24"/>
+          <circle cx="50" cy="73.5" r="7.8" fill="#FFDE96"/>
+        </svg>
       </button>
-      <button class="flux-onoff-chip" id="fluxOnOffChip" onclick="fbfToggle()" title="Flux on/off">⭘</button>
+      <span class="flux-state" id="flux-state-side">OFF</span>
     </div>
     <!-- #40/#52 : VIOLET — saisie directe de la fréquence maître (+9/-9). Bouton
          "Valider" retiré (#52) : Entrée applique déjà la saisie clavier, les
@@ -6830,32 +6858,37 @@ function _rtExitNEdit(i, apply) {
 function patchFBFHz() {
   const el = document.getElementById('fbf-hz');
   if (el) el.textContent = fmtMasterFreqDisplay();
+  _updateFluxAuraPulse();
+}
+
+// #137 : durée de la respiration de l'aura blanche du bouton Flux, dérivée
+// de la fréquence maître — grave = respiration lente, aigu = plus vive.
+// Bornée à une plage perceptible (le tempo réel de masterFreq, en Hz,
+// serait bien trop rapide pour l'oeil).
+function _updateFluxAuraPulse() {
+  const aura = document.getElementById('fluxAura');
+  if (!aura) return;
+  const dur = Math.max(1.4, Math.min(3.6, 800 / Math.max(1, masterFreq)));
+  aura.style.setProperty('--flux-pulse-dur', dur.toFixed(2) + 's');
 }
 
 function patchFBFState() {
   const btn  = document.getElementById('fbf-btn');
   const stEl = document.getElementById('fbf-state');
   const fBtn = document.getElementById('flux-btn');
-  const fIcon= document.getElementById('flux-icon');
   const fSt  = document.getElementById('flux-state-side');
   const fTxt = document.getElementById('flux-txt');
 
   if (btn)  btn.classList.toggle('flowing', !!flowing);
   if (stEl) stEl.textContent = flowing ? '◉ Rayonnant' : '⬤ Veille';
   if (fBtn) fBtn.classList.toggle('flowing', !!flowing);
-  if (fIcon) fIcon.textContent = flowing ? '◉' : '◎';
   if (fSt)  fSt.textContent   = flowing ? 'ON'  : 'OFF';
   if (fTxt) fTxt.style.color  = flowing ? '#63E6FF' : '';
   const dcFlux = document.getElementById('dcFlux');
+  // #137 : le yin-yang (SVG) reste fixe — l'état on/off se lit dans
+  // l'intensité de son halo (.flowing) et le libellé flux-state, plus de
+  // chip séparé à synchroniser.
   if (dcFlux) dcFlux.classList.toggle('flowing', !!flowing);
-  // #132 : chip on/off distinct du gros bouton (qui tape désormais un
-  // nouveau jeu aléatoire) — reflète le même état "flowing".
-  const chip = document.getElementById('fluxOnOffChip');
-  if (chip) {
-    chip.classList.toggle('on', !!flowing);
-    chip.textContent = flowing ? '⏻' : '⭘';
-    chip.title = flowing ? 'Couper le flux' : 'Activer le flux';
-  }
   if (typeof updateDockDisplays === 'function') updateDockDisplays();
 }
 
@@ -8365,6 +8398,12 @@ function init() {
 
   // Infobar tick indépendant (1s)
   setInterval(updateInfobar, 1000);
+
+  // #137 : respiration de l'aura Flux, indépendante des points d'appel de
+  // patchFBFHz() (certains chemins — presets, automations — changent
+  // masterFreq sans passer par là).
+  _updateFluxAuraPulse();
+  setInterval(_updateFluxAuraPulse, 800);
 
   ui('idle', 'Prêt · Cliquez FLUX ou FBF pour rayonner');
   setTimeout(hideSplash, 1400);
