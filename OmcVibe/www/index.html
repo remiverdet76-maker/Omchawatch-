@@ -688,6 +688,16 @@ body{
 .btn-magic-rand{width:100%;padding:1rem;border-radius:12px;background:radial-gradient(circle at 30% 30%, rgba(255,142,255,.25), rgba(99,230,255,.15), rgba(134,255,192,.1));border:2px solid rgba(200,100,255,.55);color:#F3D9FF;font-family:'Cinzel Decorative',serif;font-size:1.1rem;letter-spacing:.2em;text-transform:uppercase;font-weight:bold;transition:all .35s;}
 .btn-magic-rand:hover{box-shadow:0 0 40px rgba(200,100,255,.5);border-color:#F3D9FF;transform:scale(1.03);}
 .btn-magic-rand:active{transform:scale(.97);}
+.rand-mode-row{display:flex;align-items:center;gap:.5rem;}
+.rand-select{flex:1;padding:.4rem .5rem;border-radius:8px;border:1px solid rgba(200,170,255,.3);
+  background:rgba(255,255,255,.05);color:#F3D9FF;font-family:'IM Fell English',serif;font-size:.8rem;}
+.rand-advanced{margin-top:.6rem;}
+.rand-advanced > summary{cursor:pointer;font-size:.68rem;color:rgba(99,230,255,.75);letter-spacing:.08em;
+  font-style:italic;padding:.4rem 0;list-style:none;}
+.rand-advanced > summary::-webkit-details-marker{display:none;}
+.rand-advanced > summary::before{content:'▸ ';}
+.rand-advanced[open] > summary::before{content:'▾ ';}
+.rand-advanced-body{padding:.55rem .65rem;background:rgba(99,230,255,.05);border:1px solid rgba(99,230,255,.14);border-radius:10px;}
 .random-table{display:flex;flex-direction:column;gap:.3rem;}
 .rand-row{display:flex;flex-direction:column;gap:.35rem;padding:.5rem .6rem;border-radius:8px;}
 .rand-row-top{display:grid;grid-template-columns:26px 8px 1fr 1fr 1fr auto auto;gap:.1rem .35rem;align-items:center;}
@@ -872,7 +882,7 @@ body{
 .dcell-extra-flux:hover{ transform:scale(1.12); }
 .dcell-extra-flux:active{ transform:scale(.88); }
 .dcell-flux{
-  flex-shrink:0;width:61px;height:61px;margin-bottom:8px; /* #52 : -36% vs #32 (95px→61px) */
+  flex-shrink:0;width:80px;height:80px;margin-bottom:8px; /* #132 : "plus gros et plus réactif" — remonté depuis 61px */
   border-radius:50%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.05rem;
   background:radial-gradient(circle at 40% 34%,rgba(255,222,120,.34),rgba(40,28,4,.9));
@@ -906,6 +916,27 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
 }
 .dcell-flux .flux-icon{ font-size:1.5rem;line-height:1; }
 .dcell-flux .flux-state{ font-size:.5rem;letter-spacing:.14em;font-weight:700;opacity:.9; }
+/* #132 : flash de réactivité au tap (nouveau jeu aléatoire) — distinct de
+   l'animation d'état "flowing", one-shot, retiré en JS après ~420ms. */
+.dcell-flux.tap-pulse{ animation:fluxTapPulse .42s ease-out; }
+@keyframes fluxTapPulse{
+  0%{ transform:scale(1); box-shadow:0 0 22px rgba(255,220,110,.5),0 6px 18px rgba(0,0,0,.5); }
+  35%{ transform:scale(1.14); box-shadow:0 0 60px rgba(255,235,160,1),0 6px 18px rgba(0,0,0,.5); }
+  100%{ transform:scale(1); box-shadow:0 0 22px rgba(255,220,110,.5),0 6px 18px rgba(0,0,0,.5); }
+}
+/* #132 : on/off distinct du bouton "nouveau jeu aléatoire" — petit chip
+   ancré au bord du gros cercle Flux, pour ne pas prendre de hauteur en
+   plus dans un dock déjà serré. */
+.dcell-wrap-flux{ position:relative; }
+.flux-onoff-chip{
+  position:absolute;right:-6px;bottom:6px;width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(16,18,28,.92);border:2px solid rgba(140,200,255,.55);color:#9FD8FF;
+  font-size:13px;cursor:pointer;z-index:2;transition:all .15s;
+  box-shadow:0 2px 10px rgba(0,0,0,.55);user-select:none;-webkit-tap-highlight-color:transparent;
+}
+.flux-onoff-chip:active{ transform:scale(.88); }
+.flux-onoff-chip.on{ background:rgba(140,200,255,.28);border-color:#BFE6FF;color:#fff;box-shadow:0 0 14px rgba(140,200,255,.65); }
 
 /* #40 : cellule VIOLETTE — saisie directe de la fréquence maître, sous la
    sphère Flux (on/off). Même thème visuel que les 5 autres cellules
@@ -1834,13 +1865,16 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     </div>
   </div>
 
-  <!-- CENTRE — FLUX : cercle jaune surélevé, plus gros — tap=on/off · long=nouveau jeu aléatoire -->
+  <!-- CENTRE — FLUX : cercle jaune surélevé, plus gros — tap=nouveau jeu
+       aléatoire (#132, "un tap = nouveau jeu") · long=Flux on/off ·
+       le chip bleu distinct ci-dessous reste le on/off visible en 1 tap. -->
   <div class="dock-col dock-col-center">
     <div class="dcell-wrap dcell-wrap-flux" data-html-import-id="html-import-26">
-      <button class="dcell-flux canva-button" id="dcFlux" title="Tap : Flux on/off · Appui long : nouveau jeu aléatoire" data-html-import-id="html-import-27" data-template-id="button-16" style="background: radial-gradient(circle at 40% 34%, rgba(255, 222, 120, 0.34), rgba(40, 28, 4, 0.9)); color: rgb(255, 222, 120);">
+      <button class="dcell-flux canva-button" id="dcFlux" title="Tap : nouveau jeu aléatoire · Appui long : Flux on/off" data-html-import-id="html-import-27" data-template-id="button-16" style="background: radial-gradient(circle at 40% 34%, rgba(255, 222, 120, 0.34), rgba(40, 28, 4, 0.9)); color: rgb(255, 222, 120);">
         <span class="flux-icon canva-text" id="flux-icon" data-html-import-id="html-import-28" data-template-id="span-17" style="color: rgb(255, 222, 120); font-size: 24px;">◎</span>
         <span class="flux-state canva-text" id="flux-state-side" data-html-import-id="html-import-29" data-template-id="span-18" style="color: rgb(255, 222, 120); font-weight: 700; font-size: 8px;">OFF</span>
       </button>
+      <button class="flux-onoff-chip" id="fluxOnOffChip" onclick="fbfToggle()" title="Flux on/off">⭘</button>
     </div>
     <!-- #40/#52 : VIOLET — saisie directe de la fréquence maître (+9/-9). Bouton
          "Valider" retiré (#52) : Entrée applique déjà la saisie clavier, les
@@ -2092,59 +2126,43 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
   <!-- #12 : retour arrière sur les 5 derniers tirages aléatoires -->
   <button class="fbf-step canva-button" id="btn-undo-random" onclick="undoLastRandom()" disabled style="width:100%;margin-top:.35rem;">↩ Annuler le tirage</button>
 
-  <!-- Options aléatoire -->
-  <div style="margin:.6rem 0 .3rem;padding:.55rem .65rem;background:rgba(99,230,255,.05);border:1px solid rgba(99,230,255,.14);border-radius:10px;" data-html-import-id="html-import-497" data-template-id="div-475" class="canva-container">
-    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.1em;font-style:italic;margin-bottom:.4rem;" data-html-import-id="html-import-498" data-template-id="div-476" class="canva-container">OPTIONS ALÉATOIRE</div>
-    <div class="sw-row canva-container" style="font-size:.7rem;padding:.1rem 0 .35rem;" data-html-import-id="html-import-499" data-template-id="div-477"><canva-inline-text data-template-id="canva-inline-text-478" class="canva-text">Verrou binaural (doux) </canva-inline-text><input type="checkbox" class="sw canva-input" id="ck-binaural-lock" checked="" onchange="setBinauralLock(this.checked)" data-html-import-id="html-import-500" data-template-id="input-479"></div>
-    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;" data-html-import-id="html-import-501" data-template-id="div-480" class="canva-container">Le battement binaural reste stable et apaisé (évite le mode « IRM »). Décoche pour le laisser varier.</div>
-    <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">↳ Δ varié par paire </span><input type="checkbox" class="sw" id="ck-delta-variety" checked onchange="setDeltaVariety(this.checked)"></div>
-    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;">Actif seulement si le verrou ci-dessus est décoché : chaque paire pioche alors son propre battement (au lieu d'un seul imposé à toutes) pour un jeu plus riche.</div>
-    <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Polarité variée par paire </span><input type="checkbox" class="sw" id="ck-polarity-variety" checked onchange="setPolarityVariety(this.checked)"></div>
-    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;">Fonctionne même verrou binaural actif : ne change jamais l'amplitude du battement, seulement si Ida sonne au-dessus ou en-dessous de Pingala.</div>
-    <div class="sw-row canva-container" style="font-size:.7rem;padding:.1rem 0 .35rem;" data-html-import-id="html-import-502" data-template-id="div-481"><canva-inline-text data-template-id="canva-inline-text-482" class="canva-text">LFO Cutoff / Résonance </canva-inline-text><input type="checkbox" class="sw canva-input" id="ck-rand-lfo" onchange="setRandFilterLFO(this.checked)" data-html-import-id="html-import-503" data-template-id="input-483"></div>
-    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;" data-html-import-id="html-import-504" data-template-id="div-484" class="canva-container">Respiration lente et douce du filtre sur les paires satellites (façon pad analogique).</div>
-    <div class="sw-row canva-container" style="font-size:.7rem;padding:.1rem 0 .35rem;" data-html-import-id="html-import-505" data-template-id="div-485"><canva-inline-text data-template-id="canva-inline-text-486" class="canva-text">Timbre aléatoire </canva-inline-text><input type="checkbox" class="sw canva-input" id="ck-rand-timbre" checked="" onchange="setRandTimbre(this.checked)" data-html-import-id="html-import-506" data-template-id="input-487"></div>
-    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;" data-html-import-id="html-import-507" data-template-id="div-488" class="canva-container">La paire vedette change de forme d'onde à chaque tirage. Décoche pour garder le timbre actuel.</div>
-    <div class="sw-row canva-container" style="font-size:.7rem;padding:.1rem 0 .35rem;" data-html-import-id="html-import-508" data-template-id="div-489"><canva-inline-text data-template-id="canva-inline-text-490" class="canva-text">Profondeur 3D </canva-inline-text><input type="checkbox" class="sw canva-input" id="ck-rand-depth" checked="" onchange="setRandDepth(this.checked)" data-html-import-id="html-import-509" data-template-id="input-491"></div>
-    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;" data-html-import-id="html-import-510" data-template-id="div-492" class="canva-container">Certaines paires reculent (plus mates, moins présentes) pour une sensation d'espace. Décoche pour un mix uniforme.</div>
-    <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Respiration par paire (aléatoire) </span><input type="checkbox" class="sw" id="ck-rand-breath" checked onchange="setRandBreath(this.checked)"></div>
-    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;">Chaque paire respire (volume) à son propre rythme, déphasée des autres — souffle vivant, jamais un pompage synchrone. Décoche pour un volume stable.</div>
+  <!-- Options aléatoire — réduites à l'essentiel : plage, ratio, caractère,
+       chacun des deux derniers avec sa propre case on/off persistante,
+       INDÉPENDANTE l'une de l'autre (les deux peuvent s'appliquer ensemble
+       au même tirage, ou séparément). Le reste des réglages est toujours
+       actif et rangé dans "Réglages aléatoires avancés" en fin de panneau. -->
+  <div style="margin:.6rem 0 .3rem;padding:.55rem .65rem;background:rgba(99,230,255,.05);border:1px solid rgba(99,230,255,.14);border-radius:10px;">
+    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin-bottom:.4rem;">PLAGE FRÉQUENCE — toujours active, répartition continue</div>
     <div class="sl-row">
-      <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Profondeur <span id="sv-breath-depth" style="color:#63E6FF">12%</span></label>
-      <input type="range" min="0.01" max="0.3" step="0.01" value="0.12" style="flex:1;color:#63E6FF;" oninput="setPairBreathDepthMax(this.value)">
+      <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Min <span id="rv-fmin" style="color:#63E6FF">54</span> Hz</label>
+      <input type="range" id="sl-fmin" min="54" max="431" value="54" style="flex:1;color:#63E6FF;" oninput="setRandFreqMin(this.value)">
     </div>
-    <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">↳ Ancre respiratoire périodique </span><input type="checkbox" class="sw" id="ck-breath-anchor" onchange="setBreathAnchor(this.checked)"></div>
-    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;">Toutes les 4 min, les paires respirent un instant à l'unisson avant de redériver naturellement — un souffle commun ponctuel.</div>
-    <!-- #84 : évolution harmonique douce — dérive lente et continue, distincte du tirage aléatoire instantané -->
-    <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Évolution harmonique douce </span><input type="checkbox" class="sw" id="ck-organic-evo" onchange="setOrganicEvolution(this.checked)"></div>
-    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;">Toutes les 45s environ, une paire (jamais mute/verrouillée) dérive très légèrement de registre, en glissant sur plusieurs secondes — un jeu qui vit tout seul dans le temps, sans jamais de saut ni de à-coup.</div>
-    <!-- #86 : battement rapproché — seule exception assumée à la marge de sécurité 36 Hz -->
-    <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Battement rapproché (1–7.2 Hz) </span><input type="checkbox" class="sw" id="ck-rand-closebeat" onchange="setCloseBeatPair(this.checked)"></div>
-    <div style="font-size:.62rem;color:rgba(200,170,255,.42);font-style:italic;margin:-.15rem 0 .4rem;">À chaque tirage, DEUX paires sont volontairement rapprochées à 1–7.2 Hz l'une de l'autre (seule exception à la marge de 36 Hz) pour un battement plus vivant et imprévisible. Tout le reste du jeu garde ses 36 Hz.</div>
-    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.3rem 0 .2rem;" data-html-import-id="html-import-511" data-template-id="div-493" class="canva-container">PLAGE FRÉQUENCE — toujours active, répartition continue</div>
-    <div class="sl-row" data-html-import-id="html-import-512">
-      <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;" data-html-import-id="html-import-513" data-template-id="label-494" class="canva-text"><canva-inline-text data-template-id="canva-inline-text-495" class="canva-text">Min </canva-inline-text><span id="rv-fmin" style="color:#63E6FF" data-html-import-id="html-import-514" data-template-id="span-496" class="canva-text">54</span><canva-inline-text data-template-id="canva-inline-text-497" class="canva-text"> Hz</canva-inline-text></label>
-      <input type="range" id="sl-fmin" min="54" max="431" value="54" style="flex:1;color:#63E6FF;" oninput="setRandFreqMin(this.value)" data-html-import-id="html-import-515" data-template-id="input-498" class="canva-input">
+    <div class="sl-row">
+      <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Max <span id="rv-fmax" style="color:#63E6FF">432</span> Hz</label>
+      <input type="range" id="sl-fmax" min="55" max="432" value="432" style="flex:1;color:#63E6FF;" oninput="setRandFreqMax(this.value)">
     </div>
-    <div class="sl-row" data-html-import-id="html-import-516">
-      <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;" data-html-import-id="html-import-517" data-template-id="label-499" class="canva-text"><canva-inline-text data-template-id="canva-inline-text-500" class="canva-text">Max </canva-inline-text><span id="rv-fmax" style="color:#63E6FF" data-html-import-id="html-import-518" data-template-id="span-501" class="canva-text">432</span><canva-inline-text data-template-id="canva-inline-text-502" class="canva-text"> Hz</canva-inline-text></label>
-      <input type="range" id="sl-fmax" min="55" max="432" value="432" style="flex:1;color:#63E6FF;" oninput="setRandFreqMax(this.value)" data-html-import-id="html-import-519" data-template-id="input-503" class="canva-input">
+    <div style="font-size:.66rem;color:rgba(200,170,255,.4);font-style:italic;margin:.15rem 0 .3rem;">Plafond absolu 432 Hz — aucune fréquence du jeu binaural ne dépasse la famille 432</div>
+
+    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.5rem 0 .3rem;">RATIO</div>
+    <div class="rand-mode-row">
+      <select id="rand-ratio-select" class="rand-select" onchange="setRandRatioMode(this.value)">
+        <option value="heterogene">Ratio hétérogène</option>
+        <option value="homogene">Ratio homogène</option>
+        <option value="harm-asc">Ratio harmonique croissant</option>
+        <option value="harm-desc">Ratio harmonique décroissant</option>
+      </select>
+      <label class="fx-toggle" title="Le ratio s'applique au tirage"><input type="checkbox" id="ck-ratio-on" checked onchange="setRatioOn(this.checked)"><span class="fx-tog-track"></span></label>
     </div>
-    <div style="font-size:.66rem;color:rgba(200,170,255,.4);font-style:italic;margin:.15rem 0 .3rem;" data-html-import-id="html-import-520" data-template-id="div-504" class="canva-container">Plafond absolu 432 Hz — aucune fréquence du jeu binaural ne dépasse la famille 432</div>
-    <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.35rem;" data-html-import-id="html-import-521">
-      <button class="fbf-step active canva-button" id="rrm-random" onclick="setRandRatioMode('random',this)" data-html-import-id="html-import-522" data-template-id="button-505">⚄ Ratio ⌀</button>
-      <button class="fbf-step canva-button" id="rrm-same" onclick="setRandRatioMode('same',this)" data-html-import-id="html-import-523" data-template-id="button-506">=  Identique</button>
-      <button class="fbf-step canva-button" id="rrm-harmonic" onclick="setRandRatioMode('harmonic',this)" data-html-import-id="html-import-524" data-template-id="button-507">♪ Harmonique</button>
-      <button class="fbf-step canva-button" id="rrm-custom" onclick="setRandRatioMode('custom',this)" title="Les ratios ne bougent plus au tirage — édite-les directement dans la liste ci-dessous">🎛 Personnalisé</button>
-    </div>
-    <div id="custom-mode-hint" style="display:none;font-size:.62rem;color:rgba(200,170,255,.5);font-style:italic;margin:-.15rem 0 .4rem;">Mode Personnalisé actif : le tirage aléatoire ne touche plus aux ratios/registres — touche le ratio ou ×n de chaque ligne ci-dessous pour les régler à la main.</div>
-    <div class="sw-row canva-container" style="font-size:.7rem;padding:.1rem 0;" data-html-import-id="html-import-525" data-template-id="div-508"><canva-inline-text data-template-id="canva-inline-text-509" class="canva-text">FX aléatoire </canva-inline-text><input type="checkbox" class="sw canva-input" id="ck-rand-fx" onchange="setRandUseFX(this.checked)" data-html-import-id="html-import-526" data-template-id="input-510"></div>
-    <!-- #8 : Caractère du battement — familles de Δ nommées (verrou décoché) -->
-    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.4rem 0 .2rem;">CARACTÈRE DU BATTEMENT — actif si le verrou binaural est décoché</div>
-    <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.35rem;">
-      <button class="fbf-step canva-button" id="dch-apaise" onclick="setDeltaCharacter('apaise',this)">☾ Apaisé</button>
-      <button class="fbf-step active canva-button" id="dch-equilibre" onclick="setDeltaCharacter('equilibre',this)">⚖ Équilibré</button>
-      <button class="fbf-step canva-button" id="dch-immersif" onclick="setDeltaCharacter('immersif',this)">✺ Immersif</button>
+    <div id="ratio-off-hint" style="display:none;font-size:.62rem;color:rgba(200,170,255,.5);font-style:italic;margin:.2rem 0 .1rem;">Désactivé : les ratios ne bougent plus au tirage — touche le ratio ou ×n de chaque ligne du tableau pour les régler à la main.</div>
+
+    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.5rem 0 .3rem;">CARACTÈRE DU BATTEMENT</div>
+    <div class="rand-mode-row">
+      <select id="rand-character-select" class="rand-select" onchange="setDeltaCharacter(this.value)">
+        <option value="apaise">☾ Apaisé</option>
+        <option value="equilibre" selected>⚖ Équilibré</option>
+        <option value="immersif">✺ Immersif</option>
+      </select>
+      <label class="fx-toggle" title="Le caractère du battement s'applique au tirage"><input type="checkbox" id="ck-character-on" checked onchange="setCharacterOn(this.checked)"><span class="fx-tog-track"></span></label>
     </div>
   </div>
 
@@ -2201,6 +2219,29 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
       <span class="rand-n canva-text" id="rt-n-6" style="color:#FFB0FF88" data-html-import-id="html-import-577" data-template-id="span-560">×1.00</span>
       <button class="rand-lock canva-button" id="lock-6" onclick="toggleLock(6)" title="Verrouiller la fréquence" data-html-import-id="html-import-578" data-template-id="button-561">◎</button>
     </div></div>
+
+  <!-- Réglages aléatoires avancés — tous actifs par défaut (l'essentiel du
+       jeu se joue déjà avec le bouton + plage/ratio/caractère ci-dessus) ;
+       rangés ici pour ne pas encombrer l'écran principal, dans l'esprit
+       méditatif de l'app. -->
+  <details class="rand-advanced">
+    <summary>Réglages aléatoires avancés</summary>
+    <div class="rand-advanced-body">
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Δ varié par paire </span><input type="checkbox" class="sw" id="ck-delta-variety" checked onchange="setDeltaVariety(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Polarité variée par paire </span><input type="checkbox" class="sw" id="ck-polarity-variety" checked onchange="setPolarityVariety(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Timbre aléatoire </span><input type="checkbox" class="sw" id="ck-rand-timbre" checked onchange="setRandTimbre(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Profondeur 3D </span><input type="checkbox" class="sw" id="ck-rand-depth" checked onchange="setRandDepth(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Respiration par paire (aléatoire) </span><input type="checkbox" class="sw" id="ck-rand-breath" checked onchange="setRandBreath(this.checked)"></div>
+      <div class="sl-row">
+        <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Profondeur <span id="sv-breath-depth" style="color:#63E6FF">12%</span></label>
+        <input type="range" min="0.01" max="0.3" step="0.01" value="0.12" style="flex:1;color:#63E6FF;" oninput="setPairBreathDepthMax(this.value)">
+      </div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Ancre respiratoire périodique </span><input type="checkbox" class="sw" id="ck-breath-anchor" checked onchange="setBreathAnchor(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Évolution harmonique douce </span><input type="checkbox" class="sw" id="ck-organic-evo" checked onchange="setOrganicEvolution(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Battement rapproché (1–7.2 Hz) </span><input type="checkbox" class="sw" id="ck-rand-closebeat" checked onchange="setCloseBeatPair(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0;"><span class="fx-label">FX aléatoire </span><input type="checkbox" class="sw" id="ck-rand-fx" checked onchange="setRandUseFX(this.checked)"></div>
+    </div>
+  </details>
 </div>
 
 <!-- Panel : Presets — banques illimitées, renommables (droite) -->
@@ -2520,7 +2561,7 @@ function binauralPanGap(delta) {
 // pan=±1 : au-delà du correctif proportionnel ci-dessus (qui garde
 // l'éventail spatial inter-paires), ce mode sacrifie l'éventail pour une
 // pureté binaurale absolue, zéro résidu de crosstalk, pensé pour un casque.
-let STRICT_HEADPHONE_MODE = false;
+let STRICT_HEADPHONE_MODE = true;
 function buildOscPan(width) {
   if (STRICT_HEADPHONE_MODE) return PAN_CENTERS.map(() => [-1, 1]);
   const w = (typeof width === 'number') ? Math.max(0, Math.min(1, width)) : 0.7;
@@ -2543,6 +2584,33 @@ function refreshBinauralPan() {
     if (np?.p && OSC_PAN[i]) np.p.pan.setTargetAtTime(OSC_PAN[i][0], aNow(), 0.25);
     if (ni?.p && OSC_PAN[i]) ni.p.pan.setTargetAtTime(OSC_PAN[i][1], aNow(), 0.25);
   });
+}
+
+// #134 (mastering intelligent) : plus d'oscillateurs actifs en même temps →
+// plus d'énergie sommée sur le bus → plus de risque de grésillement/clipping
+// au limiteur+safetyClip (le vrai symptôme du retour terrain "3 oscillateurs
+// et ça grésille"). Plutôt que de durcir le limiteur (ce qui abîme le son de
+// tout le monde, même à 1 seul oscillateur), on RÉDUIT le gain du bus AVANT
+// la chaîne de mastering, proportionnellement au nombre d'oscillateurs
+// réellement audibles — la cause est traitée à la source, pas rattrapée
+// après coup par une compression plus agressive.
+function _activeOscCount() {
+  let n = 0;
+  PAIRS.forEach(pair => {
+    if (!mutedOscs[pair.pingala.id]) n++;
+    if (!mutedOscs[pair.ida.id]) n++;
+  });
+  return n;
+}
+function _updateBusHeadroom() {
+  if (!busTrim) return;
+  const n = Math.max(1, _activeOscCount());
+  // 2 oscillateurs actifs (1 paire) = référence, gain ×1. Au-delà, réduction
+  // douce en 1/√n plutôt qu'un cru 1/n (trop agressif) : 4 actifs → ×0.71,
+  // 8 → ×0.5, 14 (tout allumé) → ×0.38 — la perte de niveau perçu reste
+  // modérée, le mastering peut alors garder des seuils moins durs.
+  const g = Math.min(1, Math.sqrt(2 / n));
+  busTrim.gain.setTargetAtTime(g, aNow(), 0.4);
 }
 
 // Courbe isosonique : graves plus forts, aigus plus doux
@@ -2570,25 +2638,16 @@ let masterFreq  = 144;
 // fréquence maître RÉELLEMENT en cours de lecture pour teinter son flux).
 window.getMasterFreq = () => masterFreq;
 
-// ─── Unité Miaow — 1 Miaow = 243/512 Hz, soit 512/243 Miaow par Hz
-// (= 32768/15552 réduit ; 432 Hz = 8192/9 Miaow exact). Unité d'affichage
-// et de saisie définitive de l'app (#124) : Miaow par défaut, et toutes
-// les lectures de fréquence (maître, satellites, tables, presets, etc.)
-// passent par elle. Le moteur audio (Web Audio) reste en Hz en interne
-// — c'est une obligation de l'API, pas un choix — donc les calculs
-// ratio×n/teintes/persistance restent en Hz partout, intacts ; seule la
-// couche de présentation change. cf. Chaharmony (même définition).
+// ─── Unité de fréquence — Hz, toujours ───────────────────────────────
+// OmcVibe est repassé en Hz (l'unité Miaow reste propre à Chaharmony,
+// où elle a du sens comme générateur de fréquences dédié). UNIT_MODE
+// est gardé en dur à 'hz' pour que les ternaires UNIT_MODE==='miaow'
+// existantes ailleurs dans le fichier retombent proprement sur leur
+// branche Hz, sans avoir à toutes les récrire.
 const MIAOW_PER_HZ = 512 / 243;
-let UNIT_MODE = 'miaow';
-try { UNIT_MODE = localStorage.getItem('fbf432-unit') || 'miaow'; } catch(e) {}
+const UNIT_MODE = 'hz';
 function hzToMiaow(hz) { return hz * MIAOW_PER_HZ; }
 function miaowToHz(m) { return m / MIAOW_PER_HZ; }
-function setUnitMode(mode) {
-  UNIT_MODE = mode === 'miaow' ? 'miaow' : 'hz';
-  try { localStorage.setItem('fbf432-unit', UNIT_MODE); } catch(e) {}
-  document.querySelectorAll('.unit-btn').forEach(b => b.classList.toggle('on', b.dataset.unit === UNIT_MODE));
-  if (typeof updateDisplay === 'function') updateDisplay();
-}
 function fmtMasterFreqDisplay() { return UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(2) + ' 🐈' : masterFreq; }
 // #124 : bornes min/max/step d'un <input> de fréquence maître, recalculées
 // selon UNIT_MODE — évite qu'un champ affiche encore "432" en mode Miaow
@@ -2871,7 +2930,7 @@ function togglePairDualSineLFO(i) {
 // paire (Pingala+Ida) converge d'abord vers un bus + DynamicsCompressorNode
 // partagé avant le master — seuil haut, ratio faible, attaque/release
 // lents : absorbe les crêtes sans jamais s'entendre comme une compression.
-const PAIR_COMP_STATE = { on: false };
+const PAIR_COMP_STATE = { on: true };
 const _pairComp = {}; // pairIdx → { bus, comp }
 function _ensurePairComp(i) {
   if (_pairComp[i]) return _pairComp[i];
@@ -3385,12 +3444,22 @@ function initFXChain() {
   const masterHPF = c.createBiquadFilter();
   masterHPF.type='highpass'; masterHPF.frequency.value=42; masterHPF.Q.value=0.707;
 
-  // Low cut doux (shelf, pas un cut brutal) : les basses fondamentales de
-  // plusieurs oscillateurs s'additionnent et saturaient trop vite le
-  // limiteur/safetyClip. Une réduction douce en plateau sous 120 Hz réduit
-  // l'énergie basse cumulée sans retirer le timbre des fondamentales graves.
+  // #134 (mastering intelligent) : l'ancien plateau à -5dB écrasait trop les
+  // graves (retour terrain : "les fréquences graves ne sont pas assez mises
+  // en avant"), en plus de contredire isosonicVol() qui les BOOSTE déjà à la
+  // source (+jusqu'à 48%, cf. plus haut) — les deux se contredisaient.
+  // Adouci à -1.5dB (garde-fou minimal contre l'accumulation, cf. compensation
+  // dynamique par nombre d'oscillateurs actifs plus bas, qui fait le vrai
+  // travail anti-craquement désormais). Les graves restent donc audibles.
   const masterLowCut = c.createBiquadFilter();
-  masterLowCut.type='lowshelf'; masterLowCut.frequency.value=120; masterLowCut.gain.value=-5;
+  masterLowCut.type='lowshelf'; masterLowCut.frequency.value=120; masterLowCut.gain.value=-1.5;
+
+  // #134 : rien ne tempérait les aigus jusqu'ici — seuls les graves étaient
+  // coupés, ce qui les faisait paraître proportionnellement plus présents
+  // ("les fréquences aigües trop mises en avant"). Plateau doux au-dessus de
+  // 3000 Hz, discret mais audible.
+  const masterHighShelf = c.createBiquadFilter();
+  masterHighShelf.type='highshelf'; masterHighShelf.frequency.value=3000; masterHighShelf.gain.value=-3;
 
   // Limiteur — retour à un réglage strict (l'assouplissement précédent,
   // seuil -2,2dB/ratio 10:1, a laissé passer des dépassements audibles
@@ -3427,8 +3496,8 @@ function initFXChain() {
   if (ppSendBus)     fxSendG.connect(ppSendBus);
 
   preMaster.connect(masterGlue); masterGlue.connect(masterFader);
-  masterFader.connect(masterHPF); masterHPF.connect(masterLowCut); masterLowCut.connect(limiter);
-  limiter.connect(safetyClip); safetyClip.connect(c.destination);
+  masterFader.connect(masterHPF); masterHPF.connect(masterLowCut); masterLowCut.connect(masterHighShelf);
+  masterHighShelf.connect(limiter); limiter.connect(safetyClip); safetyClip.connect(c.destination);
 
   // Mix sec : channel insert → busTrim (dynamique libre, glue+limiteur seuls)
   eqBands[eqBands.length - 1].connect(busTrim);
@@ -3764,6 +3833,12 @@ async function startFlow() {
         if (flowing && AC && AC.state !== 'running') AC.resume().catch(() => {});
       }, 12000);
     }
+    // #134 : compensation de gain par nombre d'oscillateurs actifs — décorrélée
+    // du rendu visuel (masterTick coupe tout en mode "Visuel léger") pour
+    // rester fiable même sur les appareils qui en ont le plus besoin.
+    if (!startFlow._headroomTimer) {
+      startFlow._headroomTimer = setInterval(_updateBusHeadroom, 500);
+    }
     if (!startFlow._wakeLock && 'wakeLock' in navigator) {
       navigator.wakeLock.request('screen').then(lock => {
         startFlow._wakeLock = lock;
@@ -3815,6 +3890,7 @@ async function startFlow() {
     _driftLFO.connect(_driftDepth); _driftLFO.start();
 
     flowing = true;
+    _updateBusHeadroom(); // #134 : applique tout de suite, sans attendre le 1er tick
     try { window.Capacitor?.Plugins?.KeepAwake?.keepAwake?.(); } catch(e) {}
     PAIRS.forEach((_, i) => setTimeout(() => swapPingala(i), 60 + i * 60));
     PAIRS.forEach((_, i) => updateOrbUI(i));
@@ -3832,6 +3908,7 @@ async function startFlow() {
 async function stopFlow() {
   ui('idle', 'Dissolution…');
   if (startFlow._heartbeat) { clearInterval(startFlow._heartbeat); startFlow._heartbeat = null; }
+  if (startFlow._headroomTimer) { clearInterval(startFlow._headroomTimer); startFlow._headroomTimer = null; }
   if (startFlow._wakeLock)  { try { startFlow._wakeLock.release(); } catch(e) {} startFlow._wakeLock = null; }
   try { window.Capacitor?.Plugins?.KeepAwake?.allowSleep?.(); } catch(e) {}
   _disableBackgroundAudio();
@@ -4256,7 +4333,7 @@ function toggleOscVolLFO(i) {
 // inchangé) — bref moment d'unisson au sein d'une texture normalement
 // décorrélée, qui redérive naturellement ensuite puisque chaque paire
 // garde un rythme légèrement différent.
-const BREATH_ANCHOR_STATE = { on: false, intervalSec: 240 };
+const BREATH_ANCHOR_STATE = { on: true, intervalSec: 240 };
 let _breathAnchorTimer = null;
 function _breathAnchorPulse() {
   if (!flowing || !RAND_OPTS.breathRandom) return;
@@ -4291,7 +4368,7 @@ function setBreathAnchor(v) {
 // Paires verrouillées/mute jamais touchées ; si le résultat sortirait de
 // la plage active (freqMin-freqMax), on ne fait rien ce cycle-là plutôt
 // que de forcer un retour brusque en bord de plage.
-const ORGANIC_EVO_STATE = { on: false, intervalSec: 45 };
+const ORGANIC_EVO_STATE = { on: true, intervalSec: 45 };
 let _organicEvoTimer = null;
 function _armOrganicEvolution() {
   clearInterval(_organicEvoTimer); _organicEvoTimer = null;
@@ -4333,7 +4410,7 @@ function setOrganicEvolution(v) {
 // Pad grave fixe (racine ÷ 2), volume très bas, jamais touché par le jeu
 // aléatoire — stabilise perceptuellement le mix quand plusieurs Δ élevés
 // jouent en même temps (un point de repère grave immobile).
-const SUBDRONE_STATE = { on: false, vol: 0.05 };
+const SUBDRONE_STATE = { on: true, vol: 0.05 };
 let _subDroneOsc = null, _subDroneGain = null;
 function _startSubDrone() {
   if (!SUBDRONE_STATE.on || !masterGain) return;
@@ -5203,52 +5280,40 @@ const DELTA_CHARACTER = {
   immersif:  { label: 'Immersif',  deltas: [1.08, 1.13, 1.17, 1.20] },
 };
 let DELTA_CHARACTER_MODE = 'equilibre';
-function setDeltaCharacter(mode, btn) {
+function setDeltaCharacter(mode) {
   if (!DELTA_CHARACTER[mode]) return;
   DELTA_CHARACTER_MODE = mode;
-  document.querySelectorAll('[id^="dch-"]').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  else { const el = document.getElementById('dch-' + mode); if (el) el.classList.add('active'); }
-  // #84 : ce réglage n'a d'effet QUE verrou binaural décoché (§2.6 plus
-  // bas) — resté invisible pour la plupart des utilisateurs qui laissent
-  // le verrou coché par défaut (choix délibéré pour la stabilité du
-  // battement). Choisir explicitement un caractère est un signal clair
-  // d'intention : on décoche le verrou à sa place, sinon rien ne change
-  // au tirage suivant et le bouton semble ne servir à rien.
-  if (RAND_OPTS.lockBinaural) { setBinauralLock(false); if (typeof _toastFlash === 'function') _toastFlash('Verrou binaural décoché — le caractère du battement s’appliquera au prochain tirage.'); }
+  const sel = document.getElementById('rand-character-select'); if (sel) sel.value = mode;
+  // Choisir explicitement un caractère est un signal clair d'intention :
+  // on l'active à sa place (remplace l'ancien "déverrouille le verrou
+  // binaural à ma place", le verrou binaural n'existe plus).
+  RAND_OPTS.characterOn = true;
+  const ck = document.getElementById('ck-character-on'); if (ck) ck.checked = true;
+  saveState();
+}
+function setCharacterOn(v) {
+  RAND_OPTS.characterOn = !!v;
+  const ck = document.getElementById('ck-character-on'); if (ck) ck.checked = RAND_OPTS.characterOn;
   saveState();
 }
 
 // ── Options mode aléatoire ────────────────────────────────────────
-// lockBinaural : ACTIVÉ par défaut. Le jeu aléatoire NE touche PAS au delta
-// binaural (testé 100% fautif du « mode IRM ») → battements doux et stables.
-// La plage fréquence (freqMin–freqMax) est TOUJOURS opérationnelle (plus de
-// case ON/OFF cachée) : chaque tirage pioche une fondamentale CONTINUE dans
-// cette plage — répartition quasi-infinie, plus de pool figé.
-const RAND_OPTS={freqMin:F_MIN,freqMax:432,ratioMode:'random',useFX:false,spread:0.6,lockBinaural:true,
-  filterLFO:false, randomTimbre:true, randomDepth:true, breathRandom:true, deltaVariety:true, polarityVariety:true,
-  randomDualSine:false, closeBeatPair:false};
-// filterLFO désactivé par défaut (retour terrain, comparaison avec la
-// version du 01/07 qui ne l'avait pas) : à chaque tirage aléatoire, cette
-// option fait jusqu'à 24 créations/déconnexions de nœuds de modulation
-// (setOscPatch ×2 ids ×2 destinations ×6 paires) — du travail et des
-// coupures de modulation abruptes qui n'existaient pas avant. Reste
-// disponible en option pour qui veut l'effet, mais plus jamais par défaut.
-// #61 : randomDualSine désactivé par défaut (audit "base propre" suite
-// retour terrain) — le détune Sinus Duo était re-tiré au hasard (-72..+72¢)
-// à CHAQUE tirage, pour TOUTES les paires, sans option pour l'empêcher :
-// ça écrasait systématiquement le "détune à 0 par défaut" (#54) dès la
-// première utilisation du jeu aléatoire. Reste disponible pour qui veut la
-// variété, mais plus jamais par défaut — le détune reste à 0 tant que
-// l'utilisateur ne le règle pas lui-même (curseur ou pad tactile).
+// Ranger l'app (retour terrain) : tous les réglages ci-dessous étaient déjà
+// pensés pour être laissés actifs — ils le sont désormais par défaut, et
+// rangés dans "Réglages aléatoires avancés" plutôt qu'étalés à l'écran
+// principal. Seuls le RATIO et le CARACTÈRE DU BATTEMENT gardent une case
+// on/off visible (chacune persistante, INDÉPENDANTE de l'autre — les deux
+// peuvent s'appliquer au même tirage, ou séparément). Le "verrou binaural"
+// a été retiré : c'est désormais la case on/off du Caractère qui joue ce
+// rôle (off = delta laissé tel quel au tirage, comme l'ancien verrou coché).
+// La plage fréquence (freqMin–freqMax) reste TOUJOURS opérationnelle :
+// chaque tirage pioche une fondamentale CONTINUE dans cette plage —
+// répartition quasi-infinie, plus de pool figé.
+const RAND_OPTS={freqMin:F_MIN,freqMax:432,ratioMode:'heterogene',ratioOn:true,characterOn:true,useFX:true,spread:0.6,
+  randomTimbre:true, randomDepth:true, breathRandom:true, deltaVariety:true, polarityVariety:true,
+  randomDualSine:true, closeBeatPair:true};
 
-// Verrouillage du battement binaural (delta) pendant le random
-function setBinauralLock(v){
-  RAND_OPTS.lockBinaural=!!v;
-  const ck=document.getElementById('ck-binaural-lock'); if(ck) ck.checked=RAND_OPTS.lockBinaural;
-  saveState();
-}
-// #6 : n'a d'effet que verrou binaural décoché — chaque paire pioche alors
+// #6 : n'a d'effet que si le Caractère est activé — chaque paire pioche alors
 // son propre Δ (au lieu d'un battement commun) pour un jeu plus riche.
 function setDeltaVariety(v){
   RAND_OPTS.deltaVariety=!!v;
@@ -5276,18 +5341,6 @@ function setStrictHeadphone(v){
 // Chacune active/désactive UN aspect précis de triggerMagicAuto, indépendamment
 // des autres — pensé pour être étendu facilement à mesure que de nouveaux
 // paramètres deviennent "randomisables".
-function setRandFilterLFO(v){
-  RAND_OPTS.filterLFO=!!v;
-  const ck=document.getElementById('ck-rand-lfo'); if(ck) ck.checked=RAND_OPTS.filterLFO;
-  // Décoché : coupe immédiatement le LFO cutoff/résonance déjà en place
-  // (sinon il faudrait attendre le prochain tirage pour le voir disparaître).
-  if(!RAND_OPTS.filterLFO && flowing) PAIRS.forEach((_,i)=>{
-    if(i===MASTER_IDX) return;
-    setPairPatch(i,'lfo','cutoff',0);
-    setPairPatch(i,'lfo','res',0);
-  });
-  saveState();
-}
 function setRandTimbre(v){
   RAND_OPTS.randomTimbre=!!v;
   const ck=document.getElementById('ck-rand-timbre'); if(ck) ck.checked=RAND_OPTS.randomTimbre;
@@ -5348,15 +5401,26 @@ function setRandFreqMax(v){
   ['rv-fmax','rv-fmax-q'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=RAND_OPTS.freqMax;});
   ['sl-fmax','q-fmax'].forEach(id=>{const sl=document.getElementById(id);if(sl && document.activeElement!==sl)sl.value=RAND_OPTS.freqMax;});
 }
-function setRandRatioMode(m,btn){
+function setRandRatioMode(m){
   RAND_OPTS.ratioMode=m;
-  document.querySelectorAll('[id^="rrm-"]').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
-  const hint = document.getElementById('custom-mode-hint');
-  if (hint) hint.style.display = (m === 'custom') ? 'block' : 'none';
+  const sel = document.getElementById('rand-ratio-select'); if (sel) sel.value = m;
   saveState();
 }
-function setRandUseFX(v){RAND_OPTS.useFX=!!v;}
+// Case on/off du RATIO — indépendante du Caractère du battement, les deux
+// peuvent s'appliquer au même tirage. Off = ratios non touchés (édite-les
+// à la main dans le tableau), comme l'ancien mode "Personnalisé".
+function setRatioOn(v){
+  RAND_OPTS.ratioOn=!!v;
+  const ck=document.getElementById('ck-ratio-on'); if(ck) ck.checked=RAND_OPTS.ratioOn;
+  const hint = document.getElementById('ratio-off-hint');
+  if (hint) hint.style.display = RAND_OPTS.ratioOn ? 'none' : 'block';
+  saveState();
+}
+function setRandUseFX(v){
+  RAND_OPTS.useFX=!!v;
+  const ck=document.getElementById('ck-rand-fx'); if(ck) ck.checked=RAND_OPTS.useFX;
+  saveState();
+}
 
 // FX aléatoire — randomise delay, ping-pong, EQ
 // Random FX — INDÉPENDANT du random fréquence. FX globaux en fin de chaîne.
@@ -5543,6 +5607,13 @@ function setVolI(i, volUI) {
   const node = nodes[iid]; if (node && !mutedOscs[iid]) safeRamp(node.g.gain, vol, 0.3);
   saveState();
 }
+// Volume de paire — un seul curseur "Volume" (table du jeu aléatoire) qui
+// doit bouger LES DEUX oscillateurs de la paire (Pingala + Ida) ensemble ;
+// avant ce correctif, ce curseur n'appelait que setVolP et Ida restait figé.
+function setPairVol(i, volUI) {
+  setVolP(i, volUI);
+  setVolI(i, volUI);
+}
 function setMasterVol(v) {
   masterVol = Math.max(0, Math.min(1, parseFloat(v)));
   if (masterGain) safeRamp(masterGain.gain, masterVol * MASTER_GAIN_SCALE, 0.3);
@@ -5560,12 +5631,6 @@ function setMasterFreq(f) {
   _retuneSubDrone(); // #16 (roadmap)
   saveState();
 }
-// #102 : presets "rock star binaurale" — 432/396/360 pensés en Miaow (pas
-// convertis depuis les anciens 432/396/360 Hz), ronds dans cette unité-là.
-function setMasterFreqMiaow(miaowVal) {
-  setMasterFreq(Math.round(miaowToHz(miaowVal)));
-}
-
 // #40/#52 : cellule violette du dock — saisie directe de la fréquence maître.
 // Le bouton "Valider" a été retiré (#52) : Entrée (clavier) ou perte de focus
 // appliquent déjà la saisie via _purpleFreqValidate, les pas -9/+9 s'appliquent
@@ -5944,6 +6009,17 @@ function triggerMagicAuto(opts) {
   if (now - _lastMagicAt < 350) return;
   _lastMagicAt = now;
 
+  // #132 : flash de réactivité — visible même quand le tirage est déclenché
+  // autrement que par un tap sur le gros bouton (raccourci sphère, dock
+  // remappé, etc.), pour que "plus réactif" reste vrai partout.
+  const _fluxBtn = document.getElementById('dcFlux');
+  if (_fluxBtn) {
+    _fluxBtn.classList.remove('tap-pulse');
+    void _fluxBtn.offsetWidth; // force le reflow pour rejouer l'animation
+    _fluxBtn.classList.add('tap-pulse');
+    setTimeout(() => _fluxBtn.classList.remove('tap-pulse'), 420);
+  }
+
   // #12 (roadmap) : snapshot PRÉ-tirage pour le retour arrière (undoLastRandom)
   _pushGameHistory();
 
@@ -5962,44 +6038,49 @@ function triggerMagicAuto(opts) {
   const newMaster = masterLocked ? masterFreq : _drawFundamental(rMin, rMax);
 
   // ── Δ binaural DOUX (thêta/alpha, relaxant) ───────────────────────
-  // VERROU BINAURAL (défaut) : on NE touche PAS au delta — chaque paire garde
-  // son battement doux et distinct. Déverrouillé, le random tire un delta commun.
-  const lockBin = RAND_OPTS.lockBinaural;
-  // #8 (roadmap) : "Caractère du battement" — au lieu d'un seul tableau
-  // opaque, 3 familles nommées et explicites, chacune avec sa séparation
-  // stéréo naturellement croissante (cf. binauralPanGap) puisqu'elle suit Δ.
+  // Caractère du battement DÉSACTIVÉ (case décochée) : on NE touche PAS au
+  // delta — chaque paire garde son battement doux et distinct, comme
+  // l'ancien "verrou binaural" coché. Activé, le random tire un delta
+  // commun selon le caractère choisi (Apaisé/Équilibré/Immersif).
+  // #8 : "Caractère du battement" — au lieu d'un seul tableau opaque,
+  // 3 familles nommées et explicites, chacune avec sa séparation stéréo
+  // naturellement croissante (cf. binauralPanGap) puisqu'elle suit Δ.
   const DELTAS = DELTA_CHARACTER[DELTA_CHARACTER_MODE].deltas;
   const baseDelta = DELTAS[Math.floor(Math.random() * DELTAS.length)];
   // #6/#9/#12 : suivi des paires dont le Δ change réellement à ce tirage —
   // sert à leur appliquer une glisse dédiée plus loin (cf. _deltaChangedThisDraw).
   const _deltaChangedThisDraw = {};
 
-  // ── Ratios OmcV — 3 modes de tirage (#81 : RAND_OPTS.ratioMode était
-  //    réglé par les boutons Ratio⌀/Identique/Harmonique mais jamais LU
-  //    ici — les 2 derniers étaient des no-op silencieux depuis toujours). ──
+  // ── Ratios OmcV — case on/off (RAND_OPTS.ratioOn) + 4 stratégies au choix
+  //    (RAND_OPTS.ratioMode), indépendante du Caractère du battement ─────
   const riBySlot = [];
-  if (RAND_OPTS.ratioMode === 'same') {
-    // Identique : UN SEUL ratio tiré, appliqué à toutes les paires — seul
-    // le registre (n, aeratedN) varie encore d'une paire à l'autre, donc le
-    // jeu reste spatialement/harmoniquement riche sans changer de "couleur"
-    // d'intervalle en cours de route.
-    const sameRi = Math.floor(Math.random() * RATIO_OPTS.length);
-    for (let k = 0; k < 6; k++) riBySlot[k] = sameRi;
-  } else if (RAND_OPTS.ratioMode === 'harmonic') {
-    // Harmonique : suite FIXE (pas mélangée) — même ordre logique à chaque
-    // tirage, seuls la fondamentale/le registre bougent encore.
-    for (let k = 0; k < 6; k++) riBySlot[k] = k % RATIO_OPTS.length;
-  } else {
-    // Ratio ⌀ (par défaut) : les 3 duos-miroir changent de place à chaque
-    // tirage — (11/10↔10/11) · (12/11↔11/12) · (12/10↔10/12) restent des
-    // couples réciproques (consonance OmcV garantie) mais leur position et
-    // leur sens varient — plus de mapping figé paire→ratio.
-    const duoOrder = _shuffle(RATIO_DUOS);
-    duoOrder.forEach((duo, g) => {
-      const ordered = Math.random() < 0.5 ? duo : [duo[1], duo[0]];
-      riBySlot[g * 2]     = ordered[0];
-      riBySlot[g * 2 + 1] = ordered[1];
-    });
+  if (RAND_OPTS.ratioOn) {
+    if (RAND_OPTS.ratioMode === 'homogene') {
+      // Homogène : UN SEUL ratio tiré, appliqué à toutes les paires — seul
+      // le registre (n, aeratedN) varie encore d'une paire à l'autre, donc
+      // le jeu reste spatialement/harmoniquement riche sans changer de
+      // "couleur" d'intervalle en cours de route.
+      const sameRi = Math.floor(Math.random() * RATIO_OPTS.length);
+      for (let k = 0; k < 6; k++) riBySlot[k] = sameRi;
+    } else if (RAND_OPTS.ratioMode === 'harm-asc' || RAND_OPTS.ratioMode === 'harm-desc') {
+      // Harmonique croissant/décroissant : suite FIXE triée par valeur de
+      // ratio (pas mélangée) — même ordre logique à chaque tirage, seuls
+      // la fondamentale/le registre bougent encore.
+      const order = RATIO_OPTS.map((o, oi) => oi).sort((a, b) => RATIO_OPTS[a].r - RATIO_OPTS[b].r);
+      const seq = RAND_OPTS.ratioMode === 'harm-desc' ? order.slice().reverse() : order;
+      for (let k = 0; k < 6; k++) riBySlot[k] = seq[k % seq.length];
+    } else {
+      // Hétérogène (défaut) : les 3 duos-miroir changent de place à chaque
+      // tirage — (11/10↔10/11) · (12/11↔11/12) · (12/10↔10/12) restent des
+      // couples réciproques (consonance OmcV garantie) mais leur position et
+      // leur sens varient — plus de mapping figé paire→ratio.
+      const duoOrder = _shuffle(RATIO_DUOS);
+      duoOrder.forEach((duo, g) => {
+        const ordered = Math.random() < 0.5 ? duo : [duo[1], duo[0]];
+        riBySlot[g * 2]     = ordered[0];
+        riBySlot[g * 2 + 1] = ordered[1];
+      });
+    }
   }
 
   // ── Registre CONTINU par paire (répartition log-continue déjà conçue,
@@ -6096,7 +6177,7 @@ function triggerMagicAuto(opts) {
 
     if (idx === MASTER_IDX) {
       pair.pingala.ri = 0; pair.pingala.n = 1.0;
-      if (!lockBin) {
+      if (RAND_OPTS.characterOn) {
         const oldDelta = pair.ida.delta;
         pair.ida.delta = baseDelta; pair.ida.polarity = 1;
         if (pair.ida.delta !== oldDelta) _deltaChangedThisDraw[idx] = true;
@@ -6108,12 +6189,12 @@ function triggerMagicAuto(opts) {
       return;
     }
 
-    // #82 : mode Personnalisé — le tirage ne retire JAMAIS ratio/registre,
-    // seule la fondamentale/le reste du jeu continuent de varier ; les
-    // valeurs restent celles réglées à la main dans la table (_rtCycleRatio/
-    // _rtExitNEdit) tant que ce mode reste actif.
+    // Ratio décoché — le tirage ne retire JAMAIS ratio/registre, seule la
+    // fondamentale/le reste du jeu continuent de varier ; les valeurs
+    // restent celles réglées à la main dans la table (_rtCycleRatio/
+    // _rtExitNEdit) tant que la case reste décochée.
     let ri = pair.pingala.ri, n = pair.pingala.n;
-    if (RAND_OPTS.ratioMode !== 'custom') {
+    if (RAND_OPTS.ratioOn) {
       ri = riBySlot[idx];                                         // ratio OmcV redistribué
       // La plage active (rMin–rMax) est passée à aeratedN : les 7 oscillateurs
       // (maître + satellites) restent TOUS dans la plage fréquence choisie.
@@ -6132,7 +6213,7 @@ function triggerMagicAuto(opts) {
     }
     _claimedFreqs.push(Math.max(rMin, Math.min(rMax, newMaster * RATIO_OPTS[ri].r * n)));
     if (idx === _closeBeatLeaderIdx) _closeBeatLeaderFreq = _claimedFreqs[_claimedFreqs.length - 1];
-    if (!lockBin) {                              // delta figé si verrou binaural (défaut)
+    if (RAND_OPTS.characterOn) {                  // delta figé si case décochée
       const oldDelta = pair.ida.delta;
       // #6 : Δ varié par paire (option) — chaque paire pioche indépendamment
       // dans le même ensemble musical (thêta/alpha) au lieu d'un battement
@@ -6171,18 +6252,9 @@ function triggerMagicAuto(opts) {
       OSC_FILTER[id] = cur;
     });
 
-    // Option "LFO Cutoff/Résonance" : respiration lente et douce du filtre
-    // (façon pad analogique), rythme très bas pour rester apaisant — jamais
-    // un effet "wah" marqué. Réutilise le patchbay modulaire existant
-    // (§2.9c dans 02-audio.js), donc reste réglable manuellement ensuite.
-    if (RAND_OPTS.filterLFO && typeof setPairPatch === 'function') {
-      const lfoRate = 0.03 + Math.random() * 0.09;      // cycle complet ≈ 11 à 33s
-      const lvlCut  = 1 + Math.floor(Math.random() * 2); // 1 ou 2 (jamais le plus fort)
-      const lvlRes  = Math.random() < 0.5 ? 1 : 0;        // résonance modulée une paire sur deux
-      setPairLfoRate(idx, lfoRate);
-      setPairPatch(idx, 'lfo', 'cutoff', lvlCut);
-      setPairPatch(idx, 'lfo', 'res', lvlRes);
-    } else if (typeof setPairPatch === 'function') {
+    // Option "LFO Cutoff/Résonance" retirée (#132) — le filtre ne respire
+    // plus tout seul au tirage, cf. modulation retirée de setPairPatch ici.
+    if (typeof setPairPatch === 'function') {
       setPairPatch(idx, 'lfo', 'cutoff', 0);
       setPairPatch(idx, 'lfo', 'res', 0);
     }
@@ -6632,7 +6704,7 @@ function buildRandomTable() {
         <button class="rand-freq-step" onclick="_rtStepFreq(${i},9)" title="+9 Hz">+9 Hz</button>
       </div>
       <input type="range" class="rand-vol" id="rt-vol-${i}" min="0" max="1" step="0.01" value="${volUI}"
-        style="color:${pair.color};" oninput="setVolP(${i},parseFloat(this.value))" title="Volume">
+        style="color:${pair.color};" oninput="setPairVol(${i},parseFloat(this.value))" title="Volume (les deux oscillateurs de la paire)">
     </div>`;
   }).join('');
 }
@@ -6776,6 +6848,14 @@ function patchFBFState() {
   if (fTxt) fTxt.style.color  = flowing ? '#63E6FF' : '';
   const dcFlux = document.getElementById('dcFlux');
   if (dcFlux) dcFlux.classList.toggle('flowing', !!flowing);
+  // #132 : chip on/off distinct du gros bouton (qui tape désormais un
+  // nouveau jeu aléatoire) — reflète le même état "flowing".
+  const chip = document.getElementById('fluxOnOffChip');
+  if (chip) {
+    chip.classList.toggle('on', !!flowing);
+    chip.textContent = flowing ? '⏻' : '⭘';
+    chip.title = flowing ? 'Couper le flux' : 'Activer le flux';
+  }
   if (typeof updateDockDisplays === 'function') updateDockDisplays();
 }
 
@@ -6900,17 +6980,17 @@ function buildMasterFXHTML() {
       <!-- #5 : Pingala 100% gauche / Ida 100% droite pour toutes les paires -->
       <div class="fx-row" style="justify-content:space-between;align-items:center;">
         <span class="fx-label">Mode casque strict (zéro crosstalk)</span>
-        <label class="fx-toggle"><input type="checkbox" id="ck-strict-headphone" onchange="setStrictHeadphone(this.checked)"><span class="fx-tog-track"></span></label>
+        <label class="fx-toggle"><input type="checkbox" id="ck-strict-headphone" checked onchange="setStrictHeadphone(this.checked)"><span class="fx-tog-track"></span></label>
       </div>
       <!-- #11 : compression douce anti-pompage par paire (bus dédié) -->
       <div class="fx-row" style="justify-content:space-between;align-items:center;">
         <span class="fx-label">Anti-pompage par paire (doux)</span>
-        <label class="fx-toggle"><input type="checkbox" id="ck-pair-comp" onchange="setPairCompression(this.checked)"><span class="fx-tog-track"></span></label>
+        <label class="fx-toggle"><input type="checkbox" id="ck-pair-comp" checked onchange="setPairCompression(this.checked)"><span class="fx-tog-track"></span></label>
       </div>
       <!-- #16 : sub-drone d'ancrage — pad grave fixe (racine ÷ 2), non touché par le random -->
       <div class="fx-row" style="justify-content:space-between;align-items:center;">
         <span class="fx-label">Sub-drone d'ancrage (racine ÷ 2)</span>
-        <label class="fx-toggle"><input type="checkbox" id="ck-subdrone" onchange="setSubDrone(this.checked)"><span class="fx-tog-track"></span></label>
+        <label class="fx-toggle"><input type="checkbox" id="ck-subdrone" checked onchange="setSubDrone(this.checked)"><span class="fx-tog-track"></span></label>
       </div>
       <div class="fxq-row"><span class="fxq-lbl">Volume sub</span>
         <input type="range" class="fx-slider" min="0" max="0.25" step="0.01" value="0.05" oninput="setSubDroneVol(this.value)">
@@ -7014,19 +7094,12 @@ function buildCustomizeHTML() {
       <button class="cust-bg-btn" id="aq-btn-light" onclick="setAudioQuality('light')">Légère</button>
     </div>
 
-    <div class="pct" style="margin-top:1.1rem">Unité de fréquence</div>
-    <div class="cust-hint">1 Miaow = 243/512 Hz (432 Hz = 8192/9 ≈ 910.22 Miaow). N'affecte que la lecture/saisie de la fréquence maître — le moteur audio reste en Hz.</div>
-    <div class="cust-bg-grid" style="grid-template-columns:repeat(2,1fr);">
-      <button class="cust-bg-btn unit-btn${UNIT_MODE==='hz'?' on':''}" data-unit="hz" onclick="setUnitMode('hz')">Hz</button>
-      <button class="cust-bg-btn unit-btn${UNIT_MODE==='miaow'?' on':''}" data-unit="miaow" onclick="setUnitMode('miaow')">🐈 Miaow</button>
-    </div>
-
-    <div class="pct" style="margin-top:.9rem">🐈 Rock star binaurale</div>
-    <div class="cust-hint">432 / 396 / 360 Miaow — les nouveaux nombres sacrés, pensés directement en Miaow plutôt que convertis depuis le Hz.</div>
+    <div class="pct" style="margin-top:.9rem">Rock star binaurale</div>
+    <div class="cust-hint">432 / 396 / 360 Hz — les accordages de référence.</div>
     <div class="cust-bg-grid" style="grid-template-columns:repeat(3,1fr);">
-      <button class="cust-bg-btn" onclick="setMasterFreqMiaow(432)">432<br><span style="font-size:.65rem;opacity:.65">${miaowToHz(432).toFixed(1)}Hz</span></button>
-      <button class="cust-bg-btn" onclick="setMasterFreqMiaow(396)">396<br><span style="font-size:.65rem;opacity:.65">${miaowToHz(396).toFixed(1)}Hz</span></button>
-      <button class="cust-bg-btn" onclick="setMasterFreqMiaow(360)">360<br><span style="font-size:.65rem;opacity:.65">${miaowToHz(360).toFixed(1)}Hz</span></button>
+      <button class="cust-bg-btn" onclick="setMasterFreq(432)">432 Hz</button>
+      <button class="cust-bg-btn" onclick="setMasterFreq(396)">396 Hz</button>
+      <button class="cust-bg-btn" onclick="setMasterFreq(360)">360 Hz</button>
     </div>
 
     <div class="pct" style="margin-top:1.1rem">Apparence</div>
@@ -7660,10 +7733,8 @@ function loadState() {
 // un rechargement alors que le moteur, lui, aurait bien la bonne valeur.
 function _syncRandOptsUI() {
   const setCk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
-  setCk('ck-binaural-lock', RAND_OPTS.lockBinaural);
   setCk('ck-delta-variety', RAND_OPTS.deltaVariety);
   setCk('ck-polarity-variety', RAND_OPTS.polarityVariety);
-  setCk('ck-rand-lfo',      RAND_OPTS.filterLFO);
   setCk('ck-rand-timbre',   RAND_OPTS.randomTimbre);
   setCk('ck-rand-depth',    RAND_OPTS.randomDepth);
   setCk('ck-rand-breath',   RAND_OPTS.breathRandom);
@@ -7675,19 +7746,13 @@ function _syncRandOptsUI() {
   setCk('ck-subdrone', SUBDRONE_STATE.on);
   const sdv = document.getElementById('sv-subdrone-vol'); if (sdv) sdv.textContent = Math.round(SUBDRONE_STATE.vol * 100) + '%';
   const sdSlider = document.querySelector('input[oninput="setSubDroneVol(this.value)"]'); if (sdSlider) sdSlider.value = SUBDRONE_STATE.vol;
-  document.querySelectorAll('[id^="dch-"]').forEach(b => b.classList.remove('active'));
-  const dchBtn = document.getElementById('dch-' + DELTA_CHARACTER_MODE); if (dchBtn) dchBtn.classList.add('active');
-  // #90 : la sélection Ratio⌀/Identique/Harmonique/Personnalisé n'était
-  // JAMAIS resynchronisée ici (contrairement au caractère du battement
-  // juste au-dessus) — après rechargement de l'app (mise en arrière-plan
-  // Android, redémarrage), le réglage réel restait correctement chargé
-  // (RAND_OPTS.ratioMode) mais le bouton affichait "Ratio⌀" par défaut,
-  // donnant l'impression trompeuse que le choix avait été "décoché".
-  document.querySelectorAll('[id^="rrm-"]').forEach(b => b.classList.remove('active'));
-  const rrmBtn = document.getElementById('rrm-' + (RAND_OPTS.ratioMode === 'random' ? 'random' : RAND_OPTS.ratioMode));
-  if (rrmBtn) rrmBtn.classList.add('active');
-  const customHint = document.getElementById('custom-mode-hint');
-  if (customHint) customHint.style.display = (RAND_OPTS.ratioMode === 'custom') ? 'block' : 'none';
+  // Ratio (dropdown + case on/off) et Caractère du battement (dropdown +
+  // case on/off) — indépendants l'un de l'autre, chacun persistant.
+  const ratioSel = document.getElementById('rand-ratio-select'); if (ratioSel) ratioSel.value = RAND_OPTS.ratioMode;
+  setCk('ck-ratio-on', RAND_OPTS.ratioOn);
+  const ratioHint = document.getElementById('ratio-off-hint'); if (ratioHint) ratioHint.style.display = RAND_OPTS.ratioOn ? 'none' : 'block';
+  const charSel = document.getElementById('rand-character-select'); if (charSel) charSel.value = DELTA_CHARACTER_MODE;
+  setCk('ck-character-on', RAND_OPTS.characterOn);
   setCk('ck-breath-anchor', BREATH_ANCHOR_STATE.on);
   // STRICT_HEADPHONE_MODE n'est connu qu'après loadState() (appelé avant la
   // construction d'OSC_PAN au chargement du script) — le recalculer ici.
@@ -8515,7 +8580,7 @@ const DOCK_ACTIONS = {
 const DOCK_MAP_DEFAULT = {
   red:    { tap: 'openRand',    hold: 'soloMaster',    extra: 'toggleAdvanced' },
   orange: { tap: 'openSamples', hold: 'sampleAnchor',  extra: 'sampleSoloMaster' },
-  flux:   { tap: 'fluxToggle',  hold: 'randomAll',     extra: 'backToMenu' },
+  flux:   { tap: 'randomAll',   hold: 'fluxToggle',    extra: 'backToMenu' },
   green:  { tap: 'openFX',      hold: 'randomFXQuick', extra: 'openGeo' },
   blue:   { tap: 'openParams',  hold: 'openPresets',   extra: 'presetQuickAdd' },
 };
