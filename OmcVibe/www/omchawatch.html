@@ -362,14 +362,14 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
     <div id="tab-notice">
       <div class="notice-section">
         <div class="notice-h">L'idée en une phrase</div>
-        <div class="notice-row"><div class="notice-key">En bref</div><div class="notice-val">Une journée de 24h réelles est redécoupée en 432 parts égales — comme des minutes, mais 432 au lieu de 1440. Le point qui tourne sur les anneaux te montre où tu en es dans cette journée redécoupée, en continu.</div></div>
+        <div class="notice-row"><div class="notice-key">En bref</div><div class="notice-val">Une journée réelle est redécoupée en 432 parts — pas à vitesse constante : les 4 quarts (minuit→lever→zénith→coucher→minuit) font toujours 108 parts chacun, mais leur durée réelle varie avec la saison (heures inégales), pour que le lever soit toujours à 108 et le coucher toujours à 324. Le point qui tourne sur les anneaux te montre où tu en es, en continu.</div></div>
       </div>
       <div class="notice-section">
         <div class="notice-h">Ce que tu vois</div>
-        <div class="notice-row"><div class="notice-key">Grand chiffre</div><div class="notice-val">Ta position dans le jour OmcV (0 à 432). 0 = minuit solaire. 216 = midi solaire (pas midi civil — corrigé par l'équation du temps + ta longitude, réglable dans l'onglet LIEU). 432 = minuit suivant.</div></div>
+        <div class="notice-row"><div class="notice-key">Grand chiffre</div><div class="notice-val">Ta position dans le jour OmcV (0 à 432), calée sur 4 repères réels : 0 = minuit solaire, 108 = lever, 216 = midi solaire (pas midi civil — corrigé par l'équation du temps + ta longitude, réglable dans l'onglet LIEU), 324 = coucher, 432 = minuit suivant.</div></div>
         <div class="notice-row"><div class="notice-key">Omc N</div><div class="notice-val">La grande division du jour (1 à 12, comme une heure). Omc 6 ≈ tu es à la moitié du jour solaire.</div></div>
-        <div class="notice-row"><div class="notice-key">cV N</div><div class="notice-val">La division dans l'Omc en cours (comme une minute). 1 cV = 100 secondes. 36 cV = 1 Omc.</div></div>
-        <div class="notice-row"><div class="notice-key">Solônde N</div><div class="notice-val">La plus petite division, dans le cV en cours (comme une seconde). 1 Solônde ≈ 17 sec. 6 Solônde = 1 cV.</div></div>
+        <div class="notice-row"><div class="notice-key">cV N</div><div class="notice-val">La division dans l'Omc en cours (comme une minute). 36 cV = 1 Omc. Durée réelle variable — plus rapide ou plus lente selon le quart du jour et la saison, jamais figée à 100 sec (sauf à l'équinoxe).</div></div>
+        <div class="notice-row"><div class="notice-key">Solônde N</div><div class="notice-val">La plus petite division, dans le cV en cours (comme une seconde). 6 Solônde = 1 cV. Même logique que cV : durée réelle variable, pas figée à 17 sec.</div></div>
         <div class="notice-row"><div class="notice-key">Sphère or</div><div class="notice-val">Centre fixe, toujours présent. C'est le point 396 — le centre de vie, ni expansion ni contraction.</div></div>
       </div>
       <div class="notice-section">
@@ -377,7 +377,7 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
         <div class="notice-row"><div class="notice-key" style="color:var(--ivoire)">● Ivoire</div><div class="notice-val">Anneau OmcV — la jauge pleine du grand chiffre (0 à 432), sans graduation : elle se remplit à mesure que le jour avance. Fait un tour en 1 jour complet.</div></div>
         <div class="notice-row"><div class="notice-key" style="color:var(--gold)">● Or</div><div class="notice-val">Anneau Omc — les 12 divisions de l'heure. Fait un tour en 1 jour. Chiffres = unités du cycle (36, 72 … 432).</div></div>
         <div class="notice-row"><div class="notice-key" style="color:var(--violet)">● Violet</div><div class="notice-val">Anneau moyen — les cV. Fait un tour en 1 Omc (36 cV).</div></div>
-        <div class="notice-row"><div class="notice-key" style="color:var(--blue)">● Bleu</div><div class="notice-val">Anneau interne — les Solônde. Fait un tour en 1 cV (100 secondes).</div></div>
+        <div class="notice-row"><div class="notice-key" style="color:var(--blue)">● Bleu</div><div class="notice-val">Anneau interne — les Solônde. Fait un tour en 1 cV (durée réelle variable, pas figée à 100 secondes).</div></div>
         <div class="notice-row"><div class="notice-key" style="color:var(--cycle)">● Magenta (option)</div><div class="notice-val">Anneau "Cycle 432" — ta position dans le cycle biologique de 432 jours calculé depuis ton J0 (onglet Archétypes). Fait un tour en 432 jours, pas en 432 unités du jour.</div></div>
         <div class="notice-row"><div class="notice-key">Traîne</div><div class="notice-val">La queue lumineuse = le passé récent du point. Plus elle est longue, plus le mouvement est lent.</div></div>
       </div>
@@ -632,7 +632,7 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
     <div id="tab-soleil" style="display:none">
       <div class="opt-section">
         <div class="opt-h">Lever · Zénith · Coucher — pour un jour donné</div>
-        <p class="small" style="margin-bottom:6px">Calculé pour la position choisie dans l'onglet LIEU. Dates traitées en UTC pur, aucune correction de fuseau horaire.</p>
+        <p class="small" style="margin-bottom:6px">Calculé pour la position choisie dans l'onglet LIEU. Dates traitées en UTC pur, aucune correction de fuseau horaire. Lever/Coucher affichent toujours 108.0/324.0 — c'est normal : le cadran cale désormais le lever et le coucher à ces valeurs fixes toute l'année (heures inégales). C'est la <strong>Durée du jour</strong> ci-dessous qui varie avec la saison, pas leur position sur le cadran.</p>
         <input type="date" id="sun-date" class="arch-input" onchange="sunRecompute()">
         <div class="arch-readout-grid">
           <div class="arch-readout"><div class="arch-readout-label">Lever (Omc)</div><div class="arch-readout-val" id="sun-lever">—</div></div>
@@ -817,10 +817,29 @@ function eqOfTime(date){
 // heure UTC réelle (toujours correcte, quel que soit le fuseau du
 // téléphone) + longitude choisie sur le planisphère × 4 min/° + équation
 // du temps = midi solaire réel n'importe où sur Terre.
+//
+// Densité NON linéaire : la journée est 4 quarts de 108 unités calés sur
+// les 4 événements solaires réels (minuit=0, lever=108, zénith=216,
+// coucher=324, minuit suivant=432) — toute l'année, quel que soit le
+// lieu. La durée réelle de chaque quart varie avec la saison (heures
+// inégales), pas sa taille en densité : Omc/cV/Solônde, dérivés par
+// simple découpage fractionnaire de cette densité, héritent
+// automatiquement de cette respiration saisonnière. À l'équinoxe
+// (jour=nuit=12h) les 4 quarts font 360 min chacun et ce calcul se
+// réduit exactement à l'ancien mapping linéaire — hors équinoxe il en
+// diverge, c'est le point.
+function frac01(v,lo,hi){const s=hi-lo;return s>1e-6?(v-lo)/s:0;}
 function calcDensity(now){
   const eot=eqOfTime(now);
   const m=now.getUTCHours()*60+now.getUTCMinutes()+now.getUTCSeconds()/60;
-  return ((m+LOCATION.lon*4+eot)/1440*432+432)%432;
+  const sm=(((m+LOCATION.lon*4+eot)%1440)+1440)%1440; // minute solaire vraie, 720=midi
+  const sun=computeSunTimes(now,LOCATION.lat);
+  if(sun.polar) return (sm/1440*432+432)%432; // jour/nuit permanents : pas de lever/coucher à caler
+  const half=sun.dayLenH*30, riseMin=720-half, setMin=720+half;
+  if(sm<riseMin) return frac01(sm,0,riseMin)*108;
+  if(sm<720)     return 108+frac01(sm,riseMin,720)*108;
+  if(sm<setMin)  return 216+frac01(sm,720,setMin)*108;
+  return 324+frac01(sm,setMin,1440)*108;
 }
 
 // ─── CONFIG MODE ─────────────────────────────────────
@@ -1421,7 +1440,20 @@ function simSetDensity(v){
   const target=Math.max(0,Math.min(432,parseFloat(v)));
   const cur=SIM.date||new Date();
   const eot=eqOfTime(cur);
-  let m=target/432*1440-LOCATION.lon*4-eot;
+  // Inverse de calcDensity : retrouve la minute solaire correspondant à
+  // la densité cible sous le mapping non-linéaire à 4 quarts.
+  const sun=computeSunTimes(cur,LOCATION.lat);
+  let sm;
+  if(sun.polar){
+    sm=target/432*1440;
+  }else{
+    const half=sun.dayLenH*30, riseMin=720-half, setMin=720+half;
+    if(target<108)      sm=riseMin*(target/108);
+    else if(target<216) sm=riseMin+(target-108)/108*(720-riseMin);
+    else if(target<324) sm=720+(target-216)/108*(setMin-720);
+    else                 sm=setMin+(target-324)/108*(1440-setMin);
+  }
+  let m=sm-LOCATION.lon*4-eot;
   m=((m%1440)+1440)%1440;
   const whole=Math.floor(m),sec=Math.round((m-whole)*60);
   const next=new Date(Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth(),cur.getUTCDate(),0,0,0));
@@ -1459,19 +1491,19 @@ function computeSunTimes(date,lat){
   const doy=dayOfYearUTC(date);
   const declR=solarDeclinationDeg(doy)*Math.PI/180, latR=lat*Math.PI/180;
   const cosH0=-Math.tan(latR)*Math.tan(declR);
-  let dayLenH,halfDayOmc,polar=null;
-  if(cosH0<=-1){dayLenH=24;halfDayOmc=216;polar='soleil de minuit';}
-  else if(cosH0>=1){dayLenH=0;halfDayOmc=0;polar='nuit polaire';}
+  let dayLenH,polar=null;
+  if(cosH0<=-1){dayLenH=24;polar='soleil de minuit';}
+  else if(cosH0>=1){dayLenH=0;polar='nuit polaire';}
   else{
     const H0deg=Math.acos(cosH0)*180/Math.PI;
-    dayLenH=H0deg/7.5; halfDayOmc=H0deg*1.2;
+    dayLenH=H0deg/7.5;
   }
   const diy=daysInYearUTC(date.getUTCFullYear());
   return{
     doy,dayLenH,polar,
-    leverOmc:((216-halfDayOmc)+432)%432,
+    leverOmc:108,  // fixe par construction — calcDensity cale toujours le lever ici
     zenithOmc:216,
-    coucherOmc:((216+halfDayOmc)+432)%432,
+    coucherOmc:324, // fixe par construction, idem le coucher
     pos360:doy/diy*360,
   };
 }
