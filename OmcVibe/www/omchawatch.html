@@ -32,7 +32,7 @@
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --gold:#F0C060; --violet:#A060F0; --blue:#60A8F8; --cycle:#c45bbf;
+  --gold:#F0C060; --violet:#A060F0; --blue:#60A8F8; --cycle:#c45bbf; --ivoire:#EDE4C8;
   --frame:rgba(6,9,28,0.88); --border:rgba(140,80,220,0.20);
   --text:#E8C878; --textD:#907040; --textS:#C090D8;
 }
@@ -374,7 +374,8 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
       </div>
       <div class="notice-section">
         <div class="notice-h">Les anneaux</div>
-        <div class="notice-row"><div class="notice-key" style="color:var(--gold)">● Or</div><div class="notice-val">Anneau externe — les Omc. Fait un tour en 12 Omc (un demi-jour). Chiffres = unités du cycle (36, 72 … 432).</div></div>
+        <div class="notice-row"><div class="notice-key" style="color:var(--ivoire)">● Ivoire</div><div class="notice-val">Anneau OmcV — la jauge pleine du grand chiffre (0 à 432), sans graduation : elle se remplit à mesure que le jour avance. Fait un tour en 1 jour complet.</div></div>
+        <div class="notice-row"><div class="notice-key" style="color:var(--gold)">● Or</div><div class="notice-val">Anneau Omc — les 12 divisions de l'heure. Fait un tour en 1 jour. Chiffres = unités du cycle (36, 72 … 432).</div></div>
         <div class="notice-row"><div class="notice-key" style="color:var(--violet)">● Violet</div><div class="notice-val">Anneau moyen — les cV. Fait un tour en 1 Omc (36 cV).</div></div>
         <div class="notice-row"><div class="notice-key" style="color:var(--blue)">● Bleu</div><div class="notice-val">Anneau interne — les Solônde. Fait un tour en 1 cV (100 secondes).</div></div>
         <div class="notice-row"><div class="notice-key" style="color:var(--cycle)">● Magenta (option)</div><div class="notice-val">Anneau "Cycle 432" — ta position dans le cycle biologique de 432 jours calculé depuis ton J0 (onglet Archétypes). Fait un tour en 432 jours, pas en 432 unités du jour.</div></div>
@@ -388,7 +389,7 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
       </div>
       <div class="notice-section">
         <div class="notice-h">Barre du bas</div>
-        <div class="notice-row"><div class="notice-key">432 / 15552</div><div class="notice-val">Deux façons de lire le même mouvement. <strong>432</strong> = échelle standard, le grand chiffre affiché (résolution du curseur ≈ 200 sec/unité — 24h ÷ 432, une grille de mesure, pas une unité nommée : l'Omc fait 3600 sec, le cV 100 sec, le Solônde ≈ 17 sec). <strong>15552</strong> = zoom profond (36 Omc × 432 cV, 1 cV ≈ 5,6 sec).</div></div>
+        <div class="notice-row"><div class="notice-key">432 / 15552</div><div class="notice-val">Deux façons de lire le même mouvement. <strong>432</strong> = échelle standard, le grand chiffre affiché — porté par l'anneau ivoire OmcV. <strong>15552</strong> = zoom profond (36 Omc × 432 cV, 1 cV ≈ 5,6 sec).</div></div>
         <div class="notice-row"><div class="notice-key">🔒 / 🔓</div><div class="notice-val">Verrou de simulation (onglet SIMU) — déverrouille pour figer le temps et explorer n'importe quel instant du cycle (date + densité Omc) sans attendre qu'il arrive réellement.</div></div>
       </div>
       <div class="notice-section">
@@ -406,6 +407,10 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
         <label class="opt-row locked">
           <span><span class="dot" style="background:var(--gold);display:inline-block"></span>Sphère centrale 396</span>
           <input type="checkbox" class="sw" checked disabled>
+        </label>
+        <label class="opt-row">
+          <span><span class="dot" style="background:var(--ivoire);display:inline-block"></span>Anneau Ivoire — OmcV</span>
+          <input type="checkbox" class="sw" id="o-ringOmcV" checked onchange="OPTS.ringOmcV=this.checked">
         </label>
         <label class="opt-row">
           <span><span class="dot" style="background:var(--gold);display:inline-block"></span>Anneau Or — Omc</span>
@@ -520,13 +525,18 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
       <div class="des-section">
         <div class="des-h">Anneaux & bulles</div>
         <div class="des-col">
-          <div class="des-head"><span>Épaisseur anneau Omc (or)</span><span class="des-val" id="v-ringOmc">160%</span></div>
-          <input type="range" min="50" max="400" value="160"
+          <div class="des-head"><span>Épaisseur anneau OmcV (ivoire)</span><span class="des-val" id="v-ringOmcV">140%</span></div>
+          <input type="range" min="50" max="400" value="140"
+            oninput="DESIGN.ringOmcVWidth=this.value/100;document.getElementById('v-ringOmcV').textContent=this.value+'%'">
+        </div>
+        <div class="des-col">
+          <div class="des-head"><span>Épaisseur anneau Omc (or)</span><span class="des-val" id="v-ringOmc">190%</span></div>
+          <input type="range" min="50" max="400" value="190"
             oninput="DESIGN.ringOmcWidth=this.value/100;document.getElementById('v-ringOmc').textContent=this.value+'%'">
         </div>
         <div class="des-col">
-          <div class="des-head"><span>Épaisseur anneaux cV / Solônde</span><span class="des-val" id="v-ringOther">130%</span></div>
-          <input type="range" min="50" max="400" value="130"
+          <div class="des-head"><span>Épaisseur anneaux cV / Solônde</span><span class="des-val" id="v-ringOther">160%</span></div>
+          <input type="range" min="50" max="400" value="160"
             oninput="DESIGN.ringWidth=this.value/100;document.getElementById('v-ringOther').textContent=this.value+'%'">
         </div>
         <div class="des-col">
@@ -745,7 +755,7 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
 'use strict';
 // ─── OPTS & DESIGN ───────────────────────────────────
 const OPTS = {
-  ringPhase:true, ringSouffle:true, ringInstant:true, ringCycle432:true,
+  ringOmcV:true, ringPhase:true, ringSouffle:true, ringInstant:true, ringCycle432:true,
   trails:true, ticks:true,
   nodes:true, nodeNums:true, pulse:true,
   densityNum:true, readings:true,
@@ -753,8 +763,9 @@ const OPTS = {
 };
 const DESIGN = {
   colorPhase:'#F0C060', colorSouffle:'#A060F0', colorInstant:'#60A8F8',
+  colorOmcV:'#EDE4C8',
   intensity:1, haloScale:1, nodeFontScale:1, centerFontScale:1,
-  ringOmcWidth:1.6, ringWidth:1.3, bubbleScale:1.2,
+  ringOmcWidth:1.9, ringWidth:1.6, ringOmcVWidth:1.4, bubbleScale:1.2,
   deepMode:false,
 };
 
@@ -948,7 +959,7 @@ function drawArc(radius,col,angle,sweep,lw){
   const gg=X.createRadialGradient(px,py,0,px,py,lw*6.5);
   gg.addColorStop(0,rgba(col,.85));gg.addColorStop(.4,rgba(col,.32));gg.addColorStop(1,rgba(col,0));
   X.beginPath();X.arc(px,py,lw*6.5,0,TAU);X.fillStyle=gg;X.fill();
-  X.beginPath();X.arc(px,py,lw*1.3,0,TAU);X.fillStyle=DESIGN[col===DESIGN.colorPhase?'colorPhase':col===DESIGN.colorSouffle?'colorSouffle':'colorInstant']||col;X.fill();
+  X.beginPath();X.arc(px,py,lw*1.3,0,TAU);X.fillStyle=col;X.fill();
   X.beginPath();X.arc(px,py,lw*.55,0,TAU);X.fillStyle='rgba(255,255,255,.95)';X.fill();
   const tx=cx+Math.cos(angle)*(radius+R*.034),ty=cy+Math.sin(angle)*(radius+R*.034);
   X.beginPath();X.moveTo(px,py);X.lineTo(tx,ty);X.strokeStyle=col;X.lineWidth=2.2;X.lineCap='round';X.stroke();
@@ -976,33 +987,42 @@ function drawReadingArcs(r, cfg){
   const fS=Math.max(8,R*.028|0),fM=Math.max(7,R*.022|0),fI=Math.max(6,R*.018|0);
   // #ChaWatch-design : anneaux repoussés vers le bord (plus larges,
   // mieux séparés) et bandes arc-en-ciel/comètes épaissies pour rester
-  // lisibles à distance.
+  // lisibles à distance. Rayons resserrés vers le centre pour laisser
+  // la bande extérieure (.90-1.0) libre pour l'anneau OmcV.
+  if(OPTS.ringOmcV){
+    // Anneau OmcV : la lecture continue 0-432 (le "grand chiffre"), en
+    // vrai anneau — une jauge de progression du jour, sans graduations,
+    // pour rester visuellement distincte des 3 anneaux à comète.
+    const rV=R*.97, w=DESIGN.ringOmcVWidth;
+    X.beginPath();X.arc(cx,cy,rV,0,TAU);X.strokeStyle=rgba(DESIGN.colorOmcV,.12);X.lineWidth=1.2*w;X.stroke();
+    drawArc(rV,DESIGN.colorOmcV, fDay*TAU-Math.PI/2, Math.min(fDay*TAU*.985,TAU*.99), 4.2*w);
+  }
   if(OPTS.ringPhase){
-    const rH=R*.94, w=DESIGN.ringOmcWidth;
+    const rH=R*.85, w=DESIGN.ringOmcWidth;
     drawRainbowRing(rH, 7*w);
     drawTicks(rH,cfg.ringPN,DESIGN.colorPhase,cfg.ringPmaj,cfg.ringPL,fS,w);
     drawArc(rH,DESIGN.colorPhase, fDay*TAU-Math.PI/2, Math.PI/3, 7*w);
   }
   if(OPTS.ringSouffle){
-    const rS=R*.80, w=DESIGN.ringWidth;
+    const rS=R*.72, w=DESIGN.ringWidth;
     drawRainbowRing(rS, 5*w);
     drawTicks(rS,cfg.ringSN,DESIGN.colorSouffle,cfg.ringSmax,cfg.ringSL,fM,w);
     drawArc(rS,DESIGN.colorSouffle, fPhase*TAU-Math.PI/2, Math.PI/6.5, 4.5*w);
   }
   if(OPTS.ringInstant){
-    const rI=R*.66, w=DESIGN.ringWidth;
+    const rI=R*.60, w=DESIGN.ringWidth;
     drawRainbowRing(rI, 3.5*w);
     drawTicks(rI,cfg.ringIN,DESIGN.colorInstant,cfg.ringImaj,cfg.ringIL,fI,w);
     drawArc(rI,DESIGN.colorInstant, fSouffle*TAU-Math.PI/2, Math.PI/20, 3.2*w);
   }
   // Arc arc-en-ciel sur l'orbite des 36 nœuds
-  if(OPTS.nodes) drawRainbowRing(R*.56, 1.8*DESIGN.bubbleScale);
+  if(OPTS.nodes) drawRainbowRing(R*.50, 1.8*DESIGN.bubbleScale);
 }
 
 // ─── 36 NŒUDS ────────────────────────────────────────
 function draw36Nodes(readings,t,cfg){
   if(!OPTS.nodes)return;
-  const OR=R*.56,bR0=R*.035*DESIGN.bubbleScale;
+  const OR=R*.50,bR0=R*.035*DESIGN.bubbleScale;
   // Mode 432 : les bulles cyclent dans l'heure (souffle)
   // Mode 15552 : les bulles représentent les 36 phases du jour
   const activeFrac = DESIGN.deepMode
@@ -1693,7 +1713,7 @@ function buildArchTable36(activeCyclePos,activeJourPos){
 function drawCycle432Ring(now){
   const comp=computeFromJ0(J0_ARCH,now);
   const mv=comp.lvlJour432.mv;
-  const rD=R*1.02;
+  const rD=R*1.05;
   const frac=(comp.dayInCycle-1)/432;
   X.beginPath();X.arc(cx,cy,rD,0,TAU);X.strokeStyle='rgba(196,91,191,.14)';X.lineWidth=2;X.stroke();
   const ang=frac*TAU-Math.PI/2;
