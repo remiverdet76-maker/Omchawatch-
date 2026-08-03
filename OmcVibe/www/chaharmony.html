@@ -1,0 +1,1038 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Chaharmony · Générateur de fréquences</title>
+<style>
+:root{
+  --void:#02010D;--gold:#E8A020;--goldBright:#FFD27A;--text:#B8A8D0;
+  --bright:#F0E0FF;--panel:rgba(20,12,4,.62);--border:rgba(255,190,90,.28);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--void);color:var(--text);
+  font-family:'IM Fell English',serif;}
+body{background:radial-gradient(circle at 50% 20%,#1a1004,#000 78%);}
+#wrap{position:fixed;inset:0;display:flex;flex-direction:column;}
+#hdr{padding:.9rem 1rem .5rem;flex-shrink:0;}
+#hdr-title{font-family:'Cinzel Decorative',serif;font-size:1.15rem;font-weight:700;
+  color:var(--goldBright);letter-spacing:.1em;text-shadow:0 0 18px rgba(255,200,90,.4);}
+#hdr-sub{font-size:.7rem;letter-spacing:.12em;opacity:.55;text-transform:uppercase;margin-top:2px;}
+#tabs{display:flex;gap:.3rem;padding:0 1rem;overflow-x:auto;flex-shrink:0;scrollbar-width:none;}
+#tabs::-webkit-scrollbar{display:none;}
+.otab{flex-shrink:0;padding:.4rem .75rem;border-radius:8px;font-family:'Cinzel Decorative',serif;
+  font-size:.68rem;letter-spacing:.05em;color:var(--text);border:1.5px solid var(--border);
+  background:rgba(20,12,4,.4);cursor:pointer;white-space:nowrap;}
+.otab.on{color:var(--goldBright);border-color:var(--gold);background:rgba(232,160,32,.16);}
+#body{flex:1;overflow-y:auto;padding:.8rem 1rem 1rem;}
+.card{background:var(--panel);border:1.5px solid var(--border);border-radius:12px;
+  padding:.9rem;margin-bottom:.7rem;backdrop-filter:blur(8px);}
+.sec-t{font-family:'Cinzel Decorative',serif;font-size:.68rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gold);opacity:.85;margin-bottom:.55rem;}
+.osc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;}
+.lr-btn,.plus-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);
+  background:rgba(20,12,4,.5);color:var(--text);font-family:'Cinzel Decorative',serif;
+  font-size:.62rem;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  flex-direction:column;gap:1px;}
+.lr-btn.bin{border-color:var(--gold);color:var(--goldBright);background:rgba(232,160,32,.18);}
+.plus-btn{font-size:1.2rem;color:#8CFFC0;border-color:rgba(140,255,180,.4);}
+.freq-disp{text-align:center;flex:1;}
+.freq-num{font-family:'Cinzel Decorative',serif;font-size:2.1rem;font-weight:700;color:var(--bright);
+  line-height:1;cursor:text;}
+.freq-hz{font-size:.68rem;opacity:.5;letter-spacing:.1em;text-transform:uppercase;}
+.freq-input-manual{display:none;width:100%;text-align:center;font-family:'Cinzel Decorative',serif;
+  font-size:1.7rem;font-weight:700;color:var(--goldBright);background:rgba(232,160,32,.12);
+  border:1.5px solid var(--gold);border-radius:8px;padding:.15rem 0;}
+input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:2px;
+  background:rgba(232,160,32,.18);outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;
+  border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 8px rgba(232,160,32,.6);}
+input[type=range].pink::-webkit-slider-thumb{background:#FF6FA8;box-shadow:0 0 8px rgba(255,111,168,.6);}
+.freq-range{display:flex;justify-content:space-between;font-size:.6rem;opacity:.4;margin-top:2px;}
+.miaow-presets{display:flex;gap:.4rem;margin-top:.5rem;}
+.miaow-preset-btn{flex:1;padding:.35rem .2rem;border-radius:8px;border:1.5px solid var(--border);
+  background:rgba(20,12,4,.5);color:var(--goldBright);font-size:.72rem;cursor:pointer;text-align:center;line-height:1.3;}
+.miaow-preset-btn span{display:block;font-size:.58rem;opacity:.6;}
+.n-row{display:flex;align-items:center;justify-content:center;gap:.9rem;margin:.7rem 0;}
+.n-step{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--border);
+  background:rgba(20,12,4,.5);color:var(--goldBright);font-size:1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;}
+.n-mute{width:56px;height:56px;border-radius:50%;border:2px solid var(--gold);cursor:pointer;
+  background:radial-gradient(circle,rgba(232,160,32,.35),rgba(232,160,32,.08));
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--goldBright);}
+.n-mute.muted{border-color:#666;background:rgba(60,60,60,.3);color:#888;}
+.ctl-row{margin-bottom:.55rem;}
+.ctl-lv{display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:.2rem;}
+.ctl-l{opacity:.75;}
+.ctl-v{color:var(--bright);}
+.filt-row{display:flex;gap:.3rem;margin-bottom:.55rem;}
+.filt-btn{flex:1;padding:.32rem 0;border-radius:8px;font-size:.62rem;letter-spacing:.05em;
+  border:1px solid var(--border);background:rgba(20,12,4,.5);color:var(--text);cursor:pointer;}
+.filt-btn.active{background:rgba(232,160,32,.22);border-color:var(--gold);color:var(--goldBright);}
+.hint{font-size:.62rem;opacity:.4;font-style:italic;margin-top:.3rem;}
+#dock{display:flex;gap:.5rem;padding:.6rem 1rem calc(.6rem + env(safe-area-inset-bottom));
+  flex-shrink:0;border-top:1px solid var(--border);}
+.dbtn{flex:1;padding:.6rem .3rem;border-radius:10px;border:1.5px solid var(--border);
+  background:rgba(20,12,4,.5);color:var(--text);font-family:'Cinzel Decorative',serif;
+  font-size:.66rem;text-align:center;cursor:pointer;}
+.dbtn.silence{border-color:rgba(255,90,90,.4);color:#FF9090;}
+.dbtn.silence.on{background:rgba(255,60,60,.22);border-color:#FF6060;color:#FFB0B0;}
+.dbtn.flux{border-color:var(--gold);color:var(--goldBright);}
+.dbtn.flux.on{background:rgba(232,160,32,.25);}
+#plusMenu{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;
+  align-items:flex-end;justify-content:center;}
+#plusMenu.open{display:flex;}
+#plusMenu .sheet{width:100%;max-width:420px;background:#0c0806;border:1.5px solid var(--border);
+  border-radius:16px 16px 0 0;padding:1rem;}
+.pm-item{padding:.7rem .5rem;font-family:'Cinzel Decorative',serif;font-size:.78rem;
+  color:var(--bright);border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;}
+.pm-item:last-child{border-bottom:none;}
+
+/* ─── Boîte à rythme — 108 pas (3×36) ────────────────────────────── */
+.drum-transport{display:flex;align-items:center;justify-content:center;gap:1rem;margin-bottom:.7rem;}
+.dtrans-btn{width:52px;height:52px;border-radius:50%;border:2px solid var(--gold);cursor:pointer;
+  background:radial-gradient(circle,rgba(232,160,32,.3),rgba(232,160,32,.08));
+  color:var(--goldBright);font-size:1.2rem;display:flex;align-items:center;justify-content:center;}
+.dtrans-btn.on{border-color:#8CFFC0;color:#8CFFC0;background:radial-gradient(circle,rgba(140,255,192,.3),rgba(140,255,192,.08));}
+.dtrans-btn.tap{width:auto;height:auto;padding:.5rem .9rem;border-radius:10px;font-family:'Cinzel Decorative',serif;font-size:.68rem;letter-spacing:.08em;}
+.dtrans-btn.tap:active{background:rgba(232,160,32,.3);}
+.drum-bpm{text-align:center;min-width:70px;}
+.bpm-num{display:block;font-family:'Cinzel Decorative',serif;font-size:1.7rem;font-weight:700;color:var(--bright);line-height:1;}
+.bpm-lbl{font-size:.6rem;opacity:.5;letter-spacing:.14em;text-transform:uppercase;}
+.drum-banks{display:flex;gap:.4rem;justify-content:center;}
+.dbank{flex:1;max-width:70px;padding:.4rem 0;border-radius:8px;font-family:'Cinzel Decorative',serif;
+  font-size:.72rem;border:1.5px solid var(--border);background:rgba(20,12,4,.5);color:var(--text);cursor:pointer;text-align:center;}
+.dbank.on{border-color:var(--gold);color:var(--goldBright);background:rgba(232,160,32,.2);}
+.dvoices{display:flex;flex-wrap:wrap;gap:.5rem;}
+.dvoice-col{width:calc(33.33% - .34rem);display:flex;flex-direction:column;gap:.3rem;}
+.dvoice-pad{aspect-ratio:1.15;border-radius:10px;border:2px solid color-mix(in srgb, var(--vc) 55%, transparent);
+  background:radial-gradient(circle,color-mix(in srgb, var(--vc) 30%, transparent),color-mix(in srgb, var(--vc) 8%, transparent));
+  display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;position:relative;}
+.dvoice-pad.sel{border-color:var(--vc);box-shadow:0 0 12px color-mix(in srgb, var(--vc) 60%, transparent);}
+.dvoice-pad.muted{opacity:.35;border-style:dashed;}
+.dvoice-name{font-family:'Cinzel Decorative',serif;font-size:.62rem;letter-spacing:.03em;color:var(--vc);padding:0 .2rem;}
+.dvoice-fx{width:100%;padding:.3rem 0;border-radius:7px;border:1px solid var(--border);
+  background:rgba(20,12,4,.5);color:var(--text);font-size:.85rem;cursor:pointer;}
+.dstep-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-bottom:.6rem;}
+.dstep{aspect-ratio:1;border-radius:4px;border:1px solid var(--border);background:rgba(255,255,255,.04);cursor:pointer;padding:0;}
+.dstep.on{background:var(--gold);border-color:var(--goldBright);box-shadow:0 0 6px rgba(232,160,32,.6);}
+.dstep.playhead{outline:2px solid #63E6FF;outline-offset:1px;}
+.drum-auto{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;}
+.drum-auto input[type=number]{width:52px;background:rgba(20,12,4,.6);border:1.5px solid var(--border);
+  border-radius:6px;color:var(--bright);text-align:center;padding:.3rem 0;font-family:'IM Fell English',serif;font-size:.9rem;}
+.dauto-btn{padding:.4rem .7rem;border-radius:8px;font-family:'Cinzel Decorative',serif;font-size:.66rem;
+  border:1.5px solid var(--gold);background:rgba(232,160,32,.14);color:var(--goldBright);cursor:pointer;}
+.dauto-btn.clear{border-color:rgba(255,110,110,.5);color:#FF9E9E;background:rgba(255,80,80,.1);}
+#drumFxModal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:210;display:none;
+  align-items:flex-end;justify-content:center;}
+#drumFxModal.open{display:flex;}
+#drumFxModal .sheet{width:100%;max-width:420px;max-height:82vh;overflow-y:auto;background:#0c0806;
+  border:1.5px solid var(--border);border-radius:16px 16px 0 0;padding:1rem;}
+.dfx-import{display:block;text-align:center;padding:.6rem;border-radius:9px;border:1.5px dashed var(--gold);
+  color:var(--goldBright);font-family:'Cinzel Decorative',serif;font-size:.72rem;cursor:pointer;margin-bottom:.5rem;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hdr">
+    <div id="hdr-title">⬡ CHAHARMONY</div>
+    <div id="hdr-sub">Générateur de fréquences · 7 oscillateurs</div>
+  </div>
+  <div id="tabs"></div>
+  <div id="body"></div>
+  <div id="dock">
+    <div class="dbtn" onclick="location.href='index.html'">← Retour</div>
+    <div class="dbtn silence" id="btnSilence" onclick="toggleSilence()">◼ Silence</div>
+    <div class="dbtn flux" id="btnFlux" onclick="toggleFlux()">◎ Flux OFF</div>
+  </div>
+</div>
+<div id="plusMenu" onclick="if(event.target===this)closePlusMenu()">
+  <div class="sheet">
+    <div class="pm-item" onclick="oscReset(curOsc);closePlusMenu()">↺ Réinitialiser cet oscillateur</div>
+    <div class="pm-item" onclick="oscRandom(curOsc);closePlusMenu()">⚄ Fréquence aléatoire</div>
+    <div class="pm-item" onclick="copyToAll();closePlusMenu()">⇉ Copier ces réglages sur les 7</div>
+    <div class="pm-item" onclick="closePlusMenu()">Fermer</div>
+  </div>
+</div>
+<div id="drumFxModal" onclick="if(event.target===this)closeDrumFx()">
+  <div class="sheet" id="drumFxSheet"></div>
+</div>
+<script>
+// ─── AUDIO ENGINE — 7 oscillateurs indépendants, chacun son propre moteur
+// FX (reverb + delay non partagés), normal (mono centré) ↔ binaural (L/R
+// séparés + Δ) commutable par oscillateur. ──────────────────────────────
+const N_OSC = 7;
+const FILTER_TYPES = { off:'allpass', hpf:'highpass', bpf:'bandpass', lpf:'lowpass' };
+let AC = null, master = null, masterGlue = null, limiter = null, safetyClip = null, flowing = false, silenced = false;
+
+// #69 : un seul oscillateur actif par défaut (OSC 1) — les 6 autres
+// démarrent coupés (bouton mute déjà existant pour les réactiver un par un).
+const OSC = [];
+for (let i = 0; i < N_OSC; i++) {
+  OSC.push({
+    freq: 144 + i * 36, bin: false, delta: 4.0, n: 1, muted: i !== 0,
+    vol: 0.6, pan: 0, lfoDepth: 0,
+    filtMode: 'off', cutoff: 2000, res: 0,
+    revWet: 0, delWet: 0,
+    nodes: null
+  });
+}
+let curOsc = 0;
+let curTab = 'osc'; // 'osc' | 'drum'
+
+// #74 : watchdog qualité audio (portée d'OmcVibe/index.html §2.8b) — surveille
+// la dérive du setInterval (signal universel de thread JS saturé, fiable même
+// quand AudioContext.outputLatency est absent/figé sur WebView Android) et,
+// en cas de tension soutenue, coupe reverb/delay de tous les oscillateurs
+// (le calcul le plus lourd de ce module) pour soulager le thread audio.
+let AUDIO_QUALITY_TIER = 'full';
+let _audioWatchdogTimer = null, _audioStrainCount = 0, _wdLastCheckTs = 0;
+function _armAudioWatchdog() {
+  clearInterval(_audioWatchdogTimer); _audioWatchdogTimer = null;
+  _audioStrainCount = 0; _wdLastCheckTs = 0;
+  if (AUDIO_QUALITY_TIER === 'light') return;
+  _audioWatchdogTimer = setInterval(_audioWatchdogCheck, 3000);
+}
+function _audioWatchdogCheck() {
+  if (!flowing) return;
+  const now = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+  let strained = false;
+  if (_wdLastCheckTs && (now - _wdLastCheckTs) - 3000 > 600) strained = true;
+  _wdLastCheckTs = now;
+  try {
+    if (AC && typeof AC.outputLatency === 'number' && typeof AC.baseLatency === 'number' && AC.baseLatency > 0.001) {
+      if (AC.outputLatency > AC.baseLatency * 2.2) strained = true;
+    }
+  } catch(e) {}
+  if (strained) {
+    _audioStrainCount++;
+    if (_audioStrainCount >= 2) _degradeAudioQuality();
+  } else {
+    _audioStrainCount = 0;
+  }
+}
+function _degradeAudioQuality() {
+  _audioStrainCount = 0;
+  if (AUDIO_QUALITY_TIER === 'light') return;
+  AUDIO_QUALITY_TIER = 'light';
+  for (let i = 0; i < N_OSC; i++) { _gateOscRev(i, false); _gateOscDel(i, false); }
+  clearInterval(_audioWatchdogTimer); _audioWatchdogTimer = null;
+}
+
+function ensureAC() {
+  if (AC) return;
+  AC = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 0.22 });
+  master = AC.createGain(); master.gain.value = 0.8;
+  // Chaîne de sécurité (portée d'OmcVibe/index.html, #74) : ce module n'avait
+  // AUCUNE protection anti-clip (master→destination direct) — jusqu'à 7
+  // oscillateurs (dont certains en binaural = 2 partiels) pouvaient s'additionner
+  // et dépasser 0dBFS, source probable de craquements/déchirements audibles.
+  // Glue doux (compresseur léger, seuil haut, ratio faible) → limiteur
+  // brickwall (dernier filet réglable) → soft-clip tanh SANS latence (garantie
+  // "jamais de dépassement" quoi qu'il arrive en amont, cf. index.html §2.4).
+  masterGlue = AC.createDynamicsCompressor();
+  masterGlue.threshold.value = -14; masterGlue.knee.value = 8; masterGlue.ratio.value = 1.5;
+  masterGlue.attack.value = 0.03; masterGlue.release.value = 0.25;
+  limiter = AC.createDynamicsCompressor();
+  limiter.threshold.value = -3.6; limiter.knee.value = 0; limiter.ratio.value = 20;
+  limiter.attack.value = 0.006; limiter.release.value = 0.18;
+  safetyClip = AC.createWaveShaper();
+  safetyClip.oversample = '4x';
+  { const n = 2048, curve = new Float32Array(n), k = 1.2, ceiling = 0.95;
+    for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; curve[i] = ceiling * Math.tanh(k * x) / Math.tanh(k); }
+    safetyClip.curve = curve; }
+  master.connect(masterGlue); masterGlue.connect(limiter);
+  limiter.connect(safetyClip); safetyClip.connect(AC.destination);
+  _armAudioWatchdog();
+}
+function _makeIR(c, decay) {
+  const sr = c.sampleRate, len = Math.max(1, Math.floor(sr * decay));
+  const buf = c.createBuffer(2, len, sr);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.2);
+  }
+  return buf;
+}
+function _buildOscNodes(o) {
+  const c = AC;
+  const filt = c.createBiquadFilter();
+  filt.type = FILTER_TYPES[o.filtMode] || 'allpass';
+  filt.frequency.value = o.cutoff; filt.Q.value = o.res;
+  const g = c.createGain(); g.gain.value = o.muted ? 0 : o.vol;
+  // Moteur FX PROPRE à cet oscillateur (pas de bus partagé) : #74 (perf) —
+  // le convolveur (reverb) et le tank delay ne sont connectés QUE si leur
+  // wet est réellement > 0 (comme index.html §2.4b) ; avant, les 7
+  // oscillateurs faisaient tourner 7 convolveurs en continu même à 0%,
+  // seul le RETOUR étant inaudible — vrai coût de calcul pour rien.
+  const rev = c.createConvolver(); rev.buffer = _makeIR(c, 1.6);
+  const revGain = c.createGain(); revGain.gain.value = o.revWet;
+  const del = c.createDelay(1.2); del.delayTime.value = 0.28;
+  const delFb = c.createGain(); delFb.gain.value = 0.32;
+  const delGain = c.createGain(); delGain.gain.value = o.delWet;
+  del.connect(delFb); delFb.connect(del);
+  g.connect(filt);
+  filt.connect(master);
+  rev.connect(revGain); revGain.connect(master);
+  del.connect(delGain); delGain.connect(master);
+  let _revOn = false, _delOn = false;
+  if (o.revWet > 0.001 && AUDIO_QUALITY_TIER !== 'light') { filt.connect(rev); _revOn = true; }
+  if (o.delWet > 0.001 && AUDIO_QUALITY_TIER !== 'light') { filt.connect(del); _delOn = true; }
+  let oscL = null, oscR = null, p = null, merge = null, lfo = null, lfoGain = null;
+  if (o.bin) {
+    merge = c.createChannelMerger(2);
+    oscL = c.createOscillator(); oscL.type = 'sine'; oscL.frequency.value = o.freq;
+    oscR = c.createOscillator(); oscR.type = 'sine'; oscR.frequency.value = o.freq + o.delta;
+    oscL.connect(merge, 0, 0); oscR.connect(merge, 0, 1);
+    merge.connect(g);
+    oscL.start(); oscR.start();
+  } else {
+    p = c.createOscillator(); p.type = 'sine'; p.frequency.value = o.freq;
+    const pan = c.createStereoPanner(); pan.pan.value = o.pan;
+    p.connect(pan); pan.connect(g);
+    p.start();
+    oscL = p;
+  }
+  if (o.lfoDepth > 0) {
+    lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.15;
+    lfoGain = c.createGain(); lfoGain.gain.value = o.lfoDepth * o.vol;
+    lfo.connect(lfoGain); lfoGain.connect(g.gain); lfo.start();
+  }
+  return { filt, g, rev, revGain, del, delFb, delGain, oscL, oscR, merge, lfo, lfoGain, _revOn, _delOn };
+}
+// #74 (perf) : (re)connecte/déconnecte l'entrée du convolveur/tank d'un
+// oscillateur — appelé au changement de wet (0↔>0) et par le watchdog.
+function _gateOscRev(i, on) {
+  const n = OSC[i] && OSC[i].nodes; if (!n || !n.filt || !n.rev) return;
+  if (on === n._revOn) return;
+  try { on ? n.filt.connect(n.rev) : n.filt.disconnect(n.rev); n._revOn = on; } catch(e) {}
+}
+function _gateOscDel(i, on) {
+  const n = OSC[i] && OSC[i].nodes; if (!n || !n.filt || !n.del) return;
+  if (on === n._delOn) return;
+  try { on ? n.filt.connect(n.del) : n.filt.disconnect(n.del); n._delOn = on; } catch(e) {}
+}
+function _teardownOscNodes(o) {
+  if (!o.nodes) return;
+  const n = o.nodes;
+  [n.oscL, n.oscR, n.lfo].forEach(x => { if (x) { try { x.stop(); } catch(e){} try { x.disconnect(); } catch(e){} } });
+  [n.merge, n.filt, n.g, n.rev, n.revGain, n.del, n.delFb, n.delGain, n.lfoGain].forEach(x => { if (x) try { x.disconnect(); } catch(e){} });
+  o.nodes = null;
+}
+function rebuildOsc(i) {
+  const o = OSC[i];
+  _teardownOscNodes(o);
+  if (flowing) o.nodes = _buildOscNodes(o);
+}
+function startFlux() {
+  ensureAC();
+  if (AC.state !== 'running') AC.resume();
+  flowing = true;
+  OSC.forEach((o, i) => rebuildOsc(i));
+  document.getElementById('btnFlux').textContent = '◉ Flux ON';
+  document.getElementById('btnFlux').classList.add('on');
+}
+function stopFlux() {
+  flowing = false;
+  OSC.forEach(o => _teardownOscNodes(o));
+  document.getElementById('btnFlux').textContent = '◎ Flux OFF';
+  document.getElementById('btnFlux').classList.remove('on');
+}
+function toggleFlux() { flowing ? stopFlux() : startFlux(); }
+function toggleSilence() {
+  silenced = !silenced;
+  ensureAC();
+  if (master) master.gain.setTargetAtTime(silenced ? 0 : 0.8, AC.currentTime, 0.05);
+  const b = document.getElementById('btnSilence');
+  b.classList.toggle('on', silenced);
+  b.textContent = silenced ? '◼ Coupé' : '◼ Silence';
+}
+
+// ─── Unité Miaow — 1 Miaow = 243/512 Hz, soit 512/243 Miaow par Hz
+// (= 32768/15552 réduit à sa forme la plus simple ; 32768 = crystal RTC
+// standard, 15552 = Miaow par Solônde). 432 Hz = 8192/9 Miaow exact.
+// Couche d'affichage/saisie uniquement — le moteur Web Audio reste en
+// Hz en interne (obligatoire, l'API ne connaît que le Hz).
+const MIAOW_PER_HZ = 512 / 243;
+let UNIT_MODE = 'hz';
+try { UNIT_MODE = localStorage.getItem('chaharmony-unit') || 'hz'; } catch(e) {}
+function hzToMiaow(hz) { return hz * MIAOW_PER_HZ; }
+function miaowToHz(m) { return m / MIAOW_PER_HZ; }
+function toggleUnitMode() {
+  UNIT_MODE = UNIT_MODE === 'hz' ? 'miaow' : 'hz';
+  try { localStorage.setItem('chaharmony-unit', UNIT_MODE); } catch(e) {}
+  renderOsc(curOsc);
+}
+function fmtFreqDisplay(hz) { return UNIT_MODE === 'miaow' ? hzToMiaow(hz).toFixed(2) : hz.toFixed(1); }
+function fmtUnitLabel() { return UNIT_MODE === 'miaow' ? '🐈 Miaow' : 'Hz'; }
+
+function setOscFreq(i, hz) {
+  const o = OSC[i]; o.freq = Math.max(1, Math.min(864, parseFloat(hz)));
+  if (o.nodes) {
+    const now = AC.currentTime;
+    if (o.nodes.oscL) o.nodes.oscL.frequency.setTargetAtTime(o.freq, now, 0.05);
+    if (o.bin && o.nodes.oscR) o.nodes.oscR.frequency.setTargetAtTime(o.freq + o.delta, now, 0.05);
+  }
+  renderOsc(i);
+}
+// #102 : presets "rock star binaurale" — 432/396/360 pensés en Miaow.
+function setOscFreqMiaow(i, miaowVal) {
+  setOscFreq(i, miaowToHz(miaowVal));
+}
+// #66 : entrée manuelle de la fréquence (tap sur la valeur → clavier)
+function openOscFreqEdit(i) {
+  const inp = document.getElementById('freqEdit' + i);
+  if (!inp) return;
+  const disp = inp.previousElementSibling;
+  if (disp) disp.style.display = 'none';
+  inp.style.display = 'block';
+  inp.value = UNIT_MODE === 'miaow' ? hzToMiaow(OSC[i].freq).toFixed(2) : OSC[i].freq.toFixed(1);
+  inp.focus(); inp.select();
+}
+function handleOscFreqKey(i, e) {
+  if (e.key === 'Enter') { e.preventDefault(); exitOscFreqEdit(i, true); }
+  if (e.key === 'Escape') exitOscFreqEdit(i, false);
+}
+function exitOscFreqEdit(i, apply) {
+  const inp = document.getElementById('freqEdit' + i);
+  if (!inp) return;
+  const v = parseFloat(inp.value);
+  if (apply && !isNaN(v)) setOscFreq(i, UNIT_MODE === 'miaow' ? miaowToHz(v) : v);
+  else renderOsc(i);
+}
+function setOscDelta(i, hz) {
+  const o = OSC[i]; o.delta = Math.max(0, Math.min(40, parseFloat(hz)));
+  if (o.nodes && o.nodes.oscR) o.nodes.oscR.frequency.setTargetAtTime(o.freq + o.delta, AC.currentTime, 0.05);
+  renderOsc(i);
+}
+function toggleOscBin(i) {
+  const o = OSC[i]; o.bin = !o.bin;
+  rebuildOsc(i);
+  renderOsc(i);
+}
+function setOscVol(i, v) {
+  const o = OSC[i]; o.vol = Math.max(0, Math.min(1, parseFloat(v)));
+  if (o.nodes && !o.muted) o.nodes.g.gain.setTargetAtTime(o.vol, AC.currentTime, 0.05);
+  renderOsc(i);
+}
+function setOscPan(i, v) {
+  const o = OSC[i]; o.pan = Math.max(-1, Math.min(1, parseFloat(v)));
+  renderOsc(i);
+}
+function toggleOscMute(i) {
+  const o = OSC[i]; o.muted = !o.muted;
+  if (o.nodes) o.nodes.g.gain.setTargetAtTime(o.muted ? 0 : o.vol, AC.currentTime, 0.05);
+  renderOsc(i);
+}
+function stepOscN(i, d) {
+  const o = OSC[i]; o.n = Math.max(0.1, Math.round((o.n + d) * 10) / 10);
+  renderOsc(i);
+}
+function setOscFilterMode(i, mode) {
+  const o = OSC[i]; o.filtMode = mode;
+  if (o.nodes) o.nodes.filt.type = FILTER_TYPES[mode] || 'allpass';
+  renderOsc(i);
+}
+function setOscCutoff(i, hz) {
+  const o = OSC[i]; o.cutoff = Math.max(20, Math.min(8000, parseFloat(hz)));
+  if (o.nodes) o.nodes.filt.frequency.setTargetAtTime(o.cutoff, AC.currentTime, 0.05);
+  renderOsc(i);
+}
+function setOscRes(i, q) {
+  const o = OSC[i]; o.res = Math.max(0, Math.min(20, parseFloat(q)));
+  if (o.nodes) o.nodes.filt.Q.setTargetAtTime(o.res, AC.currentTime, 0.05);
+  renderOsc(i);
+}
+function setOscLfo(i, v) {
+  const o = OSC[i]; o.lfoDepth = Math.max(0, Math.min(1, parseFloat(v)));
+  rebuildOsc(i);
+  renderOsc(i);
+}
+function setOscRevWet(i, v) {
+  const o = OSC[i]; o.revWet = Math.max(0, Math.min(1, parseFloat(v)));
+  if (o.nodes) {
+    if (o.revWet > 0.001 && AUDIO_QUALITY_TIER !== 'light') _gateOscRev(i, true);
+    o.nodes.revGain.gain.setTargetAtTime(o.revWet, AC.currentTime, 0.08);
+    if (o.revWet <= 0.001) setTimeout(() => { if (OSC[i].revWet <= 0.001) _gateOscRev(i, false); }, 550);
+  }
+  renderOsc(i);
+}
+function setOscDelWet(i, v) {
+  const o = OSC[i]; o.delWet = Math.max(0, Math.min(1, parseFloat(v)));
+  if (o.nodes) {
+    if (o.delWet > 0.001 && AUDIO_QUALITY_TIER !== 'light') _gateOscDel(i, true);
+    o.nodes.delGain.gain.setTargetAtTime(o.delWet, AC.currentTime, 0.08);
+    if (o.delWet <= 0.001) setTimeout(() => { if (OSC[i].delWet <= 0.001) _gateOscDel(i, false); }, 450);
+  }
+  renderOsc(i);
+}
+function oscReset(i) {
+  const o = OSC[i];
+  Object.assign(o, { freq:144, bin:false, delta:4.0, n:1, muted:false, vol:0.6, pan:0,
+    lfoDepth:0, filtMode:'off', cutoff:2000, res:0, revWet:0, delWet:0 });
+  rebuildOsc(i); renderOsc(i);
+}
+function oscRandom(i) {
+  const o = OSC[i]; o.freq = Math.round(54 + Math.random() * (864 - 54));
+  setOscFreq(i, o.freq);
+}
+function copyToAll() {
+  const src = OSC[curOsc];
+  for (let i = 0; i < N_OSC; i++) {
+    if (i === curOsc) continue;
+    Object.assign(OSC[i], { bin:src.bin, delta:src.delta, vol:src.vol, lfoDepth:src.lfoDepth,
+      filtMode:src.filtMode, cutoff:src.cutoff, res:src.res, revWet:src.revWet, delWet:src.delWet });
+    rebuildOsc(i);
+  }
+  renderOsc(curOsc);
+}
+function openPlusMenu() { document.getElementById('plusMenu').classList.add('open'); }
+function closePlusMenu() { document.getElementById('plusMenu').classList.remove('open'); }
+
+// ─── UI ──────────────────────────────────────────────────────────────
+function buildTabs() {
+  const t = document.getElementById('tabs');
+  let html = OSC.map((_, i) => `<button class="otab${curTab==='osc'&&i===curOsc?' on':''}" onclick="selectOsc(${i})">OSC ${i+1}</button>`).join('');
+  html += `<button class="otab${curTab==='drum'?' on':''}" onclick="selectDrum()">▦ RYTHME</button>`;
+  t.innerHTML = html;
+}
+function selectOsc(i) { curTab = 'osc'; curOsc = i; buildTabs(); renderOsc(i); }
+function selectDrum() { curTab = 'drum'; buildTabs(); renderDrum(); }
+function renderOsc(i) {
+  if (curTab !== 'osc' || i !== curOsc) return;
+  const o = OSC[i];
+  buildTabs();
+  document.getElementById('body').innerHTML = `
+    <div class="card">
+      <div class="osc-top">
+        <button class="lr-btn${o.bin?' bin':''}" onclick="toggleOscBin(${i})">L·R<span style="font-size:.5rem;opacity:.7">${o.bin?'BIN':'MONO'}</span></button>
+        <div class="freq-disp">
+          <div class="freq-num" onclick="openOscFreqEdit(${i})">${fmtFreqDisplay(o.freq)}</div>
+          <input type="number" class="freq-input-manual" id="freqEdit${i}" step="${UNIT_MODE==='miaow'?'0.01':'0.1'}"
+            onkeydown="handleOscFreqKey(${i},event)">
+          <div class="freq-hz" onclick="toggleUnitMode()" style="cursor:pointer;" title="Tap pour changer d'unité">${fmtUnitLabel()}${UNIT_MODE==='miaow'?` · ${o.freq.toFixed(1)}Hz`:''}</div>
+        </div>
+        <button class="plus-btn" onclick="openPlusMenu()">+</button>
+      </div>
+      <input type="range" min="54" max="864" step="0.5" value="${o.freq}" oninput="setOscFreq(${i},this.value)">
+      <div class="freq-range"><span>${UNIT_MODE==='miaow'?hzToMiaow(54).toFixed(2)+' 🐈':'54Hz'}</span><span>${UNIT_MODE==='miaow'?hzToMiaow(864).toFixed(2)+' 🐈':'864Hz'}</span></div>
+      <div class="miaow-presets">
+        <button class="miaow-preset-btn" onclick="setOscFreqMiaow(${i},432)">432🐈<span>${miaowToHz(432).toFixed(1)}Hz</span></button>
+        <button class="miaow-preset-btn" onclick="setOscFreqMiaow(${i},396)">396🐈<span>${miaowToHz(396).toFixed(1)}Hz</span></button>
+        <button class="miaow-preset-btn" onclick="setOscFreqMiaow(${i},360)">360🐈<span>${miaowToHz(360).toFixed(1)}Hz</span></button>
+      </div>
+      <div class="n-row">
+        <button class="n-step" onclick="stepOscN(${i},-0.1)">−</button>
+        <button class="n-mute${o.muted?' muted':''}" onclick="toggleOscMute(${i})">${o.muted?'✕':'■'}</button>
+        <button class="n-step" onclick="stepOscN(${i},0.1)">+</button>
+      </div>
+      <div class="ctl-lv"><span class="ctl-l">Volume</span><span class="ctl-v">${Math.round(o.vol*100)}%</span></div>
+      <input type="range" class="pink" min="0" max="1" step="0.01" value="${o.vol}" oninput="setOscVol(${i},this.value)">
+      ${!o.bin ? `
+      <div class="ctl-lv" style="margin-top:.5rem"><span class="ctl-l">Pan L↔R</span><span class="ctl-v">${o.pan.toFixed(2)}</span></div>
+      <input type="range" min="-1" max="1" step="0.02" value="${o.pan}" oninput="setOscPan(${i},this.value)">` : ''}
+    </div>
+
+    <div class="card">
+      <div class="sec-t">Filtre · Type / Cutoff / Résonance</div>
+      <div class="filt-row">
+        ${['off','hpf','bpf','lpf'].map(m=>`<button class="filt-btn${o.filtMode===m?' active':''}" onclick="setOscFilterMode(${i},'${m}')">${m.toUpperCase()}</button>`).join('')}
+      </div>
+      <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Cutoff</span><span class="ctl-v">${Math.round(o.cutoff)} Hz</span></div>
+        <input type="range" min="20" max="8000" step="10" value="${o.cutoff}" oninput="setOscCutoff(${i},this.value)"></div>
+      <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Résonance</span><span class="ctl-v">${o.res.toFixed(1)}</span></div>
+        <input type="range" min="0" max="20" step="0.1" value="${o.res}" oninput="setOscRes(${i},this.value)"></div>
+    </div>
+
+    ${o.bin ? `
+    <div class="card">
+      <div class="sec-t">Δ Binaural</div>
+      <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Δ =</span><span class="ctl-v">${o.delta.toFixed(2)} Hz</span></div>
+        <input type="range" min="0" max="40" step="0.1" value="${o.delta}" oninput="setOscDelta(${i},this.value)"></div>
+      <div class="hint">Gauche ${o.freq.toFixed(1)}Hz · Droite ${(o.freq+o.delta).toFixed(1)}Hz — casque requis</div>
+    </div>` : ''}
+
+    <div class="card">
+      <div class="sec-t">LFO doux</div>
+      <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Intensité</span><span class="ctl-v">${Math.round(o.lfoDepth*100)}%</span></div>
+        <input type="range" min="0" max="1" step="0.01" value="${o.lfoDepth}" oninput="setOscLfo(${i},this.value)"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-t">Moteur FX · propre à cet oscillateur</div>
+      <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Reverb</span><span class="ctl-v">${Math.round(o.revWet*100)}%</span></div>
+        <input type="range" min="0" max="1" step="0.01" value="${o.revWet}" oninput="setOscRevWet(${i},this.value)"></div>
+      <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Delay</span><span class="ctl-v">${Math.round(o.delWet*100)}%</span></div>
+        <input type="range" min="0" max="1" step="0.01" value="${o.delWet}" oninput="setOscDelWet(${i},this.value)"></div>
+      <div class="hint">Chaque oscillateur a sa propre reverb/delay — aucun bus partagé.</div>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOÎTE À RYTHME — 108 pas (3 banques de 36), 9 voies synthétisées
+   "dans l'esprit" TR-8/909 (aucun contenu Roland copié — synthèse Web
+   Audio générique), import sample + découpe précise, FX par voix
+   (filtre HPF/BPF/LPF, delay, reverb sur bus partagé, distortion,
+   overdrive), tap tempo. Route dans le MÊME bus master que les
+   oscillateurs (chaîne de sécurité anti-clip commune).
+   ═══════════════════════════════════════════════════════════════════ */
+const DRUM_STEPS = 108, STEPS_PER_BANK = 36, DRUM_BANK_COUNT = 3;
+const DRUM_VOICES = [
+  { id:'kick', name:'Kick',        color:'#FF6B4A' },
+  { id:'snare',name:'Snare',       color:'#F2C14E' },
+  { id:'chh',  name:'HH Fermé',    color:'#63E6FF' },
+  { id:'ohh',  name:'HH Ouvert',   color:'#7FE8C8' },
+  { id:'cym',  name:'Cymbale',     color:'#F3D9FF' },
+  { id:'clo',  name:'Conga Grave', color:'#FF9EC0' },
+  { id:'chi',  name:'Conga Aigu',  color:'#FFB0CC' },
+  { id:'clap', name:'Clap',        color:'#C090FF' },
+  { id:'rim',  name:'Rimshot',     color:'#FFD060' },
+];
+const DRUM_STATE = {};
+DRUM_VOICES.forEach(v => {
+  DRUM_STATE[v.id] = {
+    pattern: new Array(DRUM_STEPS).fill(false),
+    muted: false,
+    sample: null, // { buffer, trimStart(0..1), trimEnd(0..1), name }
+    fx: { filtMode:'off', cutoff:8000, res:0, delWet:0, revSend:0, distAmt:0, overAmt:0 },
+    nodes: null,
+  };
+});
+let drumActiveVoice = 'kick';
+let drumBank = 0;
+let drumBPM = 108;
+let drumPlaying = false;
+let drumStepIdx = 0;
+let drumUiStepIdx = -1;
+let drumAutoN = 9;
+let drumFxVoice = null;
+
+// ── Bus drum (partagé, séparé des oscillateurs mais même master/sécurité) ──
+let drumMaster = null, drumReverbConv = null, drumReverbReturn = null;
+function ensureDrumBus() {
+  ensureAC();
+  if (drumMaster) return;
+  drumMaster = AC.createGain(); drumMaster.gain.value = 0.9;
+  drumMaster.connect(master);
+  // #92 : UN SEUL convolveur partagé par les 9 voies (pas 9 instances) —
+  // le coût de la convolution ne dépend pas du nombre de voix qui l'utilisent,
+  // seul le niveau d'envoi (revSend) par voix change.
+  drumReverbConv = AC.createConvolver(); drumReverbConv.buffer = _makeIR(AC, 1.3);
+  drumReverbReturn = AC.createGain(); drumReverbReturn.gain.value = 0.5;
+  drumReverbConv.connect(drumReverbReturn); drumReverbReturn.connect(drumMaster);
+}
+function _clipCurve(amt) { // Distortion : écrêtage dur, de plus en plus agressif
+  const n = 1024, curve = new Float32Array(n), drive = 1 + amt * 30;
+  for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; curve[i] = Math.max(-1, Math.min(1, x * drive)); }
+  return curve;
+}
+function _overdriveCurve(amt) { // Overdrive : saturation tanh chaude
+  const n = 1024, curve = new Float32Array(n), k = 1 + amt * 14;
+  for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; curve[i] = Math.tanh(k * x) / Math.tanh(k); }
+  return curve;
+}
+function _buildDrumVoiceChain(id) {
+  const v = DRUM_STATE[id];
+  const filt = AC.createBiquadFilter();
+  filt.type = FILTER_TYPES[v.fx.filtMode] || 'allpass';
+  filt.frequency.value = v.fx.cutoff; filt.Q.value = v.fx.res;
+  const dist = AC.createWaveShaper(); dist.curve = _clipCurve(v.fx.distAmt); dist.oversample = '2x';
+  const over = AC.createWaveShaper(); over.curve = _overdriveCurve(v.fx.overAmt); over.oversample = '2x';
+  const post = AC.createGain(); post.gain.value = 0.9;
+  const del = AC.createDelay(1.0); del.delayTime.value = 0.25;
+  const delFb = AC.createGain(); delFb.gain.value = 0.3;
+  const delGain = AC.createGain(); delGain.gain.value = v.fx.delWet;
+  del.connect(delFb); delFb.connect(del);
+  const revSend = AC.createGain(); revSend.gain.value = v.fx.revSend;
+
+  filt.connect(dist); dist.connect(over); over.connect(post);
+  post.connect(drumMaster);
+  post.connect(del); del.connect(delGain); delGain.connect(drumMaster);
+  post.connect(revSend); revSend.connect(drumReverbConv);
+
+  return { filt, dist, over, post, del, delFb, delGain, revSend };
+}
+
+// ── Synthèse "dans l'esprit" TR-8/909 — techniques génériques bien connues
+// (oscillateur+enveloppe pour kick/conga, bruit filtré pour snare/clap/rim,
+// banc d'oscillateurs carrés inharmoniques passe-haut pour hi-hats/cymbale),
+// AUCUN sample ni code Roland. ─────────────────────────────────────────
+function _noiseBuffer(dur) {
+  const len = Math.max(1, Math.floor(AC.sampleRate * dur));
+  const buf = AC.createBuffer(1, len, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  return buf;
+}
+function synthKick(dest, t) {
+  const osc = AC.createOscillator(); osc.type = 'sine';
+  const g = AC.createGain();
+  osc.frequency.setValueAtTime(150, t);
+  osc.frequency.exponentialRampToValueAtTime(48, t + 0.14);
+  g.gain.setValueAtTime(1, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+  osc.connect(g); g.connect(dest);
+  osc.start(t); osc.stop(t + 0.36);
+}
+function synthSnare(dest, t) {
+  const src = AC.createBufferSource(); src.buffer = _noiseBuffer(0.2);
+  const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 1;
+  const ng = AC.createGain(); ng.gain.setValueAtTime(0.9, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+  src.connect(bp); bp.connect(ng); ng.connect(dest);
+  src.start(t); src.stop(t + 0.2);
+  [180, 330].forEach(f => {
+    const osc = AC.createOscillator(); osc.type = 'triangle'; osc.frequency.value = f;
+    const g = AC.createGain(); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    osc.connect(g); g.connect(dest);
+    osc.start(t); osc.stop(t + 0.13);
+  });
+}
+function _metallicHat(dest, t, dur) {
+  const fund = 40, ratios = [2, 3, 4.16, 5.43, 6.79, 8.21]; // ratios inharmoniques classiques (808/909)
+  const bandpass = AC.createBiquadFilter(); bandpass.type = 'bandpass'; bandpass.frequency.value = 9000; bandpass.Q.value = 1.2;
+  const hp = AC.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000;
+  const g = AC.createGain(); g.gain.setValueAtTime(0.55, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  ratios.forEach(r => {
+    const osc = AC.createOscillator(); osc.type = 'square'; osc.frequency.value = fund * r;
+    osc.connect(bandpass);
+    osc.start(t); osc.stop(t + dur + 0.02);
+  });
+  bandpass.connect(hp); hp.connect(g); g.connect(dest);
+}
+function synthClosedHat(dest, t) { _metallicHat(dest, t, 0.07); }
+function synthOpenHat(dest, t) { _metallicHat(dest, t, 0.35); }
+function synthCymbal(dest, t) { _metallicHat(dest, t, 0.9); }
+function _synthConga(dest, t, freq) {
+  const osc = AC.createOscillator(); osc.type = 'sine';
+  const g = AC.createGain();
+  osc.frequency.setValueAtTime(freq * 1.5, t);
+  osc.frequency.exponentialRampToValueAtTime(freq, t + 0.05);
+  g.gain.setValueAtTime(0.8, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+  osc.connect(g); g.connect(dest);
+  osc.start(t); osc.stop(t + 0.3);
+}
+function synthCongaLo(dest, t) { _synthConga(dest, t, 140); }
+function synthCongaHi(dest, t) { _synthConga(dest, t, 220); }
+function synthClap(dest, t) {
+  const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 1.4;
+  bp.connect(dest);
+  [0, 0.012, 0.024, 0.038].forEach((off, idx) => {
+    const src = AC.createBufferSource(); src.buffer = _noiseBuffer(0.05);
+    const bg = AC.createGain();
+    const peakT = t + off, isLast = idx === 3;
+    bg.gain.setValueAtTime(0.0001, peakT);
+    bg.gain.linearRampToValueAtTime(isLast ? 0.8 : 0.55, peakT + 0.003);
+    bg.gain.exponentialRampToValueAtTime(0.001, peakT + (isLast ? 0.2 : 0.03));
+    src.connect(bg); bg.connect(bp);
+    src.start(peakT); src.stop(peakT + 0.06);
+  });
+}
+function synthRim(dest, t) {
+  const osc = AC.createOscillator(); osc.type = 'square'; osc.frequency.value = 420;
+  const g = AC.createGain(); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+  osc.connect(g); g.connect(dest);
+  osc.start(t); osc.stop(t + 0.06);
+  const src = AC.createBufferSource(); src.buffer = _noiseBuffer(0.03);
+  const hp = AC.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 4000;
+  const ng = AC.createGain(); ng.gain.setValueAtTime(0.4, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+  src.connect(hp); hp.connect(ng); ng.connect(dest);
+  src.start(t); src.stop(t + 0.04);
+}
+const DRUM_SYNTH = { kick:synthKick, snare:synthSnare, chh:synthClosedHat, ohh:synthOpenHat, cym:synthCymbal, clo:synthCongaLo, chi:synthCongaHi, clap:synthClap, rim:synthRim };
+
+function playDrumVoice(id, t) {
+  ensureDrumBus();
+  const v = DRUM_STATE[id];
+  if (v.muted) return;
+  if (!v.nodes) v.nodes = _buildDrumVoiceChain(id);
+  const dest = v.nodes.filt;
+  if (v.sample && v.sample.buffer) {
+    const buf = v.sample.buffer, dur = buf.duration;
+    const startOff = v.sample.trimStart * dur;
+    const playDur = Math.max(0.01, (v.sample.trimEnd - v.sample.trimStart) * dur);
+    const src = AC.createBufferSource(); src.buffer = buf;
+    src.connect(dest);
+    src.start(t, startOff, playDur);
+  } else if (DRUM_SYNTH[id]) {
+    DRUM_SYNTH[id](dest, t);
+  }
+}
+
+// ── Scheduler pas-à-pas (lookahead — évite la dérive d'un setTimeout seul) ──
+let _drumTimerId = null, _drumNextStepTime = 0;
+const DRUM_LOOKAHEAD_MS = 25, DRUM_SCHEDULE_AHEAD_S = 0.12;
+function drumStepDur() { return 60 / drumBPM / 4; } // pas = croche pointée... non, noire/4 = double-croche standard
+function drumTick() {
+  if (!drumPlaying) return;
+  while (_drumNextStepTime < AC.currentTime + DRUM_SCHEDULE_AHEAD_S) {
+    const stepTime = _drumNextStepTime, stepIdx = drumStepIdx;
+    DRUM_VOICES.forEach(vv => { if (DRUM_STATE[vv.id].pattern[stepIdx]) playDrumVoice(vv.id, stepTime); });
+    const delayMs = Math.max(0, (stepTime - AC.currentTime) * 1000);
+    setTimeout(() => _updateDrumPlayhead(stepIdx), delayMs);
+    _drumNextStepTime += drumStepDur();
+    drumStepIdx = (drumStepIdx + 1) % DRUM_STEPS;
+  }
+  _drumTimerId = setTimeout(drumTick, DRUM_LOOKAHEAD_MS);
+}
+function _updateDrumPlayhead(idx) {
+  if (!drumPlaying) return;
+  drumUiStepIdx = idx;
+  if (curTab !== 'drum') return;
+  const bankOfIdx = Math.floor(idx / STEPS_PER_BANK);
+  if (bankOfIdx !== drumBank) { drumBank = bankOfIdx; renderDrum(); return; }
+  const prev = document.querySelector('.dstep.playhead'); if (prev) prev.classList.remove('playhead');
+  const cell = document.getElementById('dstep-' + (idx % STEPS_PER_BANK));
+  if (cell) cell.classList.add('playhead');
+}
+function toggleDrumPlay() { drumPlaying ? stopDrumPlay() : startDrumPlay(); }
+function startDrumPlay() {
+  ensureDrumBus();
+  if (AC.state !== 'running') AC.resume();
+  drumPlaying = true; drumStepIdx = 0; drumUiStepIdx = -1;
+  _drumNextStepTime = AC.currentTime + 0.06;
+  drumTick();
+  renderDrum();
+}
+function stopDrumPlay() {
+  drumPlaying = false;
+  clearTimeout(_drumTimerId); _drumTimerId = null;
+  renderDrum();
+}
+
+// ── Tap tempo ────────────────────────────────────────────────────────
+let _drumTapTimes = [];
+function drumTapTempo() {
+  const now = performance.now();
+  if (_drumTapTimes.length && now - _drumTapTimes[_drumTapTimes.length - 1] > 2000) _drumTapTimes = [];
+  _drumTapTimes.push(now);
+  if (_drumTapTimes.length > 8) _drumTapTimes.shift();
+  if (_drumTapTimes.length >= 2) {
+    const intervals = [];
+    for (let i = 1; i < _drumTapTimes.length; i++) intervals.push(_drumTapTimes[i] - _drumTapTimes[i - 1]);
+    const avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    drumBPM = Math.max(40, Math.min(240, Math.round(60000 / avg)));
+    renderDrum();
+  }
+}
+
+// ── Voies : tap = mute/unmute · appui long = sélectionner + éditer ──────
+let _dvTimer = null, _dvSX = 0, _dvSY = 0;
+const DV_LONG_MS = 420;
+function _dvPt(e) { return e.touches && e.touches[0] ? e.touches[0] : e; }
+function _dvStart(id, e) {
+  if (e.type === 'touchstart') { try { e.preventDefault(); } catch (x) {} }
+  const pt = _dvPt(e); _dvSX = pt.clientX; _dvSY = pt.clientY;
+  clearTimeout(_dvTimer);
+  _dvTimer = setTimeout(() => {
+    _dvTimer = null;
+    try { navigator.vibrate && navigator.vibrate(16); } catch (x) {}
+    drumActiveVoice = id; renderDrum();
+  }, DV_LONG_MS);
+}
+function _dvMove(id, e) {
+  if (!_dvTimer) return;
+  const pt = _dvPt(e);
+  if (Math.abs(pt.clientX - _dvSX) > 14 || Math.abs(pt.clientY - _dvSY) > 14) { clearTimeout(_dvTimer); _dvTimer = null; }
+}
+function _dvEnd(id) {
+  if (_dvTimer) { clearTimeout(_dvTimer); _dvTimer = null; DRUM_STATE[id].muted = !DRUM_STATE[id].muted; renderDrum(); }
+}
+function _dvCancel() { clearTimeout(_dvTimer); _dvTimer = null; }
+
+// ── Grille de pas / banques / auto-assign ───────────────────────────
+function setDrumBank(b) { drumBank = b; renderDrum(); }
+function toggleDrumStep(localIdx) {
+  const idx = drumBank * STEPS_PER_BANK + localIdx;
+  const v = DRUM_STATE[drumActiveVoice];
+  v.pattern[idx] = !v.pattern[idx];
+  renderDrum();
+}
+function drumAutoAssign() {
+  const v = DRUM_STATE[drumActiveVoice];
+  const n = Math.max(1, Math.round(drumAutoN) || 1);
+  for (let i = 0; i < DRUM_STEPS; i++) v.pattern[i] = (i % n === 0);
+  renderDrum();
+}
+function drumClearVoice() { DRUM_STATE[drumActiveVoice].pattern.fill(false); renderDrum(); }
+
+// ── Import sample + découpe précise ─────────────────────────────────
+function handleSampleFile(id, fileInput) {
+  const file = fileInput.files[0]; if (!file) return;
+  ensureAC();
+  file.arrayBuffer().then(arrBuf => {
+    AC.decodeAudioData(arrBuf, buffer => {
+      DRUM_STATE[id].sample = { buffer, trimStart: 0, trimEnd: 1, name: file.name };
+      renderDrumFxModal();
+    }, () => { if (typeof alert === 'function') alert('Fichier audio illisible.'); });
+  });
+}
+function clearSample(id) { DRUM_STATE[id].sample = null; renderDrumFxModal(); }
+function previewSample(id) { playDrumVoice(id, AC.currentTime); }
+let _wfDrag = null;
+function _drawSampleWaveform(id) {
+  const v = DRUM_STATE[id]; if (!v.sample) return;
+  const cv = document.getElementById('sampleWave'); if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const w = cv.width = cv.clientWidth || 300, h = cv.height = 90;
+  ctx.clearRect(0, 0, w, h);
+  const data = v.sample.buffer.getChannelData(0);
+  const step = Math.max(1, Math.floor(data.length / w));
+  ctx.strokeStyle = 'rgba(232,160,32,.85)'; ctx.beginPath();
+  for (let x = 0; x < w; x++) {
+    let mn = 1, mx = -1;
+    for (let j = 0; j < step; j++) { const s = data[x * step + j] || 0; if (s < mn) mn = s; if (s > mx) mx = s; }
+    const y1 = (1 - (mx + 1) / 2) * h, y2 = (1 - (mn + 1) / 2) * h;
+    ctx.moveTo(x, y1); ctx.lineTo(x, y2);
+  }
+  ctx.stroke();
+  const sx = v.sample.trimStart * w, ex = v.sample.trimEnd * w;
+  ctx.fillStyle = 'rgba(0,0,0,.55)';
+  ctx.fillRect(0, 0, sx, h); ctx.fillRect(ex, 0, w - ex, h);
+  ctx.strokeStyle = '#63E6FF'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, h); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ex, 0); ctx.lineTo(ex, h); ctx.stroke();
+}
+function _wfPointerDown(e, id) {
+  const cv = document.getElementById('sampleWave'); if (!cv) return;
+  const rect = cv.getBoundingClientRect();
+  const pt = e.touches ? e.touches[0] : e;
+  const x = pt.clientX - rect.left;
+  const v = DRUM_STATE[id];
+  const sx = v.sample.trimStart * cv.width, ex = v.sample.trimEnd * cv.width;
+  _wfDrag = Math.abs(x - sx) < Math.abs(x - ex) ? 'start' : 'end';
+}
+function _wfPointerMove(e, id) {
+  if (!_wfDrag) return;
+  const cv = document.getElementById('sampleWave'); if (!cv) return;
+  const rect = cv.getBoundingClientRect();
+  const pt = e.touches ? e.touches[0] : e;
+  const x = pt.clientX - rect.left;
+  const frac = Math.max(0, Math.min(1, x / cv.width));
+  const v = DRUM_STATE[id];
+  if (_wfDrag === 'start') v.sample.trimStart = Math.min(frac, v.sample.trimEnd - 0.01);
+  else v.sample.trimEnd = Math.max(frac, v.sample.trimStart + 0.01);
+  _drawSampleWaveform(id);
+  _updateTrimReadout(id);
+}
+function _wfPointerUp() { _wfDrag = null; }
+function _updateTrimReadout(id) {
+  const v = DRUM_STATE[id]; if (!v.sample) return;
+  const dur = v.sample.buffer.duration;
+  const el = document.getElementById('trimReadout'); if (!el) return;
+  el.textContent = `${(v.sample.trimStart * dur * 1000).toFixed(0)} ms → ${(v.sample.trimEnd * dur * 1000).toFixed(0)} ms · durée ${((v.sample.trimEnd - v.sample.trimStart) * dur * 1000).toFixed(0)} ms`;
+}
+
+// ── FX par voix ──────────────────────────────────────────────────────
+function setDrumFilterMode(id, mode) { const v = DRUM_STATE[id]; v.fx.filtMode = mode; if (v.nodes) v.nodes.filt.type = FILTER_TYPES[mode] || 'allpass'; renderDrumFxModal(); }
+function setDrumCutoff(id, hz) { const v = DRUM_STATE[id]; v.fx.cutoff = Math.max(20, Math.min(12000, parseFloat(hz))); if (v.nodes) v.nodes.filt.frequency.setTargetAtTime(v.fx.cutoff, AC.currentTime, 0.02); renderDrumFxModal(); }
+function setDrumRes(id, q) { const v = DRUM_STATE[id]; v.fx.res = Math.max(0, Math.min(20, parseFloat(q))); if (v.nodes) v.nodes.filt.Q.setTargetAtTime(v.fx.res, AC.currentTime, 0.02); renderDrumFxModal(); }
+function setDrumDelay(id, v01) { const v = DRUM_STATE[id]; v.fx.delWet = Math.max(0, Math.min(1, parseFloat(v01))); if (v.nodes) v.nodes.delGain.gain.setTargetAtTime(v.fx.delWet, AC.currentTime, 0.05); renderDrumFxModal(); }
+function setDrumRevSend(id, v01) { const v = DRUM_STATE[id]; v.fx.revSend = Math.max(0, Math.min(1, parseFloat(v01))); if (v.nodes) v.nodes.revSend.gain.setTargetAtTime(v.fx.revSend, AC.currentTime, 0.05); renderDrumFxModal(); }
+function setDrumDist(id, v01) { const v = DRUM_STATE[id]; v.fx.distAmt = Math.max(0, Math.min(1, parseFloat(v01))); if (v.nodes) v.nodes.dist.curve = _clipCurve(v.fx.distAmt); renderDrumFxModal(); }
+function setDrumOver(id, v01) { const v = DRUM_STATE[id]; v.fx.overAmt = Math.max(0, Math.min(1, parseFloat(v01))); if (v.nodes) v.nodes.over.curve = _overdriveCurve(v.fx.overAmt); renderDrumFxModal(); }
+
+function openDrumFx(id) { drumFxVoice = id; document.getElementById('drumFxModal').classList.add('open'); renderDrumFxModal(); }
+function closeDrumFx() { document.getElementById('drumFxModal').classList.remove('open'); drumFxVoice = null; }
+function renderDrumFxModal() {
+  if (!drumFxVoice) return;
+  const id = drumFxVoice, v = DRUM_STATE[id], voiceDef = DRUM_VOICES.find(x => x.id === id);
+  const sheet = document.getElementById('drumFxSheet'); if (!sheet) return;
+  sheet.innerHTML = `
+    <div class="sec-t">${voiceDef.name} — Sample &amp; FX</div>
+    <label class="dfx-import">📥 Importer un sample
+      <input type="file" accept="audio/*" style="display:none" onchange="handleSampleFile('${id}',this)">
+    </label>
+    ${v.sample ? `
+      <div class="hint">${v.sample.name}</div>
+      <canvas id="sampleWave" style="width:100%;height:90px;touch-action:none;"
+        onmousedown="_wfPointerDown(event,'${id}')" onmousemove="_wfPointerMove(event,'${id}')" onmouseup="_wfPointerUp()" onmouseleave="_wfPointerUp()"
+        ontouchstart="_wfPointerDown(event,'${id}')" ontouchmove="_wfPointerMove(event,'${id}')" ontouchend="_wfPointerUp()"></canvas>
+      <div class="hint" id="trimReadout"></div>
+      <div style="display:flex;gap:.4rem;margin:.4rem 0;">
+        <button class="dauto-btn" onclick="previewSample('${id}')">▶ Écouter</button>
+        <button class="dauto-btn clear" onclick="clearSample('${id}')">Retirer le sample</button>
+      </div>` : `<div class="hint">Aucun sample importé — la voie utilise le son synthétisé par défaut (dans l'esprit TR-8/909).</div>`}
+    <div class="sec-t" style="margin-top:.8rem;">Filtre</div>
+    <div class="filt-row">
+      ${['off', 'hpf', 'bpf', 'lpf'].map(m => `<button class="filt-btn${v.fx.filtMode === m ? ' active' : ''}" onclick="setDrumFilterMode('${id}','${m}')">${m.toUpperCase()}</button>`).join('')}
+    </div>
+    <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Cutoff</span><span class="ctl-v">${Math.round(v.fx.cutoff)} Hz</span></div>
+      <input type="range" min="20" max="12000" step="10" value="${v.fx.cutoff}" oninput="setDrumCutoff('${id}',this.value)"></div>
+    <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Résonance</span><span class="ctl-v">${v.fx.res.toFixed(1)}</span></div>
+      <input type="range" min="0" max="20" step="0.1" value="${v.fx.res}" oninput="setDrumRes('${id}',this.value)"></div>
+    <div class="sec-t" style="margin-top:.8rem;">Delay / Reverb</div>
+    <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Delay</span><span class="ctl-v">${Math.round(v.fx.delWet * 100)}%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="${v.fx.delWet}" oninput="setDrumDelay('${id}',this.value)"></div>
+    <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Reverb (bus partagé)</span><span class="ctl-v">${Math.round(v.fx.revSend * 100)}%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="${v.fx.revSend}" oninput="setDrumRevSend('${id}',this.value)"></div>
+    <div class="sec-t" style="margin-top:.8rem;">Saturation</div>
+    <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Distortion</span><span class="ctl-v">${Math.round(v.fx.distAmt * 100)}%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="${v.fx.distAmt}" oninput="setDrumDist('${id}',this.value)"></div>
+    <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Overdrive</span><span class="ctl-v">${Math.round(v.fx.overAmt * 100)}%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="${v.fx.overAmt}" oninput="setDrumOver('${id}',this.value)"></div>
+    <div class="pm-item" style="text-align:center;margin-top:.6rem;" onclick="closeDrumFx()">Fermer</div>
+  `;
+  if (v.sample) requestAnimationFrame(() => { _drawSampleWaveform(id); _updateTrimReadout(id); });
+}
+
+// ── Rendu principal ──────────────────────────────────────────────────
+function renderDrum() {
+  buildTabs();
+  const activeV = DRUM_STATE[drumActiveVoice], activeDef = DRUM_VOICES.find(v => v.id === drumActiveVoice);
+  const bankStart = drumBank * STEPS_PER_BANK;
+  let stepsHtml = '';
+  for (let local = 0; local < STEPS_PER_BANK; local++) {
+    const idx = bankStart + local;
+    const on = activeV.pattern[idx];
+    const isPlayhead = drumPlaying && drumUiStepIdx === idx;
+    stepsHtml += `<button class="dstep${on ? ' on' : ''}${isPlayhead ? ' playhead' : ''}" id="dstep-${local}" onclick="toggleDrumStep(${local})"></button>`;
+  }
+  document.getElementById('body').innerHTML = `
+    <div class="card">
+      <div class="sec-t">Boîte à rythme · 108 pas (3×36)</div>
+      <div class="drum-transport">
+        <button class="dtrans-btn${drumPlaying ? ' on' : ''}" onclick="toggleDrumPlay()">${drumPlaying ? '◼' : '▶'}</button>
+        <div class="drum-bpm"><span class="bpm-num">${drumBPM}</span><span class="bpm-lbl">BPM</span></div>
+        <button class="dtrans-btn tap" onclick="drumTapTempo()">TAP<br>TEMPO</button>
+      </div>
+      <div class="drum-banks">
+        ${[0, 1, 2].map(b => `<button class="dbank${drumBank === b ? ' on' : ''}" onclick="setDrumBank(${b})">${['A', 'B', 'C'][b]}</button>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-t">Voies</div>
+      <div class="dvoices">
+        ${DRUM_VOICES.map(v => {
+          const st = DRUM_STATE[v.id], selected = v.id === drumActiveVoice;
+          return `<div class="dvoice-col">
+            <div class="dvoice-pad${st.muted ? ' muted' : ''}${selected ? ' sel' : ''}" style="--vc:${v.color}"
+              onmousedown="_dvStart('${v.id}',event)" onmouseup="_dvEnd('${v.id}')" onmouseleave="_dvCancel()" onmousemove="_dvMove('${v.id}',event)"
+              ontouchstart="_dvStart('${v.id}',event)" ontouchend="_dvEnd('${v.id}')" ontouchmove="_dvMove('${v.id}',event)">
+              <span class="dvoice-name">${v.name}</span>
+            </div>
+            <button class="dvoice-fx" onclick="openDrumFx('${v.id}')" title="Import sample / réglages FX">⚙</button>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="hint">Tap = mute/unmute · appui long = ouvrir le séquenceur de cette voie · ⚙ = import sample / réglages FX</div>
+    </div>
+    <div class="card">
+      <div class="sec-t">Séquenceur — ${activeDef.name} · Banque ${['A', 'B', 'C'][drumBank]}</div>
+      <div class="dstep-grid">${stepsHtml}</div>
+      <div class="drum-auto">
+        <span class="ctl-l">Auto tous les</span>
+        <input type="number" id="autoN" min="1" max="108" value="${drumAutoN}" oninput="drumAutoN=parseInt(this.value)||1">
+        <span class="ctl-l">pas</span>
+        <button class="dauto-btn" onclick="drumAutoAssign()">Appliquer</button>
+        <button class="dauto-btn clear" onclick="drumClearVoice()">Effacer</button>
+      </div>
+      <div class="hint">L'auto-assign s'applique aux 108 pas de la voie sélectionnée (les 3 banques), pas seulement à la banque affichée.</div>
+    </div>
+  `;
+}
+
+buildTabs();
+renderOsc(0);
+</script>
+</body>
+</html>

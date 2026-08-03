@@ -1,0 +1,55 @@
+name: Build OmcVibe APK
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - 'OmcVibe/www/**'
+      - 'OmcVibe/android/**'
+      - 'OmcVibe/branding/**'
+      - 'OmcVibe/package.json'
+      - 'OmcVibe/package-lock.json'
+      - 'OmcVibe/capacitor.config.json'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: OmcVibe/package-lock.json
+
+      - name: Install dependencies
+        working-directory: OmcVibe
+        run: npm ci
+
+      - name: Sync Capacitor Android project
+        working-directory: OmcVibe
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: OmcVibe/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmcVibe432-debug-apk
+          path: OmcVibe/android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30
