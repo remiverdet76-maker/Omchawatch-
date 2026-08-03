@@ -109,9 +109,9 @@ canvas{display:block;}
 #panel.open{transform:translateX(0);}
 
 /* ── TABS MENU ── */
-#mtabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+#mtabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--border);flex-shrink:0;}
 .mtab{
-  flex:1;padding:12px 4px;font-size:8.5px;letter-spacing:.18em;
+  flex:1 1 25%;padding:9px 2px;font-size:7.3px;letter-spacing:.12em;
   text-transform:uppercase;cursor:pointer;text-align:center;
   border:none;background:transparent;color:var(--textD);
   transition:all .2s;border-bottom:2px solid transparent;
@@ -226,6 +226,17 @@ input[type=color]{
 }
 #bgRetoucheHint.on{opacity:1;}
 body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:none;}
+/* #bugfix-bg-import : le bouton "Terminé" doit rester cliquable même
+   quand le panneau est désactivé — sinon aucune sortie possible du mode
+   retouche (verrouillage total du menu, perçu comme "l'import ne
+   fonctionne pas"). */
+#bgRetoucheDone{
+  position:fixed;left:50%;bottom:56px;transform:translate(-50%,12px);z-index:260;
+  padding:9px 22px;border-radius:20px;background:linear-gradient(90deg,var(--violet),var(--gold));
+  border:none;color:#140428;font:600 10px/1 'Nunito',sans-serif;letter-spacing:.12em;
+  text-transform:uppercase;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;
+}
+#bgRetoucheDone.on{opacity:1;pointer-events:auto;transform:translate(-50%,0);}
 
 /* ── PLANISPHÈRE ── */
 #geo-modal{
@@ -287,20 +298,39 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
 .arch-table-wrap{max-height:260px;overflow-y:auto;border-radius:9px;border:1px solid var(--border);}
 .arch-mark{display:inline-block;font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:9px;margin:0 4px 4px 0;
   background:rgba(232,74,111,.18);color:#e8a0d0;}
+
+/* ── SIMULATION (verrou densité) ── */
+#ms-lock.on{background:rgba(240,192,60,.18);color:var(--gold);border:1px solid rgba(240,192,60,.38);text-shadow:0 0 12px rgba(240,192,60,.5);}
+
+/* ── CALENDRIER (soleil + journal Omc) ── */
+.cal-cell{aspect-ratio:1;border-radius:5px;background:rgba(140,80,220,.08);
+  display:flex;align-items:center;justify-content:center;font-size:.66rem;color:var(--textS);cursor:pointer;transition:all .15s;}
+.cal-cell.empty{background:transparent;cursor:default;}
+.cal-cell.today{border:1px solid var(--gold);color:var(--gold);}
+.cal-cell.sel{background:rgba(240,192,60,.30);color:var(--gold);font-weight:700;}
+.cal-nav-btn{width:auto;padding:6px 16px;margin-bottom:0;border-radius:9px;border:none;cursor:pointer;
+  background:rgba(140,80,220,.16);color:var(--textS);font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;}
+.j-cell{aspect-ratio:1;border-radius:4px;background:rgba(140,80,220,.10);border:1px solid rgba(140,80,220,.16);
+  display:flex;align-items:center;justify-content:center;font-size:.56rem;color:var(--textD);cursor:pointer;position:relative;}
+.j-cell.today{border-color:var(--gold);color:var(--gold);}
+.j-cell.has-note{background:rgba(240,192,60,.16);}
+.j-cell.has-note::after{content:'';position:absolute;top:2px;right:2px;width:4px;height:4px;border-radius:50%;background:var(--gold);}
+.j-cell.sel{outline:2px solid var(--violet);}
 </style>
 </head>
 <body>
 <div id="cosmic-bg"></div>
 <div id="title">UTC432 · PROJECT · 396</div>
 <canvas id="c"></canvas>
-<div id="bgRetoucheHint">Glisse pour centrer ton image · pince/molette pour zoomer<br>Termine dans Options → Fond</div>
+<div id="bgRetoucheHint">Glisse pour centrer ton image · pince/molette pour zoomer</div>
+<button id="bgRetoucheDone" onclick="setBgRetouche(false)">✓ Terminé</button>
 
 <!-- BARRE BAS : uniquement le choix d'échelle de lecture -->
 <div id="bar">
   <div id="mode-sw">
     <div class="ms on" id="ms-432"    onclick="setReadMode('432')">432</div>
     <div class="ms"    id="ms-15552"  onclick="setReadMode('15552')">15552</div>
-    <div class="ms"    id="ms-civil"  onclick="setReadMode('civil')">Civil</div>
+    <div class="ms"    id="ms-lock"   onclick="toggleSimLock()" title="Verrouiller / déverrouiller — simulation">🔒</div>
   </div>
 </div>
 <div id="pulse-ring"></div>
@@ -319,6 +349,9 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
     <button class="mtab"    id="mt-options" onclick="setTab('options')">OPTIONS</button>
     <button class="mtab"    id="mt-design"  onclick="setTab('design')">DESIGN</button>
     <button class="mtab"    id="mt-lieu"    onclick="setTab('lieu')">LIEU</button>
+    <button class="mtab"    id="mt-simu"    onclick="setTab('simu')">SIMU</button>
+    <button class="mtab"    id="mt-soleil"  onclick="setTab('soleil')">SOLEIL</button>
+    <button class="mtab"    id="mt-journal" onclick="setTab('journal')">JOURNAL</button>
     <button class="mtab"    id="mt-arch"    onclick="setTab('arch')">ARCHÉTYPES</button>
   </div>
 
@@ -355,14 +388,14 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
       </div>
       <div class="notice-section">
         <div class="notice-h">Barre du bas</div>
-        <div class="notice-row"><div class="notice-key">432 / 15552 / Civil</div><div class="notice-val">Trois façons de lire le même mouvement. <strong>432</strong> = échelle standard (1 unité = 100 sec). <strong>15552</strong> = zoom profond (36 Omc × 432 cV, 1 cV ≈ 5,6 sec). <strong>Civil</strong> = même échelle 0-432 mais sur l'heure civile du téléphone, sans aucune correction solaire — un mode brut, pour comparer.</div></div>
+        <div class="notice-row"><div class="notice-key">432 / 15552</div><div class="notice-val">Deux façons de lire le même mouvement. <strong>432</strong> = échelle standard (1 unité ≈ 200 sec). <strong>15552</strong> = zoom profond (36 Omc × 432 cV, 1 cV ≈ 5,6 sec).</div></div>
+        <div class="notice-row"><div class="notice-key">🔒 / 🔓</div><div class="notice-val">Verrou de simulation (onglet SIMU) — déverrouille pour figer le temps et explorer n'importe quel instant du cycle (date + densité Omc) sans attendre qu'il arrive réellement.</div></div>
       </div>
       <div class="notice-section">
         <div class="notice-h">Logique des chiffres</div>
-        <div class="notice-row"><div class="notice-key">432</div><div class="notice-val">Un jour OmcV complet. 12 Omc = 432 unités. 1 unité = 100 secondes.</div></div>
+        <div class="notice-row"><div class="notice-key">432</div><div class="notice-val">Un jour OmcV complet. 12 Omc = 432 unités.</div></div>
         <div class="notice-row"><div class="notice-key">216</div><div class="notice-val">Midi solaire = moitié du jour. La sphère à l'équilibre.</div></div>
         <div class="notice-row"><div class="notice-key">396</div><div class="notice-val">Le centre. Ni expansion ni contraction. La Terre elle-même.</div></div>
-        <div class="notice-row"><div class="notice-key">Civil</div><div class="notice-val">Mode brut : même échelle 0–432 mais sur 24h civiles, sans correction solaire — utile pour comparer au mode corrigé.</div></div>
       </div>
     </div>
 
@@ -436,7 +469,7 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
           <input type="checkbox" class="sw" id="o-stars" checked onchange="OPTS.stars=this.checked">
         </label>
         <label class="opt-row">
-          <span>Barre du bas (432 / 15552 / Civil)</span>
+          <span>Barre du bas (432 / 15552 / verrou)</span>
           <input type="checkbox" class="sw" id="o-infobar" checked onchange="OPTS.infoBar=this.checked;document.getElementById('bar').style.display=this.checked?'flex':'none'">
         </label>
       </div>
@@ -499,7 +532,7 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
       </div>
       <div class="des-section">
         <div class="des-h">Mode de lecture</div>
-        <p class="small">Choix déplacé dans la barre du bas : 432 (standard) · 15552 (zoom profond, 1 cV ≈ 5,6 sec) · Civil (heure du téléphone, sans correction solaire).</p>
+        <p class="small">Choix déplacé dans la barre du bas : 432 (standard) · 15552 (zoom profond, 1 cV ≈ 5,6 sec) · 🔒 verrou de simulation (onglet SIMU) pour figer et explorer un instant précis.</p>
       </div>
     </div>
 
@@ -514,7 +547,21 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
         <div class="opt-row" onclick="openGeoModal()"><span>🌐 Ouvrir le planisphère</span></div>
       </div>
       <div class="opt-section">
-        <div class="opt-h">Saisie manuelle</div>
+        <div class="opt-h">Saisie manuelle précise</div>
+        <div style="display:flex;gap:8px;margin-bottom:4px">
+          <div style="flex:1">
+            <label style="font-size:.68rem;color:var(--textD);display:block;margin-bottom:3px">Latitude (°)</label>
+            <input type="number" id="in-lat-num" class="arch-input" style="margin-bottom:0" min="-90" max="90" step="0.0001" onchange="setLocationManual(this.value,null)">
+          </div>
+          <div style="flex:1">
+            <label style="font-size:.68rem;color:var(--textD);display:block;margin-bottom:3px">Longitude (°)</label>
+            <input type="number" id="in-lon-num" class="arch-input" style="margin-bottom:0" min="-180" max="180" step="0.0001" onchange="setLocationManual(null,this.value)">
+          </div>
+        </div>
+        <p class="small">Chiffres après la virgule utiles si tu connais tes coordonnées précises (GPS, carte…).</p>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Saisie au curseur (rapide)</div>
         <div class="des-col">
           <div class="des-head"><span>Latitude</span><span class="des-val" id="v-lat">48.85°</span></div>
           <input type="range" min="-90" max="90" step="0.1" value="48.85" id="in-lat" oninput="setLocationManual(this.value,null)">
@@ -523,6 +570,82 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
           <div class="des-head"><span>Longitude</span><span class="des-val" id="v-lon">2.35°</span></div>
           <input type="range" min="-180" max="180" step="0.1" value="2.35" id="in-lon" oninput="setLocationManual(null,this.value)">
         </div>
+      </div>
+    </div>
+
+    <!-- ══ SIMU — verrou de simulation : figer/avancer/reculer la densité (Omc) ══ -->
+    <div id="tab-simu" style="display:none">
+      <div class="opt-section">
+        <div class="opt-h">Verrou de simulation</div>
+        <div class="opt-row" onclick="toggleSimLock()">
+          <span id="sim-lock-label">🔒 Verrouillé — temps réel</span>
+        </div>
+        <p class="small">Déverrouille pour figer le temps et explorer n'importe quel instant du cycle (ex. simuler le jour où la densité atteint 430) sans attendre que ça arrive réellement.</p>
+      </div>
+      <div class="opt-section" id="simu-controls" style="display:none">
+        <div class="opt-h">Jour simulé</div>
+        <input type="date" id="sim-date" class="arch-input" onchange="simSetDate(this.value)">
+        <div class="opt-h" style="margin-top:12px">Densité (Omc) — 0 à 432</div>
+        <div class="des-col">
+          <div class="des-head"><span>Densité manuelle</span><span class="des-val" id="v-sim-density">0.0</span></div>
+          <input type="range" min="0" max="432" step="0.5" value="0" id="sim-density-slider" oninput="simSetDensity(this.value)">
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="arch-btn ghost" style="flex:1;margin-bottom:0" onclick="simStepDensity(-9)">−9</button>
+          <button class="arch-btn ghost" style="flex:1;margin-bottom:0" onclick="simStepDensity(-1)">−1</button>
+          <button class="arch-btn ghost" style="flex:1;margin-bottom:0" onclick="simStepDensity(1)">+1</button>
+          <button class="arch-btn ghost" style="flex:1;margin-bottom:0" onclick="simStepDensity(9)">+9</button>
+        </div>
+        <button class="arch-btn" style="margin-top:12px" onclick="simResetToNow()">↺ Revenir à maintenant</button>
+      </div>
+    </div>
+
+    <!-- ══ SOLEIL — lever/zénith/coucher calculés + calendrier repère ══ -->
+    <div id="tab-soleil" style="display:none">
+      <div class="opt-section">
+        <div class="opt-h">Lever · Zénith · Coucher — pour un jour donné</div>
+        <p class="small" style="margin-bottom:6px">Calculé pour la position choisie dans l'onglet LIEU. Dates traitées en UTC pur, aucune correction de fuseau horaire.</p>
+        <input type="date" id="sun-date" class="arch-input" onchange="sunRecompute()">
+        <div class="arch-readout-grid">
+          <div class="arch-readout"><div class="arch-readout-label">Lever (Omc)</div><div class="arch-readout-val" id="sun-lever">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Zénith (Omc)</div><div class="arch-readout-val" id="sun-zenith">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Coucher (Omc)</div><div class="arch-readout-val" id="sun-coucher">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Durée du jour</div><div class="arch-readout-val" id="sun-daylen">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Jour de l'année</div><div class="arch-readout-val" id="sun-doy">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Position (360 Omc · année solaire)</div><div class="arch-readout-val" id="sun-pos360">—</div></div>
+        </div>
+        <button class="arch-btn ghost" style="margin-top:8px" onclick="sunSendToSim()">→ Envoyer ce jour dans l'onglet SIMU</button>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Calendrier — sélecteur rapide de jour</div>
+        <p class="small" style="margin-bottom:6px">Repère uniquement, sans correction de décalage horaire — tape un jour pour voir sa durée de jour / lever solaire ci-dessus.</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <button class="cal-nav-btn" onclick="calMonthStep(-1)">‹</button>
+          <span id="cal-label" style="font:600 .82rem 'Cinzel',serif;color:var(--gold)">—</span>
+          <button class="cal-nav-btn" onclick="calMonthStep(1)">›</button>
+        </div>
+        <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;"></div>
+      </div>
+    </div>
+
+    <!-- ══ JOURNAL — calendrier Omc (360/432) pour observations libres ══ -->
+    <div id="tab-journal" style="display:none">
+      <div class="opt-section">
+        <div class="opt-h">Calendrier Omc</div>
+        <div class="arch-tabs">
+          <button class="arch-tab-btn on" id="jtb-360" onclick="journalSetBase(360)">360</button>
+          <button class="arch-tab-btn" id="jtb-432" onclick="journalSetBase(432)">432</button>
+        </div>
+        <p class="small">Jour Omc courant : <span id="j-today">—</span>. Tape un jour pour noter une observation libre (cycle organique, ressenti, valeur...).</p>
+        <div class="arch-table-wrap" style="max-height:340px">
+          <div id="journal-grid" style="display:grid;grid-template-columns:repeat(12,1fr);gap:3px;padding:8px;"></div>
+        </div>
+      </div>
+      <div class="opt-section" id="journal-editor" style="display:none">
+        <div class="opt-h">Observation — jour <span id="j-sel-day">—</span></div>
+        <textarea id="j-note-text" class="arch-input" style="min-height:80px;resize:vertical"></textarea>
+        <button class="arch-btn" onclick="journalSaveNote()">Enregistrer</button>
+        <button class="arch-btn ghost" onclick="journalDeleteNote()">Supprimer la note</button>
       </div>
     </div>
 
@@ -613,7 +736,7 @@ const OPTS = {
 const DESIGN = {
   colorPhase:'#F0C060', colorSouffle:'#A060F0', colorInstant:'#60A8F8',
   intensity:1, haloScale:1, nodeFontScale:1, centerFontScale:1,
-  ut18:false, deepMode:false,
+  deepMode:false,
 };
 
 // ─── CANVAS ──────────────────────────────────────────
@@ -642,7 +765,7 @@ function togglePanel(){
   setTimeout(resize,360);
 }
 function setTab(name){
-  ['notice','options','design','lieu','arch'].forEach(t=>{
+  ['notice','options','design','lieu','simu','soleil','journal','arch'].forEach(t=>{
     document.getElementById('tab-'+t).style.display=t===name?'block':'none';
     document.getElementById('mt-'+t).classList.toggle('on',t===name);
   });
@@ -665,11 +788,6 @@ function eqOfTime(date){
 // téléphone) + longitude choisie sur le planisphère × 4 min/° + équation
 // du temps = midi solaire réel n'importe où sur Terre.
 function calcDensity(now){
-  if(DESIGN.ut18){
-    // UT18 : heure civile locale du téléphone, sur 24h, sans correction solaire
-    const m=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
-    return (m/1440*432+432)%432;
-  }
   const eot=eqOfTime(now);
   const m=now.getUTCHours()*60+now.getUTCMinutes()+now.getUTCSeconds()/60;
   return ((m+LOCATION.lon*4+eot)/1440*432+432)%432;
@@ -725,12 +843,11 @@ function getSeason(date){
   return {season,density,mode};
 }
 
-// ─── MODE SWITCHER — 432 / 15552 / Civil (barre du bas) ──────────
+// ─── MODE SWITCHER — 432 / 15552 (barre du bas) ──────────
 function setReadMode(mode){
   DESIGN.deepMode = mode==='15552';
-  DESIGN.ut18 = mode==='civil';
   lastSouffle=-1;
-  ['ms-432','ms-15552','ms-civil'].forEach(id=>{
+  ['ms-432','ms-15552'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.classList.toggle('on', id==='ms-'+mode);
   });
@@ -896,7 +1013,7 @@ function draw36Nodes(readings,t,cfg){
 // ─── SPHÈRE CENTRALE ─────────────────────────────────
 function drawCenter(ut36,readings,t,cfg){
   const{phase,souffle,instant,density}=readings;
-  const modeLabel = DESIGN.ut18?'Civil': cfg.label;
+  const modeLabel = SIM.active ? cfg.label+' · SIMULÉ' : cfg.label;
   const r=R*.195, rb=r*(1+.07*Math.sin(t*TAU/T_BRE));
   const h1=X.createRadialGradient(cx,cy,0,cx,cy,rb*4.5);
   h1.addColorStop(0,rgba(DESIGN.colorPhase,.20));h1.addColorStop(.5,rgba(DESIGN.colorPhase,.06));h1.addColorStop(1,rgba(DESIGN.colorPhase,0));
@@ -949,7 +1066,7 @@ function triggerPulse(){
 // ─── BOUCLE ──────────────────────────────────────────
 function loop(){
   const t=(performance.now()-t0)/1000;
-  const fd=new Date();
+  const fd=nowOrSim();
   const ut36=calcDensity(fd);
   const cfg=getModeConfig();
   const r=getReadings(ut36,cfg);
@@ -997,12 +1114,16 @@ function updateGeoLabels(){
   if(vo)vo.textContent=LOCATION.lon.toFixed(2)+'°';
   const il=document.getElementById('in-lat'),io=document.getElementById('in-lon');
   if(il)il.value=LOCATION.lat; if(io)io.value=LOCATION.lon;
+  const iln=document.getElementById('in-lat-num'),ion=document.getElementById('in-lon-num');
+  if(iln&&document.activeElement!==iln)iln.value=LOCATION.lat;
+  if(ion&&document.activeElement!==ion)ion.value=LOCATION.lon;
 }
 function setLocationManual(lat,lon){
-  if(lat!=null)LOCATION.lat=parseFloat(lat);
-  if(lon!=null)LOCATION.lon=parseFloat(lon);
+  if(lat!=null){const v=parseFloat(lat); if(!isNaN(v))LOCATION.lat=Math.max(-90,Math.min(90,v));}
+  if(lon!=null){const v=parseFloat(lon); if(!isNaN(v))LOCATION.lon=Math.max(-180,Math.min(180,v));}
   LOCATION.name='';
   saveLocation();updateGeoLabels();
+  if(typeof sunRecompute==='function')sunRecompute();
 }
 
 // ─── PLANISPHÈRE (grille équirectangulaire, pas de tracé côtier —
@@ -1147,6 +1268,7 @@ function setBgRetouche(on){
   BG_RETOUCHE=on&&!!BG_STATE.image;
   document.body.classList.toggle('bg-retouche',BG_RETOUCHE);
   const hint=document.getElementById('bgRetoucheHint'); if(hint)hint.classList.toggle('on',BG_RETOUCHE);
+  const done=document.getElementById('bgRetoucheDone'); if(done)done.classList.toggle('on',BG_RETOUCHE);
   const ck=document.getElementById('ck-bgretouche'); if(ck)ck.classList.toggle('on',BG_RETOUCHE);
 }
 function setBgZoom(v){
@@ -1176,6 +1298,220 @@ document.body.addEventListener('wheel',e=>{
   const sl=document.getElementById('bg-zoom-slider'); if(sl)sl.value=Math.round(BG_STATE.zoom);
   applyBgState();saveBgState();
 },{passive:false});
+
+// ─── SIMULATION — verrou densité (avance/recule le temps sans attendre) ──
+// Remplace l'ancien mode "Civil" (UT18), jugé inutile : déverrouillé, on
+// peut figer l'horloge sur n'importe quel jour + n'importe quelle densité
+// (Omc, 0-432) pour observer le cycle à ce point précis, sans device réel
+// derrière — aucune donnée envoyée nulle part, tout reste en mémoire/local.
+let SIM={active:false,date:null};
+function nowOrSim(){return (SIM.active&&SIM.date)?SIM.date:new Date();}
+function toggleSimLock(){
+  SIM.active=!SIM.active;
+  if(SIM.active&&!SIM.date)SIM.date=new Date();
+  syncSimUI();
+  if(J0_ARCH)archApplyJ0(true);
+}
+function syncSimUI(){
+  const lockBtn=document.getElementById('ms-lock');
+  if(lockBtn){lockBtn.textContent=SIM.active?'🔓':'🔒';lockBtn.classList.toggle('on',SIM.active);}
+  const ctrls=document.getElementById('simu-controls');
+  if(ctrls)ctrls.style.display=SIM.active?'block':'none';
+  const lbl=document.getElementById('sim-lock-label');
+  if(lbl)lbl.textContent=SIM.active?'🔓 Déverrouillé — simulation figée':'🔒 Verrouillé — temps réel';
+  const d=SIM.active&&SIM.date?SIM.date:new Date();
+  const di=document.getElementById('sim-date'); if(di)di.value=d.toISOString().slice(0,10);
+  const dens=calcDensity(d);
+  const sl=document.getElementById('sim-density-slider'); if(sl)sl.value=dens;
+  const v=document.getElementById('v-sim-density'); if(v)v.textContent=dens.toFixed(1);
+}
+function simSetDate(v){
+  if(!SIM.active)return;
+  const d=archParseDate(v); if(!d)return;
+  const cur=SIM.date||new Date();
+  d.setUTCHours(cur.getUTCHours(),cur.getUTCMinutes(),cur.getUTCSeconds(),0);
+  SIM.date=d;
+  syncSimUI();
+  if(J0_ARCH)archApplyJ0(true);
+}
+function simSetDensity(v){
+  if(!SIM.active)return;
+  const target=Math.max(0,Math.min(432,parseFloat(v)));
+  const cur=SIM.date||new Date();
+  const eot=eqOfTime(cur);
+  let m=target/432*1440-LOCATION.lon*4-eot;
+  m=((m%1440)+1440)%1440;
+  const whole=Math.floor(m),sec=Math.round((m-whole)*60);
+  const next=new Date(Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth(),cur.getUTCDate(),0,0,0));
+  next.setUTCMinutes(whole,sec);
+  SIM.date=next;
+  const vEl=document.getElementById('v-sim-density'); if(vEl)vEl.textContent=target.toFixed(1);
+  const sl=document.getElementById('sim-density-slider'); if(sl)sl.value=target;
+}
+function simStepDensity(delta){
+  if(!SIM.active)return;
+  const cur=calcDensity(SIM.date||new Date());
+  const next=((cur+delta)%432+432)%432;
+  simSetDensity(next);
+}
+function simResetToNow(){
+  SIM.date=new Date();
+  syncSimUI();
+  if(J0_ARCH)archApplyJ0(true);
+}
+
+// ─── ASTRONOMIE SOLAIRE (approximation, cohérente avec eqOfTime) ────────
+// Modèle de déclinaison simplifié (même esprit/précision que l'équation
+// du temps déjà utilisée pour le midi solaire) : suffisant pour situer
+// un lever/coucher à quelques minutes près, sans dépendance externe.
+function dayOfYearUTC(date){
+  return Math.floor((Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate())
+    -Date.UTC(date.getUTCFullYear(),0,1))/86400000)+1;
+}
+function daysInYearUTC(y){return ((y%4===0&&y%100!==0)||y%400===0)?366:365;}
+function solarDeclinationDeg(doy){return 23.44*Math.sin(2*Math.PI/365*(doy-81));}
+// Lever/coucher sont symétriques autour du zénith solaire (toujours 216,
+// par construction de calcDensity) : pas besoin de ré-appliquer
+// longitude/équation du temps ici, elles s'annulent dans la différence.
+function computeSunTimes(date,lat){
+  const doy=dayOfYearUTC(date);
+  const declR=solarDeclinationDeg(doy)*Math.PI/180, latR=lat*Math.PI/180;
+  const cosH0=-Math.tan(latR)*Math.tan(declR);
+  let dayLenH,halfDayOmc,polar=null;
+  if(cosH0<=-1){dayLenH=24;halfDayOmc=216;polar='soleil de minuit';}
+  else if(cosH0>=1){dayLenH=0;halfDayOmc=0;polar='nuit polaire';}
+  else{
+    const H0deg=Math.acos(cosH0)*180/Math.PI;
+    dayLenH=H0deg/7.5; halfDayOmc=H0deg*1.2;
+  }
+  const diy=daysInYearUTC(date.getUTCFullYear());
+  return{
+    doy,dayLenH,polar,
+    leverOmc:((216-halfDayOmc)+432)%432,
+    zenithOmc:216,
+    coucherOmc:((216+halfDayOmc)+432)%432,
+    pos360:doy/diy*360,
+  };
+}
+
+// ─── SOLEIL — lever/zénith/coucher + calendrier repère (sans DST) ────────
+let _sunSelDate=null;
+function sunRecompute(){
+  const el=document.getElementById('sun-date'); if(!el)return;
+  const d=archParseDate(el.value)||nowOrSim();
+  _sunSelDate=d;
+  const st=computeSunTimes(d,LOCATION.lat);
+  const setTxt=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;};
+  setTxt('sun-lever', st.polar?'—':st.leverOmc.toFixed(1));
+  setTxt('sun-zenith', st.zenithOmc.toFixed(1));
+  setTxt('sun-coucher', st.polar?'—':st.coucherOmc.toFixed(1));
+  setTxt('sun-daylen', st.polar?st.polar:st.dayLenH.toFixed(2)+' h');
+  setTxt('sun-doy', st.doy+' / '+daysInYearUTC(d.getUTCFullYear()));
+  setTxt('sun-pos360', st.pos360.toFixed(1)+' / 360');
+  if(typeof calBuildGrid==='function')calBuildGrid();
+}
+function sunSendToSim(){
+  if(!_sunSelDate)return;
+  if(!SIM.active)toggleSimLock();
+  SIM.date=new Date(_sunSelDate.getTime());
+  syncSimUI();
+  if(J0_ARCH)archApplyJ0(true);
+  setTab('simu');
+}
+let CAL_VIEW={y:(new Date()).getUTCFullYear(),m:(new Date()).getUTCMonth()};
+const MONTH_NAMES=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+function calMonthStep(delta){
+  CAL_VIEW.m+=delta;
+  if(CAL_VIEW.m<0){CAL_VIEW.m=11;CAL_VIEW.y--;}
+  if(CAL_VIEW.m>11){CAL_VIEW.m=0;CAL_VIEW.y++;}
+  calBuildGrid();
+}
+function calBuildGrid(){
+  const grid=document.getElementById('cal-grid'); if(!grid)return;
+  grid.innerHTML='';
+  const lbl=document.getElementById('cal-label'); if(lbl)lbl.textContent=MONTH_NAMES[CAL_VIEW.m]+' '+CAL_VIEW.y;
+  const first=new Date(Date.UTC(CAL_VIEW.y,CAL_VIEW.m,1));
+  const startDow=(first.getUTCDay()+6)%7; // lundi=0, sans notion de fuseau
+  const daysInM=new Date(Date.UTC(CAL_VIEW.y,CAL_VIEW.m+1,0)).getUTCDate();
+  const now=nowOrSim();
+  const isTodayMonth=now.getUTCFullYear()===CAL_VIEW.y&&now.getUTCMonth()===CAL_VIEW.m;
+  const sel=_sunSelDate;
+  for(let i=0;i<startDow;i++){const c=document.createElement('div');c.className='cal-cell empty';grid.appendChild(c);}
+  for(let d=1;d<=daysInM;d++){
+    const c=document.createElement('div');
+    const isSel=sel&&sel.getUTCFullYear()===CAL_VIEW.y&&sel.getUTCMonth()===CAL_VIEW.m&&sel.getUTCDate()===d;
+    c.className='cal-cell'+(isTodayMonth&&now.getUTCDate()===d?' today':'')+(isSel?' sel':'');
+    c.textContent=d;
+    c.onclick=()=>calPickDay(CAL_VIEW.y,CAL_VIEW.m,d);
+    grid.appendChild(c);
+  }
+}
+function calPickDay(y,m,d){
+  _sunSelDate=new Date(Date.UTC(y,m,d));
+  const el=document.getElementById('sun-date'); if(el)el.value=_sunSelDate.toISOString().slice(0,10);
+  sunRecompute();
+}
+
+// ─── JOURNAL — calendrier Omc (360/432) pour observations libres ────────
+let JOURNAL={base:360,selDay:null};
+function journalKey(base){return 'chawatch-journal-'+base;}
+function journalLoad(base){
+  try{const s=localStorage.getItem(journalKey(base)); return s?JSON.parse(s):{};}catch(e){return{};}
+}
+function journalSaveAll(base,data){try{localStorage.setItem(journalKey(base),JSON.stringify(data));}catch(e){}}
+function journalTodayIndex(base){
+  const now=nowOrSim();
+  const doy=dayOfYearUTC(now), diy=daysInYearUTC(now.getUTCFullYear());
+  return Math.max(1,Math.min(base,Math.round(doy/diy*base)));
+}
+function journalSetBase(base){
+  JOURNAL.base=base; JOURNAL.selDay=null;
+  const b360=document.getElementById('jtb-360'),b432=document.getElementById('jtb-432');
+  if(b360)b360.classList.toggle('on',base===360);
+  if(b432)b432.classList.toggle('on',base===432);
+  const ed=document.getElementById('journal-editor'); if(ed)ed.style.display='none';
+  journalBuildGrid();
+}
+function journalBuildGrid(){
+  const grid=document.getElementById('journal-grid'); if(!grid)return;
+  grid.innerHTML='';
+  const data=journalLoad(JOURNAL.base);
+  const todayIdx=journalTodayIndex(JOURNAL.base);
+  const jt=document.getElementById('j-today'); if(jt)jt.textContent=todayIdx+' / '+JOURNAL.base;
+  for(let d=1;d<=JOURNAL.base;d++){
+    const cell=document.createElement('div');
+    cell.className='j-cell'+(d===todayIdx?' today':'')+(data[d]?' has-note':'');
+    cell.textContent=d;
+    cell.onclick=()=>journalOpenDay(d);
+    grid.appendChild(cell);
+  }
+}
+function journalOpenDay(d){
+  JOURNAL.selDay=d;
+  const grid=document.getElementById('journal-grid');
+  if(grid)Array.from(grid.children).forEach((c,i)=>c.classList.toggle('sel',i+1===d));
+  const sd=document.getElementById('j-sel-day'); if(sd)sd.textContent=d+' / '+JOURNAL.base;
+  const data=journalLoad(JOURNAL.base);
+  const ta=document.getElementById('j-note-text'); if(ta)ta.value=data[d]||'';
+  const ed=document.getElementById('journal-editor'); if(ed)ed.style.display='block';
+}
+function journalSaveNote(){
+  if(!JOURNAL.selDay)return;
+  const data=journalLoad(JOURNAL.base);
+  const ta=document.getElementById('j-note-text');
+  const txt=ta?ta.value.trim():'';
+  if(txt)data[JOURNAL.selDay]=txt; else delete data[JOURNAL.selDay];
+  journalSaveAll(JOURNAL.base,data);
+  journalBuildGrid(); journalOpenDay(JOURNAL.selDay);
+}
+function journalDeleteNote(){
+  if(!JOURNAL.selDay)return;
+  const data=journalLoad(JOURNAL.base);
+  delete data[JOURNAL.selDay];
+  journalSaveAll(JOURNAL.base,data);
+  const ta=document.getElementById('j-note-text'); if(ta)ta.value='';
+  journalBuildGrid(); journalOpenDay(JOURNAL.selDay);
+}
 
 // ─── ARCHÉTYPES — lecture fractale à 3 niveaux (cycle 432, J0) ──────────
 // Les 4 mêmes mouvements du souffle (11/10 lever, 6/5 zénith, 10/11
@@ -1271,7 +1607,7 @@ function archApplyJ0(silent){
   if(!j0){if(!silent)alert('Saisis un J0 valide.');return;}
   J0_ARCH=j0;
   if(!silent){try{localStorage.setItem('chawatch-j0',j0.toISOString());}catch(e){}}
-  const comp=computeFromJ0(j0,new Date()); lastArchComp=comp;
+  const comp=computeFromJ0(j0,nowOrSim()); lastArchComp=comp;
   const setTxt=(id,v)=>{const el=document.getElementById(id); if(el)el.textContent=v;};
   setTxt('a-j0',archFmtDate(j0)); setTxt('a-days',comp.daysSince); setTxt('a-cycle',comp.cycle108);
   setTxt('a-day',comp.dayInCycle+' / 432');
@@ -1368,6 +1704,11 @@ document.addEventListener('pointerdown',_autoRequestFullscreen,{once:true,captur
 loadLocation();
 loadBgState();
 loadArch();
+syncSimUI();
+(function(){const el=document.getElementById('sun-date'); if(el)el.value=new Date().toISOString().slice(0,10);})();
+sunRecompute();
+calBuildGrid();
+journalSetBase(360);
 resize(); loop();
 </script>
 </body>
