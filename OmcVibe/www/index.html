@@ -2267,6 +2267,8 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
       <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Ancre respiratoire périodique </span><input type="checkbox" class="sw" id="ck-breath-anchor" checked onchange="setBreathAnchor(this.checked)"></div>
       <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Évolution harmonique douce </span><input type="checkbox" class="sw" id="ck-organic-evo" checked onchange="setOrganicEvolution(this.checked)"></div>
       <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Battement rapproché (1–7.2 Hz) </span><input type="checkbox" class="sw" id="ck-rand-closebeat" checked onchange="setCloseBeatPair(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Détune Sinus Duo aléatoire </span><input type="checkbox" class="sw" id="ck-rand-dualsine" onchange="setRandDualSine(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Pré-mastering (filtres LPF/HPF/BPF) </span><input type="checkbox" class="sw" id="ck-rand-premaster" checked onchange="setPreMasterFilter(this.checked)"></div>
       <div class="sw-row" style="font-size:.7rem;padding:.1rem 0;"><span class="fx-label">FX aléatoire </span><input type="checkbox" class="sw" id="ck-rand-fx" checked onchange="setRandUseFX(this.checked)"></div>
     </div>
   </details>
@@ -5337,9 +5339,15 @@ function setCharacterOn(v) {
 // La plage fréquence (freqMin–freqMax) reste TOUJOURS opérationnelle :
 // chaque tirage pioche une fondamentale CONTINUE dans cette plage —
 // répartition quasi-infinie, plus de pool figé.
+// #144 : randomDualSine repassé à FALSE — le commentaire de triggerMagicAuto
+// annonçait déjà "OFF par défaut (#61)" pour ne pas écraser le détune 0 par
+// défaut (#54), mais RAND_OPTS valait encore `true` : contradiction entre
+// l'intention documentée et le code, source de dissonance identifiée à
+// l'usage (le détune 0 était réécrit au hasard dès le premier tirage, sans
+// que personne n'ait rien demandé).
 const RAND_OPTS={freqMin:F_MIN,freqMax:432,ratioMode:'heterogene',ratioOn:true,characterOn:true,useFX:true,spread:0.6,
   randomTimbre:true, randomDepth:true, breathRandom:true, deltaVariety:true, polarityVariety:true,
-  randomDualSine:true, closeBeatPair:true};
+  randomDualSine:false, closeBeatPair:true, preMasterFilter:true};
 
 // #6 : n'a d'effet que si le Caractère est activé — chaque paire pioche alors
 // son propre Δ (au lieu d'un battement commun) pour un jeu plus riche.
@@ -5403,6 +5411,23 @@ function setRandBreath(v){
 function setCloseBeatPair(v){
   RAND_OPTS.closeBeatPair=!!v;
   const ck=document.getElementById('ck-rand-closebeat'); if(ck) ck.checked=RAND_OPTS.closeBeatPair;
+  saveState();
+}
+// #144 : détune Sinus Duo — OFF par défaut, tel que documenté mais jamais
+// appliqué (cf. commentaire triggerMagicAuto). Décoché, le détune reste à
+// 0 (ou à la valeur réglée à la main) tirage après tirage.
+function setRandDualSine(v){
+  RAND_OPTS.randomDualSine=!!v;
+  const ck=document.getElementById('ck-rand-dualsine'); if(ck) ck.checked=RAND_OPTS.randomDualSine;
+  saveState();
+}
+// #144 : pré-mastering — LPF/HPF/BPF entrent dans le tirage avec des
+// valeurs FIXES (jamais Math.random()) selon le rôle de chaque paire, cf.
+// triggerMagicAuto. Réversible : décoché, le tirage ne touche plus jamais
+// le type de filtre, comme avant (seul le pad tactile le change).
+function setPreMasterFilter(v){
+  RAND_OPTS.preMasterFilter=!!v;
+  const ck=document.getElementById('ck-rand-premaster'); if(ck) ck.checked=RAND_OPTS.preMasterFilter;
   saveState();
 }
 
@@ -5875,6 +5900,11 @@ function _shuffle(arr) {
   return a;
 }
 
+// #144 : compteur glissant par paire pour la rotation de polarité équilibrée
+// (cf. RAND_OPTS.polarityVariety dans triggerMagicAuto) — +1/-1 par tirage,
+// jamais réinitialisé (pas besoin : le biais est borné, cf. usage).
+const _polarityBalance = {};
+
 // Anti-répétition : évite de retomber près d'une des 3 dernières fondamentales
 let _lastFunds = [];
 function _drawFundamental(min, max) {
@@ -6256,7 +6286,19 @@ function triggerMagicAuto(opts) {
     // son signe, donc l'image spatiale varie sans jamais toucher au confort
     // garanti par le verrou binaural. Remplace l'ancienne alternance
     // idx%2 (toujours identique d'un tirage à l'autre) par un vrai tirage.
-    if (RAND_OPTS.polarityVariety) pair.ida.polarity = Math.random() < 0.5 ? 1 : -1;
+    // #144 : rotation de polarité ÉQUILIBRÉE sur la durée — chaque tirage
+    // reste bien aléatoire individuellement, mais un compteur glissant par
+    // paire empêche de retomber 4-5 fois de suite sur la même polarité,
+    // pour ne jamais fatiguer systématiquement la même oreille sur une
+    // session longue. Le verrou binaural reste 100% respecté (amplitude du
+    // battement jamais touchée, seulement son signe).
+    if (RAND_OPTS.polarityVariety) {
+      const bal = (_polarityBalance[idx] = _polarityBalance[idx] || 0);
+      const bias = 0.5 - Math.max(-0.3, Math.min(0.3, bal * 0.12));
+      const pol = Math.random() < bias ? 1 : -1;
+      pair.ida.polarity = pol;
+      _polarityBalance[idx] = bal + pol;
+    }
 
     const pf = Math.max(rMin, Math.min(rMax, newMaster * RATIO_OPTS[ri].r * n));
     pair.pingala.vol = Math.min(0.4, isosonicVol(pf, 0.085) * boost);
@@ -6279,6 +6321,29 @@ function triggerMagicAuto(opts) {
       if (cur.hp  == null) cur.hp  = 20;
       OSC_FILTER[id] = cur;
     });
+
+    // #144 : Pré-mastering (option, ON par défaut) — LPF/HPF/BPF entrent
+    // VOLONTAIREMENT dans le tirage avec des valeurs FIXES (jamais
+    // Math.random()) selon le rôle de la paire — pas pour ajouter du
+    // hasard, au contraire : pour garantir une mise en forme systématique
+    // plutôt que d'hériter du dernier réglage manuel du pad tactile. Ici
+    // c'est explicite et réversible (case décochable), contrairement au
+    // silence que #61 corrigeait. LPF = outil universel (adoucit le haut
+    // de chaque paire ; le cutoff ci-dessus, jusqu'ici souvent inaudible
+    // en mode Off, prend enfin effet). HPF = dégage le grave des paires
+    // hors registre grave (évite l'empâtement quand plusieurs satellites
+    // s'empilent) — via le hp toujours actif, pas le filtre commutable.
+    // BPF = réservé au suiveur du duo rapproché, accent textural ponctuel
+    // (le BPF partout sonnerait "téléphone" et casserait l'ambiance).
+    if (RAND_OPTS.preMasterFilter) {
+      const isBpfAccent = idx === _closeBeatFollowerIdx;
+      setPairFilterMode(idx, isBpfAccent ? 'bpf' : 'lpf');
+      if (!isBpfAccent) {
+        const hp = pf > 200 ? 60 : 20;
+        OSC_FILTER[pair.pingala.id].hp = hp;
+        OSC_FILTER[pair.ida.id].hp = hp;
+      }
+    }
 
     // Option "LFO Cutoff/Résonance" retirée (#132) — le filtre ne respire
     // plus tout seul au tirage, cf. modulation retirée de setPairPatch ici.
@@ -6317,12 +6382,13 @@ function triggerMagicAuto(opts) {
   // ── #12 Glisse dédiée du battement (Δ) ──────────────────────────────
   // setMasterFreq() vient déjà de retuner Ida au nouveau Δ en 80ms (masqué
   // par le fondu _duckAndApply). Pour les paires dont Δ a réellement changé
-  // ce tirage, on ré-étire cette arrivée sur ~2,2s : le battement glisse
-  // doucement vers sa nouvelle vitesse une fois le son revenu, plutôt que
-  // d'être déjà figé avant même le fade-in — sensation vivante, jamais un saut.
+  // ce tirage, on ré-étire cette arrivée sur ~1,6 à 3,2s (#144 : légère
+  // variation par paire, avant fixe à 2,2s partout) : le battement glisse
+  // doucement vers sa nouvelle vitesse une fois le son revenu, tantôt vite
+  // tantôt très progressif — diversité du VÉCU de la transition, jamais un saut.
   if (flowing) PAIRS.forEach((pair, i) => {
     if (!_deltaChangedThisDraw[i]) return;
-    tuneOsc(pair.ida.id, calcIFreq(i), 2.2);
+    tuneOsc(pair.ida.id, calcIFreq(i), 1.6 + Math.random() * 1.6);
   });
 
   // Applique volumes + pan + filtres sur les nœuds vivants
@@ -7773,6 +7839,8 @@ function _syncRandOptsUI() {
   setCk('ck-rand-breath',   RAND_OPTS.breathRandom);
   setCk('ck-rand-fx',       RAND_OPTS.useFX);
   setCk('ck-rand-closebeat', RAND_OPTS.closeBeatPair);
+  setCk('ck-rand-dualsine', RAND_OPTS.randomDualSine);
+  setCk('ck-rand-premaster', RAND_OPTS.preMasterFilter);
   setCk('ck-delta-drift',   DELTA_DRIFT_STATE.on);
   setCk('ck-strict-headphone', STRICT_HEADPHONE_MODE);
   setCk('ck-pair-comp', PAIR_COMP_STATE.on);
