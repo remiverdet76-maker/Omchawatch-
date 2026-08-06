@@ -289,6 +289,24 @@ body{
 #btn-back.show{opacity:1;pointer-events:auto;transform:translateY(0);}
 #btn-back.dock-up{bottom:38px;}
 
+/* #145 : retour au menu principal — bouton fixe haut-gauche, toujours à
+   la même place (au lieu d'un raccourci caché derrière la sphère "+" du
+   dock). Se masque pendant qu'un panneau/modal est ouvert, cf. _syncBackBtn. */
+#btn-back-menu{
+  position:fixed;top:14px;left:14px;z-index:9000;
+  width:42px;height:42px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(10,6,20,.72);border:1.5px solid rgba(255,214,120,.55);
+  color:#FFDE96;backdrop-filter:blur(6px);
+  box-shadow:0 4px 14px rgba(0,0,0,.4),0 0 12px rgba(255,200,100,.18);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:transform .15s,background .15s,opacity .2s;
+  opacity:1;
+}
+#btn-back-menu.hide{ opacity:0;pointer-events:none; }
+#btn-back-menu:active{ transform:scale(.88); background:rgba(255,214,120,.16); }
+#btn-back-menu svg{ width:20px;height:20px; }
+
 /* Keyframes */
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 @keyframes prog-pulse{0%,100%{box-shadow:0 0 8px rgba(255,140,40,.3);}50%{box-shadow:0 0 22px rgba(255,140,40,.7);}}
@@ -910,7 +928,7 @@ body.vis-lite .flux-aura{ animation:none;opacity:.7; }
 
 .dcell-flux{
   position:relative;z-index:2;
-  flex-shrink:0;width:118px;height:118px;margin-bottom:10px; /* #137 : pièce maîtresse — bien plus gros que les autres cellules */
+  flex-shrink:0;width:132px;height:132px;margin-bottom:10px; /* #145 : encore agrandie (118px→132px), pièce maîtresse du dock */
   border-radius:50%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:radial-gradient(circle at 38% 32%,rgba(255,226,150,.22),rgba(18,10,28,.96) 70%);
@@ -941,14 +959,34 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
   0%,100%{ box-shadow:0 0 26px rgba(255,220,110,.5),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.3); }
   50%{ box-shadow:0 0 52px rgba(255,230,140,.9),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.3); }
 }
-/* Symbole yin-yang (SVG) — remplace l'ancien glyphe texte, thème doré/nuit
-   cohérent avec le reste du dock plutôt que le noir/blanc traditionnel. */
-.dcell-flux .flux-yy{ width:70%;height:70%;filter:drop-shadow(0 2px 5px rgba(0,0,0,.5)); }
+/* #145 : logo officiel (remplace l'ancien SVG yin-yang) — rognage circulaire
+   propre (object-fit:cover + border-radius:50%, l'image source est carrée). */
+.dcell-flux .flux-yy{
+  width:78%;height:78%;border-radius:50%;object-fit:cover;
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.5));
+}
 .flux-state{
   position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);
   font-size:.58rem;letter-spacing:.2em;font-weight:700;
   color:rgba(255,228,165,.88);text-shadow:0 0 8px rgba(255,200,100,.5);
   white-space:nowrap;pointer-events:none;
+}
+/* #145 : Flux Off — les sphères oscillateurs restent "atteintes" (toujours
+   là, toujours réactives) mais passent en blanc neutre, sans couleur ni
+   éclat : silence visuel qui suit le silence sonore réel (masterGain +
+   samples coupés, cf. setFluxMuted). Le bouton dcFlux lui-même s'éteint
+   pareil — plus de pulsation dorée tant que le son ne sort pas. */
+body.flux-muted .vp-p,
+body.flux-muted .vp-i{
+  filter:grayscale(1) brightness(1.7) saturate(0) !important;
+  box-shadow:0 0 14px rgba(255,255,255,.25) !important;
+  transition:filter .5s ease,box-shadow .5s ease;
+}
+.dcell-flux.flux-off{
+  animation:none !important;
+  filter:grayscale(.85) brightness(.8);
+  box-shadow:0 0 10px rgba(255,255,255,.18),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.15);
+  border-color:rgba(230,230,230,.4);
 }
 /* #132 : flash de réactivité au tap (nouveau jeu aléatoire) — distinct de
    l'animation d'état "flowing", one-shot, retiré en JS après ~420ms. */
@@ -1678,7 +1716,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   .dcell-name { font-size: .82rem !important; } /* #72 : réduit, "Aléatoire"/"Paramètres" débordaient */
   .dcell-sub  { font-size: .88rem !important; } /* #72 : réduit + retour à la ligne (cf. règle de base) au lieu de nowrap */
   .dcell-extra { width: 34px !important; height: 34px !important; } /* #52 : -36% vs #32 (53px→34px) */
-  .dcell-flux { width: 60px !important; height: 60px !important; margin-bottom: 8px !important; } /* #52 : -36% vs #32 (93px→60px) */
+  .dcell-flux { width: 84px !important; height: 84px !important; margin-bottom: 8px !important; } /* #145 : agrandie (60px→84px), pièce maîtresse du dock — tap = nouveau jeu, appui long = Flux on/off */
 
   /* Panneaux : plein écran (largeur) pour la lisibilité, déroulement haut → bas,
      hauteur toujours réservée au-dessus du dock (158px sur smartphone, dock agrandi) */
@@ -1823,25 +1861,22 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 </div>
 
 <!-- #64 : Lanceur — choix entre les 3 modules, affiché avant l'app -->
-<div id="omc-launcher">
+<!-- #145 : lanceur simplifié — OmchaVibe 432 (ce fichier) est désormais le
+     module d'accueil direct (plus de carte "vibe" à taper pour démasquer
+     l'app en dessous, cf. bootstrap plus bas qui masque le lanceur au
+     chargement). "OmchaSphere/Flux" n'a plus de carte ici non plus : les 3
+     visualisations 3D sont accessibles directement depuis le mode geometry
+     3D (panneau FX3D · Torus). Il ne reste que les 2 modules réellement
+     séparés : Chaharmony et OmchaWatch. -->
+<div id="omc-launcher" class="hide">
   <img class="lch-logo" src="img/omcvibe432-logo.jpg" alt="OMCHA" onerror="this.style.display='none'">
   <div class="lch-title">OMCHA · UNIVERS 432</div>
   <div class="lch-sub">✦ Choisis ton module ✦</div>
   <div class="lch-cards">
-    <div class="lch-card vibe" onclick="_launcherGo('vibe')">
-      <span class="lch-ico">✦</span>
-      <span class="lch-name">OmchaVibe 432</span>
-      <span class="lch-desc">Le jeu binaural fractal — sphères, matrice, module tactile</span>
-    </div>
     <div class="lch-card chaharmony" onclick="_launcherGo('chaharmony')">
       <span class="lch-ico">⬡</span>
       <span class="lch-name">Chaharmony</span>
       <span class="lch-desc">Générateur de fréquences — 7 oscillateurs, casque ou enceintes</span>
-    </div>
-    <div class="lch-card sphereflux" onclick="_launcherGo('sphereflux')">
-      <span class="lch-ico">◎</span>
-      <span class="lch-name">OmchaSphere / Flux</span>
-      <span class="lch-desc">Visualisation géométrique — Sphère 432 · Torsion 432 · Géométrie</span>
     </div>
     <div class="lch-card omchawatch" onclick="_launcherGo('omchawatch')">
       <span class="lch-ico">☉</span>
@@ -1856,6 +1891,12 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 <div id="module-overlay">
   <iframe id="module-iframe" src="about:blank" title="Module visuel OmchaVibe"></iframe>
 </div>
+
+<!-- #145 : retour au menu principal — bouton fixe, toujours au même
+     endroit (au lieu d'un raccourci caché derrière la sphère "+" du dock). -->
+<button id="btn-back-menu" onclick="_showLauncher()" title="Retour au menu principal" aria-label="Retour au menu principal">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+</button>
 
 <div id="cosmic-bg" data-html-import-id="html-import-5" style="background-image: url(&quot;img/cosmic-flux.jpg&quot;); filter: hue-rotate(-23.8deg) saturate(1.15);"></div>
 <canvas id="meta-canvas" width="540" height="1024" style="width: 540px; height: 1024px; cursor: grab; pointer-events: auto;" data-html-import-id="html-import-6"></canvas>
@@ -1887,20 +1928,17 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     </div>
   </div>
 
-  <!-- CENTRE — FLUX : yin-yang organique, pièce maîtresse du dock — tap =
-       nouveau jeu aléatoire (#132) · appui long = Flux on/off (#137 :
-       plus de chip séparé, l'aura + l'intensité du halo suffisent à
-       montrer l'état). -->
+  <!-- CENTRE — FLUX : pièce maîtresse du dock — tap = nouveau jeu
+       aléatoire (#132) · appui long = Flux on/off (#145 : mute réel, cf.
+       toggleFluxMuted). #145 : logo officiel (déjà utilisé par le lanceur)
+       à la place du yin-yang SVG — même rognage circulaire que le reste
+       du dock (object-fit:cover + border-radius), halo/pulsation déjà en
+       place (fluxAura + fluxIdleGold/fluxPulseGold) inchangés. -->
   <div class="dock-col dock-col-center">
     <div class="dcell-wrap dcell-wrap-flux">
       <div class="flux-aura" id="fluxAura" aria-hidden="true"></div>
       <button class="dcell-flux canva-button" id="dcFlux" title="Tap : nouveau jeu aléatoire · Appui long : Flux on/off">
-        <svg class="flux-yy" id="flux-icon" viewBox="0 0 100 100" aria-hidden="true">
-          <circle cx="50" cy="50" r="47" fill="#150A24" stroke="rgba(255,222,150,.6)" stroke-width="2"/>
-          <path d="M50,3 A47,47 0 0,1 50,97 A23.5,23.5 0 0,1 50,50 A23.5,23.5 0 0,0 50,3 Z" fill="#FFDE96"/>
-          <circle cx="50" cy="26.5" r="7.8" fill="#150A24"/>
-          <circle cx="50" cy="73.5" r="7.8" fill="#FFDE96"/>
-        </svg>
+        <img class="flux-yy" id="flux-icon" src="img/omcvibe432-logo.jpg" alt="" aria-hidden="true">
       </button>
       <span class="flux-state" id="flux-state-side">OFF</span>
     </div>
@@ -2096,6 +2134,18 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   <div class="pct canva-container" data-html-import-id="html-import-440" data-template-id="div-417">FX3D · Torus</div>
   <div class="geometry-grid" id="geo-grid" data-html-import-id="html-import-441"><div class="geometry-btn active" style="cursor:default;">Torus</div></div>
 
+  <!-- #145 : accès direct aux 3 visualisations 3D dédiées (auparavant
+       seulement via le lanceur → carte "OmchaSphere/Flux" → écran
+       intermédiaire de choix). Le lanceur ne montre plus que Chaharmony
+       et OmchaWatch (#145) ; ces 3 visualisations vivent maintenant ici,
+       dans le mode geometry 3D, un tap = accès direct. -->
+  <div class="pct canva-container" style="margin-top:.65rem">Visualisations 3D dédiées</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;margin-bottom:.5rem;">
+    <button class="geometry-btn canva-button" onclick="_openModuleOverlay('sphere432.html')">◉ Sphère 432</button>
+    <button class="geometry-btn canva-button" onclick="_openModuleOverlay('torsion432.html')">∿ Torsion 432</button>
+    <button class="geometry-btn canva-button" onclick="_openModuleOverlay('geometrie.html')">◈ Géométrie</button>
+  </div>
+
   <div class="pct canva-container" style="margin-top:.65rem" data-html-import-id="html-import-446" data-template-id="div-422">Ratio fréquentiel</div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.2rem;margin-bottom:.45rem;" data-html-import-id="html-import-447">
     <button class="geometry-btn fx3d-ratio on canva-button" data-r="432/360" onclick="fx3dSetRatio('432/360')" data-html-import-id="html-import-448" data-template-id="button-423">432/360</button>
@@ -2150,7 +2200,9 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
 <!-- Panel : Jeu Aléatoire — droite -->
 <div class="pan-right canva-container" id="panRand" data-html-import-id="html-import-494" data-template-id="div-472">
   <div class="pct canva-container" data-html-import-id="html-import-495" data-template-id="div-473">Options Aléatoire</div>
-  <button class="btn-magic-rand canva-button" onclick="triggerMagicAuto()" data-html-import-id="html-import-496" data-template-id="button-474">⚄ Omchaléatoire</button>
+  <!-- #145 : bouton "⚄ Omchaléatoire" retiré — redondant avec le tap sur
+       la sphère Flux du dock (triggerMagicAuto, cf. DOCK_MAP.flux.tap),
+       désormais la seule façon de déclencher un tirage. -->
   <!-- #12 : retour arrière sur les 5 derniers tirages aléatoires -->
   <button class="fbf-step canva-button" id="btn-undo-random" onclick="undoLastRandom()" disabled style="width:100%;margin-top:.35rem;">↩ Annuler le tirage</button>
 
@@ -3900,7 +3952,11 @@ async function startFlow() {
     masterGain = c.createGain(); masterGain.gain.value = 0;
     const now = c.currentTime;
     masterGain.gain.setValueAtTime(0, now);
-    masterGain.gain.setTargetAtTime(masterVol * MASTER_GAIN_SCALE, now, _fadeDur / 3);
+    // #145 : si Flux était coupé (FLUX_MUTED) avant un redémarrage du
+    // moteur (ex. contexte audio relancé après mise en arrière-plan), on
+    // ne remonte PAS le volume automatiquement — le silence demandé reste
+    // respecté tant que l'utilisateur ne le lève pas lui-même.
+    if (!FLUX_MUTED) masterGain.gain.setTargetAtTime(masterVol * MASTER_GAIN_SCALE, now, _fadeDur / 3);
 
     // #42 : _lfoGain n'est plus modulé par un LFO trémolo — il ne sert plus
     // qu'à recevoir la cible anti-crack (cf. _applyAntiCrack), en amont de
@@ -3945,6 +4001,14 @@ async function stopFlow() {
   try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; } catch(e) {}
   if (typeof progRunning !== 'undefined' && progRunning) stopProgression();
   Object.keys(swapTimers).forEach(k => { clearTimeout(swapTimers[k]); delete swapTimers[k]; });
+  // #145 : fréquences fantômes — un sample lu en boucle (samplePlay) sort
+  // sur fx.in → safetyClip/limiter → destination, un chemin qui NE PASSE
+  // JAMAIS par masterGain. Couper le flux (ou muter tous les oscillateurs)
+  // ne l'arrêtait donc jamais : il continuait à boucler indéfiniment, sans
+  // lien visible avec "tout est off" côté utilisateur. Pareil pour un
+  // aperçu resté actif dans l'éditeur de découpe.
+  if (typeof sampleStop === 'function') sampleStop();
+  if (typeof _sampleEditorStopPreview === 'function') _sampleEditorStopPreview();
   try {
     if (masterGain) {
       const t = aNow();
@@ -4027,6 +4091,11 @@ function _uiBusy() {
 function _syncBackBtn() {
   const btn = document.getElementById('btn-back');
   if (btn) btn.classList.toggle('show', _uiBusy());
+  // #145 : le raccourci "retour au menu principal" (haut-gauche) se cache
+  // tant qu'un panneau/modal est ouvert — évite qu'il se superpose au
+  // contenu du panneau (qui n'a pas de z-index propre, cf. #btn-back-menu).
+  const menuBtn = document.getElementById('btn-back-menu');
+  if (menuBtn) menuBtn.classList.toggle('hide', _uiBusy());
 }
 function _backAction() {
   const modal = document.getElementById('osc-modal');
@@ -5784,9 +5853,39 @@ function onMasterChange(raw) {
 }
 
 // FBF toggle — Rayonner / Dissoudre
-function fbfToggle() {
-  if (flowing) stopFlow(); else startFlow();
+// #145 : Flux on/off — MUTE réel du moteur déjà en marche, plus l'ancien
+// arrêt/redémarrage complet (stopFlow/startFlow, qui reconstruisait tous
+// les oscillateurs à chaque fois — source du bug signalé). Flux Off :
+// masterGain + samples coupés à 0 (silence total garanti, cf. #145 dans
+// stopFlow pour le pourquoi des samples), mais le moteur continue de
+// tourner en coulisse — retour au son instantané, sans reconstruction ni
+// coupure audible. Les sphères oscillateurs passent en blanc (cf. CSS
+// body.flux-muted) : "atteintes" mais visuellement neutres.
+let FLUX_MUTED = false;
+function setFluxMuted(v) {
+  FLUX_MUTED = !!v;
+  if (!flowing) { if (!FLUX_MUTED) startFlow(); _updateFluxMuteUI(); return; }
+  const t = aNow();
+  if (masterGain) {
+    masterGain.gain.cancelScheduledValues(t);
+    masterGain.gain.setTargetAtTime(FLUX_MUTED ? 0 : masterVol * MASTER_GAIN_SCALE, t, _fadeDur / 6);
+  }
+  if (FLUX_MUTED) {
+    if (typeof sampleStop === 'function') sampleStop();
+    if (typeof _sampleEditorStopPreview === 'function') _sampleEditorStopPreview();
+  }
+  _updateFluxMuteUI();
+  saveState();
 }
+function toggleFluxMuted() { setFluxMuted(!FLUX_MUTED); }
+function _updateFluxMuteUI() {
+  document.body.classList.toggle('flux-muted', FLUX_MUTED);
+  const fSt = document.getElementById('flux-state-side');
+  if (fSt) fSt.textContent = (flowing && !FLUX_MUTED) ? 'ON' : 'OFF';
+  const dcFlux = document.getElementById('dcFlux');
+  if (dcFlux) dcFlux.classList.toggle('flux-off', FLUX_MUTED);
+}
+function fbfToggle() { toggleFluxMuted(); }
 
 // ── Densité n recalculée selon la fréquence maître (points 8 & 9) ──
 // Palette de densité ; pas plus fins quand le maître est haut (>360 Hz).
@@ -7777,7 +7876,8 @@ function _doSave() {
       subDrone: { ...SUBDRONE_STATE },
       deltaCharacter: DELTA_CHARACTER_MODE,
       breathAnchor: BREATH_ANCHOR_STATE.on,
-      randOpts: { ...RAND_OPTS }
+      randOpts: { ...RAND_OPTS },
+      fluxMuted: FLUX_MUTED
     }));
   } catch(e) {}
 }
@@ -7823,6 +7923,7 @@ function loadState() {
     if (typeof s.deltaCharacter==='string' && DELTA_CHARACTER[s.deltaCharacter]) DELTA_CHARACTER_MODE = s.deltaCharacter;
     if (typeof s.breathAnchor==='boolean') BREATH_ANCHOR_STATE.on = s.breathAnchor;
     if (s.randOpts && typeof s.randOpts==='object') Object.assign(RAND_OPTS, s.randOpts);
+    if (typeof s.fluxMuted==='boolean') FLUX_MUTED = s.fluxMuted;
   } catch(e) {}
 }
 
@@ -8454,6 +8555,7 @@ function init() {
   // Reflète les options aléatoire / détune Sinus Duo / respiration (relues
   // depuis localStorage par loadState) sur les contrôles du panneau.
   _syncRandOptsUI();
+  _updateFluxMuteUI(); // #145 : reflète FLUX_MUTED (relu par loadState) dès le chargement
 
   // Câblage du dock 5 touches (tap / appui long)
   _bindDock();
