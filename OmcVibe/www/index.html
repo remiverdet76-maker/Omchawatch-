@@ -307,6 +307,19 @@ body{
 #btn-back-menu:active{ transform:scale(.88); background:rgba(255,214,120,.16); }
 #btn-back-menu svg{ width:20px;height:20px; }
 
+/* #146 : sphère Jeu Aléatoire — position fixe indépendante du dock (reste
+   affichée dock replié), au-dessus de l'overlay Flux/Sphère/3D (z-index >
+   #module-overlay=10600) et toujours cliquable, même en transparence
+   par-dessus un panneau ouvert (cf. .dcFlux-dim, appliquée en JS). Le
+   bottom est calé pour que la sphère chevauche le haut du dock — même
+   emplacement visuel qu'avant, désormais indépendant de sa structure. */
+#dcFluxFloat{
+  position:fixed;left:50%;bottom:82px;transform:translateX(-50%);
+  z-index:10700;display:flex;flex-direction:column;align-items:center;
+  transition:opacity .25s ease;
+}
+#dcFluxFloat.dcFlux-dim{ opacity:.42; }
+
 /* Keyframes */
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 @keyframes prog-pulse{0%,100%{box-shadow:0 0 8px rgba(255,140,40,.3);}50%{box-shadow:0 0 22px rgba(255,140,40,.7);}}
@@ -959,8 +972,13 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
   0%,100%{ box-shadow:0 0 26px rgba(255,220,110,.5),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.3); }
   50%{ box-shadow:0 0 52px rgba(255,230,140,.9),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.3); }
 }
-/* Symbole yin-yang (SVG) — thème doré/nuit cohérent avec le reste du dock. */
-.dcell-flux .flux-yy{ width:70%;height:70%;filter:drop-shadow(0 2px 5px rgba(0,0,0,.5)); }
+/* #146 : logo Jeu Aléatoire fourni tel quel (pas de recadrage — object-fit:
+   contain préserve l'image entière, ses coins sombres se fondent dans le
+   thème nuit du bouton). */
+.dcell-flux .flux-yy{
+  width:88%;height:88%;object-fit:contain;
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.5));
+}
 .flux-state{
   position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);
   font-size:.58rem;letter-spacing:.2em;font-weight:700;
@@ -1713,6 +1731,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   .dcell-sub  { font-size: .88rem !important; } /* #72 : réduit + retour à la ligne (cf. règle de base) au lieu de nowrap */
   .dcell-extra { width: 34px !important; height: 34px !important; } /* #52 : -36% vs #32 (53px→34px) */
   .dcell-flux { width: 84px !important; height: 84px !important; margin-bottom: 8px !important; } /* #145 : agrandie (60px→84px), pièce maîtresse du dock — tap = nouveau jeu, appui long = Flux on/off */
+  #dcFluxFloat { bottom: 116px !important; } /* #146 : dock mobile plus haut (158px) — recale le chevauchement */
 
   /* Panneaux : plein écran (largeur) pour la lisibilité, déroulement haut → bas,
      hauteur toujours réservée au-dessus du dock (158px sur smartphone, dock agrandi) */
@@ -1894,10 +1913,25 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
 </button>
 
+<!-- #146 : bouton Jeu Aléatoire — sorti du dock (position fixe indépendante)
+     pour rester utilisable même dock replié, par-dessus les panneaux (en
+     transparence, jamais masqué) et par-dessus l'overlay Flux/Sphère/3D
+     (module-overlay vit dans le même document qu'index.html : le clic
+     appelle directement triggerMagicAuto()/toggleFluxMuted(), pas besoin
+     de dupliquer quoi que ce soit dans sphere432.html/torsion432.html/
+     geometrie.html). Déborde volontairement au-dessus du dock/chevron. -->
+<div id="dcFluxFloat">
+  <div class="flux-aura" id="fluxAura" aria-hidden="true"></div>
+  <button class="dcell-flux canva-button" id="dcFlux" title="Tap : nouveau jeu aléatoire · Appui long : Flux on/off">
+    <img class="flux-yy" id="flux-icon" src="img/random-game-logo.jpg" alt="" aria-hidden="true">
+  </button>
+  <span class="flux-state" id="flux-state-side">OFF</span>
+</div>
+
 <div id="cosmic-bg" data-html-import-id="html-import-5" style="background-image: url(&quot;img/cosmic-flux.jpg&quot;); filter: hue-rotate(-23.8deg) saturate(1.15);"></div>
 <canvas id="meta-canvas" width="540" height="1024" style="width: 540px; height: 1024px; cursor: grab; pointer-events: auto;" data-html-import-id="html-import-6"></canvas>
 <div id="sphere-layer" data-html-import-id="html-import-7"><div class="vp-center-wrap vp-solo" id="vp6" data-html-import-id="html-import-8">
-    <div class="vp-p  " id="vpc-p6" style="border-color:hsl(187,72%,64%);background:radial-gradient(circle,hsla(187,72%,60%,0.32) 0%,hsla(187,72%,62%,0.18) 55%,rgba(20,5,38,.6) 100%);box-shadow:0 0 30px hsla(187,72%,62%,0.5);backdrop-filter:blur(4px);cursor:pointer;user-select:none;" onmousedown="_vpStart(6,event)" onmouseup="_vpEnd(6)" onmouseleave="_vpCancel()" onmousemove="_vpMove(6,event)" ontouchstart="_vpStart(6,event)" ontouchend="_vpEnd(6)" ontouchmove="_vpMove(6,event)" data-html-import-id="html-import-9">
+    <div class="vp-p  " id="vpc-p6" style="border-color:rgba(255,214,120,.75);background:radial-gradient(circle,rgba(255,255,255,.10) 0%,rgba(255,255,255,0) 55%),url('img/master-freq-logo.jpg') center/cover no-repeat;box-shadow:0 0 40px rgba(255,190,90,.55),0 0 80px rgba(255,150,60,.22),inset 0 0 20px rgba(255,220,150,.18);backdrop-filter:blur(2px);cursor:pointer;user-select:none;" onmousedown="_vpStart(6,event)" onmouseup="_vpEnd(6)" onmouseleave="_vpCancel()" onmousemove="_vpMove(6,event)" ontouchstart="_vpStart(6,event)" ontouchend="_vpEnd(6)" ontouchmove="_vpMove(6,event)" data-html-import-id="html-import-9">
       <span class="ms-freq canva-text" id="ms-freq" onclick="event.stopPropagation();openFreqEdit();" data-html-import-id="html-import-11" data-template-id="span-4" style="font-family: &quot;IM Fell English&quot;; font-weight: 700; font-size: 67px;">181</span>
       <input type="number" id="freq-input-master" min="54" max="432" placeholder="181" autocomplete="off" onkeydown="handleFreqKey(event);" data-html-import-id="html-import-12" data-template-id="input-5" class="canva-input" style="color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 29px;">
       <span class="ms-state canva-text" id="ms-state" data-html-import-id="html-import-13" data-template-id="span-6" style="color: rgba(220, 180, 255, 0.7); font-weight: 700; font-style: italic; font-size: 14px;">BINAURAL</span>
@@ -1926,22 +1960,11 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 
   <!-- CENTRE — FLUX : pièce maîtresse du dock — tap = nouveau jeu
        aléatoire (#132) · appui long = Flux on/off (#145 : mute réel, cf.
-       toggleFluxMuted). #146 : retour au symbole yin-yang SVG neutre —
-       le logo officiel repris du screenshot (#145) ne correspondait pas
-       au design voulu, essai abandonné en attendant une vraie référence. -->
+       toggleFluxMuted). #146 : la sphère Flux elle-même (dcFlux) a été
+       sortie d'ici — elle vit maintenant en position fixe indépendante
+       (cf. #dcFluxFloat, juste après <body>) pour rester visible même
+       dock replié, et utilisable par-dessus panneaux/overlay 3D. -->
   <div class="dock-col dock-col-center">
-    <div class="dcell-wrap dcell-wrap-flux">
-      <div class="flux-aura" id="fluxAura" aria-hidden="true"></div>
-      <button class="dcell-flux canva-button" id="dcFlux" title="Tap : nouveau jeu aléatoire · Appui long : Flux on/off">
-        <svg class="flux-yy" id="flux-icon" viewBox="0 0 100 100" aria-hidden="true">
-          <circle cx="50" cy="50" r="47" fill="#150A24" stroke="rgba(255,222,150,.6)" stroke-width="2"/>
-          <path d="M50,3 A47,47 0 0,1 50,97 A23.5,23.5 0 0,1 50,50 A23.5,23.5 0 0,0 50,3 Z" fill="#FFDE96"/>
-          <circle cx="50" cy="26.5" r="7.8" fill="#150A24"/>
-          <circle cx="50" cy="73.5" r="7.8" fill="#FFDE96"/>
-        </svg>
-      </button>
-      <span class="flux-state" id="flux-state-side">OFF</span>
-    </div>
     <!-- #40/#52 : VIOLET — saisie directe de la fréquence maître (+9/-9). Bouton
          "Valider" retiré (#52) : Entrée applique déjà la saisie clavier, les
          pas -9/+9 s'appliquent immédiatement, ce bouton ne servait plus. -->
@@ -4096,6 +4119,17 @@ function _syncBackBtn() {
   // contenu du panneau (qui n'a pas de z-index propre, cf. #btn-back-menu).
   const menuBtn = document.getElementById('btn-back-menu');
   if (menuBtn) menuBtn.classList.toggle('hide', _uiBusy());
+  // #146 : la sphère Jeu Aléatoire ne se cache JAMAIS (elle doit rester
+  // utilisable partout) — elle passe juste en transparence pendant qu'un
+  // panneau est ouvert, cf. .dcFlux-dim. _syncModuleOverlayDim (appelée
+  // depuis _openModuleOverlay/_closeModuleOverlay) gère l'autre cas.
+  const fluxFloat = document.getElementById('dcFluxFloat');
+  if (fluxFloat) fluxFloat.classList.toggle('dcFlux-dim', _uiBusy());
+}
+function _syncModuleOverlayDim() {
+  const fluxFloat = document.getElementById('dcFluxFloat');
+  const ov = document.getElementById('module-overlay');
+  if (fluxFloat && ov) fluxFloat.classList.toggle('dcFlux-dim', ov.classList.contains('open'));
 }
 function _backAction() {
   const modal = document.getElementById('osc-modal');
@@ -5188,17 +5222,21 @@ function buildVesicaPairs() {
 
   const mp  = PAIRS[MASTER_IDX];
   const isMutedMP = !!mutedOscs[mp.pingala.id];
-  // Couleur organique selon la fréquence maître
+  // Couleur organique selon la fréquence maître (garde le halo réactif à Δfréquence)
   const mc   = (typeof freqColor === 'function') ? freqColor(masterFreq, 64) : mp.color;
   const mcSoft = (typeof freqColorA === 'function') ? freqColorA(masterFreq, 60, 0.32) : mp.color;
   const mcGlow = (typeof freqColorA === 'function') ? freqColorA(masterFreq, 62, 0.5)  : mp.color;
   const vcw = document.createElement('div');
   vcw.className = 'vp-center-wrap' + (document.body.classList.contains('mode-simple') ? ' vp-solo' : '');
   vcw.id = 'vp' + MASTER_IDX;
+  // #146 : logo lune/soleil + mandala fourni par l'utilisateur — l'ancien
+  // dégradé de couleur pure (mc/mcSoft) reste comme HALO derrière l'image
+  // (teinté ∝ fréquence, cf. freqColor/freqColorA) au lieu de remplir le
+  // disque : effet demandé ("remplace la sphère actuelle... avec effet halo").
   vcw.innerHTML = `
     <div class="vp-p ${isMutedMP?'vp-muted':''} ${flowing&&!isMutedMP?'vp-live':''}"
          id="vpc-p${MASTER_IDX}"
-         style="border-color:${mc};background:radial-gradient(circle,${mcSoft} 0%,${mcGlow.replace('0.5','0.18')} 55%,rgba(20,5,38,.6) 100%);box-shadow:0 0 30px ${mcGlow};backdrop-filter:blur(4px);cursor:pointer;user-select:none;"
+         style="border-color:${mc};background:radial-gradient(circle,${mcSoft} 0%,transparent 60%),url('img/master-freq-logo.jpg') center/cover no-repeat;box-shadow:0 0 30px ${mcGlow},0 0 55px ${mcGlow};backdrop-filter:blur(1px);cursor:pointer;user-select:none;"
          onmousedown="_vpStart(${MASTER_IDX},event)" onmouseup="_vpEnd(${MASTER_IDX})" onmouseleave="_vpCancel()" onmousemove="_vpMove(${MASTER_IDX},event)"
          ontouchstart="_vpStart(${MASTER_IDX},event)" ontouchend="_vpEnd(${MASTER_IDX})" ontouchmove="_vpMove(${MASTER_IDX},event)">
       <span class="ms-freq" id="ms-freq" onclick="event.stopPropagation();openFreqEdit();">${fmtMasterFreqDisplay()}</span>
@@ -8488,11 +8526,13 @@ function _openModuleOverlay(url) {
   if (!ov || !fr) return;
   fr.src = url;
   ov.classList.add('open');
+  _syncModuleOverlayDim(); // #146
 }
 function _closeModuleOverlay() {
   const ov = document.getElementById('module-overlay');
   const fr = document.getElementById('module-iframe');
   if (ov) ov.classList.remove('open');
+  _syncModuleOverlayDim(); // #146
   // Laisse la transition se jouer avant de couper le rendu de l'iframe
   // (plus de boucle requestAnimationFrame à charge une fois masquée).
   setTimeout(() => { if (fr) fr.src = 'about:blank'; }, 350);
