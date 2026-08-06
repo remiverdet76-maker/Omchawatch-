@@ -33,9 +33,27 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+
+        <!-- Service de premier plan qui garde le flux binaural actif écran
+             éteint / app en arrière-plan, jusqu'à ce que l'utilisateur quitte
+             vraiment l'app (cf. BackgroundAudioService/-Plugin, appelés
+             depuis www/index.html § _enableBackgroundAudio/_disableBackgroundAudio). -->
+        <service
+            android:name=".BackgroundAudioService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
     </application>
 
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Import de sample par micro (éditeur de sample, index.html) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Lecture audio en arrière-plan (écran éteint / app en arrière-plan) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Android 13+ : requise pour AFFICHER la notification du service de
+         premier plan (le service continue de tourner même sans, cf. plugin) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>

@@ -346,6 +346,25 @@ function rebuildOsc(i) {
   _teardownOscNodes(o);
   if (flowing) o.nodes = _buildOscNodes(o);
 }
+// #148 : même service natif de premier plan que index.html (OmcVibe) —
+// garde l'audio actif écran éteint / app en arrière-plan. Réglage ON/OFF
+// PARTAGÉ (même clé localStorage) avec le menu Paramètres d'OmcVibe : pas
+// de second interrupteur à gérer ici. Oscillateurs ET boîte à rythme
+// tournent tous les deux sur ce même bus/process — le service ne s'arrête
+// que quand PLUS AUCUN des deux ne joue (cf. _syncBackgroundAudio).
+const BGAUDIO_KEY = 'fbf432-bgaudio';
+function _bgAudioEnabled() {
+  try { const v = localStorage.getItem(BGAUDIO_KEY); return v === null || v === '1'; } catch(e) { return true; }
+}
+function _syncBackgroundAudio() {
+  try {
+    const ba = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundAudio;
+    if (!ba) return;
+    if ((flowing || drumPlaying) && _bgAudioEnabled()) { if (typeof ba.start === 'function') ba.start(); }
+    else { if (typeof ba.stop === 'function') ba.stop(); }
+  } catch(e) {}
+}
+
 function startFlux() {
   ensureAC();
   if (AC.state !== 'running') AC.resume();
@@ -353,12 +372,14 @@ function startFlux() {
   OSC.forEach((o, i) => rebuildOsc(i));
   document.getElementById('btnFlux').textContent = '◉ Flux ON';
   document.getElementById('btnFlux').classList.add('on');
+  _syncBackgroundAudio();
 }
 function stopFlux() {
   flowing = false;
   OSC.forEach(o => _teardownOscNodes(o));
   document.getElementById('btnFlux').textContent = '◎ Flux OFF';
   document.getElementById('btnFlux').classList.remove('on');
+  _syncBackgroundAudio();
 }
 function toggleFlux() { flowing ? stopFlux() : startFlux(); }
 function toggleSilence() {
@@ -818,11 +839,13 @@ function startDrumPlay() {
   _drumNextStepTime = AC.currentTime + 0.06;
   drumTick();
   renderDrum();
+  _syncBackgroundAudio();
 }
 function stopDrumPlay() {
   drumPlaying = false;
   clearTimeout(_drumTimerId); _drumTimerId = null;
   renderDrum();
+  _syncBackgroundAudio();
 }
 
 // ── Tap tempo ────────────────────────────────────────────────────────

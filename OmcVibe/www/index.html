@@ -2012,6 +2012,10 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <button class="params-item canva-button" style="--ic: #FFB0FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panNotice')" data-html-import-id="html-import-53" data-template-id="button-43"><canva-inline-text data-template-id="canva-inline-text-44" class="canva-text" style="color: #FFD700; font-size: 22px;">≡</canva-inline-text><span data-html-import-id="html-import-54" data-template-id="span-45" class="canva-text" style="color: color(srgb 1 0.752157 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Notice &amp; Thème</span></button>
     <button class="params-item canva-button" id="btn-advanced" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleAdvanced()" data-html-import-id="html-import-55" data-template-id="button-46"><canva-inline-text data-template-id="canva-inline-text-47" class="canva-text" style="color: #FFD700; font-size: 22px;">⊹</canva-inline-text><span data-html-import-id="html-import-56" data-template-id="span-48" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Mode avancé (6 sphères) : OFF</span></button>
     <button class="params-item canva-button" id="btn-vislite" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleVisLite()" data-html-import-id="html-import-57" data-template-id="button-49"><canva-inline-text data-template-id="canva-inline-text-50" class="canva-text" style="color: #FFD700; font-size: 22px;">◐</canva-inline-text><span data-html-import-id="html-import-58" data-template-id="span-51" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Visuel léger : OFF</span></button>
+    <!-- #148 : garde le flux binaural actif écran éteint / app en arrière-plan
+         (service natif Android de premier plan) — jusqu'à ce que l'utilisateur
+         quitte vraiment l'app. ON par défaut, cf. _loadBgAudio/toggleBgAudio. -->
+    <button class="params-item canva-button on" id="btn-bgaudio" style="--ic: #78C6FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleBgAudio()"><span style="color:#FFD700;font-size:22px;">☾</span><span style="color:#78C6FF;font-family:'Cinzel Decorative';font-size:14px;">Rester actif en arrière-plan : ON</span></button>
     <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panCustom')" data-html-import-id="html-import-59" data-template-id="button-52"><canva-inline-text data-template-id="canva-inline-text-53" class="canva-text" style="color: #FFD700; font-size: 22px;">◈</canva-inline-text><span data-html-import-id="html-import-60" data-template-id="span-54" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Personnaliser l'interface</span></button>
     <button class="params-item canva-button" style="--ic: #B0D8FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panTuto')"><span style="color:#FFD700;font-size:22px;">✎</span><span style="color:#B0D8FF;font-family:'Cinzel Decorative';font-size:14px;">Tutoriel</span></button>
   </div>
@@ -2347,6 +2351,28 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
       <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Détune Sinus Duo aléatoire </span><input type="checkbox" class="sw" id="ck-rand-dualsine" onchange="setRandDualSine(this.checked)"></div>
       <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Pré-mastering (filtres LPF/HPF/BPF) </span><input type="checkbox" class="sw" id="ck-rand-premaster" checked onchange="setPreMasterFilter(this.checked)"></div>
       <div class="sw-row" style="font-size:.7rem;padding:.1rem 0;"><span class="fx-label">FX aléatoire </span><input type="checkbox" class="sw" id="ck-rand-fx" checked onchange="setRandUseFX(this.checked)"></div>
+
+      <div class="fxq-sep"></div>
+      <div class="pct" style="font-size:.6rem;opacity:.65;margin:.25rem 0 .3rem;">Nouveaux modes</div>
+      <!-- #149 : chaque paire "s'allume" à un instant différent après un
+           tirage (chorégraphie de gain, jamais la fréquence/le ratio déjà
+           posés par le tirage normal) — off par défaut, effet marqué. -->
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Feu d'artifice binaural (ignition étalée) </span><input type="checkbox" class="sw" id="ck-fireworks" onchange="setFireworksIgnition(this.checked)"></div>
+      <!-- #150 : pulsation très lente (20-60s) en plus de la respiration
+           organique existante — off par défaut, se cumule à la respiration. -->
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Signature bol tibétain (pulsation lente) </span><input type="checkbox" class="sw" id="ck-bowlpulse" onchange="setBowlPulse(this.checked)"></div>
+      <!-- #151 : progression volontaire sur la durée — resserre doucement Δ
+           (plus stimulant → plus apaisant) sur 10/20/30 min, indépendant du
+           tirage aléatoire (touche uniquement les paires non verrouillées). -->
+      <div class="sl-row" style="align-items:center;gap:.4rem;">
+        <label style="font-size:.7rem;color:rgba(200,170,255,.7);flex-shrink:0;">Arc de session</label>
+        <select id="session-arc-duration" style="flex:0 0 auto;background:rgba(20,10,40,.6);color:#F0E0FF;border:1px solid rgba(200,170,255,.35);border-radius:6px;font-size:.72rem;padding:.25rem .3rem;">
+          <option value="10">10 min</option>
+          <option value="20" selected>20 min</option>
+          <option value="30">30 min</option>
+        </select>
+        <button id="btn-session-arc" class="btn-magic-rand" style="width:auto;flex:1;padding:.4rem .5rem;font-size:.66rem;letter-spacing:.08em;" onclick="toggleSessionArc(parseInt(document.getElementById('session-arc-duration').value,10))">Arc de session : OFF</button>
+      </div>
     </div>
   </details>
 </div>
@@ -2893,6 +2919,84 @@ const DELTA_DRIFT_STATE = { on: true, amount: 0.06 }; // Hz
 const _deltaDriftLFOs = {}; // pairIdx → { lfo, depthGain }
 let _lfoGain = null; // #42 : ne sert plus qu'à l'anti-crack (cf. _applyAntiCrack), plus de LFO trémolo dessus
 let _breathLFO = null, _breathGain = null, _breathDepthGain = null;
+// #150 : "Signature bol tibétain" — pulsation TRÈS lente (20-60s de
+// période), en COUCHE additionnelle sur le même nœud que la respiration
+// organique (_breathGain.gain, cf. plus haut) : Web Audio somme les
+// entrées d'un AudioParam automatiquement, donc pas besoin de toucher au
+// LFO de respiration existant, juste un second LFO→gain en parallèle,
+// bien plus lent et discret — évoque le souffle long d'un bol qu'on
+// frappe puis qui s'éteint doucement, sans jamais couper le son.
+const BOWL_STATE = { on: false, periodSec: 34, depth: 0.10 };
+let _bowlLFO = null, _bowlDepthGain = null;
+function _startBowlPulse() {
+  if (!BOWL_STATE.on || !flowing || !_breathGain || _bowlLFO) return;
+  const c = audioCtx();
+  _bowlLFO = c.createOscillator(); _bowlLFO.type = 'sine';
+  _bowlLFO.frequency.value = 1 / Math.max(8, BOWL_STATE.periodSec);
+  _bowlDepthGain = c.createGain(); _bowlDepthGain.gain.value = BOWL_STATE.depth;
+  _bowlLFO.connect(_bowlDepthGain); _bowlDepthGain.connect(_breathGain.gain);
+  _bowlLFO.start();
+}
+function _stopBowlPulse() {
+  const lfo = _bowlLFO, dg = _bowlDepthGain;
+  _bowlLFO = null; _bowlDepthGain = null;
+  try { if (dg) dg.gain.setTargetAtTime(0, aNow(), 0.6); } catch(e) {}
+  setTimeout(() => { try { lfo?.stop(); lfo?.disconnect(); dg?.disconnect(); } catch(e) {} }, 1200);
+}
+function setBowlPulse(v) {
+  BOWL_STATE.on = !!v;
+  const ck = document.getElementById('ck-bowlpulse'); if (ck) ck.checked = BOWL_STATE.on;
+  if (BOWL_STATE.on) _startBowlPulse(); else _stopBowlPulse();
+  saveState();
+}
+// #151 : "Arc de session" — progression VOLONTAIRE sur la durée choisie
+// (10/20/30 min) : resserre doucement Δ de chaque paire active vers une
+// bande plus apaisée, par petits paliers longuement lissés (jamais un
+// saut audible) — indépendant du tirage aléatoire, ne touche ni la
+// fréquence maître, ni le ratio, ni les paires verrouillées/mute.
+const SESSION_ARC = { on: false, durationMin: 20, timer: null, tickSec: 20, startedAt: 0 };
+function startSessionArc(durationMin) {
+  if (!flowing) return;
+  stopSessionArc();
+  SESSION_ARC.on = true;
+  SESSION_ARC.durationMin = Math.max(5, Math.min(60, durationMin || SESSION_ARC.durationMin));
+  SESSION_ARC.startedAt = Date.now();
+  const totalSec = SESSION_ARC.durationMin * 60;
+  const tickSec = SESSION_ARC.tickSec;
+  const finalFactor = 0.55; // resserrement cumulé visé en fin d'arc (~45%)
+  const perTickFactor = Math.pow(finalFactor, tickSec / totalSec);
+  const DELTA_FLOOR = 1.4; // jamais en dessous — reste dans la bande Delta/thêta douce
+  SESSION_ARC.timer = setInterval(() => {
+    if (!flowing) { stopSessionArc(); return; }
+    const elapsed = (Date.now() - SESSION_ARC.startedAt) / 1000;
+    if (elapsed >= totalSec) { stopSessionArc(); return; }
+    PAIRS.forEach((pair, i) => {
+      if (mutedOscs[pair.ida.id]) return;
+      if (typeof isLocked === 'function' && isLocked(i)) return;
+      const nd = Math.max(DELTA_FLOOR, pair.ida.delta * perTickFactor);
+      if (Math.abs(nd - pair.ida.delta) < 0.002) return;
+      pair.ida.delta = nd;
+      tuneOsc(pair.ida.id, calcIFreq(i), tickSec * 0.9);
+    });
+    _updateSessionArcUI();
+  }, tickSec * 1000);
+  _updateSessionArcUI();
+}
+function stopSessionArc() {
+  SESSION_ARC.on = false;
+  if (SESSION_ARC.timer) clearInterval(SESSION_ARC.timer);
+  SESSION_ARC.timer = null;
+  _updateSessionArcUI();
+}
+function toggleSessionArc(durationMin) {
+  if (SESSION_ARC.on) stopSessionArc(); else startSessionArc(durationMin);
+}
+function _updateSessionArcUI() {
+  const b = document.getElementById('btn-session-arc');
+  if (!b) return;
+  b.classList.toggle('on', SESSION_ARC.on);
+  b.textContent = SESSION_ARC.on ? ('Arc de session : ON (' + SESSION_ARC.durationMin + ' min)') : 'Arc de session : OFF';
+}
 let _btKeepalive = null;
 let _fadeDur = 2;
 let metaAngle = 0, masterRAF = null;
@@ -3693,7 +3797,15 @@ function _startBTKeepalive() {
    à ce projet — voir android/.../BackgroundAudioService.java) démarre un
    service de premier plan (notification discrète) + wake lock CPU, gardant le
    rendu audio régulier écran éteint ou app en arrière-plan. */
+// #148 : réglage utilisateur — le service de premier plan natif reste
+// disponible (le pont JS/plugin ne change pas), mais l'utilisateur garde
+// la main pour le désactiver s'il ne veut jamais de notification
+// persistante. ON par défaut (c'est le comportement attendu : l'app
+// continue tant qu'on ne l'a pas vraiment quittée).
+const BGAUDIO_KEY = 'fbf432-bgaudio';
+let BG_AUDIO_ENABLED = true;
 function _enableBackgroundAudio() {
+  if (!BG_AUDIO_ENABLED) return;
   try {
     const ba = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundAudio;
     if (ba && typeof ba.start === 'function') ba.start();
@@ -3704,6 +3816,21 @@ function _disableBackgroundAudio() {
     const ba = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundAudio;
     if (ba && typeof ba.stop === 'function') ba.stop();
   } catch(e) {}
+}
+function toggleBgAudio() {
+  BG_AUDIO_ENABLED = !BG_AUDIO_ENABLED;
+  try { localStorage.setItem(BGAUDIO_KEY, BG_AUDIO_ENABLED ? '1' : '0'); } catch(e) {}
+  const b = document.getElementById('btn-bgaudio');
+  if (b) { b.classList.toggle('on', BG_AUDIO_ENABLED); const s = b.querySelector('span'); if (s) s.textContent = 'Rester actif en arrière-plan : ' + (BG_AUDIO_ENABLED ? 'ON' : 'OFF'); }
+  if (BG_AUDIO_ENABLED) { if (typeof flowing !== 'undefined' && flowing) _enableBackgroundAudio(); }
+  else { _disableBackgroundAudio(); }
+}
+function _loadBgAudio() {
+  let on = true; // défaut ON — la plupart des utilisateurs veulent que ça continue
+  try { const v = localStorage.getItem(BGAUDIO_KEY); if (v !== null) on = v === '1'; } catch(e) {}
+  BG_AUDIO_ENABLED = on;
+  const b = document.getElementById('btn-bgaudio');
+  if (b) { b.classList.toggle('on', on); const s = b.querySelector('span'); if (s) s.textContent = 'Rester actif en arrière-plan : ' + (on ? 'ON' : 'OFF'); }
 }
 
 // Media Session : signale à Android qu'il s'agit d'une lecture audio active
@@ -4002,6 +4129,7 @@ async function startFlow() {
 
     flowing = true;
     _updateBusHeadroom(); // #134 : applique tout de suite, sans attendre le 1er tick
+    _startBowlPulse(); // #150 : no-op si BOWL_STATE.on est false
     try { window.Capacitor?.Plugins?.KeepAwake?.keepAwake?.(); } catch(e) {}
     PAIRS.forEach((_, i) => setTimeout(() => swapPingala(i), 60 + i * 60));
     PAIRS.forEach((_, i) => updateOrbUI(i));
@@ -4022,6 +4150,8 @@ async function stopFlow() {
   if (startFlow._headroomTimer) { clearInterval(startFlow._headroomTimer); startFlow._headroomTimer = null; }
   if (startFlow._wakeLock)  { try { startFlow._wakeLock.release(); } catch(e) {} startFlow._wakeLock = null; }
   try { window.Capacitor?.Plugins?.KeepAwake?.allowSleep?.(); } catch(e) {}
+  _stopBowlPulse(); // #150
+  stopSessionArc(); // #151 : pas d'intervalle fantôme une fois le flux coupé
   _disableBackgroundAudio();
   try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; } catch(e) {}
   if (typeof progRunning !== 'undefined' && progRunning) stopProgression();
@@ -5456,7 +5586,8 @@ function setCharacterOn(v) {
 // que personne n'ait rien demandé).
 const RAND_OPTS={freqMin:F_MIN,freqMax:432,ratioMode:'heterogene',ratioOn:true,characterOn:true,useFX:true,spread:0.6,
   randomTimbre:true, randomDepth:true, breathRandom:true, deltaVariety:true, polarityVariety:true,
-  randomDualSine:false, closeBeatPair:true, preMasterFilter:true};
+  randomDualSine:false, closeBeatPair:true, preMasterFilter:true,
+  fireworksIgnition:false}; // #149 : off par défaut (effet marqué, opt-in)
 
 // #6 : n'a d'effet que si le Caractère est activé — chaque paire pioche alors
 // son propre Δ (au lieu d'un battement commun) pour un jeu plus riche.
@@ -5537,6 +5668,13 @@ function setRandDualSine(v){
 function setPreMasterFilter(v){
   RAND_OPTS.preMasterFilter=!!v;
   const ck=document.getElementById('ck-rand-premaster'); if(ck) ck.checked=RAND_OPTS.preMasterFilter;
+  saveState();
+}
+// #149 : "Feu d'artifice binaural" — off par défaut. Voir _igniteFireworks
+// (plus bas) pour l'implémentation ; celle-ci ne touche QUE ce booléen.
+function setFireworksIgnition(v){
+  RAND_OPTS.fireworksIgnition=!!v;
+  const ck=document.getElementById('ck-fireworks'); if(ck) ck.checked=RAND_OPTS.fireworksIgnition;
   saveState();
 }
 
@@ -6199,6 +6337,28 @@ function _diagLogAutoTrigger(gapMs) {
   if (typeof ui === 'function') ui('live', '⚠ Tirage auto sans interaction (+' + Math.round(gapMs/1000) + 's) — diagnostic enregistré');
 }
 
+// #149 : "Feu d'artifice binaural" — repli exact sur l'ancien comportement
+// (safeRamp direct) quand l'option est off ; activée, chaque oscillateur
+// s'éteint d'abord brièvement puis remonte à SA cible après un délai
+// aléatoire (0-3.2s) — les paires n'arrivent plus toutes en même temps,
+// comme des étincelles qui s'ouvrent puis se posent l'une après l'autre.
+// Ne touche QUE le volume : fréquence/ratio/filtre restent gérés ailleurs,
+// déjà posés à leur valeur finale avant même que l'étincelle ne s'allume.
+function _applyVolFirework(node, targetVol) {
+  if (!RAND_OPTS.fireworksIgnition) { safeRamp(node.g.gain, targetVol, 0.4); return; }
+  const now = aNow();
+  node.g.gain.cancelScheduledValues(now);
+  node.g.gain.setTargetAtTime(0, now, 0.12);
+  const delay = Math.random() * 3.2;
+  setTimeout(() => {
+    if (!node.g) return; // oscillateur retiré entre-temps (nouveau tirage, stopFlow…)
+    const now2 = aNow();
+    node.g.gain.cancelScheduledValues(now2);
+    node.g.gain.setValueAtTime(0, now2);
+    node.g.gain.setTargetAtTime(targetVol, now2, 0.5 + Math.random() * 0.5);
+  }, delay * 1000);
+}
+
 function triggerMagicAuto(opts) {
   const now = Date.now();
   const _gestureGapMs = now - _lastUserGestureAt;
@@ -6533,14 +6693,21 @@ function triggerMagicAuto(opts) {
   // Applique volumes + pan + filtres sur les nœuds vivants
   if (flowing) PAIRS.forEach((pair, i) => {
     const pid = pair.pingala.id, iid = pair.ida.id;
-    if (nodes[pid] && !mutedOscs[pid]) safeRamp(nodes[pid].g.gain, pair.pingala.vol, 0.4);
-    if (nodes[iid] && !mutedOscs[iid]) safeRamp(nodes[iid].g.gain, pair.ida.vol, 0.4);
+    if (nodes[pid] && !mutedOscs[pid]) _applyVolFirework(nodes[pid], pair.pingala.vol);
+    if (nodes[iid] && !mutedOscs[iid]) _applyVolFirework(nodes[iid], pair.ida.vol);
     if (nodes[pid]?.p && OSC_PAN[i]) nodes[pid].p.pan.setTargetAtTime(OSC_PAN[i][0], aNow(), 0.15);
     if (nodes[iid]?.p && OSC_PAN[i]) nodes[iid].p.pan.setTargetAtTime(OSC_PAN[i][1], aNow(), 0.15);
     if (i !== MASTER_IDX) {
-      setOscFilter(pid, OSC_FILTER[pid].cutoff, OSC_FILTER[pid].res);
-      setOscFilter(iid, OSC_FILTER[iid].cutoff, OSC_FILTER[iid].res);
-      if (typeof setOscHPF === 'function') { setOscHPF(pid, OSC_FILTER[pid].hp); setOscHPF(iid, OSC_FILTER[iid].hp); }
+      // Fix (trouvé en testant #149) : une paire restée mute depuis le
+      // début de la session (jamais retirée par _activeSatIdxs, cf. #78 un
+      // peu plus haut) n'a jamais eu son OSC_FILTER peuplé — sans repli,
+      // .cutoff plantait ici sur `undefined` dès qu'un tirage touchait une
+      // session fraîche avec des paires encore intactes.
+      const pFlt = OSC_FILTER[pid] || { cutoff: 6000, res: 0.707, hp: 20 };
+      const iFlt = OSC_FILTER[iid] || { cutoff: 6000, res: 0.707, hp: 20 };
+      setOscFilter(pid, pFlt.cutoff, pFlt.res);
+      setOscFilter(iid, iFlt.cutoff, iFlt.res);
+      if (typeof setOscHPF === 'function') { setOscHPF(pid, pFlt.hp); setOscHPF(iid, iFlt.hp); }
     }
   });
   // Random FX DÉCOUPLÉ : le random fréquence ne déclenche plus les FX
@@ -7917,7 +8084,8 @@ function _doSave() {
       deltaCharacter: DELTA_CHARACTER_MODE,
       breathAnchor: BREATH_ANCHOR_STATE.on,
       randOpts: { ...RAND_OPTS },
-      fluxMuted: FLUX_MUTED
+      fluxMuted: FLUX_MUTED,
+      bowlPulse: BOWL_STATE.on // #150 : fireworksIgnition est déjà couvert par randOpts (spread ci-dessus)
     }));
   } catch(e) {}
 }
@@ -7964,6 +8132,7 @@ function loadState() {
     if (typeof s.breathAnchor==='boolean') BREATH_ANCHOR_STATE.on = s.breathAnchor;
     if (s.randOpts && typeof s.randOpts==='object') Object.assign(RAND_OPTS, s.randOpts);
     if (typeof s.fluxMuted==='boolean') FLUX_MUTED = s.fluxMuted;
+    if (typeof s.bowlPulse==='boolean') BOWL_STATE.on = s.bowlPulse; // #150
   } catch(e) {}
 }
 
@@ -7982,6 +8151,9 @@ function _syncRandOptsUI() {
   setCk('ck-rand-closebeat', RAND_OPTS.closeBeatPair);
   setCk('ck-rand-dualsine', RAND_OPTS.randomDualSine);
   setCk('ck-rand-premaster', RAND_OPTS.preMasterFilter);
+  setCk('ck-fireworks', RAND_OPTS.fireworksIgnition); // #149
+  setCk('ck-bowlpulse', BOWL_STATE.on); // #150
+  if (typeof _updateSessionArcUI === 'function') _updateSessionArcUI(); // #151
   setCk('ck-delta-drift',   DELTA_DRIFT_STATE.on);
   setCk('ck-strict-headphone', STRICT_HEADPHONE_MODE);
   setCk('ck-pair-comp', PAIR_COMP_STATE.on);
@@ -8045,7 +8217,8 @@ function exportState() {
     deltaDrift: { ...DELTA_DRIFT_STATE }, deltaCharacter: DELTA_CHARACTER_MODE,
     strictHeadphone: STRICT_HEADPHONE_MODE, pairComp: PAIR_COMP_STATE.on,
     subDrone: { ...SUBDRONE_STATE },
-    randOpts: { ...RAND_OPTS }
+    randOpts: { ...RAND_OPTS },
+    bowlPulse: BOWL_STATE.on
   };
   try {
     navigator.clipboard.writeText(JSON.stringify(state));
@@ -8547,6 +8720,7 @@ function init() {
   _loadTheme();
   _loadVisLite();
   _loadAdvanced();
+  _loadBgAudio();
   _loadAppearance();
   _loadDockMap();
   _loadExtraPos();
