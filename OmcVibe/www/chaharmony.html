@@ -164,13 +164,36 @@ const N_OSC = 7;
 const FILTER_TYPES = { off:'allpass', hpf:'highpass', bpf:'bandpass', lpf:'lowpass' };
 let AC = null, master = null, masterGlue = null, limiter = null, safetyClip = null, flowing = false, silenced = false;
 
+// #147 : le curseur Volume montait jusqu'à 100% alors que 7 oscillateurs
+// somment sur le même bus — ça saturait déjà au-delà de 10%. Le plafond
+// RÉEL est maintenant 15% (VOL_MAX), et le curseur ne peut plus dépasser
+// cette valeur : "100% de curseur" = 15% de gain réel, plus jamais 100%.
+const VOL_MAX = 0.15;
+const VOL_DEFAULT = 0.07; // ancien défaut 0.6 (60%) était lui-même la cause du "85% trop fort" perçu — nouveau défaut confortablement sous le seuil de saturation (~0.10) signalé
+// #147 : mastering intelligent — à amplitude électrique égale, l'oreille
+// perçoit les fréquences hautes de la plage (vers 864Hz) BEAUCOUP plus fort
+// que les graves (vers 54Hz) — courbes de sonie égale (Fletcher-Munson) :
+// la sensibilité auditive grimpe nettement entre 150Hz et le kHz. Ce
+// module génère des sinus PURS (aucun harmonique pour "épaissir" le
+// grave), l'effet est donc très marqué ici. Compense en boostant les
+// graves et en adoucissant les aigus, de façon TOTALEMENT transparente
+// pour le curseur Volume (qui garde son sens 0-15%) : la correction
+// s'applique EN PLUS, sans jamais dépasser VOL_MAX (le plafond anti-
+// saturation du point précédent reste garanti quoi qu'il arrive).
+function isosonicGain(freq, vol) {
+  const f = Math.max(20, Math.min(2000, freq));
+  const t = Math.max(0, Math.min(1, (f - 54) / (864 - 54)));
+  const k = 1.35 - 0.55 * t; // ×1.35 vers 54Hz … ×0.80 vers 864Hz, neutre ≈570Hz
+  return Math.min(VOL_MAX, vol * k);
+}
+
 // #69 : un seul oscillateur actif par défaut (OSC 1) — les 6 autres
 // démarrent coupés (bouton mute déjà existant pour les réactiver un par un).
 const OSC = [];
 for (let i = 0; i < N_OSC; i++) {
   OSC.push({
     freq: 144 + i * 36, bin: false, delta: 4.0, n: 1, muted: i !== 0,
-    vol: 0.6, pan: 0, lfoDepth: 0,
+    vol: VOL_DEFAULT, pan: 0, lfoDepth: 0,
     filtMode: 'off', cutoff: 2000, res: 0,
     revWet: 0, delWet: 0,
     nodes: null
@@ -258,7 +281,7 @@ function _buildOscNodes(o) {
   const filt = c.createBiquadFilter();
   filt.type = FILTER_TYPES[o.filtMode] || 'allpass';
   filt.frequency.value = o.cutoff; filt.Q.value = o.res;
-  const g = c.createGain(); g.gain.value = o.muted ? 0 : o.vol;
+  const g = c.createGain(); g.gain.value = o.muted ? 0 : isosonicGain(o.freq, o.vol);
   // Moteur FX PROPRE à cet oscillateur (pas de bus partagé) : #74 (perf) —
   // le convolveur (reverb) et le tank delay ne sont connectés QUE si leur
   // wet est réellement > 0 (comme index.html §2.4b) ; avant, les 7
@@ -294,7 +317,7 @@ function _buildOscNodes(o) {
   }
   if (o.lfoDepth > 0) {
     lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.15;
-    lfoGain = c.createGain(); lfoGain.gain.value = o.lfoDepth * o.vol;
+    lfoGain = c.createGain(); lfoGain.gain.value = o.lfoDepth * isosonicGain(o.freq, o.vol);
     lfo.connect(lfoGain); lfoGain.connect(g.gain); lfo.start();
   }
   return { filt, g, rev, revGain, del, delFb, delGain, oscL, oscR, merge, lfo, lfoGain, _revOn, _delOn };
@@ -371,6 +394,9 @@ function setOscFreq(i, hz) {
     const now = AC.currentTime;
     if (o.nodes.oscL) o.nodes.oscL.frequency.setTargetAtTime(o.freq, now, 0.05);
     if (o.bin && o.nodes.oscR) o.nodes.oscR.frequency.setTargetAtTime(o.freq + o.delta, now, 0.05);
+    // #147 : le mastering intelligent dépend de la fréquence — la recalculer
+    // à chaque changement (sinon la compensation reste figée sur l'ancienne note).
+    if (!o.muted) o.nodes.g.gain.setTargetAtTime(isosonicGain(o.freq, o.vol), now, 0.05);
   }
   renderOsc(i);
 }
@@ -410,8 +436,8 @@ function toggleOscBin(i) {
   renderOsc(i);
 }
 function setOscVol(i, v) {
-  const o = OSC[i]; o.vol = Math.max(0, Math.min(1, parseFloat(v)));
-  if (o.nodes && !o.muted) o.nodes.g.gain.setTargetAtTime(o.vol, AC.currentTime, 0.05);
+  const o = OSC[i]; o.vol = Math.max(0, Math.min(VOL_MAX, parseFloat(v)));
+  if (o.nodes && !o.muted) o.nodes.g.gain.setTargetAtTime(isosonicGain(o.freq, o.vol), AC.currentTime, 0.05);
   renderOsc(i);
 }
 function setOscPan(i, v) {
@@ -420,7 +446,7 @@ function setOscPan(i, v) {
 }
 function toggleOscMute(i) {
   const o = OSC[i]; o.muted = !o.muted;
-  if (o.nodes) o.nodes.g.gain.setTargetAtTime(o.muted ? 0 : o.vol, AC.currentTime, 0.05);
+  if (o.nodes) o.nodes.g.gain.setTargetAtTime(o.muted ? 0 : isosonicGain(o.freq, o.vol), AC.currentTime, 0.05);
   renderOsc(i);
 }
 function stepOscN(i, d) {
@@ -467,7 +493,7 @@ function setOscDelWet(i, v) {
 }
 function oscReset(i) {
   const o = OSC[i];
-  Object.assign(o, { freq:144, bin:false, delta:4.0, n:1, muted:false, vol:0.6, pan:0,
+  Object.assign(o, { freq:144, bin:false, delta:4.0, n:1, muted:false, vol:VOL_DEFAULT, pan:0,
     lfoDepth:0, filtMode:'off', cutoff:2000, res:0, revWet:0, delWet:0 });
   rebuildOsc(i); renderOsc(i);
 }
@@ -525,8 +551,8 @@ function renderOsc(i) {
         <button class="n-mute${o.muted?' muted':''}" onclick="toggleOscMute(${i})">${o.muted?'✕':'■'}</button>
         <button class="n-step" onclick="stepOscN(${i},0.1)">+</button>
       </div>
-      <div class="ctl-lv"><span class="ctl-l">Volume</span><span class="ctl-v">${Math.round(o.vol*100)}%</span></div>
-      <input type="range" class="pink" min="0" max="1" step="0.01" value="${o.vol}" oninput="setOscVol(${i},this.value)">
+      <div class="ctl-lv"><span class="ctl-l">Volume</span><span class="ctl-v">${Math.round(o.vol*100)}% <span style="opacity:.5;font-size:.85em;">(max ${Math.round(VOL_MAX*100)}%)</span></span></div>
+      <input type="range" class="pink" min="0" max="${VOL_MAX}" step="0.005" value="${o.vol}" oninput="setOscVol(${i},this.value)">
       ${!o.bin ? `
       <div class="ctl-lv" style="margin-top:.5rem"><span class="ctl-l">Pan L↔R</span><span class="ctl-v">${o.pan.toFixed(2)}</span></div>
       <input type="range" min="-1" max="1" step="0.02" value="${o.pan}" oninput="setOscPan(${i},this.value)">` : ''}
