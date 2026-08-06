@@ -959,12 +959,8 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
   0%,100%{ box-shadow:0 0 26px rgba(255,220,110,.5),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.3); }
   50%{ box-shadow:0 0 52px rgba(255,230,140,.9),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.3); }
 }
-/* #145 : logo officiel (remplace l'ancien SVG yin-yang) — rognage circulaire
-   propre (object-fit:cover + border-radius:50%, l'image source est carrée). */
-.dcell-flux .flux-yy{
-  width:78%;height:78%;border-radius:50%;object-fit:cover;
-  filter:drop-shadow(0 2px 5px rgba(0,0,0,.5));
-}
+/* Symbole yin-yang (SVG) — thème doré/nuit cohérent avec le reste du dock. */
+.dcell-flux .flux-yy{ width:70%;height:70%;filter:drop-shadow(0 2px 5px rgba(0,0,0,.5)); }
 .flux-state{
   position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);
   font-size:.58rem;letter-spacing:.2em;font-weight:700;
@@ -1930,15 +1926,19 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 
   <!-- CENTRE — FLUX : pièce maîtresse du dock — tap = nouveau jeu
        aléatoire (#132) · appui long = Flux on/off (#145 : mute réel, cf.
-       toggleFluxMuted). #145 : logo officiel (déjà utilisé par le lanceur)
-       à la place du yin-yang SVG — même rognage circulaire que le reste
-       du dock (object-fit:cover + border-radius), halo/pulsation déjà en
-       place (fluxAura + fluxIdleGold/fluxPulseGold) inchangés. -->
+       toggleFluxMuted). #146 : retour au symbole yin-yang SVG neutre —
+       le logo officiel repris du screenshot (#145) ne correspondait pas
+       au design voulu, essai abandonné en attendant une vraie référence. -->
   <div class="dock-col dock-col-center">
     <div class="dcell-wrap dcell-wrap-flux">
       <div class="flux-aura" id="fluxAura" aria-hidden="true"></div>
       <button class="dcell-flux canva-button" id="dcFlux" title="Tap : nouveau jeu aléatoire · Appui long : Flux on/off">
-        <img class="flux-yy" id="flux-icon" src="img/omcvibe432-logo.jpg" alt="" aria-hidden="true">
+        <svg class="flux-yy" id="flux-icon" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="47" fill="#150A24" stroke="rgba(255,222,150,.6)" stroke-width="2"/>
+          <path d="M50,3 A47,47 0 0,1 50,97 A23.5,23.5 0 0,1 50,50 A23.5,23.5 0 0,0 50,3 Z" fill="#FFDE96"/>
+          <circle cx="50" cy="26.5" r="7.8" fill="#150A24"/>
+          <circle cx="50" cy="73.5" r="7.8" fill="#FFDE96"/>
+        </svg>
       </button>
       <span class="flux-state" id="flux-state-side">OFF</span>
     </div>
