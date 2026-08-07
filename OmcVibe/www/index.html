@@ -12,7 +12,10 @@
      si l'appareil est hors-ligne au premier lancement). -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+<!-- #155 : jeu élargi pour le sélecteur de police du module Créateur —
+     mêmes 2 polices par défaut (Cinzel Decorative/IM Fell English) +
+     quelques alternatives décoratives/lisibles au choix. -->
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;700;900&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=MedievalSharp&family=Cormorant+Garamond:wght@400;500;600;700&family=Marcellus&family=Philosopher:wght@400;700&family=Uncial+Antiqua&family=EB+Garamond:wght@400;500;600;700&family=Crimson+Text:wght@400;600;700&family=Spectral:wght@400;500;600;700&display=swap" rel="stylesheet">
 <title>OmcVibe432</title>
 <style>
 /* ═══════════════════════════════════════════
@@ -71,7 +74,7 @@ input[type="range"]:disabled{opacity:.35;cursor:default;}
 
 body{
   width:100vw;height:100vh;overflow:hidden;
-  font-family:'IM Fell English',Georgia,serif;
+  font-family:var(--font-body,'IM Fell English'),Georgia,serif;
   color:#f0ead8;
   background:#02010D;
 }
@@ -97,6 +100,9 @@ body{
 #sphere-layer{
   position:fixed;inset:0;z-index:10;
   pointer-events:none;
+  /* #155 : ambiance couleur globale (Créateur) — décale toute la palette
+     sans devoir reparamétrer chacune des 7 couleurs à la main. */
+  filter:hue-rotate(var(--sphere-hue,0deg));
 }
 #sphere-layer .vp-wrap,
 #sphere-layer .vp-center-wrap,
@@ -218,7 +224,7 @@ body{
   flex-shrink:0;
 }
 .panel-title{
-  font-family:'Cinzel Decorative',serif;
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;
   font-size:1.15rem;letter-spacing:.18em;
   background:linear-gradient(90deg,#FF8EFF,#63E6FF,#86FFC0);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
@@ -266,7 +272,7 @@ body{
   flex-shrink:0;
 }
 #osc-modal-title{
-  font-family:'Cinzel Decorative',serif;
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;
   font-size:1.1rem;letter-spacing:.15em;
   background:linear-gradient(90deg,#FF8EFF,#63E6FF);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
@@ -291,7 +297,7 @@ body{
   position:fixed;left:1rem;bottom:calc(154px + 38px);z-index:90;
   padding:.6rem 1.1rem;border-radius:24px;
   background:rgba(10,4,30,.92);border:1.5px solid rgba(200,140,255,.55);
-  color:rgba(230,210,255,.95);font-family:'Cinzel Decorative',serif;
+  color:rgba(230,210,255,.95);font-family:var(--font-deco,'Cinzel Decorative'),serif;
   font-size:.8rem;letter-spacing:.08em;font-weight:700;
   box-shadow:0 0 16px rgba(160,80,255,.35);
   opacity:0;pointer-events:none;transform:translateY(8px);
@@ -344,7 +350,16 @@ body{
    02-vesica.css — Sphères Vesica & menu rapide
    ═══════════════════════════════════════════ */
 
-:root{ --bubble-scale:1; }
+:root{
+  --bubble-scale:1;
+  /* #155 : nouveau module Créateur — variables globales de personnalisation
+     (défauts inchangés visuellement tant que l'utilisateur n'y touche pas). */
+  --font-deco:'Cinzel Decorative';
+  --font-body:'IM Fell English';
+  --dock-cell-scale:1;
+  --sphere-digit-scale:1;
+  --sphere-hue:0deg;
+}
 .vp-wrap{
   position:absolute;transform:translate(-50%,-50%) scale(var(--bubble-scale,1));
   width:180px;height:180px;
@@ -369,8 +384,8 @@ body{
 }
 .vp-p.vp-live{animation:vplive 8s ease-in-out infinite;}
 @keyframes vplive{0%,100%{filter:brightness(1);}50%{filter:brightness(1.38);}}
-.vp-type{font-family:'Cinzel Decorative',serif;font-size:.65rem;letter-spacing:.06em;opacity:.7;}
-.vp-freq{font-family:'IM Fell English',serif;font-size:1.7rem;line-height:1;color:#f5eedc;text-shadow:0 0 12px rgba(255,255,255,.45);font-weight:700;}
+.vp-type{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.65rem;letter-spacing:.06em;opacity:.7;}
+.vp-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:calc(1.7rem * var(--sphere-digit-scale,1));line-height:1;color:#f5eedc;text-shadow:0 0 12px rgba(255,255,255,.45);font-weight:700;}
 .vp-hz{display:none;}
 /* #153 : étoile discrète sous chaque sphère satellite → ouvre son menu
    oscillateur (openOscModal). SIBLING direct de #sphere-layer (positionnée
@@ -428,7 +443,7 @@ body{
   0%,100%{ transform:scale(1); }
   50%{ transform:scale(1.06); }
 }
-.ms-freq{font-family:'IM Fell English',serif;font-size:2.2rem;color:#F3D9FF;line-height:1;cursor:text;text-shadow:0 0 14px rgba(220,130,255,.55);font-weight:bold;}
+.ms-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:2.2rem;color:#F3D9FF;line-height:1;cursor:text;text-shadow:0 0 14px rgba(220,130,255,.55);font-weight:bold;}
 .ms-freq:hover{color:#FFD700;}
 /* #154 : la sphère maître n'affiche plus son chiffre — désormais visible/
    réglable uniquement via le modificateur violet du dock (.dcell-purple).
@@ -438,7 +453,7 @@ body{
 .ms-state{font-size:.7rem;font-style:italic;letter-spacing:.1em;color:rgba(220,180,255,.7);text-transform:uppercase;transition:color .5s;font-weight:bold;}
 #freq-input-master{
   display:none;width:95px;background:transparent;border:none;border-bottom:2px solid rgba(220,140,255,.75);
-  color:#F3D9FF;font-family:'IM Fell English',serif;font-size:1.8rem;text-align:center;outline:none;-moz-appearance:textfield;
+  color:#F3D9FF;font-family:var(--font-body,'IM Fell English'),serif;font-size:1.8rem;text-align:center;outline:none;-moz-appearance:textfield;
 }
 #freq-input-master::-webkit-inner-spin-button,#freq-input-master::-webkit-outer-spin-button{-webkit-appearance:none;}
 
@@ -471,7 +486,7 @@ body{
   color:#D7DAE0;font-size:.92rem;cursor:pointer;transition:all .18s;
   box-shadow:0 0 12px rgba(0,0,0,.6);
 }
-.mm-cell span{ font-size:.4rem;font-family:'Cinzel Decorative',serif;letter-spacing:.02em;color:rgba(230,220,255,.75); }
+.mm-cell span{ font-size:.4rem;font-family:var(--font-deco,'Cinzel Decorative'),serif;letter-spacing:.02em;color:rgba(230,220,255,.75); }
 .mm-cell:hover{ transform:translateX(-50%) scale(1.08); }
 .mm-cell:active{ transform:translateX(-50%) scale(.94); }
 .mm-cell-top{ top:14%; }
@@ -524,7 +539,7 @@ body{
   color:#63E6FF;
 }
 .flux-icon{font-size:1.15rem;line-height:1;}
-.flux-txt{font-family:'Cinzel Decorative',serif;font-size:.42rem;letter-spacing:.18em;font-weight:700;}
+.flux-txt{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.42rem;letter-spacing:.18em;font-weight:700;}
 .flux-state{font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;opacity:.85;}
 
 /* ─── FBF Sphere ─────────────────────────────── */
@@ -535,7 +550,7 @@ body{
   background-size:300% 300%;
   animation:magicRotate 7s ease-in-out infinite alternate,fbfPulse 3s ease-in-out infinite;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1rem;
-  font-family:'Cinzel Decorative',serif;
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;
   transition:transform .25s,box-shadow .25s;
   flex-shrink:0;
 }
@@ -546,7 +561,7 @@ body{
   animation:magicRotate 3s ease-in-out infinite alternate,fbfPulse 1.2s ease-in-out infinite;
 }
 .fbf-label{font-size:1.05rem;font-weight:900;letter-spacing:.22em;color:#FFD700;text-shadow:0 0 14px rgba(0,0,0,.9),0 0 28px rgba(255,215,0,.65);}
-.fbf-hz{font-family:'IM Fell English',serif;font-size:1.1rem;font-weight:bold;color:#FFD700;text-shadow:0 0 10px rgba(0,0,0,.9);line-height:1;}
+.fbf-hz{font-family:var(--font-body,'IM Fell English'),serif;font-size:1.1rem;font-weight:bold;color:#FFD700;text-shadow:0 0 10px rgba(0,0,0,.9);line-height:1;}
 .fbf-state{font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(210,214,224,.75);text-shadow:0 0 6px rgba(0,0,0,.9);}
 
 /* ─── Step buttons (dans Jeu Aléatoire) ─────── */
@@ -556,7 +571,7 @@ body{
   background:rgba(99,230,255,.09);
   border:1.5px solid rgba(99,230,255,.35);
   color:#63E6FF;
-  font-family:'IM Fell English',serif;
+  font-family:var(--font-body,'IM Fell English'),serif;
   font-size:.82rem;font-weight:bold;
   transition:all .14s;text-align:center;
 }
@@ -577,13 +592,13 @@ body{
 .fmini-row{display:grid;grid-template-columns:6px 1fr 1fr 1fr;gap:.04rem .08rem;align-items:center;padding:.05rem 0;border-bottom:1px solid rgba(200,100,255,.08);}
 .fmini-row:last-child{border-bottom:none;}
 .fmini-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.fmini-freq{font-size:.66rem;font-weight:bold;font-family:'IM Fell English',serif;opacity:.9;}
-.fmini-ratio{font-size:.62rem;font-weight:bold;font-family:'IM Fell English',serif;opacity:.8;text-align:center;}
-.fmini-n{font-size:.62rem;font-weight:bold;font-family:'IM Fell English',serif;opacity:.7;text-align:right;}
+.fmini-freq{font-size:.66rem;font-weight:bold;font-family:var(--font-body,'IM Fell English'),serif;opacity:.9;}
+.fmini-ratio{font-size:.62rem;font-weight:bold;font-family:var(--font-body,'IM Fell English'),serif;opacity:.8;text-align:center;}
+.fmini-n{font-size:.62rem;font-weight:bold;font-family:var(--font-body,'IM Fell English'),serif;opacity:.7;text-align:right;}
 
 /* ─── Navigation onglets colorés ────────────── */
 .tnav-btn{
-  font-family:'Cinzel Decorative',serif;
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;
   font-size:.65rem;letter-spacing:.1em;
   padding:.5rem .9rem;border-radius:20px;
   border:1.5px solid transparent;
@@ -624,7 +639,7 @@ body{
 /* ─── Paramètres 3D panel (OmCv 477 style) ──── */
 .geo-panel-inner{display:flex;flex-direction:column;gap:.4rem;}
 .geo-section-title{
-  font-family:'Cinzel Decorative',serif;
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;
   font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;
   color:rgba(200,100,255,.9);
   padding-bottom:.4rem;border-bottom:1px solid rgba(200,100,255,.2);
@@ -633,7 +648,7 @@ body{
 .geometry-btn{
   background:rgba(255,255,255,.04);border:1.5px solid rgba(200,100,255,.22);
   color:rgba(235,220,255,.7);border-radius:7px;padding:.38rem .2rem;
-  font-family:'IM Fell English',serif;font-size:.7rem;cursor:pointer;transition:all .2s;text-align:center;line-height:1.2;
+  font-family:var(--font-body,'IM Fell English'),serif;font-size:.7rem;cursor:pointer;transition:all .2s;text-align:center;line-height:1.2;
 }
 .geometry-btn:hover{background:rgba(200,100,255,.15);border-color:#F3D9FF;color:#FFD700;}
 .geometry-btn.active,.geometry-btn.on{background:rgba(200,100,255,.28);border-color:#F3D9FF;color:#FFD700;box-shadow:0 0 12px rgba(200,100,255,.45);}
@@ -668,7 +683,7 @@ body{
 
 /* ─── Status + flow controls (FX panel) ────── */
 .status{display:flex;align-items:center;justify-content:center;gap:.8rem;font-size:1.05rem;font-style:italic;letter-spacing:.14em;color:rgba(200,170,255,.65);font-weight:bold;}
-.wave-badge{font-family:'IM Fell English',serif;font-size:1rem;font-style:italic;padding:.15rem .6rem;border-radius:12px;border:1.5px solid transparent;transition:all .4s;letter-spacing:.08em;font-weight:bold;}
+.wave-badge{font-family:var(--font-body,'IM Fell English'),serif;font-size:1rem;font-style:italic;padding:.15rem .6rem;border-radius:12px;border:1.5px solid transparent;transition:all .4s;letter-spacing:.08em;font-weight:bold;}
 .wave-badge.live{border-color:currentColor;background:rgba(200,100,255,.15);box-shadow:0 0 12px currentColor;}
 .dot{width:12px;height:12px;border-radius:50%;background:rgba(180,100,255,.4);transition:all .5s;flex-shrink:0;}
 .dot.live{background:#D29DFF;box-shadow:0 0 14px rgba(200,100,255,.9);animation:blink 2s infinite;}
@@ -676,7 +691,7 @@ body{
 .flow-row{display:flex;gap:.7rem;width:100%;margin-top:.3rem;}
 .btn-flow{
   background:rgba(200,100,255,.1);border:2px solid rgba(200,100,255,.5);color:#F3D9FF;
-  padding:.75rem 1.5rem;font-family:'Cinzel Decorative',serif;font-size:.9rem;letter-spacing:.18em;
+  padding:.75rem 1.5rem;font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.9rem;letter-spacing:.18em;
   text-transform:uppercase;border-radius:8px;cursor:pointer;transition:all .4s;flex:1;
   text-shadow:0 0 12px rgba(200,100,255,.4);font-weight:bold;
 }
@@ -687,14 +702,14 @@ body{
 .mvol-label{font-size:.8rem;font-style:italic;letter-spacing:.16em;text-transform:uppercase;color:rgba(220,190,255,.7);font-weight:bold;}
 .mvol-row{display:flex;align-items:center;gap:.8rem;width:100%;}
 .mvol-slider{flex:1;cursor:pointer;color:#D29DFF;}
-.mvol-val{font-family:'IM Fell English',serif;font-size:1.1rem;color:rgba(235,210,255,.85);min-width:40px;text-align:right;font-weight:bold;}
+.mvol-val{font-family:var(--font-body,'IM Fell English'),serif;font-size:1.1rem;color:rgba(235,210,255,.85);min-width:40px;text-align:right;font-weight:bold;}
 
 .mfreq-ctrl{display:flex;flex-direction:column;align-items:center;gap:.3rem;background:rgba(200,100,255,.06);border:1.5px solid rgba(200,100,255,.25);border-radius:10px;padding:.5rem .8rem;width:100%;}
 .mfreq-label{font-size:.58rem;font-style:italic;letter-spacing:.18em;text-transform:uppercase;color:rgba(220,180,255,.8);font-weight:bold;}
 .mfreq-row{display:flex;align-items:center;gap:.5rem;justify-content:center;width:100%;}
 .mfreq-btn{width:32px;height:32px;border-radius:50%;background:radial-gradient(circle,rgba(220,100,255,.24) 0%,transparent 100%);border:1.5px solid rgba(220,100,255,.65);color:#F3D9FF;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;}
 .mfreq-btn:hover{border-color:#F3D9FF;box-shadow:0 0 12px rgba(220,100,255,.5);transform:scale(1.1);}
-.mfreq-input{width:80px;background:rgba(25,8,48,.85);border:1.5px solid rgba(220,100,255,.35);border-bottom:2.5px solid rgba(220,100,255,.8);color:#F3D9FF;font-family:'IM Fell English',serif;font-size:1.4rem;text-align:center;padding:.12rem .2rem;border-radius:7px;outline:none;-moz-appearance:textfield;font-weight:bold;}
+.mfreq-input{width:80px;background:rgba(25,8,48,.85);border:1.5px solid rgba(220,100,255,.35);border-bottom:2.5px solid rgba(220,100,255,.8);color:#F3D9FF;font-family:var(--font-body,'IM Fell English'),serif;font-size:1.4rem;text-align:center;padding:.12rem .2rem;border-radius:7px;outline:none;-moz-appearance:textfield;font-weight:bold;}
 .mfreq-range{font-size:.5rem;font-style:italic;color:rgba(220,180,255,.45);letter-spacing:.1em;}
 
 .delta-sphere-wrap{display:flex;flex-direction:column;align-items:center;gap:.6rem;background:rgba(0,80,255,.07);border:1.5px solid rgba(30,155,255,.38);border-radius:12px;padding:.6rem .8rem;width:100%;}
@@ -703,8 +718,8 @@ body{
 .delta-sphere-btn{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle,rgba(30,155,255,.22) 0%,transparent 100%);border:1.5px solid rgba(30,155,255,.55);color:#F3D9FF;font-size:1.3rem;font-weight:700;line-height:1;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;}
 .delta-sphere-btn:hover{border-color:#63CCFF;transform:scale(1.12);}
 .delta-sphere-val{display:flex;flex-direction:column;align-items:center;gap:.2rem;min-width:90px;}
-.delta-sphere-num{width:90px;background:rgba(25,8,48,.85);border:1.5px solid rgba(30,155,255,.35);border-bottom:3px solid rgba(30,155,255,.8);color:#F3D9FF;font-family:'IM Fell English',serif;font-size:2rem;text-align:center;padding:.25rem .3rem;border-radius:8px;outline:none;-moz-appearance:textfield;font-weight:bold;}
-.delta-sphere-wave{font-family:'IM Fell English',serif;font-size:.95rem;font-style:italic;letter-spacing:.1em;font-weight:bold;color:#63CCFF;}
+.delta-sphere-num{width:90px;background:rgba(25,8,48,.85);border:1.5px solid rgba(30,155,255,.35);border-bottom:3px solid rgba(30,155,255,.8);color:#F3D9FF;font-family:var(--font-body,'IM Fell English'),serif;font-size:2rem;text-align:center;padding:.25rem .3rem;border-radius:8px;outline:none;-moz-appearance:textfield;font-weight:bold;}
+.delta-sphere-wave{font-family:var(--font-body,'IM Fell English'),serif;font-size:.95rem;font-style:italic;letter-spacing:.1em;font-weight:bold;color:#63CCFF;}
 .delta-sphere-range{font-size:.65rem;font-style:italic;color:rgba(220,190,255,.5);letter-spacing:.1em;}
 
 .btn-reset{background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.22);color:rgba(245,240,225,.72);font-size:1.4rem;width:48px;height:48px;border-radius:50%;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;}
@@ -713,14 +728,14 @@ body{
 /* ─── FX Panel ───────────────────────────────── */
 .fx-panel{display:flex;flex-direction:column;gap:1.2rem;}
 .fx-block{background:rgba(255,255,255,.04);border:1.5px solid rgba(200,160,255,.18);border-radius:14px;padding:1rem;display:flex;flex-direction:column;gap:.8rem;}
-.fx-title{font-family:'Cinzel Decorative',serif;font-size:.75rem;letter-spacing:.18em;color:#F3D9FF;text-transform:uppercase;border-bottom:1px solid rgba(200,160,255,.2);padding-bottom:.5rem;font-weight:bold;}
+.fx-title{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.75rem;letter-spacing:.18em;color:#F3D9FF;text-transform:uppercase;border-bottom:1px solid rgba(200,160,255,.2);padding-bottom:.5rem;font-weight:bold;}
 .fx-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}
 .fx-control-group{display:flex;align-items:center;gap:.5rem;flex:1;min-width:200px;}
 .fx-label{font-size:.8rem;font-style:italic;color:rgba(220,195,255,.8);min-width:80px;font-weight:bold;}
 .fx-slider{flex:1;color:#D29DFF;cursor:pointer;}
 .fx-btn-step{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(200,160,255,.35);background:rgba(12,2,32,.7);color:#F3D9FF;font-size:1rem;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .fx-btn-step:hover{background:rgba(200,160,255,.2);border-color:#F3D9FF;transform:scale(1.1);}
-.fx-val-disp{font-family:'IM Fell English',serif;font-size:.9rem;color:#D29DFF;min-width:42px;text-align:right;font-weight:bold;}
+.fx-val-disp{font-family:var(--font-body,'IM Fell English'),serif;font-size:.9rem;color:#D29DFF;min-width:42px;text-align:right;font-weight:bold;}
 
 /* ─── FX COMPACT — bloc rapide (gain + fréquence + binaural + effets) ─── */
 .fx-panel.fx-compact{ gap:.7rem; }
@@ -736,7 +751,7 @@ body{
   display:flex;align-items:center;justify-content:center;transition:all .15s; }
 .fxq-step:hover{ border-color:#F3D9FF;box-shadow:0 0 10px rgba(200,120,255,.5);transform:scale(1.1); }
 .fxq-step:active{ transform:scale(.9); }
-.fxq-num{ width:74px;flex:0 0 auto;text-align:center;font-family:'IM Fell English',serif;font-weight:bold;
+.fxq-num{ width:74px;flex:0 0 auto;text-align:center;font-family:var(--font-body,'IM Fell English'),serif;font-weight:bold;
   font-size:1.25rem;color:#F3D9FF;background:rgba(20,8,40,.8);
   border:1.5px solid rgba(200,140,255,.35);border-bottom:2.5px solid rgba(200,140,255,.75);
   border-radius:7px;padding:.15rem .2rem;outline:none;-moz-appearance:textfield; }
@@ -751,19 +766,19 @@ body{
 }
 .n-matrix-btn:hover{ border-color:#F3D9FF;box-shadow:0 0 10px rgba(200,120,255,.5);transform:scale(1.1); }
 .n-matrix-btn:active{ transform:scale(.9); }
-.fxq-wave{ font-family:'IM Fell English',serif;font-style:italic;font-weight:bold;
+.fxq-wave{ font-family:var(--font-body,'IM Fell English'),serif;font-style:italic;font-weight:bold;
   font-size:.82rem;color:#63CCFF;min-width:48px;text-align:center; }
 .fxq-sep{ height:1px;background:rgba(200,160,255,.16);margin:.15rem 0; }
 .btn-reset.sm{ width:30px;height:30px;font-size:1rem;flex-shrink:0; }
 
 /* ─── Random panel ───────────────────────────── */
 .rand-panel{display:flex;flex-direction:column;gap:1rem;}
-.btn-magic-rand{width:100%;padding:1rem;border-radius:12px;background:radial-gradient(circle at 30% 30%, rgba(255,142,255,.25), rgba(99,230,255,.15), rgba(134,255,192,.1));border:2px solid rgba(200,100,255,.55);color:#F3D9FF;font-family:'Cinzel Decorative',serif;font-size:1.1rem;letter-spacing:.2em;text-transform:uppercase;font-weight:bold;transition:all .35s;}
+.btn-magic-rand{width:100%;padding:1rem;border-radius:12px;background:radial-gradient(circle at 30% 30%, rgba(255,142,255,.25), rgba(99,230,255,.15), rgba(134,255,192,.1));border:2px solid rgba(200,100,255,.55);color:#F3D9FF;font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:1.1rem;letter-spacing:.2em;text-transform:uppercase;font-weight:bold;transition:all .35s;}
 .btn-magic-rand:hover{box-shadow:0 0 40px rgba(200,100,255,.5);border-color:#F3D9FF;transform:scale(1.03);}
 .btn-magic-rand:active{transform:scale(.97);}
 .rand-mode-row{display:flex;align-items:center;gap:.5rem;}
 .rand-select{flex:1;padding:.4rem .5rem;border-radius:8px;border:1px solid rgba(200,170,255,.3);
-  background:rgba(255,255,255,.05);color:#F3D9FF;font-family:'IM Fell English',serif;font-size:.8rem;}
+  background:rgba(255,255,255,.05);color:#F3D9FF;font-family:var(--font-body,'IM Fell English'),serif;font-size:.8rem;}
 .rand-advanced{margin-top:.6rem;}
 .rand-advanced > summary{cursor:pointer;font-size:.68rem;color:rgba(99,230,255,.75);letter-spacing:.08em;
   font-style:italic;padding:.4rem 0;list-style:none;}
@@ -780,7 +795,7 @@ body{
   border-radius:6px;font-size:.72rem;padding:.15rem .4rem;cursor:pointer;line-height:1;transition:all .18s;}
 .rand-menu-btn:active{transform:scale(.9);background:rgba(200,170,255,.12);}
 .rand-freqline{display:flex;align-items:center;gap:.4rem;}
-.rand-freq-step{flex:1;font-family:'IM Fell English',serif;font-size:.72rem;font-weight:bold;
+.rand-freq-step{flex:1;font-family:var(--font-body,'IM Fell English'),serif;font-size:.72rem;font-weight:bold;
   padding:.25rem .3rem;border-radius:6px;border:1px solid rgba(200,170,255,.28);
   background:rgba(255,255,255,.04);color:rgba(220,200,255,.75);cursor:pointer;transition:all .15s;text-align:center;}
 .rand-freq-step:active{transform:scale(.94);background:rgba(200,170,255,.15);}
@@ -788,13 +803,13 @@ body{
    TOUTE l'app (règle input[type=range] globale, cf. plus haut — cohérence
    tactile) plutôt que de le redéfinir en plus petit ici. */
 .rand-vol{width:100%;display:block;margin:0;}
-.rand-freq{font-family:'IM Fell English',serif;font-size:1rem;font-weight:bold;opacity:.95;}
-.rand-ratio{font-family:'IM Fell English',serif;font-size:.85rem;opacity:.8;text-align:center;}
-.rand-n{font-family:'IM Fell English',serif;font-size:.85rem;opacity:.7;text-align:right;}
+.rand-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:1rem;font-weight:bold;opacity:.95;}
+.rand-ratio{font-family:var(--font-body,'IM Fell English'),serif;font-size:.85rem;opacity:.8;text-align:center;}
+.rand-n{font-family:var(--font-body,'IM Fell English'),serif;font-size:.85rem;opacity:.7;text-align:right;}
 /* #82/#83 : édition directe (mode Personnalisé) + lecture/pause par ligne */
 .rand-editable{cursor:pointer;border-radius:5px;transition:background .15s;}
 .rand-editable:active{background:rgba(255,255,255,.08);}
-.rand-n-input{font-family:'IM Fell English',serif;font-size:.85rem;text-align:right;background:rgba(255,255,255,.08);
+.rand-n-input{font-family:var(--font-body,'IM Fell English'),serif;font-size:.85rem;text-align:right;background:rgba(255,255,255,.08);
   border:1px solid rgba(200,170,255,.4);border-radius:5px;width:100%;padding:0 .2rem;}
 .rand-play{width:24px;height:24px;border-radius:50%;flex-shrink:0;
   background:rgba(255,255,255,.05);border:1px solid rgba(200,170,255,.28);
@@ -806,19 +821,19 @@ body{
 
 /* ─── Progression harmonique ─────────────────── */
 .prog-wrap{width:100%;background:rgba(255,180,80,.06);border:1.5px solid rgba(255,180,80,.25);border-radius:14px;padding:1rem;display:flex;flex-direction:column;gap:.7rem;}
-.prog-title{font-family:'Cinzel Decorative',serif;font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,200,100,.85);text-align:center;font-weight:bold;}
+.prog-title{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,200,100,.85);text-align:center;font-weight:bold;}
 .prog-row{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;justify-content:center;}
 .prog-label{font-size:.8rem;font-style:italic;color:rgba(255,210,130,.8);min-width:55px;font-weight:bold;}
-.prog-select{flex:1;background:rgba(25,12,2,.85);border:1.5px solid rgba(255,180,80,.35);border-bottom:2.5px solid rgba(255,180,80,.75);color:rgba(255,220,150,1);font-family:'IM Fell English',serif;font-style:italic;font-size:1rem;padding:.35rem .5rem;border-radius:7px;cursor:pointer;outline:none;font-weight:bold;}
+.prog-select{flex:1;background:rgba(25,12,2,.85);border:1.5px solid rgba(255,180,80,.35);border-bottom:2.5px solid rgba(255,180,80,.75);color:rgba(255,220,150,1);font-family:var(--font-body,'IM Fell English'),serif;font-style:italic;font-size:1rem;padding:.35rem .5rem;border-radius:7px;cursor:pointer;outline:none;font-weight:bold;}
 .prog-mode-row{display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap;}
-.prog-mode-btn{font-family:'IM Fell English',serif;font-size:.8rem;font-style:italic;padding:.3rem .8rem;border-radius:14px;cursor:pointer;border:1.5px solid rgba(255,180,80,.35);background:rgba(255,180,80,.07);color:rgba(255,210,130,.75);transition:all .2s;font-weight:bold;}
+.prog-mode-btn{font-family:var(--font-body,'IM Fell English'),serif;font-size:.8rem;font-style:italic;padding:.3rem .8rem;border-radius:14px;cursor:pointer;border:1.5px solid rgba(255,180,80,.35);background:rgba(255,180,80,.07);color:rgba(255,210,130,.75);transition:all .2s;font-weight:bold;}
 .prog-mode-btn:hover{background:rgba(255,180,80,.18);color:#FFE080;}
 .prog-mode-btn.active{background:rgba(255,180,80,.25);border-color:rgba(255,180,80,.8);color:#FFD080;box-shadow:0 0 12px rgba(255,160,40,.3);}
 .prog-range-row{display:flex;align-items:center;gap:.5rem;justify-content:center;flex-wrap:wrap;}
-.prog-range-input{width:80px;background:rgba(25,12,2,.85);border:1.5px solid rgba(255,180,80,.35);border-bottom:2.5px solid rgba(255,180,80,.75);color:rgba(255,220,150,1);font-family:'IM Fell English',serif;font-size:1.1rem;text-align:center;padding:.3rem .4rem;border-radius:7px;outline:none;-moz-appearance:textfield;font-weight:bold;}
-.prog-freq-display{font-family:'IM Fell English',serif;font-size:1rem;color:rgba(255,220,130,.7);text-align:center;letter-spacing:.1em;font-style:italic;min-height:1.4rem;transition:color .3s;font-weight:bold;}
+.prog-range-input{width:80px;background:rgba(25,12,2,.85);border:1.5px solid rgba(255,180,80,.35);border-bottom:2.5px solid rgba(255,180,80,.75);color:rgba(255,220,150,1);font-family:var(--font-body,'IM Fell English'),serif;font-size:1.1rem;text-align:center;padding:.3rem .4rem;border-radius:7px;outline:none;-moz-appearance:textfield;font-weight:bold;}
+.prog-freq-display{font-family:var(--font-body,'IM Fell English'),serif;font-size:1rem;color:rgba(255,220,130,.7);text-align:center;letter-spacing:.1em;font-style:italic;min-height:1.4rem;transition:color .3s;font-weight:bold;}
 .prog-freq-display.active{color:rgba(255,200,80,1);text-shadow:0 0 10px rgba(255,180,60,.4);}
-.btn-prog{background:rgba(255,180,80,.1);border:1.5px solid rgba(255,180,80,.55);color:#FFD080;font-family:'Cinzel Decorative',serif;font-size:.85rem;letter-spacing:.16em;padding:.7rem 1.8rem;border-radius:6px;cursor:pointer;transition:all .3s;display:block;margin:0 auto;font-weight:bold;}
+.btn-prog{background:rgba(255,180,80,.1);border:1.5px solid rgba(255,180,80,.55);color:#FFD080;font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.85rem;letter-spacing:.16em;padding:.7rem 1.8rem;border-radius:6px;cursor:pointer;transition:all .3s;display:block;margin:0 auto;font-weight:bold;}
 .btn-prog:hover{background:rgba(255,180,80,.22);box-shadow:0 0 20px rgba(255,160,40,.3);border-color:#FFE080;}
 .btn-prog.running{background:rgba(255,100,60,.16);border-color:rgba(255,120,60,.7);color:#FFB080;animation:prog-pulse 2s ease-in-out infinite;}
 
@@ -827,14 +842,14 @@ body{
 .preset-bank-tab{
   padding:.35rem .75rem;border-radius:8px;
   background:rgba(255,255,255,.05);border:1.5px solid rgba(255,208,96,.3);
-  color:rgba(255,220,150,.75);font-family:'IM Fell English',serif;font-size:.78rem;
+  color:rgba(255,220,150,.75);font-family:var(--font-body,'IM Fell English'),serif;font-size:.78rem;
   transition:all .2s;
 }
 .preset-bank-tab.on{background:rgba(255,208,96,.22);border-color:#FFD060;color:#FFD060;box-shadow:0 0 14px rgba(255,208,96,.3);}
 .preset-bank-tab.preset-bank-add{font-weight:700;padding:.35rem .9rem;}
 .preset-bank-actions{display:flex;gap:.4rem;margin-bottom:.3rem;flex-wrap:wrap;}
 .preset-freq-badge{
-  font-family:'IM Fell English',serif;font-size:.7rem;color:#63E6FF;
+  font-family:var(--font-body,'IM Fell English'),serif;font-size:.7rem;color:#63E6FF;
   background:rgba(99,230,255,.1);border:1px solid rgba(99,230,255,.3);
   border-radius:6px;padding:.1rem .45rem;white-space:nowrap;
 }
@@ -865,7 +880,7 @@ body{
 .dcell{
   position:relative;
   display:flex;align-items:center;justify-content:center;gap:.35rem;
-  flex:1 1 0;min-width:0;width:auto;height:64px;padding:0 .4rem; /* #52 : +36% vs #32 (43px→58px) ; #154 : +6px, optimisation d'espace demandée */
+  flex:1 1 0;min-width:0;width:auto;height:calc(64px * var(--dock-cell-scale,1));padding:0 .4rem; /* #52 : +36% vs #32 (43px→58px) ; #154 : +6px ; #155 : réglable via Créateur */
   border-radius:18px;border:1.5px solid; /* #137 : 11px→18px, galbe plus organique qu'un rectangle strict */
   cursor:pointer;user-select:none;-webkit-user-select:none;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
@@ -877,12 +892,12 @@ body{
 .dcell:active{ transform:scale(.96); }
 .dcell.dc-hold{ transform:scale(1.05); box-shadow:0 0 22px currentColor; }
 .dcell-txt{ display:flex;flex-direction:column;align-items:center;line-height:1.05;min-width:0;overflow:hidden; }
-.dcell-name{ font-family:'Cinzel Decorative',serif;font-size:.92rem;letter-spacing:.04em;font-weight:700; /* #72 : -0.06rem, laisse de la marge à .dcell-sub */
+.dcell-name{ font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.92rem;letter-spacing:.04em;font-weight:700; /* #72 : -0.06rem, laisse de la marge à .dcell-sub */
   white-space:normal;overflow:hidden;max-width:100%;text-align:center;overflow-wrap:break-word; }
 /* #72 : "Aléatoire" débordait/était coupé ("Aléatoir") — même traitement
    que .dcell-name (retour à la ligne + coupure de mot en dernier recours)
    au lieu d'un nowrap qui débordait silencieusement de la cellule. */
-.dcell-sub{ font-family:'IM Fell English',serif;font-size:.98rem;font-weight:bold;opacity:.85;
+.dcell-sub{ font-family:var(--font-body,'IM Fell English'),serif;font-size:.98rem;font-weight:bold;opacity:.85;
   white-space:normal;overflow-wrap:break-word;max-width:100%;text-align:center; }
 .dcell-ico{ font-size:1.56rem;flex-shrink:0; } /* #52 : +36% */
 /* #154 : ⚙ discrète, uniforme sur les 4 cellules principales du dock —
@@ -1088,7 +1103,7 @@ body.flux-muted .vp-i{
 .dcell-purple-step:active{ transform:scale(.9); }
 .dcell-purple-input{
   width:52px;min-width:0;flex:1 1 auto;background:rgba(0,0,0,.32);border:1.5px solid rgba(190,110,255,.4);border-radius:6px; /* #52 : +36% */
-  color:#F0DCFF;font-family:'IM Fell English',serif;font-size:1.12rem;text-align:center;
+  color:#F0DCFF;font-family:var(--font-body,'IM Fell English'),serif;font-size:1.12rem;text-align:center;
   padding:.15rem 0;outline:none;-moz-appearance:textfield;
 }
 .dcell-purple-input::-webkit-inner-spin-button,.dcell-purple-input::-webkit-outer-spin-button{-webkit-appearance:none;}
@@ -1102,7 +1117,7 @@ body.flux-muted .vp-i{
   width:100%;max-width:204px;padding:.32rem .5rem;border-radius:14px;
   border:1.5px solid rgba(255,150,40,.55);
   background:rgba(255,140,30,.16);backdrop-filter:blur(10px);
-  color:#FFB060;font-family:'Cinzel Decorative',serif;font-size:.74rem;letter-spacing:.06em;font-weight:700;
+  color:#FFB060;font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.74rem;letter-spacing:.06em;font-weight:700;
   text-align:center;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -6px 10px rgba(0,0,0,.12);
   transition:transform .12s,box-shadow .2s;
@@ -1134,7 +1149,7 @@ body.flux-muted .vp-i{
   background:radial-gradient(circle at 40% 35%,rgba(192,128,255,.22),rgba(10,4,30,.85));
   color:#C080FF;
   font-size:1.25rem;line-height:1;
-  font-family:'IM Fell English',serif;
+  font-family:var(--font-body,'IM Fell English'),serif;
   cursor:pointer;
   transition:all .22s;
   animation:randIdle 3.6s ease-in-out infinite;
@@ -1216,7 +1231,7 @@ body.flux-muted .vp-i{
 
 /* ─── Note méditation (panel 3D) ─────────────── */
 .geo-med-note{
-  font-family:'IM Fell English',serif;
+  font-family:var(--font-body,'IM Fell English'),serif;
   font-size:.82rem;font-style:italic;
   color:rgba(200,180,255,.55);
   line-height:1.8;text-align:center;
@@ -1235,16 +1250,16 @@ body.flux-muted .vp-i{
 /* En-tête haut gauche */
 #hdr{position:fixed;top:18px;left:24px;z-index:100;pointer-events:none;}
 #hdr-title{
-  font-family:'Cinzel Decorative',serif;font-size:20px;font-weight:700;
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:20px;font-weight:700;
   color:#00ccff;letter-spacing:.08em;
   text-shadow:0 0 30px rgba(0,204,255,.5),0 0 60px rgba(0,204,255,.2);
 }
 #hdr-sub{
-  font-family:'IM Fell English',serif;font-size:9px;letter-spacing:.28em;
+  font-family:var(--font-body,'IM Fell English'),serif;font-size:9px;letter-spacing:.28em;
   opacity:.4;text-transform:uppercase;margin-top:3px;color:#7a9ab0;
 }
 #hdr-freq{
-  font-family:'IM Fell English',serif;font-size:10px;
+  font-family:var(--font-body,'IM Fell English'),serif;font-size:10px;
   color:#e8a020;opacity:.65;margin-top:2px;letter-spacing:.07em;font-style:italic;
 }
 
@@ -1255,7 +1270,7 @@ body.flux-muted .vp-i{
   z-index:100;pointer-events:auto;max-width:600px;
 }
 .tbtn{
-  font-family:'IM Fell English',serif;font-size:10px;letter-spacing:.14em;
+  font-family:var(--font-body,'IM Fell English'),serif;font-size:10px;letter-spacing:.14em;
   padding:7px 11px;cursor:pointer;text-transform:uppercase;border-radius:2px;
   transition:all .18s;background:rgba(1,3,6,.92);
   border:1px solid rgba(0,204,255,.2);color:#00ccff;
@@ -1291,7 +1306,7 @@ body.flux-muted .vp-i{
 
 /* Section header dans les panels */
 .pct{
-  font-family:'IM Fell English',serif;
+  font-family:var(--font-body,'IM Fell English'),serif;
   font-size:8px;letter-spacing:.28em;text-transform:uppercase;
   color:#00ccff;opacity:.55;margin-bottom:9px;
 }
@@ -1315,12 +1330,12 @@ body.flux-muted .vp-i{
   padding:7px 12px;border-radius:2px;backdrop-filter:blur(8px);
 }
 .ib-k{
-  font-family:'IM Fell English',serif;
+  font-family:var(--font-body,'IM Fell English'),serif;
   font-size:7px;letter-spacing:.22em;opacity:.38;
   text-transform:uppercase;color:#7a9ab0;
 }
 .ib-v{
-  font-family:'IM Fell English',serif;
+  font-family:var(--font-body,'IM Fell English'),serif;
   font-size:12px;color:#ddeeff;margin-top:2px;
 }
 .ib-live{color:#00ff88;}
@@ -1336,7 +1351,7 @@ body.flux-muted .vp-i{
   gap:.3rem .5rem;align-items:center;
 }
 .fx-eq-band{
-  font-family:'Cinzel Decorative',serif;font-size:.6rem;
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.6rem;
   letter-spacing:.12em;color:#C0AAFF;text-align:right;padding-right:.3rem;
 }
 
@@ -1368,7 +1383,7 @@ body.flux-muted .vp-i{
   border-radius:8px;padding:.35rem .5rem;
 }
 .fx-preset-name{
-  flex:1;font-family:'IM Fell English',serif;font-size:.82rem;font-style:italic;
+  flex:1;font-family:var(--font-body,'IM Fell English'),serif;font-size:.82rem;font-style:italic;
   color:rgba(200,175,255,.7);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
 }
 .fx-preset-btn{
@@ -1398,11 +1413,11 @@ body.flux-muted .vp-i{
 }
 .pair-head{display:flex;align-items:center;gap:.7rem;padding-bottom:.5rem;border-bottom:1px solid rgba(255,255,255,.12);}
 .pair-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;}
-.pair-name{font-family:'Cinzel Decorative',serif;font-size:1rem;letter-spacing:.12em;flex:1;font-weight:bold;}
+.pair-name{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:1rem;letter-spacing:.12em;flex:1;font-weight:bold;}
 /* Formules */
 .block-formula{
   display:flex;align-items:baseline;gap:.35rem;flex-wrap:wrap;
-  font-family:'IM Fell English',serif;font-style:italic;font-size:1.1rem;
+  font-family:var(--font-body,'IM Fell English'),serif;font-style:italic;font-size:1.1rem;
   padding:.35rem .55rem;border-radius:8px;
   background:color-mix(in srgb,var(--ec,#888) 20%,transparent); /* #50 : jamais de noir, teinté par paire */
   border:1.1px solid rgba(255,255,255,.06);
@@ -1426,10 +1441,10 @@ body.flux-muted .vp-i{
 .tuto-lvl-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:.15rem;
   padding:.5rem .3rem;border-radius:10px;border:1.5px solid rgba(200,150,255,.28);
   background:rgba(255,255,255,.04);color:rgba(230,210,255,.75);cursor:pointer;
-  font-family:'Cinzel Decorative',serif;font-size:.72rem;letter-spacing:.03em;text-align:center;}
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.72rem;letter-spacing:.03em;text-align:center;}
 .tuto-lvl-btn.on{border-color:#FFD700;background:rgba(255,215,0,.14);color:#FFD700;
   box-shadow:0 0 10px rgba(255,215,0,.3);}
-.tuto-lvl-sub{font-family:'IM Fell English',serif;font-size:.6rem;opacity:.7;font-style:italic;letter-spacing:.05em;}
+.tuto-lvl-sub{font-family:var(--font-body,'IM Fell English'),serif;font-size:.6rem;opacity:.7;font-style:italic;letter-spacing:.05em;}
 .tuto-intro{font-size:.78rem;line-height:1.5;opacity:.8;font-style:italic;margin-bottom:.6rem;
   color:rgba(220,200,255,.85);}
 .tuto-sec-body{font-size:.82rem;line-height:1.55;color:rgba(230,220,245,.88);padding:0 .8rem .8rem;}
@@ -1441,10 +1456,10 @@ body.flux-muted .vp-i{
 .bctrl{display:flex;flex-direction:column;gap:.28rem;}
 .bctrl-row{display:flex;align-items:center;justify-content:space-between;gap:.4rem;}
 .bctrl-label{font-size:.8rem;font-style:italic;letter-spacing:.12em;text-transform:uppercase;color:rgba(220,190,255,.65);font-weight:bold;}
-.wave-state{font-family:'IM Fell English',serif;font-size:.85rem;font-style:italic;letter-spacing:.1em;transition:color .3s;flex-shrink:0;font-weight:bold;}
+.wave-state{font-family:var(--font-body,'IM Fell English'),serif;font-size:.85rem;font-style:italic;letter-spacing:.1em;transition:color .3s;flex-shrink:0;font-weight:bold;}
 select.bsel{
   width:100%;background:rgba(25,10,50,.85);border:1.5px solid rgba(180,120,255,.32);
-  color:rgba(240,230,255,.95);font-family:'IM Fell English',serif;font-style:italic;font-size:1rem;
+  color:rgba(240,230,255,.95);font-family:var(--font-body,'IM Fell English'),serif;font-style:italic;font-size:1rem;
   padding:.38rem .55rem;border-radius:8px;cursor:pointer;outline:none;font-weight:bold;
 }
 select.bsel option{background:#17032b;color:#f5eedc;}
@@ -1456,14 +1471,14 @@ input[type="range"].brange{width:100%;cursor:pointer;}
 input.param-input{
   width:95px;background:rgba(25,10,50,.85);
   border:1.5px solid rgba(180,120,255,.3);border-bottom:3px solid rgba(220,140,255,.55);
-  color:#F3D9FF;font-family:'IM Fell English',serif;font-style:italic;font-size:1.2rem;
+  color:#F3D9FF;font-family:var(--font-body,'IM Fell English'),serif;font-style:italic;font-size:1.2rem;
   text-align:center;padding:.28rem .35rem;border-radius:6px;
   outline:none;-moz-appearance:textfield;font-weight:bold;
 }
 .param-hint{font-size:.72rem;font-style:italic;color:rgba(220,190,255,.42);}
 .polarity-btn{
   background:rgba(255,255,255,.09);border:1.5px solid rgba(200,160,255,.35);
-  color:rgba(240,220,255,.85);font-family:'IM Fell English',serif;
+  color:rgba(240,220,255,.85);font-family:var(--font-body,'IM Fell English'),serif;
   font-size:1.1rem;width:32px;height:32px;border-radius:50%;
   cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
   transition:all .2s;flex-shrink:0;font-weight:bold;
@@ -1474,7 +1489,7 @@ input.param-input{
 /* Notice */
 .notice-panel{display:flex;flex-direction:column;gap:1rem;}
 .notice-h1{
-  font-family:'Cinzel Decorative',serif;font-size:1.1rem;letter-spacing:.18em;
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:1.1rem;letter-spacing:.18em;
   text-align:center;
   background:linear-gradient(90deg,#FF8EFF,#63E6FF,#86FFC0);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
@@ -1485,14 +1500,14 @@ input.param-input{
   border-radius:0 12px 12px 0;padding:.8rem 1rem;
   display:flex;flex-direction:column;gap:.35rem;
 }
-.notice-term{font-family:'Cinzel Decorative',serif;font-size:.78rem;letter-spacing:.14em;color:rgba(200,100,255,1);text-transform:uppercase;font-weight:bold;}
+.notice-term{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.78rem;letter-spacing:.14em;color:rgba(200,100,255,1);text-transform:uppercase;font-weight:bold;}
 .notice-def{font-size:.9rem;font-style:italic;color:rgba(235,225,255,.8);line-height:1.6;}
 
 /* Presets */
 .preset-panel{display:flex;flex-direction:column;gap:1.2rem;}
 .preset-intro{font-size:.9rem;font-style:italic;color:rgba(220,200,255,.65);text-align:center;letter-spacing:.1em;line-height:1.6;font-weight:bold;}
 .preset-section-title{
-  font-family:'Cinzel Decorative',serif;font-size:.72rem;letter-spacing:.2em;
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.72rem;letter-spacing:.2em;
   text-transform:uppercase;color:rgba(220,180,255,.75);
   display:flex;align-items:center;gap:.7rem;font-weight:bold;
 }
@@ -1501,11 +1516,11 @@ input.param-input{
 .preset-freq-btn{display:flex;flex-direction:column;align-items:center;gap:.1rem;padding:.55rem .25rem;border-radius:9px;cursor:pointer;border:1.5px solid rgba(255,255,255,.13);background:rgba(255,255,255,.04);transition:all .18s;}
 .preset-freq-btn:hover{background:rgba(255,255,255,.11);border-color:rgba(255,255,255,.42);transform:scale(1.07);}
 .preset-freq-btn.active{border-color:rgba(220,140,255,1);background:rgba(200,100,255,.22);box-shadow:0 0 14px rgba(200,100,255,.3);}
-.preset-freq-hz{font-family:'IM Fell English',serif;font-size:1.1rem;color:#f5eedc;line-height:1;font-weight:bold;}
+.preset-freq-hz{font-family:var(--font-body,'IM Fell English'),serif;font-size:1.1rem;color:#f5eedc;line-height:1;font-weight:bold;}
 .preset-freq-label{font-size:.6rem;font-style:italic;color:rgba(220,190,255,.55);letter-spacing:.08em;font-weight:bold;}
 .btn-preset-launch{
   background:rgba(200,100,255,.12);border:2px solid rgba(200,100,255,.5);
-  color:#F3D9FF;font-family:'Cinzel Decorative',serif;font-size:.9rem;
+  color:#F3D9FF;font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.9rem;
   letter-spacing:.18em;padding:.8rem 2rem;border-radius:6px;
   cursor:pointer;transition:all .3s;margin:0 auto;display:block;font-weight:bold;
 }
@@ -1515,14 +1530,14 @@ input.param-input{
 .sfx-row{display:flex;align-items:center;gap:.45rem;margin:.28rem 0;}
 .sfx-row .sfx-lbl{font-size:.68rem;color:rgba(200,170,255,.6);min-width:64px;white-space:nowrap;}
 .sfx-row input[type=range]{flex:1;color:#C080FF;}
-.sfx-row .sfx-val{font-size:.7rem;color:rgba(225,200,255,.8);min-width:42px;text-align:right;font-family:'IM Fell English',serif;}
+.sfx-row .sfx-val{font-size:.7rem;color:rgba(225,200,255,.8);min-width:42px;text-align:right;font-family:var(--font-body,'IM Fell English'),serif;}
 
 /* ════════ Modal oscillateur — 4 onglets (v2) ════════ */
 .osc-tabs{display:flex;gap:.3rem;margin:.2rem 0 .7rem;position:sticky;top:0;z-index:3;
   background:linear-gradient(180deg,rgba(8,4,22,.96),rgba(8,4,22,.7));padding:.2rem 0;}
 .osc-tab{flex:1;min-height:42px;border-radius:9px;cursor:pointer;
   background:rgba(255,255,255,.03);border:1px solid var(--ec,#888)33;
-  color:rgba(225,210,255,.7);font-family:'Cinzel Decorative',serif;font-size:.72rem;
+  color:rgba(225,210,255,.7);font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.72rem;
   letter-spacing:.02em;transition:all .2s;padding:.2rem;}
 .osc-tab.on{background:color-mix(in srgb,var(--ec,#888) 22%,transparent);
   border-color:var(--ec,#888);color:#D7DAE0;box-shadow:0 0 14px color-mix(in srgb,var(--ec,#888) 40%,transparent);}
@@ -1546,7 +1561,7 @@ input.param-input{
 .ctl-row{display:flex;align-items:center;gap:.5rem;margin:.34rem 0;}
 .ctl-row .ctl-l{font-size:.7rem;color:rgba(210,190,255,.7);min-width:62px;white-space:nowrap;}
 .ctl-row input[type=range]{flex:1;}
-.ctl-row .ctl-v{font-size:.72rem;font-family:'IM Fell English',serif;color:rgba(225,205,255,.85);
+.ctl-row .ctl-v{font-size:.72rem;font-family:var(--font-body,'IM Fell English'),serif;color:rgba(225,205,255,.85);
   min-width:54px;text-align:right;}
 
 /* Tableau ratio → Hz */
@@ -1555,7 +1570,7 @@ input.param-input{
   min-height:40px;border-radius:7px;cursor:pointer;padding:.15rem;
   background:rgba(255,255,255,.03);border:1px solid color-mix(in srgb,var(--ec,#888) 26%,transparent);transition:all .16s;}
 .rt-cell .rt-l{font-size:.64rem;color:color-mix(in srgb,var(--ec,#888) 80%,white);line-height:1.1;}
-.rt-cell .rt-hz{font-size:.7rem;font-family:'IM Fell English',serif;color:rgba(225,205,255,.7);}
+.rt-cell .rt-hz{font-size:.7rem;font-family:var(--font-body,'IM Fell English'),serif;color:rgba(225,205,255,.7);}
 .rt-cell.on{background:color-mix(in srgb,var(--ec,#888) 26%,transparent);border-color:var(--ec,#888);
   box-shadow:0 0 10px color-mix(in srgb,var(--ec,#888) 40%,transparent);}
 .rt-cell.on .rt-l,.rt-cell.on .rt-hz{color:#D7DAE0;}
@@ -1577,12 +1592,12 @@ input.param-input{
 /* #48 : Matrice 🌀 — 6 lignes (une par ratio) × 6 cellules (n aléatoire) */
 .mx-grid{display:flex;flex-direction:column;gap:.35rem;}
 .mx-row{display:flex;align-items:center;gap:.3rem;}
-.mx-ratio-label{min-width:38px;font-size:.68rem;font-family:'IM Fell English',serif;font-weight:bold;flex-shrink:0;}
+.mx-ratio-label{min-width:38px;font-size:.68rem;font-family:var(--font-body,'IM Fell English'),serif;font-weight:bold;flex-shrink:0;}
 .mx-row-cells{display:grid;grid-template-columns:repeat(6,1fr);gap:.22rem;flex:1;}
 .mx-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;
   min-height:36px;border-radius:7px;cursor:pointer;padding:.1rem;
   background:rgba(255,255,255,.03);border:1px solid color-mix(in srgb,var(--ec,#888) 26%,transparent);transition:all .16s;}
-.mx-cell .mx-hz{font-size:.62rem;font-family:'IM Fell English',serif;color:rgba(225,205,255,.75);}
+.mx-cell .mx-hz{font-size:.62rem;font-family:var(--font-body,'IM Fell English'),serif;color:rgba(225,205,255,.75);}
 .mx-cell .mx-n{font-size:.5rem;color:color-mix(in srgb,var(--ec,#888) 75%,white);}
 .mx-cell.on{background:color-mix(in srgb,var(--ec,#888) 30%,transparent);border-color:var(--ec,#888);
   box-shadow:0 0 10px color-mix(in srgb,var(--ec,#888) 45%,transparent);}
@@ -1602,9 +1617,9 @@ input.param-input{
 #splash-36 img{width:min(62vw,300px);height:auto;filter:drop-shadow(0 0 40px rgba(255,190,70,.5));
   animation:splashGlow 2.4s ease-in-out infinite;}
 @keyframes splashGlow{0%,100%{filter:drop-shadow(0 0 30px rgba(255,190,70,.4));}50%{filter:drop-shadow(0 0 56px rgba(255,210,110,.7));}}
-#splash-36 .splash-title{font-family:'Cinzel Decorative',serif;font-size:1.7rem;font-weight:900;
+#splash-36 .splash-title{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:1.7rem;font-weight:900;
   color:#FFD27A;letter-spacing:.22em;text-shadow:0 0 24px rgba(255,200,90,.6);}
-#splash-36 .splash-sub{font-family:'IM Fell English',serif;font-style:italic;font-size:.95rem;color:rgba(255,210,130,.7);letter-spacing:.1em;}
+#splash-36 .splash-sub{font-family:var(--font-body,'IM Fell English'),serif;font-style:italic;font-size:.95rem;color:rgba(255,210,130,.7);letter-spacing:.1em;}
 
 /* ════════ #64 : Lanceur 3 modules (OmchaVibe/Chaharmony/OmchaSphère) ════════ */
 #omc-launcher{position:fixed;inset:0;z-index:10500;display:flex;flex-direction:column;
@@ -1614,9 +1629,9 @@ input.param-input{
 #omc-launcher.hide{opacity:0;visibility:hidden;pointer-events:none;}
 #omc-launcher .lch-logo{width:min(34vw,150px);height:auto;margin-bottom:.3rem;
   filter:drop-shadow(0 0 34px rgba(255,190,70,.45));animation:splashGlow 2.6s ease-in-out infinite;}
-#omc-launcher .lch-title{font-family:'Cinzel Decorative',serif;font-size:1.5rem;font-weight:900;
+#omc-launcher .lch-title{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:1.5rem;font-weight:900;
   color:#FFD27A;letter-spacing:.16em;text-shadow:0 0 22px rgba(255,200,90,.55);text-align:center;}
-#omc-launcher .lch-sub{font-family:'IM Fell English',serif;font-style:italic;font-size:.82rem;
+#omc-launcher .lch-sub{font-family:var(--font-body,'IM Fell English'),serif;font-style:italic;font-size:.82rem;
   color:rgba(255,210,130,.6);letter-spacing:.08em;text-align:center;margin-bottom:.6rem;}
 .lch-cards{display:flex;flex-direction:column;gap:.7rem;width:100%;max-width:360px;}
 .lch-card{display:flex;flex-direction:column;align-items:center;gap:.25rem;
@@ -1626,9 +1641,9 @@ input.param-input{
 .lch-card:active{transform:scale(.97);}
 .lch-card:hover{border-color:rgba(255,200,100,.6);background:rgba(30,18,6,.7);}
 .lch-card .lch-ico{font-size:1.7rem;line-height:1;margin-bottom:.15rem;}
-.lch-card .lch-name{font-family:'Cinzel Decorative',serif;font-size:1rem;font-weight:700;
+.lch-card .lch-name{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:1rem;font-weight:700;
   letter-spacing:.08em;color:#FFE0A0;}
-.lch-card .lch-desc{font-family:'IM Fell English',serif;font-size:.74rem;
+.lch-card .lch-desc{font-family:var(--font-body,'IM Fell English'),serif;font-size:.74rem;
   color:rgba(220,200,255,.6);letter-spacing:.03em;}
 .lch-card.vibe{border-color:rgba(99,230,255,.35);}
 .lch-card.vibe:hover{border-color:rgba(99,230,255,.7);}
@@ -1679,7 +1694,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 .fx-onoff:active{transform:scale(.95);}
 
 /* ════════ Menu déroulant Paramètres ════════ */
-.tnav-params{font-family:'Cinzel Decorative',serif !important;letter-spacing:.08em;}
+.tnav-params{font-family:var(--font-deco,'Cinzel Decorative'),serif !important;letter-spacing:.08em;}
 .params-menu{display:flex;flex-direction:column;gap:.5rem;margin-top:.4rem;}
 .params-item{
   display:flex;align-items:center;gap:.7rem;min-height:58px;padding:.7rem .9rem; /* #154 : cellules un peu agrandies (52px→58px) */
@@ -1687,11 +1702,69 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   background:rgba(255,255,255,.04);border:1px solid color-mix(in srgb,var(--ic,#888) 35%,transparent);
   color:#FFD700;font-size:1.4rem;transition:all .18s;
 }
-.params-item span{font-family:'Cinzel Decorative',serif;font-size:.86rem;letter-spacing:.06em;
+.params-item span{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.86rem;letter-spacing:.06em;
   color:color-mix(in srgb,var(--ic,#888) 78%,#FFD700 22%);}
 .params-item:hover{background:color-mix(in srgb,var(--ic,#888) 18%,transparent);border-color:var(--ic,#888);
   box-shadow:0 0 16px color-mix(in srgb,var(--ic,#888) 35%,transparent);transform:translateX(2px);}
 .params-item:active{transform:scale(.98);}
+
+/* ════════ #155 : Créateur — personnalisation avancée ════════ */
+.creator-sec{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,208,96,.18);border-radius:14px;
+  padding:.7rem .8rem;margin-bottom:.6rem;display:flex;flex-direction:column;gap:.55rem;
+}
+.creator-sec-title{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.78rem;letter-spacing:.1em;
+  text-transform:uppercase;color:#FFD060;font-weight:700;border-bottom:1px solid rgba(255,208,96,.18);padding-bottom:.35rem;}
+.creator-row{display:flex;align-items:center;gap:.5rem;}
+.creator-lbl{font-size:.74rem;color:rgba(220,200,255,.75);min-width:118px;flex-shrink:0;font-style:italic;}
+.creator-row select{
+  flex:1;background:rgba(20,8,40,.85);border:1px solid rgba(255,208,96,.3);border-radius:8px;
+  color:#F3D9FF;font-family:var(--font-body,'IM Fell English'),serif;font-size:.82rem;padding:.35rem .5rem;
+}
+.creator-row input[type=range]{flex:1;accent-color:#FFD700;}
+.creator-val{font-size:.72rem;color:#FFD700;min-width:40px;text-align:right;flex-shrink:0;}
+.creator-btn2{
+  display:flex;align-items:center;gap:.6rem;min-height:48px;padding:.5rem .8rem;
+  border-radius:10px;cursor:pointer;text-align:left;width:100%;
+  background:rgba(255,255,255,.04);border:1px solid color-mix(in srgb,var(--ic,#888) 35%,transparent);
+  color:color-mix(in srgb,var(--ic,#888) 78%,#FFD700 22%);font-size:.82rem;
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;transition:all .18s;
+}
+.creator-btn2 .ico{font-size:1.2rem;flex-shrink:0;}
+.creator-btn2:active{transform:scale(.98);}
+.creator-btn2.on{background:color-mix(in srgb,var(--ic,#888) 26%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--ic,#888) 40%,transparent);}
+/* Repositionnement libre : affordance visuelle sur les cibles déplaçables */
+body.creator-reposition .vp-p,
+body.creator-reposition .dcell,
+body.creator-reposition .dcell-purple,
+body.creator-reposition .dcell-chawatch{
+  outline:2px dashed rgba(255,215,0,.75);outline-offset:3px;cursor:move !important;
+  animation:crRepoPulse 1.8s ease-in-out infinite;
+}
+@keyframes crRepoPulse{0%,100%{outline-color:rgba(255,215,0,.4);}50%{outline-color:rgba(255,215,0,.9);}}
+/* Fiches sticker (7 sphères) */
+.cr-sticker-row{
+  display:flex;align-items:center;gap:.6rem;padding:.5rem;border-radius:10px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);margin-bottom:.4rem;
+}
+.cr-sticker-thumb{
+  width:52px;height:52px;border-radius:50%;flex-shrink:0;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  border:2px solid rgba(255,208,96,.5);box-shadow:0 0 10px rgba(255,208,96,.25);
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:rgba(255,255,255,.3);
+}
+.cr-sticker-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:.25rem;}
+.cr-sticker-name{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.76rem;color:#FFD700;}
+.cr-sticker-actions{display:flex;gap:.4rem;flex-wrap:wrap;}
+.cr-mini-btn{
+  font-size:.66rem;padding:.3rem .55rem;border-radius:7px;cursor:pointer;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:rgba(230,220,255,.85);
+}
+.cr-mini-btn:active{transform:scale(.94);}
+.cr-sticker-edit{display:none;flex-direction:column;gap:.35rem;margin-top:.4rem;}
+.cr-sticker-edit.open{display:flex;}
+.cr-sticker-edit .creator-row{gap:.4rem;}
+.cr-sticker-edit .creator-lbl{min-width:88px;font-size:.68rem;}
 
 /* ════════ Personnaliser l'interface ════════ */
 .cust-hint{font-size:.72rem;font-style:italic;color:rgba(200,180,255,.5);line-height:1.5;margin-bottom:.6rem;}
@@ -1699,18 +1772,18 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   background:rgba(255,255,255,.04);border:1px solid rgba(255,208,96,.18);border-radius:12px;
   padding:.6rem .7rem;margin-bottom:.5rem;display:flex;flex-direction:column;gap:.4rem;
 }
-.cust-cell-title{font-family:'Cinzel Decorative',serif;font-size:.72rem;letter-spacing:.12em;
+.cust-cell-title{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.72rem;letter-spacing:.12em;
   text-transform:uppercase;color:#FFD060;font-weight:700;}
 .cust-slot{display:flex;align-items:center;gap:.5rem;}
 .cust-slot-lbl{font-size:.68rem;color:rgba(220,200,255,.65);min-width:82px;font-style:italic;flex-shrink:0;}
 .cust-select{
   flex:1;background:rgba(20,8,40,.85);border:1px solid rgba(255,208,96,.3);border-radius:8px;
-  color:#F3D9FF;font-family:'IM Fell English',serif;font-size:.85rem;padding:.35rem .4rem;outline:none;
+  color:#F3D9FF;font-family:var(--font-body,'IM Fell English'),serif;font-size:.85rem;padding:.35rem .4rem;outline:none;
 }
 .btn-reset-wide{
   width:100%;padding:.6rem;margin:.3rem 0 .2rem;border-radius:10px;cursor:pointer;
   background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.22);
-  color:rgba(245,240,225,.8);font-family:'Cinzel Decorative',serif;font-size:.7rem;letter-spacing:.1em;
+  color:rgba(245,240,225,.8);font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.7rem;letter-spacing:.1em;
   transition:all .2s;
 }
 .btn-reset-wide:hover{border-color:#FFD060;color:#FFD060;background:rgba(255,208,96,.08);}
@@ -1718,14 +1791,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 .cust-bg-btn{
   padding:.55rem;border-radius:10px;cursor:pointer;text-align:center;
   background:rgba(255,255,255,.04);border:1.5px solid rgba(200,160,255,.25);
-  color:rgba(230,220,255,.75);font-family:'IM Fell English',serif;font-size:.85rem;transition:all .18s;
+  color:rgba(230,220,255,.75);font-family:var(--font-body,'IM Fell English'),serif;font-size:.85rem;transition:all .18s;
 }
 .cust-bg-btn:hover{border-color:#D29DFF;color:#FFD700;}
 .cust-bg-btn.on{background:rgba(200,100,255,.22);border-color:#D29DFF;color:#FFD700;box-shadow:0 0 12px rgba(200,100,255,.4);}
 .cust-upload-btn{
   display:block;width:100%;text-align:center;padding:.6rem;border-radius:10px;cursor:pointer;
   background:rgba(99,230,255,.08);border:1.5px dashed rgba(99,230,255,.4);
-  color:#63E6FF;font-family:'Cinzel Decorative',serif;font-size:.7rem;letter-spacing:.08em;
+  color:#63E6FF;font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.7rem;letter-spacing:.08em;
   transition:all .18s;
 }
 .cust-upload-btn:hover{background:rgba(99,230,255,.18);border-color:#63E6FF;}
@@ -1760,7 +1833,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   40%,60%  { transform: rotate(90deg); }
 }
 #rotate-msg {
-  font-family: 'Cinzel Decorative', serif;
+  font-family: var(--font-deco,'Cinzel Decorative'), serif;
   font-size: .95rem;
   letter-spacing: .16em;
   color: #63E6FF;
@@ -1768,7 +1841,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   line-height: 1.7;
 }
 #rotate-sub {
-  font-family: 'IM Fell English', serif;
+  font-family: var(--font-body,'IM Fell English'), serif;
   font-size: .78rem;
   font-style: italic;
   color: rgba(200,180,255,.42);
@@ -1793,7 +1866,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   #bottom-dock.collapsed { transform: translateY(161px) !important; }
   #spectroid-bar { bottom: 161px !important; width: 80vw !important; }
 
-  .dcell { height: 64px !important; } /* #52 : +36% vs #32 (45px→61px) ; #154 : +3px */
+  .dcell { height: calc(64px * var(--dock-cell-scale,1)) !important; } /* #52 : +36% vs #32 (45px→61px) ; #154 : +3px ; #155 : réglable */
   .dcell-name { font-size: .82rem !important; } /* #72 : réduit, "Aléatoire"/"Paramètres" débordaient */
   .dcell-sub  { font-size: .88rem !important; } /* #72 : réduit + retour à la ligne (cf. règle de base) au lieu de nowrap */
   .dcell-extra { width: 34px !important; height: 34px !important; } /* #52 : -36% vs #32 (53px→34px) */
@@ -1841,7 +1914,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   border:1px solid rgba(200,170,255,.16);border-radius:9px;flex-direction:column;gap:.35rem;}
 .sfm-row{display:flex;gap:.35rem;align-items:center;}
 .sfm-row input[type=text]{flex:1;background:rgba(20,8,40,.7);border:1px solid rgba(200,170,255,.25);
-  border-radius:6px;color:#F3D9FF;font-family:'IM Fell English',serif;font-size:.78rem;padding:.3rem .5rem;}
+  border-radius:6px;color:#F3D9FF;font-family:var(--font-body,'IM Fell English'),serif;font-size:.78rem;padding:.3rem .5rem;}
 .sfm-del{font-size:.7rem;padding:.28rem .45rem;background:transparent;border:1px solid rgba(255,142,142,.35);
   color:rgba(255,142,142,.75);border-radius:6px;cursor:pointer;flex-shrink:0;}
 
@@ -1866,7 +1939,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   background:rgba(1,3,6,.97);backdrop-filter:blur(14px);padding:14px;}
 #sample-editor-modal.open{display:flex;}
 .sed-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;gap:.5rem;}
-.sed-title{font-family:'Cinzel Decorative',serif;font-size:.85rem;color:#F3D9FF;letter-spacing:.05em;
+.sed-title{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.85rem;color:#F3D9FF;letter-spacing:.05em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
 #sed-wave-wrap{position:relative;height:140px;background:rgba(0,0,0,.35);border:1px solid rgba(200,160,255,.2);
   border-radius:10px;overflow:hidden;touch-action:none;}
@@ -1878,13 +1951,13 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 #sed-handle-in::after{content:'◂';}
 #sed-handle-out::after{content:'▸';}
 .sed-transport{display:flex;gap:.4rem;align-items:center;margin-top:.6rem;}
-.sed-time{font-family:'Cinzel Decorative',serif;font-size:.72rem;color:rgba(220,200,255,.7);min-width:48px;text-align:center;}
+.sed-time{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.72rem;color:rgba(220,200,255,.7);min-width:48px;text-align:center;}
 .sed-actions{display:flex;gap:.4rem;margin-top:.8rem;}
 .sed-note{font-size:.66rem;color:rgba(200,170,255,.55);font-style:italic;margin-top:.5rem;min-height:1em;}
 /* #16 : zoom/dézoom */
 .sed-zoom-row{display:flex;gap:.4rem;align-items:center;margin-bottom:.5rem;}
 .fbf-step.sm{padding:.28rem .55rem;font-size:.68rem;}
-.sed-zoom-val{font-family:'Cinzel Decorative',serif;font-size:.7rem;color:rgba(220,200,255,.7);min-width:44px;text-align:center;}
+.sed-zoom-val{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.7rem;color:rgba(220,200,255,.7);min-width:44px;text-align:center;}
 .sed-hint{font-size:.62rem;color:rgba(200,170,255,.4);font-style:italic;margin-top:.35rem;}
 /* #17 : marqueurs + menu d'action flottant */
 #sed-marker-menu{position:absolute;top:6px;transform:translateX(-50%);display:flex;gap:.25rem;
@@ -1903,7 +1976,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 .dqa-inner{width:100%;max-width:480px;max-height:78vh;overflow-y:auto;background:rgba(10,4,24,.97);
   border:1px solid rgba(200,170,255,.25);border-radius:16px 16px 0 0;padding:1rem;}
 .dqa-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;
-  font-family:'Cinzel Decorative',serif;font-size:.85rem;color:#F3D9FF;}
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.85rem;color:#F3D9FF;}
 .dqa-section-t{font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.08em;font-style:italic;margin:.6rem 0 .3rem;}
 .dqa-toggles{display:flex;flex-direction:column;gap:.3rem;}
 .dqa-tog-row{display:flex;align-items:center;justify-content:space-between;font-size:.74rem;color:rgba(220,200,255,.85);padding:.2rem 0;}
@@ -1939,8 +2012,8 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 <!-- Splash OmcVibe -->
 <div id="splash-36" class="hide" data-html-import-id="html-import-1" style="display: none;">
   <img onerror="this.style.display='none'" data-html-import-id="html-import-2" data-template-id="img-0" class="canva-image" src="img/omcvibe432-logo.jpg" alt="OmcVibe432">
-  <div class="splash-title canva-container" data-html-import-id="html-import-3" data-template-id="div-1" style="font-family: &quot;Cinzel Decorative&quot;; font-weight: 900; font-size: 27px;">OmcVibe432</div>
-  <div class="splash-sub canva-container" data-html-import-id="html-import-4" data-template-id="div-2" style="color: rgba(255, 210, 130, 0.7); font-family: &quot;IM Fell English&quot;; font-style: italic; font-size: 15px;">✦ Flux Binaural Fractal ✦</div>
+  <div class="splash-title canva-container" data-html-import-id="html-import-3" data-template-id="div-1" style="font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 900; font-size: 27px;">OmcVibe432</div>
+  <div class="splash-sub canva-container" data-html-import-id="html-import-4" data-template-id="div-2" style="color: rgba(255, 210, 130, 0.7); font-family: var(--font-body,&quot;IM Fell English&quot;); font-style: italic; font-size: 15px;">✦ Flux Binaural Fractal ✦</div>
 </div>
 
 <!-- #64 : Lanceur — choix entre les 3 modules, affiché avant l'app -->
@@ -2000,8 +2073,8 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 <canvas id="meta-canvas" width="540" height="1024" style="width: 540px; height: 1024px; cursor: grab; pointer-events: auto;" data-html-import-id="html-import-6"></canvas>
 <div id="sphere-layer" data-html-import-id="html-import-7"><div class="vp-center-wrap vp-solo" id="vp6" data-html-import-id="html-import-8">
     <div class="vp-p  " id="vpc-p6" style="border-color:rgba(255,214,120,.75);background:radial-gradient(circle,rgba(255,255,255,.10) 0%,rgba(255,255,255,0) 55%),url('img/master-freq-logo.jpg') center/cover no-repeat;background-blend-mode:soft-light;box-shadow:0 0 40px rgba(255,190,90,.55),0 0 80px rgba(255,150,60,.22),inset 0 0 20px rgba(255,220,150,.18);backdrop-filter:blur(2px);cursor:pointer;user-select:none;" onmousedown="_vpStart(6,event)" onmouseup="_vpEnd(6)" onmouseleave="_vpCancel()" onmousemove="_vpMove(6,event)" ontouchstart="_vpStart(6,event)" ontouchend="_vpEnd(6)" ontouchmove="_vpMove(6,event)" data-html-import-id="html-import-9">
-      <span class="ms-freq canva-text" id="ms-freq" onclick="event.stopPropagation();openFreqEdit();" data-html-import-id="html-import-11" data-template-id="span-4" style="font-family: &quot;IM Fell English&quot;; font-weight: 700; font-size: 67px;">181</span>
-      <input type="number" id="freq-input-master" min="54" max="475" placeholder="181" autocomplete="off" onkeydown="handleFreqKey(event);" data-html-import-id="html-import-12" data-template-id="input-5" class="canva-input" style="color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 29px;">
+      <span class="ms-freq canva-text" id="ms-freq" onclick="event.stopPropagation();openFreqEdit();" data-html-import-id="html-import-11" data-template-id="span-4" style="font-family: var(--font-body,&quot;IM Fell English&quot;); font-weight: 700; font-size: 67px;">181</span>
+      <input type="number" id="freq-input-master" min="54" max="475" placeholder="181" autocomplete="off" onkeydown="handleFreqKey(event);" data-html-import-id="html-import-12" data-template-id="input-5" class="canva-input" style="color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 29px;">
       <span class="ms-state canva-text" id="ms-state" data-html-import-id="html-import-13" data-template-id="span-6" style="color: rgba(220, 180, 255, 0.7); font-weight: 700; font-style: italic; font-size: 14px;">BINAURAL</span>
     </div></div></div>
 
@@ -2020,14 +2093,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Afficher / masquer les oscillateurs">+</button>
       <button class="dcell dcell-red canva-button" id="dcRed" title="Tap : Options Aléatoire · Appui long : Solo fréquence maître" data-html-import-id="html-import-17" data-template-id="button-8" style="background: rgba(255, 70, 70, 0.14); color: rgb(255, 142, 142);">
         <span class="dcell-gear">⚙</span>
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Option Jeu Aléatoire</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Option Jeu Aléatoire</b></span>
       </button>
     </div>
     <!-- VERT — Effet Audio : tap=ouvrir Effet · long=Effet Aléatoire (≤72%) · sphères=raccourcis -->
     <div class="dcell-wrap" data-html-import-id="html-import-31">
       <button class="dcell dcell-green canva-button" id="dcGreen" title="Tap : Effet · Appui long : Effet Aléatoire (≤72%)" data-html-import-id="html-import-32" data-template-id="button-19" style="background: rgba(90, 255, 160, 0.13); color: rgb(140, 255, 192);">
         <span class="dcell-gear">⚙</span>
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-33" data-template-id="span-20" style="color: rgb(140, 255, 192);"><b class="dcell-name canva-text" data-html-import-id="html-import-34" data-template-id="b-21" style="color: rgb(140, 255, 192); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Effet Audio</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-33" data-template-id="span-20" style="color: rgb(140, 255, 192);"><b class="dcell-name canva-text" data-html-import-id="html-import-34" data-template-id="b-21" style="color: rgb(140, 255, 192); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Effet Audio</b></span>
       </button>
       <button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra" title="Ouvre le menu FX géométrie">+</button>
     </div>
@@ -2060,14 +2133,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra" title="Solo sample + fréquence maître">+</button>
       <button class="dcell dcell-orange canva-button" id="dcOrange" title="Tap : Samples · Appui long : jeu aléatoire sur fréquence du sample" data-html-import-id="html-import-23" data-template-id="button-13" style="background: rgba(255, 150, 40, 0.14); color: rgb(255, 192, 112);">
         <span class="dcell-gear">⚙</span>
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-24" data-template-id="span-14" style="color: rgb(255, 192, 112);"><b class="dcell-name canva-text" data-html-import-id="html-import-25" data-template-id="b-15" style="color: rgb(255, 192, 112); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Samples</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-24" data-template-id="span-14" style="color: rgb(255, 192, 112);"><b class="dcell-name canva-text" data-html-import-id="html-import-25" data-template-id="b-15" style="color: rgb(255, 192, 112); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Samples</b></span>
       </button>
     </div>
     <!-- BLEU — Paramètres : tap=ouvrir · long=ouvrir Preset · sphère=raccourci -->
     <div class="dcell-wrap" data-html-import-id="html-import-35">
       <button class="dcell dcell-blue canva-button" id="dcBlue" title="Tap : Paramètres · Appui long : Preset" data-html-import-id="html-import-36" data-template-id="button-22" style="background: rgba(60, 170, 255, 0.14); color: rgb(120, 198, 255);">
         <span class="dcell-gear">⚙</span>
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-37" data-template-id="span-23" style="color: rgb(120, 198, 255);"><b class="dcell-name canva-text" data-html-import-id="html-import-38" data-template-id="b-24" style="color: rgb(120, 198, 255); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Paramètres</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-37" data-template-id="span-23" style="color: rgb(120, 198, 255);"><b class="dcell-name canva-text" data-html-import-id="html-import-38" data-template-id="b-24" style="color: rgb(120, 198, 255); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Paramètres</b></span>
       </button>
       <button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra" title="Ajouter le jeu au preset">+</button>
     </div>
@@ -2080,118 +2153,194 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 
 <!-- Panel : Paramètres (menu déroulant de tous les menus) — droite -->
 <div class="pan-right canva-container" id="panParams" data-html-import-id="html-import-40" data-template-id="div-26" style="background: rgba(1, 3, 6, 0.97);">
-  <div class="pct canva-container" data-html-import-id="html-import-41" data-template-id="div-27" style="color: rgb(0, 204, 255); font-family: &quot;IM Fell English&quot;; font-size: 8px;">⚙ Paramètres</div>
+  <div class="pct canva-container" data-html-import-id="html-import-41" data-template-id="div-27" style="color: rgb(0, 204, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 8px;">⚙ Paramètres</div>
   <div class="params-menu" data-html-import-id="html-import-42">
-    <button class="params-item canva-button" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panFX')" data-html-import-id="html-import-43" data-template-id="button-28"><canva-inline-text data-template-id="canva-inline-text-29" class="canva-text" style="color: #FFD700; font-size: 22px;">✦</canva-inline-text><span data-html-import-id="html-import-44" data-template-id="span-30" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Effet</span></button>
-    <button class="params-item canva-button" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panRand')" data-html-import-id="html-import-45" data-template-id="button-31"><canva-inline-text data-template-id="canva-inline-text-32" class="canva-text" style="color: #FFD700; font-size: 22px;">⚄</canva-inline-text><span data-html-import-id="html-import-46" data-template-id="span-33" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Options Aléatoire</span></button>
-    <button class="params-item canva-button" style="--ic: #60D8FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panGeo')" data-html-import-id="html-import-47" data-template-id="button-34"><canva-inline-text data-template-id="canva-inline-text-35" class="canva-text" style="color: #FFD700; font-size: 22px;">⊞</canva-inline-text><span data-html-import-id="html-import-48" data-template-id="span-36" class="canva-text" style="color: color(srgb 0.501176 0.877647 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">FX3D · Géométrie</span></button>
-    <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panPresets')" data-html-import-id="html-import-49" data-template-id="button-37"><canva-inline-text data-template-id="canva-inline-text-38" class="canva-text" style="color: #FFD700; font-size: 22px;">⊙</canva-inline-text><span data-html-import-id="html-import-50" data-template-id="span-39" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Presets</span></button>
-    <button class="params-item canva-button" style="--ic: #FF9A8B; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panSamples')" data-html-import-id="html-import-51" data-template-id="button-40"><canva-inline-text data-template-id="canva-inline-text-41" class="canva-text" style="color: #FFD700; font-size: 22px;">◎</canva-inline-text><span data-html-import-id="html-import-52" data-template-id="span-42" class="canva-text" style="color: color(srgb 1 0.683137 0.636078); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Samples</span></button>
-    <button class="params-item canva-button" style="--ic: #FFB0FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panNotice')" data-html-import-id="html-import-53" data-template-id="button-43"><canva-inline-text data-template-id="canva-inline-text-44" class="canva-text" style="color: #FFD700; font-size: 22px;">≡</canva-inline-text><span data-html-import-id="html-import-54" data-template-id="span-45" class="canva-text" style="color: color(srgb 1 0.752157 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Notice &amp; Thème</span></button>
-    <button class="params-item canva-button" id="btn-advanced" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleAdvanced()" data-html-import-id="html-import-55" data-template-id="button-46"><canva-inline-text data-template-id="canva-inline-text-47" class="canva-text" style="color: #FFD700; font-size: 22px;">⊹</canva-inline-text><span data-html-import-id="html-import-56" data-template-id="span-48" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Mode avancé (6 sphères) : OFF</span></button>
-    <button class="params-item canva-button" id="btn-vislite" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleVisLite()" data-html-import-id="html-import-57" data-template-id="button-49"><canva-inline-text data-template-id="canva-inline-text-50" class="canva-text" style="color: #FFD700; font-size: 22px;">◐</canva-inline-text><span data-html-import-id="html-import-58" data-template-id="span-51" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Visuel léger : OFF</span></button>
+    <button class="params-item canva-button" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panFX')" data-html-import-id="html-import-43" data-template-id="button-28"><canva-inline-text data-template-id="canva-inline-text-29" class="canva-text" style="color: #FFD700; font-size: 22px;">✦</canva-inline-text><span data-html-import-id="html-import-44" data-template-id="span-30" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Effet</span></button>
+    <button class="params-item canva-button" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panRand')" data-html-import-id="html-import-45" data-template-id="button-31"><canva-inline-text data-template-id="canva-inline-text-32" class="canva-text" style="color: #FFD700; font-size: 22px;">⚄</canva-inline-text><span data-html-import-id="html-import-46" data-template-id="span-33" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Options Aléatoire</span></button>
+    <button class="params-item canva-button" style="--ic: #60D8FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panGeo')" data-html-import-id="html-import-47" data-template-id="button-34"><canva-inline-text data-template-id="canva-inline-text-35" class="canva-text" style="color: #FFD700; font-size: 22px;">⊞</canva-inline-text><span data-html-import-id="html-import-48" data-template-id="span-36" class="canva-text" style="color: color(srgb 0.501176 0.877647 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">FX3D · Géométrie</span></button>
+    <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panPresets')" data-html-import-id="html-import-49" data-template-id="button-37"><canva-inline-text data-template-id="canva-inline-text-38" class="canva-text" style="color: #FFD700; font-size: 22px;">⊙</canva-inline-text><span data-html-import-id="html-import-50" data-template-id="span-39" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Presets</span></button>
+    <button class="params-item canva-button" style="--ic: #FF9A8B; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panSamples')" data-html-import-id="html-import-51" data-template-id="button-40"><canva-inline-text data-template-id="canva-inline-text-41" class="canva-text" style="color: #FFD700; font-size: 22px;">◎</canva-inline-text><span data-html-import-id="html-import-52" data-template-id="span-42" class="canva-text" style="color: color(srgb 1 0.683137 0.636078); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Samples</span></button>
+    <button class="params-item canva-button" style="--ic: #FFB0FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panNotice')" data-html-import-id="html-import-53" data-template-id="button-43"><canva-inline-text data-template-id="canva-inline-text-44" class="canva-text" style="color: #FFD700; font-size: 22px;">≡</canva-inline-text><span data-html-import-id="html-import-54" data-template-id="span-45" class="canva-text" style="color: color(srgb 1 0.752157 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Notice &amp; Thème</span></button>
+    <button class="params-item canva-button" id="btn-advanced" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleAdvanced()" data-html-import-id="html-import-55" data-template-id="button-46"><canva-inline-text data-template-id="canva-inline-text-47" class="canva-text" style="color: #FFD700; font-size: 22px;">⊹</canva-inline-text><span data-html-import-id="html-import-56" data-template-id="span-48" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Mode avancé (6 sphères) : OFF</span></button>
+    <button class="params-item canva-button" id="btn-vislite" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleVisLite()" data-html-import-id="html-import-57" data-template-id="button-49"><canva-inline-text data-template-id="canva-inline-text-50" class="canva-text" style="color: #FFD700; font-size: 22px;">◐</canva-inline-text><span data-html-import-id="html-import-58" data-template-id="span-51" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Visuel léger : OFF</span></button>
     <!-- #154 : retiré du menu à la demande explicite — le flux binaural
          reste actif écran éteint / app en arrière-plan (service natif
          Android de premier plan) SANS réglage utilisateur désormais, cf.
          _enableBackgroundAudio/_disableBackgroundAudio. -->
-    <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panCustom')" data-html-import-id="html-import-59" data-template-id="button-52"><canva-inline-text data-template-id="canva-inline-text-53" class="canva-text" style="color: #FFD700; font-size: 22px;">◈</canva-inline-text><span data-html-import-id="html-import-60" data-template-id="span-54" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Personnaliser l'interface</span></button>
-    <button class="params-item canva-button" style="--ic: #B0D8FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panTuto')"><span style="color:#FFD700;font-size:22px;">✎</span><span style="color:#B0D8FF;font-family:'Cinzel Decorative';font-size:14px;">Tutoriel</span></button>
+    <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panCustom')" data-html-import-id="html-import-59" data-template-id="button-52"><canva-inline-text data-template-id="canva-inline-text-53" class="canva-text" style="color: #FFD700; font-size: 22px;">◈</canva-inline-text><span data-html-import-id="html-import-60" data-template-id="span-54" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Personnaliser l'interface</span></button>
+    <!-- #155 : Créateur — police/taille, tailles cellules/chiffres, couleur,
+         repositionnement libre (sphères + cellules dock), stickers 7 sphères. -->
+    <button class="params-item canva-button" style="--ic: #FF9AE0;" onclick="openTab('panCreator')"><span>✧</span><span>Créateur</span></button>
+    <button class="params-item canva-button" style="--ic: #B0D8FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panTuto')"><span style="color:#FFD700;font-size:22px;">✎</span><span style="color:#B0D8FF;font-family:var(--font-deco,'Cinzel Decorative');font-size:14px;">Tutoriel</span></button>
+  </div>
+</div>
+
+<!-- Panel : Créateur — personnalisation avancée (#155) -->
+<div class="pan-right canva-container" id="panCreator">
+  <div class="pct" style="color:#FF9AE0;">✧ Créateur</div>
+  <div class="cust-hint">Tout ce qu'il faut pour personnaliser OmcVibe à ta façon : police, tailles, couleurs, position libre des sphères/cellules, et tes propres images sur chacune des 7 sphères.</div>
+
+  <div class="creator-sec">
+    <div class="creator-sec-title">Police & taille du texte</div>
+    <div class="creator-row">
+      <span class="creator-lbl">Police des titres</span>
+      <select id="cr-font-deco" onchange="setCreatorFontDeco(this.value)">
+        <option value="Cinzel Decorative">Cinzel Decorative (défaut)</option>
+        <option value="MedievalSharp">MedievalSharp</option>
+        <option value="Cormorant Garamond">Cormorant Garamond</option>
+        <option value="Marcellus">Marcellus</option>
+        <option value="Philosopher">Philosopher</option>
+        <option value="Uncial Antiqua">Uncial Antiqua</option>
+        <option value="Cinzel">Cinzel</option>
+      </select>
+    </div>
+    <div class="creator-row">
+      <span class="creator-lbl">Police du texte</span>
+      <select id="cr-font-body" onchange="setCreatorFontBody(this.value)">
+        <option value="IM Fell English">IM Fell English (défaut)</option>
+        <option value="Cormorant Garamond">Cormorant Garamond</option>
+        <option value="EB Garamond">EB Garamond</option>
+        <option value="Crimson Text">Crimson Text</option>
+        <option value="Spectral">Spectral</option>
+        <option value="Marcellus">Marcellus</option>
+      </select>
+    </div>
+    <div class="creator-row">
+      <!-- #155 : réutilise le réglage global existant (Personnaliser
+           l'interface → setUISize), pas de doublon. -->
+      <span class="creator-lbl">Taille du texte</span>
+      <input type="range" id="cr-font-scale" min="80" max="140" step="5" value="100" oninput="setUISize(this.value)">
+      <span class="creator-val" id="cr-font-scale-v">100%</span>
+    </div>
+  </div>
+
+  <div class="creator-sec">
+    <div class="creator-sec-title">Cellules, chiffres & couleur</div>
+    <div class="creator-row">
+      <span class="creator-lbl">Taille cellules dock</span>
+      <input type="range" id="cr-dock-scale" min="70" max="140" step="1" value="100" oninput="setCreatorDockScale(this.value)">
+      <span class="creator-val" id="cr-dock-scale-v">100%</span>
+    </div>
+    <div class="creator-row">
+      <span class="creator-lbl">Taille chiffres sphères</span>
+      <input type="range" id="cr-digit-scale" min="50" max="180" step="1" value="100" oninput="setCreatorDigitScale(this.value)">
+      <span class="creator-val" id="cr-digit-scale-v">100%</span>
+    </div>
+    <div class="creator-row">
+      <span class="creator-lbl">Ambiance couleur</span>
+      <input type="range" id="cr-hue" min="-180" max="180" step="1" value="0" oninput="setCreatorHue(this.value)">
+      <span class="creator-val" id="cr-hue-v">0°</span>
+    </div>
+    <button class="cr-mini-btn" onclick="resetCreatorAppearance()" style="align-self:flex-start;">↺ Réinitialiser police/tailles/couleur</button>
+  </div>
+
+  <div class="creator-sec">
+    <div class="creator-sec-title">Repositionnement libre</div>
+    <div class="cust-hint">Active le mode, puis glisse n'importe quelle sphère (oscillateurs + maître) ou cellule du dock où tu veux à l'écran. Désactive pour retrouver l'usage normal (tap/appui long).</div>
+    <button class="creator-btn2" id="cr-reposition-btn" style="--ic:#FFD700;" onclick="toggleCreatorReposition()"><span class="ico">✋</span><span>Mode repositionnement : OFF</span></button>
+    <button class="creator-btn2" style="--ic:#FF8E8E;" onclick="resetCreatorPositions()"><span class="ico">↺</span><span>Réinitialiser les positions</span></button>
+  </div>
+
+  <div class="creator-sec">
+    <div class="creator-sec-title">Stickers personnalisés (7 sphères)</div>
+    <div class="cust-hint">Importe une image par sphère (maître + 6 canaux), ajuste cadrage/zoom et filtre couleur. L'image remplace le rendu de fond ; le halo de couleur reste visible autour.</div>
+    <div id="cr-stickers-list"></div>
   </div>
 </div>
 
 <!-- Panel : Personnaliser l'interface — raccourcis, apparence, fond d'écran -->
 <div class="pan-right canva-container" id="panCustom" data-html-import-id="html-import-61" data-template-id="div-55" style="background: rgba(1, 3, 6, 0.97);">
-  <div class="pct canva-container" data-html-import-id="html-import-62" data-template-id="div-56" style="color: rgb(0, 204, 255); font-family: &quot;IM Fell English&quot;; font-size: 8px;">◈ Personnaliser l'interface</div>
+  <div class="pct canva-container" data-html-import-id="html-import-62" data-template-id="div-56" style="color: rgb(0, 204, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 8px;">◈ Personnaliser l'interface</div>
   <div id="panel-custom-body" data-html-import-id="html-import-63">
     <div class="cust-hint canva-container" data-html-import-id="html-import-64" data-template-id="div-57" style="color: rgba(200, 180, 255, 0.5); font-style: italic; font-size: 12px;">Choisis librement ce que fait chaque case du dock, pour chacune de ses 3 actions.</div>
-    <div class="cust-cell-block canva-container" data-html-import-id="html-import-65" data-template-id="div-58" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-66" data-template-id="div-59" style="color: rgb(255, 208, 96); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Rouge</div>
+    <div class="cust-cell-block canva-container" data-html-import-id="html-import-65" data-template-id="div-58" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-66" data-template-id="div-59" style="color: rgb(255, 208, 96); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Rouge</div>
       <div class="cust-slot" data-html-import-id="html-import-67">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-68" data-template-id="span-60" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Tap</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('red','tap',this.value)" data-html-import-id="html-import-69" data-template-id="select-61" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('red','tap',this.value)" data-html-import-id="html-import-69" data-template-id="select-61" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-70" data-template-id="option-62" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" selected="" data-html-import-id="html-import-71" data-template-id="option-63" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-72" data-template-id="option-64" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-73" data-template-id="option-65" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-74" data-template-id="option-66" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-75" data-template-id="option-67" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-76" data-template-id="option-68" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-77" data-template-id="option-69" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-78" data-template-id="option-70" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-80" data-template-id="option-72" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-81" data-template-id="option-73" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-82" data-template-id="option-74" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-83" data-template-id="option-75" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-84" data-template-id="option-76" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-85" data-template-id="option-77" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-86" data-template-id="option-78" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-87" data-template-id="option-79" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-88" data-template-id="option-80" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-89">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-90" data-template-id="span-81" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Appui long</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('red','hold',this.value)" data-html-import-id="html-import-91" data-template-id="select-82" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('red','hold',this.value)" data-html-import-id="html-import-91" data-template-id="select-82" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-92" data-template-id="option-83" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-93" data-template-id="option-84" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" selected="" data-html-import-id="html-import-94" data-template-id="option-85" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-95" data-template-id="option-86" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-96" data-template-id="option-87" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-97" data-template-id="option-88" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-98" data-template-id="option-89" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-99" data-template-id="option-90" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-100" data-template-id="option-91" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-102" data-template-id="option-93" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-103" data-template-id="option-94" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-104" data-template-id="option-95" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-105" data-template-id="option-96" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-106" data-template-id="option-97" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-107" data-template-id="option-98" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-108" data-template-id="option-99" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-109" data-template-id="option-100" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-110" data-template-id="option-101" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-111">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-112" data-template-id="span-102" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Bouton extra</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('red','extra',this.value)" data-html-import-id="html-import-113" data-template-id="select-103" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('red','extra',this.value)" data-html-import-id="html-import-113" data-template-id="select-103" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-114" data-template-id="option-104" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-115" data-template-id="option-105" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-116" data-template-id="option-106" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" selected="" data-html-import-id="html-import-117" data-template-id="option-107" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-118" data-template-id="option-108" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-119" data-template-id="option-109" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-120" data-template-id="option-110" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-121" data-template-id="option-111" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-122" data-template-id="option-112" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-124" data-template-id="option-114" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-125" data-template-id="option-115" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-126" data-template-id="option-116" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-127" data-template-id="option-117" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-128" data-template-id="option-118" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-129" data-template-id="option-119" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-130" data-template-id="option-120" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-131" data-template-id="option-121" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-132" data-template-id="option-122" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
-      </div></div><div class="cust-cell-block canva-container" data-html-import-id="html-import-133" data-template-id="div-123" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-134" data-template-id="div-124" style="color: rgb(255, 208, 96); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Orange</div>
+      </div></div><div class="cust-cell-block canva-container" data-html-import-id="html-import-133" data-template-id="div-123" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-134" data-template-id="div-124" style="color: rgb(255, 208, 96); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Orange</div>
       <div class="cust-slot" data-html-import-id="html-import-135">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-136" data-template-id="span-125" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Tap</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('orange','tap',this.value)" data-html-import-id="html-import-137" data-template-id="select-126" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('orange','tap',this.value)" data-html-import-id="html-import-137" data-template-id="select-126" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-138" data-template-id="option-127" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-139" data-template-id="option-128" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-140" data-template-id="option-129" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-141" data-template-id="option-130" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-142" data-template-id="option-131" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" selected="" data-html-import-id="html-import-143" data-template-id="option-132" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-144" data-template-id="option-133" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-145" data-template-id="option-134" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-146" data-template-id="option-135" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-148" data-template-id="option-137" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-149" data-template-id="option-138" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-150" data-template-id="option-139" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-151" data-template-id="option-140" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-152" data-template-id="option-141" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-153" data-template-id="option-142" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-154" data-template-id="option-143" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-155" data-template-id="option-144" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-156" data-template-id="option-145" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-157">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-158" data-template-id="span-146" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Appui long</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('orange','hold',this.value)" data-html-import-id="html-import-159" data-template-id="select-147" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('orange','hold',this.value)" data-html-import-id="html-import-159" data-template-id="select-147" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-160" data-template-id="option-148" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-161" data-template-id="option-149" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-162" data-template-id="option-150" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-163" data-template-id="option-151" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-164" data-template-id="option-152" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-165" data-template-id="option-153" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" selected="" data-html-import-id="html-import-166" data-template-id="option-154" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-167" data-template-id="option-155" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-168" data-template-id="option-156" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-170" data-template-id="option-158" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-171" data-template-id="option-159" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-172" data-template-id="option-160" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-173" data-template-id="option-161" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-174" data-template-id="option-162" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-175" data-template-id="option-163" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-176" data-template-id="option-164" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-177" data-template-id="option-165" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-178" data-template-id="option-166" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-179">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-180" data-template-id="span-167" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Bouton extra</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('orange','extra',this.value)" data-html-import-id="html-import-181" data-template-id="select-168" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('orange','extra',this.value)" data-html-import-id="html-import-181" data-template-id="select-168" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-182" data-template-id="option-169" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-183" data-template-id="option-170" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-184" data-template-id="option-171" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-185" data-template-id="option-172" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-186" data-template-id="option-173" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-187" data-template-id="option-174" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-188" data-template-id="option-175" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" selected="" data-html-import-id="html-import-189" data-template-id="option-176" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-190" data-template-id="option-177" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-192" data-template-id="option-179" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-193" data-template-id="option-180" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-194" data-template-id="option-181" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-195" data-template-id="option-182" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-196" data-template-id="option-183" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-197" data-template-id="option-184" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-198" data-template-id="option-185" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-199" data-template-id="option-186" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-200" data-template-id="option-187" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
-      </div></div><div class="cust-cell-block canva-container" data-html-import-id="html-import-201" data-template-id="div-188" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-202" data-template-id="div-189" style="color: rgb(255, 208, 96); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Jaune (Flux)</div>
+      </div></div><div class="cust-cell-block canva-container" data-html-import-id="html-import-201" data-template-id="div-188" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-202" data-template-id="div-189" style="color: rgb(255, 208, 96); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Jaune (Flux)</div>
       <div class="cust-slot" data-html-import-id="html-import-203">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-204" data-template-id="span-190" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Tap</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('flux','tap',this.value)" data-html-import-id="html-import-205" data-template-id="select-191" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('flux','tap',this.value)" data-html-import-id="html-import-205" data-template-id="select-191" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-206" data-template-id="option-192" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-207" data-template-id="option-193" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-208" data-template-id="option-194" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-209" data-template-id="option-195" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-210" data-template-id="option-196" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-211" data-template-id="option-197" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-212" data-template-id="option-198" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-213" data-template-id="option-199" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" selected="" data-html-import-id="html-import-214" data-template-id="option-200" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-216" data-template-id="option-202" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-217" data-template-id="option-203" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-218" data-template-id="option-204" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-219" data-template-id="option-205" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-220" data-template-id="option-206" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-221" data-template-id="option-207" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-222" data-template-id="option-208" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-223" data-template-id="option-209" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-224" data-template-id="option-210" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-225">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-226" data-template-id="span-211" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Appui long</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('flux','hold',this.value)" data-html-import-id="html-import-227" data-template-id="select-212" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('flux','hold',this.value)" data-html-import-id="html-import-227" data-template-id="select-212" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-228" data-template-id="option-213" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-229" data-template-id="option-214" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-230" data-template-id="option-215" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-231" data-template-id="option-216" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-232" data-template-id="option-217" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-233" data-template-id="option-218" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-234" data-template-id="option-219" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-235" data-template-id="option-220" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-236" data-template-id="option-221" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-238" data-template-id="option-223" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-239" data-template-id="option-224" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-240" data-template-id="option-225" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-241" data-template-id="option-226" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-242" data-template-id="option-227" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-243" data-template-id="option-228" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-244" data-template-id="option-229" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-245" data-template-id="option-230" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-246" data-template-id="option-231" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-247">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-248" data-template-id="span-232" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Bouton extra</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('flux','extra',this.value)" data-html-import-id="html-import-249" data-template-id="select-233" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('flux','extra',this.value)" data-html-import-id="html-import-249" data-template-id="select-233" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-250" data-template-id="option-234" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-251" data-template-id="option-235" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-252" data-template-id="option-236" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-253" data-template-id="option-237" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-254" data-template-id="option-238" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-255" data-template-id="option-239" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-256" data-template-id="option-240" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-257" data-template-id="option-241" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-258" data-template-id="option-242" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" selected="" data-html-import-id="html-import-260" data-template-id="option-244" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-261" data-template-id="option-245" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-262" data-template-id="option-246" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-263" data-template-id="option-247" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-264" data-template-id="option-248" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-265" data-template-id="option-249" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-266" data-template-id="option-250" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-267" data-template-id="option-251" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-268" data-template-id="option-252" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
-      </div></div><div class="cust-cell-block canva-container" data-html-import-id="html-import-269" data-template-id="div-253" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-270" data-template-id="div-254" style="color: rgb(255, 208, 96); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Vert</div>
+      </div></div><div class="cust-cell-block canva-container" data-html-import-id="html-import-269" data-template-id="div-253" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-270" data-template-id="div-254" style="color: rgb(255, 208, 96); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Vert</div>
       <div class="cust-slot" data-html-import-id="html-import-271">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-272" data-template-id="span-255" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Tap</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('green','tap',this.value)" data-html-import-id="html-import-273" data-template-id="select-256" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('green','tap',this.value)" data-html-import-id="html-import-273" data-template-id="select-256" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-274" data-template-id="option-257" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-275" data-template-id="option-258" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-276" data-template-id="option-259" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-277" data-template-id="option-260" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-278" data-template-id="option-261" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-279" data-template-id="option-262" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-280" data-template-id="option-263" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-281" data-template-id="option-264" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-282" data-template-id="option-265" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-284" data-template-id="option-267" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" selected="" data-html-import-id="html-import-285" data-template-id="option-268" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-286" data-template-id="option-269" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-287" data-template-id="option-270" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-288" data-template-id="option-271" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-289" data-template-id="option-272" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-290" data-template-id="option-273" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-291" data-template-id="option-274" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-292" data-template-id="option-275" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-293">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-294" data-template-id="span-276" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Appui long</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('green','hold',this.value)" data-html-import-id="html-import-295" data-template-id="select-277" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('green','hold',this.value)" data-html-import-id="html-import-295" data-template-id="select-277" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-296" data-template-id="option-278" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-297" data-template-id="option-279" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-298" data-template-id="option-280" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-299" data-template-id="option-281" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-300" data-template-id="option-282" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-301" data-template-id="option-283" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-302" data-template-id="option-284" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-303" data-template-id="option-285" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-304" data-template-id="option-286" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-306" data-template-id="option-288" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-307" data-template-id="option-289" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" selected="" data-html-import-id="html-import-308" data-template-id="option-290" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-309" data-template-id="option-291" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-310" data-template-id="option-292" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-311" data-template-id="option-293" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-312" data-template-id="option-294" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-313" data-template-id="option-295" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-314" data-template-id="option-296" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-315">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-316" data-template-id="span-297" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Bouton extra</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('green','extra',this.value)" data-html-import-id="html-import-317" data-template-id="select-298" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('green','extra',this.value)" data-html-import-id="html-import-317" data-template-id="select-298" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-318" data-template-id="option-299" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-319" data-template-id="option-300" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-320" data-template-id="option-301" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-321" data-template-id="option-302" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-322" data-template-id="option-303" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-323" data-template-id="option-304" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-324" data-template-id="option-305" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-325" data-template-id="option-306" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-326" data-template-id="option-307" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-328" data-template-id="option-309" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-329" data-template-id="option-310" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-330" data-template-id="option-311" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" selected="" data-html-import-id="html-import-331" data-template-id="option-312" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-332" data-template-id="option-313" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-333" data-template-id="option-314" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-334" data-template-id="option-315" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-335" data-template-id="option-316" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-336" data-template-id="option-317" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
-      </div></div><div class="cust-cell-block canva-container" data-html-import-id="html-import-337" data-template-id="div-318" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-338" data-template-id="div-319" style="color: rgb(255, 208, 96); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Bleu</div>
+      </div></div><div class="cust-cell-block canva-container" data-html-import-id="html-import-337" data-template-id="div-318" style="background: rgba(255, 255, 255, 0.04);"><div class="cust-cell-title canva-container" data-html-import-id="html-import-338" data-template-id="div-319" style="color: rgb(255, 208, 96); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Bleu</div>
       <div class="cust-slot" data-html-import-id="html-import-339">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-340" data-template-id="span-320" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Tap</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('blue','tap',this.value)" data-html-import-id="html-import-341" data-template-id="select-321" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('blue','tap',this.value)" data-html-import-id="html-import-341" data-template-id="select-321" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-342" data-template-id="option-322" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-343" data-template-id="option-323" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-344" data-template-id="option-324" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-345" data-template-id="option-325" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-346" data-template-id="option-326" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-347" data-template-id="option-327" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-348" data-template-id="option-328" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-349" data-template-id="option-329" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-350" data-template-id="option-330" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-352" data-template-id="option-332" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-353" data-template-id="option-333" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-354" data-template-id="option-334" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-355" data-template-id="option-335" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-356" data-template-id="option-336" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" selected="" data-html-import-id="html-import-357" data-template-id="option-337" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-358" data-template-id="option-338" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-359" data-template-id="option-339" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-360" data-template-id="option-340" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-361">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-362" data-template-id="span-341" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Appui long</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('blue','hold',this.value)" data-html-import-id="html-import-363" data-template-id="select-342" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('blue','hold',this.value)" data-html-import-id="html-import-363" data-template-id="select-342" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-364" data-template-id="option-343" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-365" data-template-id="option-344" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-366" data-template-id="option-345" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-367" data-template-id="option-346" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-368" data-template-id="option-347" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-369" data-template-id="option-348" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-370" data-template-id="option-349" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-371" data-template-id="option-350" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-372" data-template-id="option-351" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-374" data-template-id="option-353" style="color: rgb(243, 217, 255);">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-375" data-template-id="option-354" style="color: rgb(243, 217, 255);">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-376" data-template-id="option-355" style="color: rgb(243, 217, 255);">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-377" data-template-id="option-356" style="color: rgb(243, 217, 255);">Random FX</option><option value="openGeo" data-html-import-id="html-import-378" data-template-id="option-357" style="color: rgb(243, 217, 255);">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-379" data-template-id="option-358" style="color: rgb(243, 217, 255);">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-380" data-template-id="option-359" style="color: rgb(243, 217, 255);">Ouvrir Personnaliser l'interface</option><option value="resetAll" selected="" data-html-import-id="html-import-381" data-template-id="option-360" style="color: rgb(243, 217, 255);">Réinitialiser tout</option><option value="toggleFullscreen" data-html-import-id="html-import-382" data-template-id="option-361" style="color: rgb(243, 217, 255);">Plein écran</option>
         </select>
       </div>
       <div class="cust-slot" data-html-import-id="html-import-383">
         <span class="cust-slot-lbl canva-text" data-html-import-id="html-import-384" data-template-id="span-362" style="color: rgba(220, 200, 255, 0.65); font-style: italic; font-size: 11px;">Bouton extra</span>
-        <select class="cust-select canva-input" onchange="setDockMapping('blue','extra',this.value)" data-html-import-id="html-import-385" data-template-id="select-363" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 14px;">
+        <select class="cust-select canva-input" onchange="setDockMapping('blue','extra',this.value)" data-html-import-id="html-import-385" data-template-id="select-363" style="background: rgba(20, 8, 40, 0.85); color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 14px;">
           <option value="none" data-html-import-id="html-import-386" data-template-id="option-364" style="color: rgb(243, 217, 255);">— Aucune —</option><option value="toggleAdvanced" data-html-import-id="html-import-387" data-template-id="option-365" style="color: rgb(243, 217, 255);">Afficher / masquer les sphères</option><option value="openRand" data-html-import-id="html-import-388" data-template-id="option-366" style="color: rgb(243, 217, 255);">Ouvrir Jeu Aléatoire</option><option value="soloMaster" data-html-import-id="html-import-389" data-template-id="option-367" style="color: rgb(243, 217, 255);">Solo fréquence maître</option><option value="randomAll" data-html-import-id="html-import-390" data-template-id="option-368" style="color: rgb(243, 217, 255);">Nouveau jeu aléatoire</option><option value="openSamples" data-html-import-id="html-import-391" data-template-id="option-369" style="color: rgb(243, 217, 255);">Ouvrir Samples</option><option value="sampleAnchor" data-html-import-id="html-import-392" data-template-id="option-370" style="color: rgb(243, 217, 255);">Ancrer le jeu sur le sample</option><option value="sampleStop" data-html-import-id="html-import-393" data-template-id="option-371" style="color: rgb(243, 217, 255);">Stop sample</option><option value="fluxToggle" data-html-import-id="html-import-394" data-template-id="option-372" style="color: rgb(243, 217, 255);">Flux ouvert / fermé</option><option value="recToggle" data-html-import-id="html-import-396" data-template-id="option-374">Enregistrer</option><option value="toggleVisLite" data-html-import-id="html-import-397" data-template-id="option-375">Visuel léger on/off</option><option value="openFX" data-html-import-id="html-import-398" data-template-id="option-376">Ouvrir FX &amp; Master</option><option value="randomFX" data-html-import-id="html-import-399" data-template-id="option-377">Random FX</option><option value="openGeo" data-html-import-id="html-import-400" data-template-id="option-378">Ouvrir FX3D · Géométrie</option><option value="openParams" data-html-import-id="html-import-401" data-template-id="option-379">Ouvrir Paramètres</option><option value="openCustom" data-html-import-id="html-import-402" data-template-id="option-380">Ouvrir Personnaliser l'interface</option><option value="resetAll" data-html-import-id="html-import-403" data-template-id="option-381">Réinitialiser tout</option><option value="toggleFullscreen" selected="" data-html-import-id="html-import-404" data-template-id="option-382">Plein écran</option>
         </select>
       </div></div>
@@ -2546,8 +2695,8 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
   <div style="margin-top:.6rem;padding:.5rem;background:rgba(140,255,200,.05);border:1px solid rgba(140,255,200,.18);border-radius:9px;" class="canva-container">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;">
       <span style="font-size:.7rem;color:rgba(140,255,200,.7);" class="canva-text">Fondamentale</span>
-      <span id="sample-fund-disp" style="font-family:'IM Fell English',serif;font-size:.95rem;color:#8CFFC8;cursor:text;" class="canva-text" onclick="openSampleFundEdit()" title="Toucher pour corriger">—</span>
-      <input type="number" id="sample-fund-input" min="54" max="432" step="0.1" style="display:none;width:76px;font-family:'IM Fell English',serif;font-size:.95rem;color:#8CFFC8;background:rgba(140,255,200,.1);border:1px solid rgba(140,255,200,.45);border-radius:6px;text-align:right;padding:.1rem .3rem;" onkeydown="handleSampleFundKey(event)" onblur="exitSampleFundEdit(true)">
+      <span id="sample-fund-disp" style="font-family:var(--font-body,'IM Fell English'),serif;font-size:.95rem;color:#8CFFC8;cursor:text;" class="canva-text" onclick="openSampleFundEdit()" title="Toucher pour corriger">—</span>
+      <input type="number" id="sample-fund-input" min="54" max="432" step="0.1" style="display:none;width:76px;font-family:var(--font-body,'IM Fell English'),serif;font-size:.95rem;color:#8CFFC8;background:rgba(140,255,200,.1);border:1px solid rgba(140,255,200,.45);border-radius:6px;text-align:right;padding:.1rem .3rem;" onkeydown="handleSampleFundKey(event)" onblur="exitSampleFundEdit(true)">
     </div>
     <div style="display:flex;gap:.4rem;">
       <button class="fbf-step canva-button" style="flex:1;" onclick="sampleAutoGame()">✦ Jeu depuis sample</button>
@@ -5423,8 +5572,12 @@ function buildVesicaPairs() {
   for (let i = 0; i < 6 && !simple; i++) {
     const pair = PAIRS[i];
     const rad  = (HEX_DEG[i] - 90) * Math.PI / 180;
-    const px   = cx + R * Math.cos(rad);
-    const py   = cy + R * Math.sin(rad);
+    // #155 : décalage libre (Créateur → mode repositionnement) — {dx,dy}
+    // additionné à la position calculée, jamais l'inverse (le calcul
+    // "naturel" reste la base, l'utilisateur ne fait que la décaler).
+    const _off = SPHERE_POS[i] || {dx:0,dy:0};
+    const px   = cx + R * Math.cos(rad) + _off.dx;
+    const py   = cy + R * Math.sin(rad) + _off.dy;
     const isMutedP = !!mutedOscs[pair.pingala.id];
     const pF   = calcPFreq(i);
     // #153 : couleur "mandala" pilotée par la BANDE DE FRÉQUENCE réelle du
@@ -5434,6 +5587,14 @@ function buildVesicaPairs() {
     const band  = bandColorFor(pF);
     const c     = band.c;
     const cDark = shadeHex(c, 0.28);
+    // #155 : sticker personnalisé (Créateur) — remplace le fond plat par
+    // l'image importée (cadrage/zoom/filtre réglables), le halo/bordure de
+    // bande reste identique tout autour.
+    const _st = STICKERS[i];
+    const _hasSt = _st && _st.dataUrl;
+    const _bgStyle = _hasSt
+      ? `background:url('${_st.dataUrl}') ${_st.panX}% ${_st.panY}% / ${_st.zoom}% ${_st.zoom}% no-repeat,radial-gradient(circle,${c}55 0%,${c}22 60%,transparent 100%);filter:${_stickerFilterCss(_st)};`
+      : `background:radial-gradient(circle,${c}55 0%,${c}22 60%,transparent 100%);`;
 
     const vp = document.createElement('div');
     vp.className = 'vp-wrap';
@@ -5443,7 +5604,7 @@ function buildVesicaPairs() {
     vp.innerHTML = `
       <div class="vp-p ${isMutedP?'vp-muted':''} ${flowing&&!isMutedP?'vp-live':''}"
            id="vpc-p${i}"
-           style="border-color:${cDark};background:radial-gradient(circle,${c}55 0%,${c}22 60%,transparent 100%);box-shadow:0 0 20px ${cDark}80,0 0 34px ${c}40;cursor:pointer;user-select:none;"
+           style="border-color:${cDark};${_bgStyle}box-shadow:0 0 20px ${cDark}80,0 0 34px ${c}40;cursor:pointer;user-select:none;"
            onmousedown="_vpStart(${i},event)" onmouseup="_vpEnd(${i})" onmouseleave="_vpCancel()" onmousemove="_vpMove(${i},event)"
            ontouchstart="_vpStart(${i},event)" ontouchend="_vpEnd(${i})" ontouchmove="_vpMove(${i},event)">
         <span class="vp-type" style="color:${c}CC">Canal ${i+1}</span>
@@ -5478,6 +5639,13 @@ function buildVesicaPairs() {
   const vcw = document.createElement('div');
   vcw.className = 'vp-center-wrap' + (document.body.classList.contains('mode-simple') ? ' vp-solo' : '');
   vcw.id = 'vp' + MASTER_IDX;
+  // #155 : sticker personnalisé sur la sphère maître — remplace
+  // master-freq-logo.jpg (cadrage/zoom/filtre réglables), halo conservé.
+  const _stM = STICKERS[MASTER_IDX];
+  const _hasStM = _stM && _stM.dataUrl;
+  const _mBgStyle = _hasStM
+    ? `background:radial-gradient(circle,${mcSoft} 0%,transparent 60%),url('${_stM.dataUrl}') ${_stM.panX}% ${_stM.panY}% / ${_stM.zoom}% ${_stM.zoom}% no-repeat;filter:${_stickerFilterCss(_stM)};`
+    : `background:radial-gradient(circle,${mcSoft} 0%,transparent 60%),url('img/master-freq-logo.jpg') center/cover no-repeat;background-blend-mode:soft-light;`;
   // #146 : logo lune/soleil + mandala fourni par l'utilisateur — l'ancien
   // dégradé de couleur pure (mc/mcSoft) reste comme HALO derrière l'image
   // (teinté ∝ fréquence, cf. freqColor/freqColorA) au lieu de remplir le
@@ -5489,7 +5657,7 @@ function buildVesicaPairs() {
   vcw.innerHTML = `
     <div class="vp-p ${isMutedMP?'vp-muted':''} ${flowing&&!isMutedMP?'vp-live':''}"
          id="vpc-p${MASTER_IDX}"
-         style="border-color:${mc};background:radial-gradient(circle,${mcSoft} 0%,transparent 60%),url('img/master-freq-logo.jpg') center/cover no-repeat;background-blend-mode:soft-light;box-shadow:0 0 30px ${mcGlow},0 0 55px ${mcGlow};backdrop-filter:blur(1px);cursor:pointer;user-select:none;"
+         style="border-color:${mc};${_mBgStyle}box-shadow:0 0 30px ${mcGlow},0 0 55px ${mcGlow};backdrop-filter:blur(1px);cursor:pointer;user-select:none;"
          onmousedown="_vpStart(${MASTER_IDX},event)" onmouseup="_vpEnd(${MASTER_IDX})" onmouseleave="_vpCancel()" onmousemove="_vpMove(${MASTER_IDX},event)"
          ontouchstart="_vpStart(${MASTER_IDX},event)" ontouchend="_vpEnd(${MASTER_IDX})" ontouchmove="_vpMove(${MASTER_IDX},event)">
       <span class="ms-freq" id="ms-freq" onclick="event.stopPropagation();openFreqEdit();">${fmtMasterFreqDisplay()}</span>
@@ -5498,6 +5666,15 @@ function buildVesicaPairs() {
       <span class="ms-state" id="ms-state">Binaural</span>
     </div>`;
   layer.appendChild(vcw);
+
+  // #155 : décalage libre (Créateur → mode repositionnement) — appliqué en
+  // plus du transform de base (centrage + --bubble-scale), jamais à la
+  // place : sinon le zoom des bulles se perdrait dès qu'on déplace la
+  // sphère maître.
+  const _offM = SPHERE_POS[MASTER_IDX];
+  if (_offM && (_offM.dx || _offM.dy)) {
+    vcw.style.transform = `translate(-50%,-50%) translate(${_offM.dx}px,${_offM.dy}px) scale(var(--bubble-scale,1))`;
+  }
 
   // #154 : étoile sous la sphère maître elle aussi désormais (même geste que
   // les satellites → ouvre son menu oscillateur), SANS chiffre — cf. .ms-freq
@@ -5622,7 +5799,7 @@ function renderTuto() {
   body.innerHTML = sections.map((s, i) => `
     <div class="accord-header" onclick="toggleAccord('tuto${i}')">
       <span class="accord-arrow${i===0?' open':''}" id="aa-tuto${i}">▶</span>
-      <span style="font-family:'Cinzel Decorative',serif;font-size:.8rem;color:#FFD700;">${s.h}</span>
+      <span style="font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.8rem;color:#FFD700;">${s.h}</span>
     </div>
     <div class="accord-body${i===0?' open':''}" id="ab-tuto${i}">
       <div class="tuto-sec-body">${s.b}</div>
@@ -7863,8 +8040,8 @@ function buildPairHTML(pair, i) {
     <div style="background:${c}26;border-radius:10px;border-left:4px solid ${c}88;margin-bottom:.8rem;">
       <div class="accord-header" onclick="toggleAccord('p${i}')">
         <span class="accord-arrow open" id="aa-p${i}">▶</span>
-        <span style="font-family:'Cinzel Decorative',serif;font-size:.75rem;letter-spacing:.14em;color:${c};font-weight:bold;">☀ PINGALA (DROIT)</span>
-        <span id="pfreq-${i}" style="font-family:'IM Fell English',serif;font-size:1.2rem;color:${c};margin-left:auto;font-weight:bold;">${fmtFreq(pF)}</span>
+        <span style="font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.75rem;letter-spacing:.14em;color:${c};font-weight:bold;">☀ PINGALA (DROIT)</span>
+        <span id="pfreq-${i}" style="font-family:var(--font-body,'IM Fell English'),serif;font-size:1.2rem;color:${c};margin-left:auto;font-weight:bold;">${fmtFreq(pF)}</span>
       </div>
       <div class="accord-body open" id="ab-p${i}" style="padding:0 .8rem .8rem;">
         <div class="block-formula">
@@ -7876,7 +8053,7 @@ function buildPairHTML(pair, i) {
         <div style="display:flex;align-items:center;gap:.4rem;padding:.4rem 0;">
           <span style="font-size:.75rem;font-style:italic;color:rgba(220,190,255,.6);min-width:50px;font-weight:bold;">Vol P</span>
           <input type="range" class="brange" id="pvol-${i}" min="0" max="1" step="0.01" value="${(pair.pingala.vol/VOL_UI_SCALE).toFixed(2)}" style="flex:1;color:${c};" oninput="setVolP(${i},parseFloat(this.value))">
-          <span style="font-family:'IM Fell English',serif;font-size:.85rem;color:rgba(225,200,255,.85);min-width:36px;text-align:right;font-weight:bold;" id="o-pvol-${i}">${(pair.pingala.vol/VOL_UI_SCALE).toFixed(2)}</span>
+          <span style="font-family:var(--font-body,'IM Fell English'),serif;font-size:.85rem;color:rgba(225,200,255,.85);min-width:36px;text-align:right;font-weight:bold;" id="o-pvol-${i}">${(pair.pingala.vol/VOL_UI_SCALE).toFixed(2)}</span>
         </div>
         <div class="bctrl">
           <div class="bctrl-row"><span class="bctrl-label">Ratio harmonique</span></div>
@@ -7901,8 +8078,8 @@ function buildPairHTML(pair, i) {
     <div style="background:${c}1a;border-radius:10px;border-left:4px dashed ${c}55;">
       <div class="accord-header" onclick="toggleAccord('i${i}')">
         <span class="accord-arrow open" id="aa-i${i}">▶</span>
-        <span style="font-family:'Cinzel Decorative',serif;font-size:.75rem;letter-spacing:.14em;color:${c};opacity:.8;font-weight:bold;">☽ IDA (GAUCHE)</span>
-        <span id="ifreq-${i}" style="font-family:'IM Fell English',serif;font-size:1.15rem;color:${c};opacity:.8;margin-left:auto;font-weight:bold;">${fmtFreq(iF)}</span>
+        <span style="font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.75rem;letter-spacing:.14em;color:${c};opacity:.8;font-weight:bold;">☽ IDA (GAUCHE)</span>
+        <span id="ifreq-${i}" style="font-family:var(--font-body,'IM Fell English'),serif;font-size:1.15rem;color:${c};opacity:.8;margin-left:auto;font-weight:bold;">${fmtFreq(iF)}</span>
       </div>
       <div class="accord-body open" id="ab-i${i}" style="padding:0 .8rem .8rem;">
         <div class="block-formula">
@@ -7914,7 +8091,7 @@ function buildPairHTML(pair, i) {
         <div style="display:flex;align-items:center;gap:.4rem;padding:.4rem 0;">
           <span style="font-size:.75rem;font-style:italic;color:rgba(220,190,255,.6);min-width:50px;font-weight:bold;">Vol I</span>
           <input type="range" class="brange" id="ivol-${i}" min="0" max="1" step="0.01" value="${(pair.ida.vol/VOL_UI_SCALE).toFixed(2)}" style="flex:1;color:${c}88;" oninput="setVolI(${i},parseFloat(this.value))">
-          <span style="font-family:'IM Fell English',serif;font-size:.85rem;color:rgba(225,200,255,.85);min-width:36px;text-align:right;font-weight:bold;" id="o-ivol-${i}">${(pair.ida.vol/VOL_UI_SCALE).toFixed(2)}</span>
+          <span style="font-family:var(--font-body,'IM Fell English'),serif;font-size:.85rem;color:rgba(225,200,255,.85);min-width:36px;text-align:right;font-weight:bold;" id="o-ivol-${i}">${(pair.ida.vol/VOL_UI_SCALE).toFixed(2)}</span>
         </div>
         <div class="bctrl">
           <div class="bctrl-row">
@@ -8901,6 +9078,12 @@ function init() {
   _loadExtraPos();
   _loadBubbleSize();
   _loadDisplayFilter();
+  // #155 : module Créateur — police/tailles/couleur, positions libres
+  // (sphères + cellules dock), stickers (async, redessine seule à la fin).
+  _loadCreatorAppearance();
+  _loadSpherePos();
+  _loadCrCellPos();
+  _loadStickers();
   _loadBackground();
   _loadAudioQuality(); // #33 (perf)
   harmonicRandomInit();
@@ -9340,6 +9523,9 @@ function setUISize(pct) {
   document.documentElement.style.fontSize = (16 * pct / 100).toFixed(2) + 'px';
   const v = document.getElementById('uisize-val'); if (v) v.textContent = pct + '%';
   const sl = document.getElementById('uisize-slider'); if (sl && +sl.value !== pct) sl.value = pct;
+  // #155 : le module Créateur affiche/règle le même curseur, synchro dans les 2 sens.
+  const v2 = document.getElementById('cr-font-scale-v'); if (v2) v2.textContent = pct + '%';
+  const sl2 = document.getElementById('cr-font-scale'); if (sl2 && +sl2.value !== pct) sl2.value = pct;
   _lsSetDebounced('fbf_uisize', pct);
 }
 function setUIHue(hue) {
@@ -9401,6 +9587,305 @@ function _loadDisplayFilter() {
   try { b = localStorage.getItem('fbf_brightness'); c = localStorage.getItem('fbf_contrast'); } catch(e) {}
   if (b) setBrightness(b);
   if (c) setContrast(c);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// #155 : MODULE CRÉATEUR — police/taille, tailles cellules/chiffres,
+// ambiance couleur, repositionnement libre (sphères + cellules dock),
+// stickers personnalisés (7 sphères : maître + 6 canaux).
+// ═══════════════════════════════════════════════════════════════════
+
+/* ---------- Police, tailles, ambiance couleur ---------- */
+const CREATOR_KEY = 'fbf432-creator';
+function setCreatorFontDeco(name) {
+  document.documentElement.style.setProperty('--font-deco', "'" + name + "'");
+  const sel = document.getElementById('cr-font-deco'); if (sel) sel.value = name;
+  _creatorPersist();
+}
+function setCreatorFontBody(name) {
+  document.documentElement.style.setProperty('--font-body', "'" + name + "'");
+  const sel = document.getElementById('cr-font-body'); if (sel) sel.value = name;
+  _creatorPersist();
+}
+function setCreatorDockScale(pct) {
+  pct = Math.max(70, Math.min(140, parseInt(pct) || 100));
+  document.documentElement.style.setProperty('--dock-cell-scale', pct / 100);
+  const v = document.getElementById('cr-dock-scale-v'); if (v) v.textContent = pct + '%';
+  const sl = document.getElementById('cr-dock-scale'); if (sl && +sl.value !== pct) sl.value = pct;
+  _creatorPersist();
+}
+function setCreatorDigitScale(pct) {
+  pct = Math.max(50, Math.min(180, parseInt(pct) || 100));
+  document.documentElement.style.setProperty('--sphere-digit-scale', pct / 100);
+  const v = document.getElementById('cr-digit-scale-v'); if (v) v.textContent = pct + '%';
+  const sl = document.getElementById('cr-digit-scale'); if (sl && +sl.value !== pct) sl.value = pct;
+  _creatorPersist();
+}
+function setCreatorHue(deg) {
+  deg = Math.max(-180, Math.min(180, parseInt(deg) || 0));
+  document.documentElement.style.setProperty('--sphere-hue', deg + 'deg');
+  const v = document.getElementById('cr-hue-v'); if (v) v.textContent = deg + '°';
+  const sl = document.getElementById('cr-hue'); if (sl && +sl.value !== deg) sl.value = deg;
+  _creatorPersist();
+}
+function _creatorPersist() {
+  const cs = getComputedStyle(document.documentElement);
+  _lsSetDebounced(CREATOR_KEY, JSON.stringify({
+    fontDeco: cs.getPropertyValue('--font-deco').trim().replace(/^'|'$/g, ''),
+    fontBody: cs.getPropertyValue('--font-body').trim().replace(/^'|'$/g, ''),
+    dockScale: Math.round((parseFloat(cs.getPropertyValue('--dock-cell-scale')) || 1) * 100),
+    digitScale: Math.round((parseFloat(cs.getPropertyValue('--sphere-digit-scale')) || 1) * 100),
+    hue: parseInt(cs.getPropertyValue('--sphere-hue')) || 0,
+  }), 300);
+}
+function resetCreatorAppearance() {
+  setCreatorFontDeco('Cinzel Decorative');
+  setCreatorFontBody('IM Fell English');
+  setCreatorDockScale(100);
+  setCreatorDigitScale(100);
+  setCreatorHue(0);
+  setUISize(100);
+}
+function _loadCreatorAppearance() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(CREATOR_KEY)); } catch(e) {}
+  if (!s) return;
+  if (s.fontDeco)  setCreatorFontDeco(s.fontDeco);
+  if (s.fontBody)  setCreatorFontBody(s.fontBody);
+  if (s.dockScale)  setCreatorDockScale(s.dockScale);
+  if (s.digitScale) setCreatorDigitScale(s.digitScale);
+  if (typeof s.hue === 'number') setCreatorHue(s.hue);
+}
+
+/* ---------- Repositionnement libre (sphères + cellules dock) ---------- */
+// Sphères (oscillateurs 0-5 + maître 6) : décalage {dx,dy} additionné à la
+// position calculée dans buildVesicaPairs() — cf. #155 plus haut.
+const SPHERE_POS_KEY = 'fbf432-spherePos';
+let SPHERE_POS = {};
+function _loadSpherePos() {
+  try { SPHERE_POS = JSON.parse(localStorage.getItem(SPHERE_POS_KEY)) || {}; } catch(e) { SPHERE_POS = {}; }
+}
+function _saveSpherePos() { try { localStorage.setItem(SPHERE_POS_KEY, JSON.stringify(SPHERE_POS)); } catch(e) {} }
+
+// Cellules du dock (les 4 principales + violette + ChaWatch) : même
+// mécanique que DOCK_EXTRA_POS (petits "+"), store séparé pour ne jamais
+// risquer d'interférer avec ce système déjà en place.
+const CR_CELL_POS_KEY = 'fbf432-crCellPos';
+let CR_CELL_POS = {};
+function _loadCrCellPos() {
+  try { CR_CELL_POS = JSON.parse(localStorage.getItem(CR_CELL_POS_KEY)) || {}; } catch(e) { CR_CELL_POS = {}; }
+  Object.keys(CR_CELL_POS).forEach(id => {
+    const el = document.getElementById(id);
+    const p = CR_CELL_POS[id];
+    if (!el || !p) return;
+    if (!el._homeParent && el.parentElement) el._homeParent = el.parentElement;
+    if (el.parentElement !== document.body) document.body.appendChild(el);
+    el.style.position = 'fixed'; el.style.left = p.left + 'px'; el.style.top = p.top + 'px';
+    el.style.right = 'auto'; el.style.transform = 'none'; el.style.zIndex = 100;
+  });
+}
+function _saveCrCellPos(id, left, top) {
+  if (!id || isNaN(left) || isNaN(top)) return;
+  CR_CELL_POS[id] = { left, top };
+  try { localStorage.setItem(CR_CELL_POS_KEY, JSON.stringify(CR_CELL_POS)); } catch(e) {}
+}
+
+let CREATOR_REPOSITION_MODE = false;
+function toggleCreatorReposition() {
+  CREATOR_REPOSITION_MODE = !CREATOR_REPOSITION_MODE;
+  document.body.classList.toggle('creator-reposition', CREATOR_REPOSITION_MODE);
+  const btn = document.getElementById('cr-reposition-btn');
+  if (btn) {
+    btn.classList.toggle('on', CREATOR_REPOSITION_MODE);
+    const s = btn.querySelector('span:last-child');
+    if (s) s.textContent = 'Mode repositionnement : ' + (CREATOR_REPOSITION_MODE ? 'ON' : 'OFF');
+  }
+}
+function resetCreatorPositions() {
+  SPHERE_POS = {};
+  try { localStorage.removeItem(SPHERE_POS_KEY); } catch(e) {}
+  CR_CELL_POS = {};
+  try { localStorage.removeItem(CR_CELL_POS_KEY); } catch(e) {}
+  ['dcRed','dcOrange','dcGreen','dcBlue','dcPurple','dcChaWatch'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.position = ''; el.style.left = ''; el.style.top = ''; el.style.right = '';
+    el.style.transform = ''; el.style.zIndex = '';
+    if (el.parentElement === document.body && el._homeParent) el._homeParent.appendChild(el);
+  });
+  if (typeof buildVesicaPairs === 'function') buildVesicaPairs();
+}
+// Glisser en mode Créateur : délégué (document, phase capture) — n'agit QUE
+// si CREATOR_REPOSITION_MODE est actif, donc n'interfère JAMAIS avec le tap/
+// appui long normal des cellules/sphères quand le mode est désactivé.
+let _crDrag = null;
+document.addEventListener('pointerdown', e => {
+  if (!CREATOR_REPOSITION_MODE) return;
+  const dockEl = e.target.closest('.dcell, .dcell-purple, .dcell-chawatch');
+  const sphereEl = !dockEl ? e.target.closest('.vp-p') : null;
+  const el = dockEl || sphereEl;
+  if (!el) return;
+  e.preventDefault(); e.stopPropagation();
+  const r = el.getBoundingClientRect();
+  _crDrag = { el, kind: dockEl ? 'dock' : 'sphere', startX: e.clientX, startY: e.clientY, origLeft: r.left, origTop: r.top, w: r.width, h: r.height };
+  if (dockEl) {
+    if (!el._homeParent && el.parentElement) el._homeParent = el.parentElement;
+    if (el.parentElement !== document.body) document.body.appendChild(el);
+    el.style.position = 'fixed'; el.style.left = r.left + 'px'; el.style.top = r.top + 'px';
+    el.style.right = 'auto'; el.style.transform = 'none'; el.style.zIndex = 999;
+  }
+}, true);
+document.addEventListener('pointermove', e => {
+  if (!_crDrag) return;
+  e.preventDefault();
+  const dx = e.clientX - _crDrag.startX, dy = e.clientY - _crDrag.startY;
+  if (_crDrag.kind === 'dock') {
+    const nl = Math.max(0, Math.min(window.innerWidth  - _crDrag.w, _crDrag.origLeft + dx));
+    const nt = Math.max(0, Math.min(window.innerHeight - _crDrag.h, _crDrag.origTop  + dy));
+    _crDrag.el.style.left = nl + 'px'; _crDrag.el.style.top = nt + 'px';
+  } else {
+    // Aperçu visuel seul pendant le drag — .vp-p n'a pas de transform de
+    // base (contrairement à .vp-center-wrap), un simple translate suffit.
+    _crDrag.el.style.transform = `translate(${dx}px,${dy}px)`;
+  }
+}, true);
+document.addEventListener('pointerup', e => {
+  if (!_crDrag) return;
+  const d = _crDrag; _crDrag = null;
+  if (d.kind === 'dock') {
+    d.el.style.zIndex = 100;
+    _saveCrCellPos(d.el.id, parseFloat(d.el.style.left), parseFloat(d.el.style.top));
+  } else {
+    const dx = e.clientX - d.startX, dy = e.clientY - d.startY;
+    const i = parseInt(String(d.el.id).replace('vpc-p', ''), 10);
+    if (!isNaN(i)) {
+      const prev = SPHERE_POS[i] || { dx: 0, dy: 0 };
+      SPHERE_POS[i] = { dx: prev.dx + dx, dy: prev.dy + dy };
+      _saveSpherePos();
+    }
+    d.el.style.transform = ''; // buildVesicaPairs reprend la main avec le nouvel offset
+    if (typeof buildVesicaPairs === 'function') buildVesicaPairs();
+  }
+}, true);
+document.addEventListener('pointercancel', () => { _crDrag = null; }, true);
+
+/* ---------- Stickers personnalisés (7 sphères) ---------- */
+const CRST_DB_NAME = 'omcvibe_stickers', CRST_STORE = 'stickers';
+let _crstDb = null;
+function _crstOpen() {
+  return new Promise((resolve, reject) => {
+    if (_crstDb) return resolve(_crstDb);
+    const req = indexedDB.open(CRST_DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(CRST_STORE)) db.createObjectStore(CRST_STORE, { keyPath: 'id' });
+    };
+    req.onsuccess = () => { _crstDb = req.result; resolve(_crstDb); };
+    req.onerror   = () => reject(req.error);
+  });
+}
+async function _crstPut(rec) {
+  const db = await _crstOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(CRST_STORE, 'readwrite');
+    tx.objectStore(CRST_STORE).put(rec);
+    tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error);
+  });
+}
+async function _crstAll() {
+  const db = await _crstOpen();
+  return new Promise((res, rej) => {
+    const r = db.transaction(CRST_STORE, 'readonly').objectStore(CRST_STORE).getAll();
+    r.onsuccess = () => res(r.result || []); r.onerror = () => rej(r.error);
+  });
+}
+async function _crstDel(id) {
+  const db = await _crstOpen();
+  return new Promise(res => {
+    const tx = db.transaction(CRST_STORE, 'readwrite');
+    tx.objectStore(CRST_STORE).delete(id);
+    tx.oncomplete = () => res(); tx.onerror = () => res();
+  });
+}
+
+let STICKERS = {}; // cache mémoire synchrone — buildVesicaPairs() ne peut pas attendre l'IndexedDB
+const STICKER_NAMES = { 0:'Canal 1', 1:'Canal 2', 2:'Canal 3', 3:'Canal 4', 4:'Canal 5', 5:'Canal 6', 6:'Maître' };
+function _defaultSticker(id) { return { id, dataUrl: null, panX: 50, panY: 50, zoom: 100, hue: 0, sat: 100, bright: 100, contrast: 100 }; }
+function _stickerFilterCss(s) { return `hue-rotate(${s.hue}deg) saturate(${s.sat}%) brightness(${s.bright}%) contrast(${s.contrast}%)`; }
+
+async function _loadStickers() {
+  try { const all = await _crstAll(); STICKERS = {}; all.forEach(r => { STICKERS[r.id] = r; }); }
+  catch(e) { STICKERS = {}; }
+  _renderStickerList();
+  if (typeof buildVesicaPairs === 'function') buildVesicaPairs();
+}
+async function importStickerImage(id, fileInput) {
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const rec = STICKERS[id] || _defaultSticker(id);
+    rec.dataUrl = reader.result;
+    STICKERS[id] = rec;
+    await _crstPut(rec);
+    _renderStickerList();
+    if (typeof buildVesicaPairs === 'function') buildVesicaPairs();
+  };
+  reader.readAsDataURL(file);
+  fileInput.value = '';
+}
+async function removeStickerImage(id) {
+  delete STICKERS[id];
+  await _crstDel(id);
+  _renderStickerList();
+  if (typeof buildVesicaPairs === 'function') buildVesicaPairs();
+}
+function setStickerParam(id, key, val) {
+  const rec = STICKERS[id] || _defaultSticker(id);
+  rec[key] = parseFloat(val);
+  STICKERS[id] = rec;
+  _crstPut(rec);
+  const v = document.getElementById('cr-st-' + key + '-v-' + id);
+  if (v) v.textContent = val + (key === 'hue' ? '°' : '%');
+  if (typeof buildVesicaPairs === 'function') buildVesicaPairs();
+}
+function toggleStickerEdit(id) {
+  const el = document.getElementById('cr-st-edit-' + id);
+  if (el) el.classList.toggle('open');
+}
+function _renderStickerList() {
+  const host = document.getElementById('cr-stickers-list');
+  if (!host) return;
+  const order = [6, 0, 1, 2, 3, 4, 5]; // Maître d'abord, puis Canal 1→6
+  host.innerHTML = order.map(id => {
+    const rec = STICKERS[id];
+    const has = !!(rec && rec.dataUrl);
+    const s = rec || _defaultSticker(id);
+    const thumbStyle = has
+      ? `background-image:url('${s.dataUrl}');background-size:${s.zoom}%;background-position:${s.panX}% ${s.panY}%;filter:${_stickerFilterCss(s)};`
+      : '';
+    return `
+      <div class="cr-sticker-row">
+        <div class="cr-sticker-thumb" style="${thumbStyle}">${has ? '' : '✦'}</div>
+        <div class="cr-sticker-info">
+          <div class="cr-sticker-name">${STICKER_NAMES[id]}</div>
+          <div class="cr-sticker-actions">
+            <label class="cr-mini-btn" style="cursor:pointer;">Importer<input type="file" accept="image/*" style="display:none;" onchange="importStickerImage(${id},this)"></label>
+            ${has ? `<button class="cr-mini-btn" onclick="toggleStickerEdit(${id})">Ajuster</button>` : ''}
+            ${has ? `<button class="cr-mini-btn" onclick="removeStickerImage(${id})">Retirer</button>` : ''}
+          </div>
+          <div class="cr-sticker-edit" id="cr-st-edit-${id}">
+            <div class="creator-row"><span class="creator-lbl">Cadrage X</span><input type="range" min="0" max="100" value="${s.panX}" oninput="setStickerParam(${id},'panX',this.value)"><span class="creator-val" id="cr-st-panX-v-${id}">${s.panX}%</span></div>
+            <div class="creator-row"><span class="creator-lbl">Cadrage Y</span><input type="range" min="0" max="100" value="${s.panY}" oninput="setStickerParam(${id},'panY',this.value)"><span class="creator-val" id="cr-st-panY-v-${id}">${s.panY}%</span></div>
+            <div class="creator-row"><span class="creator-lbl">Zoom</span><input type="range" min="100" max="300" value="${s.zoom}" oninput="setStickerParam(${id},'zoom',this.value)"><span class="creator-val" id="cr-st-zoom-v-${id}">${s.zoom}%</span></div>
+            <div class="creator-row"><span class="creator-lbl">Teinte</span><input type="range" min="-180" max="180" value="${s.hue}" oninput="setStickerParam(${id},'hue',this.value)"><span class="creator-val" id="cr-st-hue-v-${id}">${s.hue}°</span></div>
+            <div class="creator-row"><span class="creator-lbl">Saturation</span><input type="range" min="0" max="200" value="${s.sat}" oninput="setStickerParam(${id},'sat',this.value)"><span class="creator-val" id="cr-st-sat-v-${id}">${s.sat}%</span></div>
+            <div class="creator-row"><span class="creator-lbl">Luminosité</span><input type="range" min="50" max="150" value="${s.bright}" oninput="setStickerParam(${id},'bright',this.value)"><span class="creator-val" id="cr-st-bright-v-${id}">${s.bright}%</span></div>
+            <div class="creator-row"><span class="creator-lbl">Contraste</span><input type="range" min="50" max="150" value="${s.contrast}" oninput="setStickerParam(${id},'contrast',this.value)"><span class="creator-val" id="cr-st-contrast-v-${id}">${s.contrast}%</span></div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // ═══ Fond d'écran — presets + image personnalisée ═══
