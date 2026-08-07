@@ -936,20 +936,22 @@ body{
    fini le calcul en pixels JS). Colonne gauche (rouge/orange) : sphère côté
    extérieur gauche. Colonne droite (vert/bleu) : sphère côté extérieur
    droit — les sphères encadrent le dock des deux côtés.
-   #156 : par défaut, collées aux bords GAUCHE/DROITE de l'ÉCRAN (pas
-   seulement du dock) — largeur/taille fixes (34px), donc aucun risque du
-   bug "cellule qui grossit" repéré sur les cellules de dock flexibles
-   (#155, retiré). Le glisser-déposer (appui long, cf. _bindExtraDraggable)
-   reste possible par-dessus : dès qu'une sphère est décrochée, sa position
-   sauvegardée (JS, style inline) prend le dessus sur ce positionnement
-   CSS par défaut.
+   #157 : retour au flux flexbox normal par défaut (position:static),
+   sphère intégrée DANS sa cellule de même couleur — le collage aux bords
+   écran (#156) rendait les sphères "+" visuellement détachées de leur
+   cellule, pas assez "propre" (retour terrain). Le glisser-déposer (appui
+   long puis déplacement, cf. _bindExtraDraggable) reste inchangé : c'est
+   lui qui décroche la sphère en position:fixed au premier vrai mouvement,
+   jamais avant — un appui long SANS déplacement ouvre directement
+   l'assignation rapide (_openDockQuickAssign), sans jamais toucher au
+   flux ni faire "grossir" la cellule (bug #39, cf. commentaire plus bas).
    #27 : sphères pleines (couleur assortie à leur cellule) et symbole "+" doré.
    #32 : sphères et cellule agrandies (+25% vs origine). Retour à 1 seule
    sphère par cellule (comme à l'origine) — 2 grosses sphères de chaque
    côté ne laissaient plus de place pour un texte de cellule lisible. */
 .dcell-wrap{ display:flex;align-items:center;gap:0;width:100%; }
 .dcell-extra{
-  position:fixed;z-index:50;
+  position:static;z-index:2;
   width:34px;height:34px;border-radius:50%;flex-shrink:0; /* #52 : -36% vs #32 (53px→34px), place faite aux cellules */
   display:flex;align-items:center;justify-content:center;
   font-size:1.5rem;line-height:1;font-weight:400;
@@ -981,14 +983,6 @@ body{
 .dcell-extra-orange{ background:radial-gradient(circle at 34% 30%, #FFDCA8, #FF9628 45%, #B05E0A 100%); box-shadow:0 0 9px rgba(255,150,40,.55),inset 0 1px 2px rgba(255,255,255,.35); }
 .dcell-extra-green{ background:radial-gradient(circle at 34% 30%, #D0FFE8, #5AFFA0 45%, #1CA860 100%); box-shadow:0 0 9px rgba(90,255,160,.55),inset 0 1px 2px rgba(255,255,255,.35); }
 .dcell-extra-blue{ background:radial-gradient(circle at 34% 30%, #C8E8FF, #3CAAFF 45%, #1560A8 100%); box-shadow:0 0 9px rgba(60,170,255,.55),inset 0 1px 2px rgba(255,255,255,.35); }
-
-/* #156 : position par défaut — collées aux bords écran, colonne gauche
-   (Aléatoire/Effet) à gauche, colonne droite (Samples/Paramètres) à
-   droite, chacune sur 2 hauteurs (haut/bas de colonne). */
-#dcRedExtra,   #dcGreenExtra { left:6px; }
-#dcOrangeExtra,#dcBlueExtra  { right:6px; }
-#dcRedExtra,   #dcOrangeExtra{ bottom:180px; }
-#dcGreenExtra, #dcBlueExtra  { bottom:110px; }
 
 /* CENTRE — Flux : yin-yang organique, pièce maîtresse du dock — plus de
    chip on/off séparé (#137 : "pas besoin de bouton on/off", l'appui long
@@ -1101,25 +1095,21 @@ body.flux-muted .vp-i{
    (fond translucide + bordure de la couleur, backdrop-filter). Colonne
    centrale dédiée (.dock-col-center) pour empiler Flux + cette cellule
    sans toucher aux colonnes gauche/droite existantes. Une seule ligne
-   compacte (−9 / saisie / +9 / ✓) plutôt que 2 lignes : la largeur ET la
+   compacte (−9 / saisie / +9) plutôt que 2 lignes : la largeur ET la
    hauteur disponibles dans le dock sont très limitées (dock à hauteur
    fixe, colonnes à largeur égale) — chaque pixel compte ici.
-   #156 : sortie du flux flexbox du dock — groupe fixe, centré, collé
-   contre le bas de l'écran (Fréquence maître + ChaWatch empilés
-   ensemble). `width:204px` explicite (pas `100%` d'un parent flex) :
-   pas de dépendance de layout, donc pas de risque du bug "cellule qui
-   grossit" repéré sur l'ancien mode de repositionnement libre (#155,
-   retiré) — les enfants gardent leur `width:100%` inchangé, qui résout
-   désormais simplement à 204px, un conteneur fixe au lieu d'une part de
-   flex. */
-.dock-col-center{
-  position:fixed;left:50%;bottom:8px;transform:translateX(-50%);
-  width:204px;z-index:105;
-  display:flex;flex-direction:column;align-items:center;gap:.3rem;flex-shrink:0;
-}
+   #157 : ChaWatch déménagé dans le menu Paramètres (cf. #panParams) — la
+   colonne centrale ne contient plus QUE cette cellule violette. Retour au
+   flux flexbox normal du dock (plus de position:fixed/bottom:8px du
+   #156) : sans ChaWatch empilé dessous, elle tient largement dans la
+   hauteur du dock au même titre que les colonnes gauche/droite — plus
+   besoin de la sortir du flux pour éviter le chevauchement, ni de lui
+   donner une largeur explicite (elle hérite normalement de `.dock-col`,
+   cf. plus haut, `flex:1 1 0;max-width:253px`, sans risque de "grossir"
+   puisqu'elle reste dans le flux, jamais détachée). */
 .dcell-purple{
   display:flex;align-items:center;justify-content:center;gap:.3rem;
-  width:100%;max-width:204px;padding:.3rem .41rem;border-radius:16px;border:1.5px solid rgba(190,110,255,.5); /* #52 : +36% ; #137 : 10px→16px, cohérent avec le reste du dock */
+  width:100%;max-width:204px;padding:.28rem .38rem;border-radius:16px;border:1.5px solid rgba(190,110,255,.5); /* #52 : +36% ; #137 : 10px→16px, cohérent avec le reste du dock */
   background:rgba(150,60,255,.14);backdrop-filter:blur(10px);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -8px 12px rgba(0,0,0,.12);
 }
@@ -1137,21 +1127,10 @@ body.flux-muted .vp-i{
 }
 .dcell-purple-input::-webkit-inner-spin-button,.dcell-purple-input::-webkit-outer-spin-button{-webkit-appearance:none;}
 
-/* #152 : cellule ORANGE "ChaWatch" — sous la fréquence maître directe,
-   même colonne centrale. Tap = jeu aléatoire accordé sur l'heure en
-   cours + ouverture d'OmchaWatch (cf. chaWatchOpen()). Même thème visuel
-   compact que .dcell-purple juste au-dessus. */
-.dcell-chawatch{
-  display:flex;align-items:center;justify-content:center;
-  width:100%;max-width:204px;padding:.32rem .5rem;border-radius:14px;
-  border:1.5px solid rgba(255,150,40,.55);
-  background:rgba(255,140,30,.16);backdrop-filter:blur(10px);
-  color:#FFB060;font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.74rem;letter-spacing:.06em;font-weight:700;
-  text-align:center;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -6px 10px rgba(0,0,0,.12);
-  transition:transform .12s,box-shadow .2s;
-}
-.dcell-chawatch:active{ transform:scale(.94); }
+/* #157 : cellule ORANGE "ChaWatch" retirée du dock — déménagée dans le
+   menu Paramètres (.params-item, cf. #panParams) pour libérer la colonne
+   centrale, ne laissant que la fréquence maître (.dcell-purple juste
+   au-dessus), qui tient désormais largement dans le dock sans elle. */
 
 /* ─── Navigation — ligne dans #bottom-dock ─── */
 #tab-nav{
@@ -2135,15 +2114,15 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   <div class="dock-col dock-col-center">
     <!-- #40/#52 : VIOLET — saisie directe de la fréquence maître (+9/-9). Bouton
          "Valider" retiré (#52) : Entrée applique déjà la saisie clavier, les
-         pas -9/+9 s'appliquent immédiatement, ce bouton ne servait plus. -->
+         pas -9/+9 s'appliquent immédiatement, ce bouton ne servait plus.
+         #157 : ChaWatch déménagé dans le menu Paramètres — cette colonne
+         centrale ne porte plus que la fréquence maître, dans le flux
+         flexbox normal du dock (plus de position:fixed dédiée). -->
     <div class="dcell-purple" id="dcPurple" title="Fréquence maître directe">
       <button class="dcell-purple-step" onclick="_purpleFreqStep(-9)" title="-9 Hz">−9</button>
       <input type="number" id="dcell-purple-input" class="dcell-purple-input" inputmode="numeric" autocomplete="off" onkeydown="_purpleFreqKey(event)" onblur="_purpleFreqValidate()">
       <button class="dcell-purple-step" onclick="_purpleFreqStep(9)" title="+9 Hz">+9</button>
     </div>
-    <!-- #152 : ORANGE — ouvre OmchaWatch, avec un tirage aléatoire fraîchement
-         accordé sur l'heure en cours à chaque tap (cf. chaWatchOpen()). -->
-    <button class="dcell-chawatch" id="dcChaWatch" onclick="chaWatchOpen()" title="Ouvre OmchaWatch · nouveau jeu accordé sur l'heure en cours">ChaWatch</button>
   </div>
 
   <!-- Colonne droite : ORANGE (haut, Samples/futur "Utilisateur") sur BLEU (bas) -->
@@ -2188,6 +2167,11 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
          Android de premier plan) SANS réglage utilisateur désormais, cf.
          _enableBackgroundAudio/_disableBackgroundAudio. -->
     <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panCustom')" data-html-import-id="html-import-59" data-template-id="button-52"><canva-inline-text data-template-id="canva-inline-text-53" class="canva-text" style="color: #FFD700; font-size: 22px;">◈</canva-inline-text><span data-html-import-id="html-import-60" data-template-id="span-54" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Personnaliser l'interface</span></button>
+    <!-- #157 : ChaWatch — déménagé du dock (cellule orange sous la fréquence
+         maître) vers ce menu. Tap = même comportement qu'avant (tirage
+         aléatoire accordé sur l'heure en cours + ouverture d'OmchaWatch,
+         cf. chaWatchOpen()), en fermant d'abord ce panneau. -->
+    <button class="params-item canva-button" style="--ic: #FFB060;" onclick="closePanel();chaWatchOpen();"><span>⌚</span><span>ChaWatch</span></button>
     <!-- #155 : Créateur — police/taille, tailles cellules/chiffres, couleur,
          repositionnement libre (sphères + cellules dock), stickers 7 sphères. -->
     <button class="params-item canva-button" style="--ic: #FF9AE0;" onclick="openTab('panCreator')"><span>✧</span><span>Créateur</span></button>
