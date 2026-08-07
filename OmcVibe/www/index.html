@@ -92,7 +92,8 @@ body{
   pointer-events:none;
 }
 #sphere-layer .vp-wrap,
-#sphere-layer .vp-center-wrap{
+#sphere-layer .vp-center-wrap,
+#sphere-layer .vp-star-standalone{
   pointer-events:all;
 }
 
@@ -361,6 +362,23 @@ body{
 .vp-type{font-family:'Cinzel Decorative',serif;font-size:.65rem;letter-spacing:.06em;opacity:.7;}
 .vp-freq{font-family:'IM Fell English',serif;font-size:1.7rem;line-height:1;color:#f5eedc;text-shadow:0 0 12px rgba(255,255,255,.45);font-weight:700;}
 .vp-hz{display:none;}
+/* #153 : étoile discrète sous chaque sphère satellite → ouvre son menu
+   oscillateur (openOscModal). SIBLING direct de #sphere-layer (positionnée
+   en px/py absolus par JS, cf. buildVesicaPairs) et non enfant de .vp-wrap :
+   .vp-wrap forme son propre contexte d'empilement (z-index:6), donc un
+   z-index élevé posé sur un DE SES ENFANTS ne pourrait jamais dépasser le
+   rectangle de la sphère maître voisine (.vp-center-wrap, z-index:8) qui
+   intercepterait le tap avant qu'il n'atteigne l'étoile. */
+.vp-star{
+  position:absolute;transform:translate(-50%,-50%);
+  font-size:.62rem;line-height:1;color:#f5eedc;opacity:.5;cursor:pointer;user-select:none;
+  text-shadow:0 0 6px rgba(255,255,255,.5);
+  transition:opacity .3s,transform .3s;
+  padding:6px 10px;
+  z-index:9;
+}
+.vp-star:hover{opacity:1;transform:translate(-50%,-50%) scale(1.3);}
+.vp-star:active{opacity:1;transform:translate(-50%,-50%) scale(1.5);}
 
 .vp-center-wrap{
   position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(var(--bubble-scale,1));
@@ -1959,7 +1977,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 <div id="sphere-layer" data-html-import-id="html-import-7"><div class="vp-center-wrap vp-solo" id="vp6" data-html-import-id="html-import-8">
     <div class="vp-p  " id="vpc-p6" style="border-color:rgba(255,214,120,.75);background:radial-gradient(circle,rgba(255,255,255,.10) 0%,rgba(255,255,255,0) 55%),url('img/master-freq-logo.jpg') center/cover no-repeat;background-blend-mode:soft-light;box-shadow:0 0 40px rgba(255,190,90,.55),0 0 80px rgba(255,150,60,.22),inset 0 0 20px rgba(255,220,150,.18);backdrop-filter:blur(2px);cursor:pointer;user-select:none;" onmousedown="_vpStart(6,event)" onmouseup="_vpEnd(6)" onmouseleave="_vpCancel()" onmousemove="_vpMove(6,event)" ontouchstart="_vpStart(6,event)" ontouchend="_vpEnd(6)" ontouchmove="_vpMove(6,event)" data-html-import-id="html-import-9">
       <span class="ms-freq canva-text" id="ms-freq" onclick="event.stopPropagation();openFreqEdit();" data-html-import-id="html-import-11" data-template-id="span-4" style="font-family: &quot;IM Fell English&quot;; font-weight: 700; font-size: 67px;">181</span>
-      <input type="number" id="freq-input-master" min="54" max="432" placeholder="181" autocomplete="off" onkeydown="handleFreqKey(event);" data-html-import-id="html-import-12" data-template-id="input-5" class="canva-input" style="color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 29px;">
+      <input type="number" id="freq-input-master" min="54" max="475" placeholder="181" autocomplete="off" onkeydown="handleFreqKey(event);" data-html-import-id="html-import-12" data-template-id="input-5" class="canva-input" style="color: rgb(243, 217, 255); font-family: &quot;IM Fell English&quot;; font-size: 29px;">
       <span class="ms-state canva-text" id="ms-state" data-html-import-id="html-import-13" data-template-id="span-6" style="color: rgba(220, 180, 255, 0.7); font-weight: 700; font-style: italic; font-size: 14px;">BINAURAL</span>
     </div></div></div>
 
@@ -2271,13 +2289,16 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
     <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin-bottom:.4rem;">PLAGE FRÉQUENCE — toujours active, répartition continue</div>
     <div class="sl-row">
       <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Min <span id="rv-fmin" style="color:#63E6FF">54</span> Hz</label>
-      <input type="range" id="sl-fmin" min="54" max="431" value="54" style="flex:1;color:#63E6FF;" oninput="setRandFreqMin(this.value)">
+      <input type="range" id="sl-fmin" min="54" max="474" value="54" style="flex:1;color:#63E6FF;" oninput="setRandFreqMin(this.value)">
     </div>
     <div class="sl-row">
-      <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Max <span id="rv-fmax" style="color:#63E6FF">432</span> Hz</label>
-      <input type="range" id="sl-fmax" min="55" max="432" value="432" style="flex:1;color:#63E6FF;" oninput="setRandFreqMax(this.value)">
+      <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Max <span id="rv-fmax" style="color:#63E6FF">475</span> Hz</label>
+      <input type="range" id="sl-fmax" min="55" max="475" value="475" style="flex:1;color:#63E6FF;" oninput="setRandFreqMax(this.value)">
     </div>
-    <div style="font-size:.66rem;color:rgba(200,170,255,.4);font-style:italic;margin:.15rem 0 .3rem;">Plafond absolu 432 Hz — aucune fréquence du jeu binaural ne dépasse la famille 432</div>
+    <!-- #153 : plafond relevé 432→475 — au-dessus de 325Hz, LPF + volume -20%
+         + Sinus Duo obligatoire s'appliquent automatiquement (cf. triggerMagicAuto),
+         jamais un aigu simple tout seul. -->
+    <div style="font-size:.66rem;color:rgba(200,170,255,.4);font-style:italic;margin:.15rem 0 .3rem;">Plafond absolu 475 Hz — au-delà de 325 Hz, adouci automatiquement (LPF + Sinus Duo)</div>
 
     <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.5rem 0 .3rem;">RATIO</div>
     <div class="rand-mode-row">
@@ -2621,10 +2642,12 @@ const TUNE_T = 0.08;
 const LS_KEY = 'fbf432_state_cosmic';
 
 // ── Bande de jeu des oscillateurs (v2) ────────────────────────────
-// Plafond ABSOLU 432 Hz : aucune fréquence du jeu binaural (maître, Pingala,
-// Ida) ne dépasse 432 Hz — carriers ET battements restent dans la famille 432.
+// Plafond ABSOLU 475 Hz : aucune fréquence du jeu binaural (maître, Pingala,
+// Ida) ne dépasse 475 Hz — carriers ET battements restent dans cette plage.
+// #153 : relevé de 432→475 (le "violet" 396-475 devient une bande jouable) —
+// cf. isosonicVol/triggerMagicAuto pour le LPF+dual-sine obligatoire >325Hz.
 const F_MIN   = 54;
-const F_MAX   = 432;        // plafond du jeu aléatoire (bande haute 288–432)
+const F_MAX   = 475;        // plafond du jeu aléatoire (bande haute 396–475)
 const N_MAX   = 8.0;        // n libre : sert à placer le carrier dans sa bande
 const F_SEUIL = 360;        // #61 : seuil utilisé par densityScheme() (palette de n) — l'ancienne
                              // "protection auto" (HPF imposé au-dessus, jamais appelée) a été retirée
@@ -2816,11 +2839,11 @@ function _syncFreqInputBounds(el) {
   if (!el) return;
   if (UNIT_MODE === 'miaow') {
     el.min = hzToMiaow(F_MIN).toFixed(2);
-    el.max = hzToMiaow(432).toFixed(2);
+    el.max = hzToMiaow(F_MAX).toFixed(2);
     el.step = '0.01';
   } else {
     el.min = F_MIN;
-    el.max = 432;
+    el.max = F_MAX;
     el.step = '1';
   }
 }
@@ -2850,13 +2873,12 @@ function waveState(hz) {
 
 function calcPFreq(i) {
   const p = PAIRS[i].pingala;
-  if (i === MASTER_IDX) return Math.min(432, masterFreq);
+  if (i === MASTER_IDX) return Math.min(F_MAX, masterFreq);
   return Math.max(F_MIN, Math.min(F_MAX, masterFreq * RATIO_OPTS[p.ri].r * Math.min(N_MAX, p.n)));
 }
 function calcIFreq(i) {
   const { ida } = PAIRS[i];
-  const hi = i === MASTER_IDX ? 432 : F_MAX;
-  return Math.max(F_MIN, Math.min(hi, calcPFreq(i) + ida.polarity * ida.delta));
+  return Math.max(F_MIN, Math.min(F_MAX, calcPFreq(i) + ida.polarity * ida.delta));
 }
 function safeF(f)    { return Math.max(32, Math.min(460, f)); }
 
@@ -2864,18 +2886,46 @@ const HARMONIC_RATIOS = [1, 9/8, 5/4, 4/3, 3/2, 5/3, 16/9, 2];
 function harmonicRandomInit() {
   const root  = 36 + Math.random() * 72;
   const ratio = HARMONIC_RATIOS[Math.floor(Math.random() * HARMONIC_RATIOS.length)];
-  masterFreq  = Math.min(432, Math.max(36, Math.round(root * ratio)));
+  masterFreq  = Math.min(F_MAX, Math.max(36, Math.round(root * ratio)));
 }
 function fmtFreq(f)  { return UNIT_MODE === 'miaow' ? hzToMiaow(f).toFixed(2) + ' 🐈' : f.toFixed(1) + ' Hz'; }
 function fmtShort(f) { return UNIT_MODE === 'miaow' ? hzToMiaow(f).toFixed(2) : f.toFixed(1); }
 
 // Couleur organique selon la fréquence : grave = violet/indigo → aigu = ambre/or
 function freqHue(f) {
-  const n = Math.max(0, Math.min(1, (Math.max(54, Math.min(432, f)) - 54) / (432 - 54)));
-  return Math.round(262 - n * 222);  // 54Hz→262 (violet) … 432Hz→40 (ambre)
+  const n = Math.max(0, Math.min(1, (Math.max(54, Math.min(475, f)) - 54) / (475 - 54)));
+  return Math.round(262 - n * 222);  // 54Hz→262 (violet) … 475Hz→40 (ambre)
 }
 function freqColor(f, l)  { return `hsl(${freqHue(f)},72%,${l != null ? l : 60}%)`; }
 function freqColorA(f, l, a) { return `hsla(${freqHue(f)},72%,${l != null ? l : 60}%,${a})`; }
+
+// #153 : bandes "mandala" — chaque sphère satellite (jamais la maître, qui
+// garde son halo continu ∝ fréquence) affiche la couleur de la bande où
+// tombe SA fréquence RÉELLE actuelle — donc change de couleur si un tirage
+// la déplace dans une autre bande, indépendamment de la couleur "identité"
+// fixe de sa paire (PAIRS[i].color, gardée ailleurs pour d'autres usages).
+const FREQ_BANDS = [
+  { lo: 54,  hi: 108, name: 'Rouge',     c: '#FF4B4B' },
+  { lo: 108, hi: 162, name: 'Orange',    c: '#FF9A3C' },
+  { lo: 162, hi: 216, name: 'Jaune',     c: '#F5DC46' },
+  { lo: 216, hi: 288, name: 'Vert',      c: '#4CE06A' },
+  { lo: 288, hi: 324, name: 'Cyan',      c: '#3CE0D8' },
+  { lo: 324, hi: 396, name: 'Bleu nuit', c: '#3C5CE0' },
+  { lo: 396, hi: 475, name: 'Violet',    c: '#A24CE0' },
+];
+function bandColorFor(freq) {
+  const f = Math.max(54, Math.min(475, freq));
+  for (const b of FREQ_BANDS) { if (f <= b.hi) return b; }
+  return FREQ_BANDS[FREQ_BANDS.length - 1];
+}
+// Assombrit une couleur hex (#RRGGBB) de amt (0-1) vers le noir — utilisé
+// pour le cercle de bordure "légèrement plus foncé" que le halo de la sphère.
+function shadeHex(hex, amt) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16), g = parseInt(h.substring(2, 4), 16), b = parseInt(h.substring(4, 6), 16);
+  const f = (v) => Math.max(0, Math.min(255, Math.round(v * (1 - amt))));
+  return `#${f(r).toString(16).padStart(2, '0')}${f(g).toString(16).padStart(2, '0')}${f(b).toString(16).padStart(2, '0')}`;
+}
 
 // AudioContext natif — exposé via window.AC
 let AC = null;
@@ -4678,8 +4728,8 @@ function _organicEvoTick() {
   if (!candidates.length) return;
   const i = candidates[Math.floor(Math.random() * candidates.length)];
   const pair = PAIRS[i];
-  const rMin = Math.max(F_MIN, Math.min(RAND_OPTS.freqMin, 432));
-  const rMax = Math.max(rMin + 1, Math.min(432, RAND_OPTS.freqMax));
+  const rMin = Math.max(F_MIN, Math.min(RAND_OPTS.freqMin, F_MAX));
+  const rMax = Math.max(rMin + 1, Math.min(F_MAX, RAND_OPTS.freqMax));
   const factor = 0.88 + Math.random() * 0.24; // ±12%, jamais un saut brusque
   const nextN = Math.max(0.1, Math.min(N_MAX, pair.pingala.n * factor));
   const nextF = masterFreq * RATIO_OPTS[pair.pingala.ri].r * nextN;
@@ -5231,8 +5281,8 @@ function _vpCancel(){clearTimeout(_vpTimer);_vpTimer=null;}
 // pour tout le monde, ici seule LA sphère touchée bouge.
 function _pairRandomFreq(i){
   if(typeof isLocked==='function' && isLocked(i)) return;
-  const rMin=Math.max(F_MIN,Math.min(RAND_OPTS.freqMin,432));
-  const rMax=Math.max(rMin+1,Math.min(432,RAND_OPTS.freqMax));
+  const rMin=Math.max(F_MIN,Math.min(RAND_OPTS.freqMin,F_MAX));
+  const rMax=Math.max(rMin+1,Math.min(F_MAX,RAND_OPTS.freqMax));
   const pair=PAIRS[i];
   const ri=Math.floor(Math.random()*RATIO_OPTS.length);
   const slot=Math.floor(Math.random()*6);
@@ -5344,7 +5394,7 @@ function buildVesicaPairs() {
   const dockEl = document.getElementById('bottom-dock');
   const dockH = (dockEl && !dockEl.classList.contains('collapsed')) ? (dockEl.offsetHeight || 54) : 0;
   const sz = Math.min(vw, vh - dockH);
-  document.querySelectorAll('.vp-wrap,.vp-center-wrap').forEach(n => n.remove());
+  document.querySelectorAll('.vp-wrap,.vp-center-wrap,.vp-star-standalone').forEach(n => n.remove());
 
   const cx = vw / 2;
   const cy = vh / 2;   // centre RÉEL de l'image (et non plus le centre de la zone au-dessus du dock)
@@ -5352,15 +5402,24 @@ function buildVesicaPairs() {
   const R  = Math.max(70, Math.min(sz * 0.32, vh / 2 - dockH - 56, cy - 40));
 
   const simple = document.body.classList.contains('mode-simple');
+  // #153 : lue une fois — l'étoile (posée hors de .vp-wrap, cf. plus bas)
+  // doit suivre le même zoom que les sphères pour rester bien accolée dessous.
+  const _bScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bubble-scale')) || 1;
 
   for (let i = 0; i < 6 && !simple; i++) {
     const pair = PAIRS[i];
-    const c    = pair.color;
     const rad  = (HEX_DEG[i] - 90) * Math.PI / 180;
     const px   = cx + R * Math.cos(rad);
     const py   = cy + R * Math.sin(rad);
     const isMutedP = !!mutedOscs[pair.pingala.id];
     const pF   = calcPFreq(i);
+    // #153 : couleur "mandala" pilotée par la BANDE DE FRÉQUENCE réelle du
+    // canal (54-475Hz, 7 bandes) — plus l'identité fixe de la paire. Cercle
+    // même couleur légèrement plus foncée + halo assorti ; l'état muet garde
+    // son style "blanc givré" dédié (.vp-muted, !important, cf. #71).
+    const band  = bandColorFor(pF);
+    const c     = band.c;
+    const cDark = shadeHex(c, 0.28);
 
     const vp = document.createElement('div');
     vp.className = 'vp-wrap';
@@ -5370,13 +5429,30 @@ function buildVesicaPairs() {
     vp.innerHTML = `
       <div class="vp-p ${isMutedP?'vp-muted':''} ${flowing&&!isMutedP?'vp-live':''}"
            id="vpc-p${i}"
-           style="border-color:${c}AA;background:radial-gradient(circle,${c}44 0%,${c}1A 60%,transparent 100%);box-shadow:0 0 18px ${c}35;cursor:pointer;user-select:none;"
+           style="border-color:${cDark};background:radial-gradient(circle,${c}55 0%,${c}22 60%,transparent 100%);box-shadow:0 0 20px ${cDark}80,0 0 34px ${c}40;cursor:pointer;user-select:none;"
            onmousedown="_vpStart(${i},event)" onmouseup="_vpEnd(${i})" onmouseleave="_vpCancel()" onmousemove="_vpMove(${i},event)"
            ontouchstart="_vpStart(${i},event)" ontouchend="_vpEnd(${i})" ontouchmove="_vpMove(${i},event)">
         <span class="vp-type" style="color:${c}CC">Canal ${i+1}</span>
         <span class="vp-freq" id="vp-pf-${i}">${fmtShort(pF)}</span>
       </div>`;
     layer.appendChild(vp);
+
+    // #153 : étoile posée en SIBLING direct de #sphere-layer (pas nichée
+    // dans .vp-wrap) — .vp-wrap forme son propre contexte d'empilement
+    // (position:absolute + z-index:6), donc un z-index élevé posé sur un
+    // enfant ne peut JAMAIS dépasser le rectangle 200×200 de la sphère
+    // maître voisine (.vp-center-wrap, z-index:8) qui, sinon, intercepte
+    // le tap avant qu'il n'atteigne l'étoile (repéré en test Playwright).
+    const star = document.createElement('span');
+    star.className = 'vp-star vp-star-standalone';
+    star.id = 'vp-star-' + i;
+    star.title = 'Réglages du canal';
+    star.textContent = '✦';
+    star.style.left = px + 'px';
+    star.style.top  = (py + 58 * _bScale) + 'px';
+    star.onclick = (ev) => { ev.stopPropagation(); openOscModal(i); };
+    star.addEventListener('touchend', ev => ev.stopPropagation());
+    layer.appendChild(star);
   }
 
   const mp  = PAIRS[MASTER_IDX];
@@ -5403,7 +5479,7 @@ function buildVesicaPairs() {
          onmousedown="_vpStart(${MASTER_IDX},event)" onmouseup="_vpEnd(${MASTER_IDX})" onmouseleave="_vpCancel()" onmousemove="_vpMove(${MASTER_IDX},event)"
          ontouchstart="_vpStart(${MASTER_IDX},event)" ontouchend="_vpEnd(${MASTER_IDX})" ontouchmove="_vpMove(${MASTER_IDX},event)">
       <span class="ms-freq" id="ms-freq" onclick="event.stopPropagation();openFreqEdit();">${fmtMasterFreqDisplay()}</span>
-      <input type="number" id="freq-input-master" min="${F_MIN}" max="432" placeholder="${masterFreq}" autocomplete="off"
+      <input type="number" id="freq-input-master" min="${F_MIN}" max="${F_MAX}" placeholder="${masterFreq}" autocomplete="off"
              onkeydown="handleFreqKey(event);">
       <span class="ms-state" id="ms-state">Binaural</span>
     </div>`;
@@ -5428,13 +5504,13 @@ function openFreqEdit() {
   inp.style.display = 'block';
   if (UNIT_MODE === 'miaow') {
     inp.min = hzToMiaow(F_MIN).toFixed(2);
-    inp.max = hzToMiaow(432).toFixed(2);
+    inp.max = hzToMiaow(F_MAX).toFixed(2);
     inp.step = '0.01';
     inp.value = hzToMiaow(masterFreq).toFixed(2);
     inp.placeholder = hzToMiaow(masterFreq).toFixed(2);
   } else {
     inp.min = F_MIN;
-    inp.max = 432;
+    inp.max = F_MAX;
     inp.step = '1';
     inp.value = masterFreq;
     inp.placeholder = masterFreq;
@@ -5455,7 +5531,7 @@ function exitEditMaster(apply) {
   const raw = parseFloat(inp.value);
   if (isNaN(raw)) return;
   const v = UNIT_MODE === 'miaow' ? Math.round(miaowToHz(raw)) : Math.round(raw);
-  if (v < F_MIN || v > 432) return;
+  if (v < F_MIN || v > F_MAX) return;
   setMasterFreq(v);
 }
 
@@ -5615,7 +5691,7 @@ function setCharacterOn(v) {
 // l'intention documentée et le code, source de dissonance identifiée à
 // l'usage (le détune 0 était réécrit au hasard dès le premier tirage, sans
 // que personne n'ait rien demandé).
-const RAND_OPTS={freqMin:F_MIN,freqMax:432,ratioMode:'heterogene',ratioOn:true,characterOn:true,useFX:true,spread:0.6,
+const RAND_OPTS={freqMin:F_MIN,freqMax:F_MAX,ratioMode:'heterogene',ratioOn:true,characterOn:true,useFX:true,spread:0.6,
   randomTimbre:true, randomDepth:true, breathRandom:true, deltaVariety:true, polarityVariety:true,
   randomDualSine:false, closeBeatPair:true, preMasterFilter:true,
   fireworksIgnition:false}; // #149 : off par défaut (effet marqué, opt-in)
@@ -5728,7 +5804,7 @@ function setRandFreqMin(v){
   ['sl-fmin','q-fmin'].forEach(id=>{const sl=document.getElementById(id);if(sl && document.activeElement!==sl)sl.value=RAND_OPTS.freqMin;});
 }
 function setRandFreqMax(v){
-  RAND_OPTS.freqMax=Math.min(432,Math.max(RAND_OPTS.freqMin+1,parseInt(v)));
+  RAND_OPTS.freqMax=Math.min(F_MAX,Math.max(RAND_OPTS.freqMin+1,parseInt(v)));
   ['rv-fmax','rv-fmax-q'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=RAND_OPTS.freqMax;});
   ['sl-fmax','q-fmax'].forEach(id=>{const sl=document.getElementById(id);if(sl && document.activeElement!==sl)sl.value=RAND_OPTS.freqMax;});
 }
@@ -5800,11 +5876,11 @@ function triggerRandomFXQuick(){
   triggerRandomFX(0.72);
 }
 
-// #47 : n plafonné pour que masterFreq × ratio × n ne dépasse jamais 432 Hz
-// ("la valeur de n s'arrête quand fréquence = 432").
+// #47/#153 : n plafonné pour que masterFreq × ratio × n ne dépasse jamais F_MAX
+// ("la valeur de n s'arrête quand fréquence = plafond").
 function _nMaxFor(i) {
   const r = RATIO_OPTS[PAIRS[i].pingala.ri].r;
-  return Math.max(0.1, Math.floor((432 / (masterFreq * r)) * 10) / 10);
+  return Math.max(0.1, Math.floor((F_MAX / (masterFreq * r)) * 10) / 10);
 }
 function setN(i, raw) {
   const nMax = _nMaxFor(i);
@@ -5953,7 +6029,7 @@ function setMasterVol(v) {
   saveState();
 }
 function setMasterFreq(f) {
-  masterFreq = Math.max(F_MIN, Math.min(432, f));
+  masterFreq = Math.max(F_MIN, Math.min(F_MAX, f));
   updateDisplay();
   if (flowing) PAIRS.forEach((_, i) => {
     tuneOsc(PAIRS[i].pingala.id, calcPFreq(i));
@@ -5971,7 +6047,7 @@ function setMasterFreq(f) {
 // masterFreq (état validé), jamais de inp.value qui peut être un Miaow
 // non-committé.
 function _purpleFreqStep(delta) {
-  const next = Math.round(Math.max(F_MIN, Math.min(432, masterFreq + delta)));
+  const next = Math.round(Math.max(F_MIN, Math.min(F_MAX, masterFreq + delta)));
   setMasterFreq(next);
   const inp = document.getElementById('dcell-purple-input');
   if (inp) inp.value = UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(2) : masterFreq;
@@ -6035,7 +6111,7 @@ function syncDeltaUI() {
 }
 
 function masterStep(delta) {
-  setMasterFreq(Math.max(F_MIN, Math.min(432, masterFreq + delta)));
+  setMasterFreq(Math.max(F_MIN, Math.min(F_MAX, masterFreq + delta)));
 }
 // ── Trouvé en reprenant le problème à zéro : le champ nombre #master-input
 // a onInput ET onChange sur le MÊME élément. Pour un <input type=number>,
@@ -6051,13 +6127,13 @@ function onMasterInput(raw) {
   const v = parseFloat(raw);
   if (isNaN(v)) return;
   const hz = UNIT_MODE === 'miaow' ? miaowToHz(v) : v;
-  if (hz < F_MIN || hz > 432) return;
+  if (hz < F_MIN || hz > F_MAX) return;
   const msf = document.getElementById('ms-freq'); if (msf) msf.textContent = UNIT_MODE === 'miaow' ? v.toFixed(2) + ' 🐈' : v;
 }
 function onMasterChange(raw) {
   const v = parseFloat(raw);
   if (isNaN(v)) return;
-  const hz = Math.max(F_MIN, Math.min(432, UNIT_MODE === 'miaow' ? miaowToHz(v) : v));
+  const hz = Math.max(F_MIN, Math.min(F_MAX, UNIT_MODE === 'miaow' ? miaowToHz(v) : v));
   setMasterFreq(Math.round(hz));
 }
 
@@ -6421,8 +6497,8 @@ function triggerMagicAuto(opts) {
   // Répartition quasi-infinie (plus de pool figé de 6 valeurs) + garde-fou
   // anti-répétition. La plage (freqMin–freqMax, ≤432 Hz) est TOUJOURS active.
   const masterLocked = (typeof isLocked === 'function' && isLocked(MASTER_IDX)) || keepMaster || keepIdx === MASTER_IDX;
-  const rMin = Math.max(F_MIN, Math.min(RAND_OPTS.freqMin, 432));
-  const rMax = Math.max(rMin + 1, Math.min(432, RAND_OPTS.freqMax));
+  const rMin = Math.max(F_MIN, Math.min(RAND_OPTS.freqMin, F_MAX));
+  const rMax = Math.max(rMin + 1, Math.min(F_MAX, RAND_OPTS.freqMax));
   const newMaster = masterLocked ? masterFreq : _drawFundamental(rMin, rMax);
 
   // ── Δ binaural DOUX (thêta/alpha, relaxant) ───────────────────────
@@ -6504,7 +6580,7 @@ function triggerMagicAuto(opts) {
 
   // #85 : marge de sécurité 36 Hz — fréquences déjà "prises" par ce tirage,
   // dans l'ordre où elles sont validées (maître en premier, toujours fixe).
-  const _claimedFreqs = [Math.min(432, newMaster)];
+  const _claimedFreqs = [Math.min(F_MAX, newMaster)];
 
   // #86 : « battement rapproché » (option) — désigne pour CE tirage un duo
   // meneur/suiveur parmi les paires satellites actives, non verrouillées,
@@ -6570,7 +6646,7 @@ function triggerMagicAuto(opts) {
         pair.ida.delta = baseDelta; pair.ida.polarity = 1;
         if (pair.ida.delta !== oldDelta) _deltaChangedThisDraw[idx] = true;
       }
-      const pf = Math.min(432, newMaster);
+      const pf = Math.min(F_MAX, newMaster);
       pair.pingala.vol = Math.min(0.4, isosonicVol(pf, 0.11) * boost);
       pair.ida.vol     = Math.min(0.4, isosonicVol(pf, 0.11) * boost);
       if (isSpot && wave !== curWave && typeof setPairEngine === 'function') setPairEngine(idx, wave);
@@ -6633,6 +6709,22 @@ function triggerMagicAuto(opts) {
     const pf = Math.max(rMin, Math.min(rMax, newMaster * RATIO_OPTS[ri].r * n));
     pair.pingala.vol = Math.min(0.4, isosonicVol(pf, 0.085) * boost);
     pair.ida.vol     = Math.min(0.4, isosonicVol(pf, 0.085) * boost);
+    // #153 : au-delà de 325Hz, un sinus simple isolé sonne fin/cassant et
+    // manque de résonance — on adoucit systématiquement (-20% volume, LPF
+    // déjà posé plus bas via preMasterFilter) ET on force le Sinus Duo
+    // (jamais de fréquence aiguë en pur mono) si la paire n'a pas déjà un
+    // détune audible réglé manuellement.
+    if (pf > 325) {
+      pair.pingala.vol *= 0.8;
+      pair.ida.vol     *= 0.8;
+      if (typeof PAIR_DUALSINE[idx] !== 'number' || Math.abs(PAIR_DUALSINE[idx]) < 6) {
+        PAIR_DUALSINE[idx] = 12 + Math.random() * 18; // 12-30¢, toujours perceptible
+        if (typeof _applyDualSineDetune === 'function') {
+          _applyDualSineDetune(pair.pingala.id, PAIR_DUALSINE[idx]);
+          _applyDualSineDetune(pair.ida.id, PAIR_DUALSINE[idx]);
+        }
+      }
+    }
     if (isSpot && wave !== curWave && typeof setPairEngine === 'function') setPairEngine(idx, wave);
 
     // Profondeur → timbre plus mat pour les paires lointaines (air absorbé).
@@ -6666,7 +6758,10 @@ function triggerMagicAuto(opts) {
     // BPF = réservé au suiveur du duo rapproché, accent textural ponctuel
     // (le BPF partout sonnerait "téléphone" et casserait l'ambiance).
     if (RAND_OPTS.preMasterFilter) {
-      const isBpfAccent = idx === _closeBeatFollowerIdx;
+      // #153 : au-delà de 325Hz, LPF obligatoire (adoucit l'aigu) — prime
+      // même sur l'accent BPF ponctuel, qui n'a de sens que dans le registre
+      // moyen/grave.
+      const isBpfAccent = idx === _closeBeatFollowerIdx && pf <= 325;
       setPairFilterMode(idx, isBpfAccent ? 'bpf' : 'lpf');
       if (!isBpfAccent) {
         const hp = pf > 200 ? 60 : 20;
@@ -7397,7 +7492,7 @@ function buildMasterFXHTML() {
       <div class="fxq-row">
         <span class="fxq-lbl">Maître</span>
         <button class="fxq-step" onclick="masterStep(-1)">−</button>
-        <input type="number" id="master-input" class="fxq-num" min="54" max="432" value="252" step="1" oninput="onMasterInput(this.value)" onchange="onMasterChange(this.value)">
+        <input type="number" id="master-input" class="fxq-num" min="54" max="475" value="252" step="1" oninput="onMasterInput(this.value)" onchange="onMasterChange(this.value)">
         <button class="fxq-step" onclick="masterStep(1)">+</button>
         <span class="fxq-unit">Hz</span>
       </div>
@@ -7935,15 +8030,15 @@ function buildPairHTML(pair, i) {
   </div>`;
 }
 
-// #48 : Matrice 🌀 — 36 cellules d'assignation rapide (6 ratios × 6 n
-// aléatoires chacun), plafonnées à 432 Hz. Cache par paire (régénérée par
+// #48/#153 : Matrice 🌀 — 36 cellules d'assignation rapide (6 ratios × 6 n
+// aléatoires chacun), plafonnées à F_MAX. Cache par paire (régénérée par
 // le bouton "Nouveau tirage", pas à chaque ouverture d'onglet — sinon les
 // valeurs sauteraient dans tous les sens à chaque clic).
 let _matrixCache = {};
 function _genMatrixFor(i) {
   const cache = {};
   RATIO_OPTS.forEach((r, ri) => {
-    const nMax = Math.max(0.1, Math.floor((432 / (masterFreq * r.r)) * 10) / 10);
+    const nMax = Math.max(0.1, Math.floor((F_MAX / (masterFreq * r.r)) * 10) / 10);
     const vals = [];
     for (let k = 0; k < 6; k++) {
       const n = Math.round((0.1 + Math.random() * Math.max(0, nMax - 0.1)) * 10) / 10;
@@ -7958,7 +8053,7 @@ function _matrixHTML(i, c) {
   const cache = _matrixCache[i] || _genMatrixFor(i);
   const rows = RATIO_OPTS.map((r, ri) => {
     const cells = cache[ri].map(n => {
-      const f = Math.max(F_MIN, Math.min(432, masterFreq * r.r * n));
+      const f = Math.max(F_MIN, Math.min(F_MAX, masterFreq * r.r * n));
       const on = ri === PAIRS[i].pingala.ri && n === PAIRS[i].pingala.n;
       return `<button class="mx-cell${on?' on':''}" style="--ec:${c};" onclick="_matrixAssign(${i},${ri},${n})">
         <span class="mx-hz">${f.toFixed(0)}</span><span class="mx-n">n=${n.toFixed(1)}</span></button>`;
@@ -8124,7 +8219,7 @@ function loadState() {
   try {
     const s = JSON.parse(localStorage.getItem(LS_KEY));
     if (!s) return;
-    if (s.masterFreq>=F_MIN&&s.masterFreq<=432) masterFreq = s.masterFreq;
+    if (s.masterFreq>=F_MIN&&s.masterFreq<=F_MAX) masterFreq = s.masterFreq;
     // #35 : clampé — une session sauvegardée avant le resserrement du Δ
     // (0.8-1.2 Hz) pouvait contenir une ancienne valeur hors bande.
     if (s.globalDelta>0) globalDelta = Math.max(DELTA_MIN, Math.min(DELTA_MAX, s.globalDelta));
@@ -8461,7 +8556,7 @@ function _snapshotGame(name) {
 
 function _restoreGame(p) {
   if (!p) return;
-  if (p.masterFreq>=F_MIN && p.masterFreq<=432) setMasterFreq(p.masterFreq);
+  if (p.masterFreq>=F_MIN && p.masterFreq<=F_MAX) setMasterFreq(p.masterFreq);
   if (p.globalDelta>0) setGlobalDelta(p.globalDelta);
   if (p.masterVol>=0)  setMasterVol(p.masterVol);
   if (typeof p.geo === 'number') setGeometry(p.geo);
@@ -8753,8 +8848,8 @@ window._closeModuleOverlay = _closeModuleOverlay; // appelé depuis l'iframe enf
 // jouer en dessous, on ne le coupe jamais en ouvrant la montre.
 function chaWatchOpen() {
   const h = new Date().getHours(); // 0-23
-  const hourFreq = Math.round(F_MIN + (h / 24) * (432 - F_MIN));
-  masterFreq = Math.max(F_MIN, Math.min(432, hourFreq));
+  const hourFreq = Math.round(F_MIN + (h / 24) * (F_MAX - F_MIN));
+  masterFreq = Math.max(F_MIN, Math.min(F_MAX, hourFreq));
   if (typeof triggerMagicAuto === 'function') triggerMagicAuto({ keepMaster: true });
   _openModuleOverlay('omchawatch.html');
 }
