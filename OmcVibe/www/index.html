@@ -331,7 +331,12 @@ body{
    bottom est calé pour que la sphère chevauche le haut du dock — même
    emplacement visuel qu'avant, désormais indépendant de sa structure. */
 #dcFluxFloat{
-  position:fixed;left:50%;bottom:82px;transform:translateX(-50%);
+  position:fixed;left:50%;
+  /* #156 : taille/position réglables (Créateur) — décalage additionné à la
+     position de base, jamais à la place (0 par défaut = comportement
+     identique à avant). */
+  bottom:calc(82px + var(--flux-dy,0px));
+  transform:translateX(-50%) translateX(var(--flux-dx,0px)) scale(var(--flux-scale,1));
   z-index:10700;display:flex;flex-direction:column;align-items:center;
   transition:opacity .25s ease;
 }
@@ -359,6 +364,10 @@ body{
   --dock-cell-scale:1;
   --sphere-digit-scale:1;
   --sphere-hue:0deg;
+  /* #156 : sphère Flux (jeu aléatoire) — taille/position réglables. */
+  --flux-scale:1;
+  --flux-dx:0px;
+  --flux-dy:0px;
 }
 .vp-wrap{
   position:absolute;transform:translate(-50%,-50%) scale(var(--bubble-scale,1));
@@ -927,17 +936,20 @@ body{
    fini le calcul en pixels JS). Colonne gauche (rouge/orange) : sphère côté
    extérieur gauche. Colonne droite (vert/bleu) : sphère côté extérieur
    droit — les sphères encadrent le dock des deux côtés.
-   #25 : plus de position absolue par défaut. Le glisser-déposer (appui
-   long, cf. _bindExtraDraggable) reste possible : SEULE une sphère
-   activement décrochée passe en position:fixed (géré en JS, cf.
-   .dcell-extra-dragging), et le reste au repos dans le flux.
+   #156 : par défaut, collées aux bords GAUCHE/DROITE de l'ÉCRAN (pas
+   seulement du dock) — largeur/taille fixes (34px), donc aucun risque du
+   bug "cellule qui grossit" repéré sur les cellules de dock flexibles
+   (#155, retiré). Le glisser-déposer (appui long, cf. _bindExtraDraggable)
+   reste possible par-dessus : dès qu'une sphère est décrochée, sa position
+   sauvegardée (JS, style inline) prend le dessus sur ce positionnement
+   CSS par défaut.
    #27 : sphères pleines (couleur assortie à leur cellule) et symbole "+" doré.
    #32 : sphères et cellule agrandies (+25% vs origine). Retour à 1 seule
    sphère par cellule (comme à l'origine) — 2 grosses sphères de chaque
    côté ne laissaient plus de place pour un texte de cellule lisible. */
 .dcell-wrap{ display:flex;align-items:center;gap:0;width:100%; }
 .dcell-extra{
-  position:static;z-index:2;
+  position:fixed;z-index:50;
   width:34px;height:34px;border-radius:50%;flex-shrink:0; /* #52 : -36% vs #32 (53px→34px), place faite aux cellules */
   display:flex;align-items:center;justify-content:center;
   font-size:1.5rem;line-height:1;font-weight:400;
@@ -969,6 +981,14 @@ body{
 .dcell-extra-orange{ background:radial-gradient(circle at 34% 30%, #FFDCA8, #FF9628 45%, #B05E0A 100%); box-shadow:0 0 9px rgba(255,150,40,.55),inset 0 1px 2px rgba(255,255,255,.35); }
 .dcell-extra-green{ background:radial-gradient(circle at 34% 30%, #D0FFE8, #5AFFA0 45%, #1CA860 100%); box-shadow:0 0 9px rgba(90,255,160,.55),inset 0 1px 2px rgba(255,255,255,.35); }
 .dcell-extra-blue{ background:radial-gradient(circle at 34% 30%, #C8E8FF, #3CAAFF 45%, #1560A8 100%); box-shadow:0 0 9px rgba(60,170,255,.55),inset 0 1px 2px rgba(255,255,255,.35); }
+
+/* #156 : position par défaut — collées aux bords écran, colonne gauche
+   (Aléatoire/Effet) à gauche, colonne droite (Samples/Paramètres) à
+   droite, chacune sur 2 hauteurs (haut/bas de colonne). */
+#dcRedExtra,   #dcGreenExtra { left:6px; }
+#dcOrangeExtra,#dcBlueExtra  { right:6px; }
+#dcRedExtra,   #dcOrangeExtra{ bottom:180px; }
+#dcGreenExtra, #dcBlueExtra  { bottom:110px; }
 
 /* CENTRE — Flux : yin-yang organique, pièce maîtresse du dock — plus de
    chip on/off séparé (#137 : "pas besoin de bouton on/off", l'appui long
@@ -1084,10 +1104,19 @@ body.flux-muted .vp-i{
    compacte (−9 / saisie / +9 / ✓) plutôt que 2 lignes : la largeur ET la
    hauteur disponibles dans le dock sont très limitées (dock à hauteur
    fixe, colonnes à largeur égale) — chaque pixel compte ici.
-   `width:100%` (pas de largeur fixe) : épouse la largeur réellement
-   allouée à sa colonne par flexbox plutôt que de risquer un débordement
-   sur les colonnes voisines si cette largeur est plus étroite que prévu. */
-.dock-col-center{ display:flex;flex-direction:column;align-items:center;gap:.3rem;flex-shrink:0; }
+   #156 : sortie du flux flexbox du dock — groupe fixe, centré, collé
+   contre le bas de l'écran (Fréquence maître + ChaWatch empilés
+   ensemble). `width:204px` explicite (pas `100%` d'un parent flex) :
+   pas de dépendance de layout, donc pas de risque du bug "cellule qui
+   grossit" repéré sur l'ancien mode de repositionnement libre (#155,
+   retiré) — les enfants gardent leur `width:100%` inchangé, qui résout
+   désormais simplement à 204px, un conteneur fixe au lieu d'une part de
+   flex. */
+.dock-col-center{
+  position:fixed;left:50%;bottom:8px;transform:translateX(-50%);
+  width:204px;z-index:105;
+  display:flex;flex-direction:column;align-items:center;gap:.3rem;flex-shrink:0;
+}
 .dcell-purple{
   display:flex;align-items:center;justify-content:center;gap:.3rem;
   width:100%;max-width:204px;padding:.3rem .41rem;border-radius:16px;border:1.5px solid rgba(190,110,255,.5); /* #52 : +36% ; #137 : 10px→16px, cohérent avec le reste du dock */
@@ -1733,15 +1762,6 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 .creator-btn2 .ico{font-size:1.2rem;flex-shrink:0;}
 .creator-btn2:active{transform:scale(.98);}
 .creator-btn2.on{background:color-mix(in srgb,var(--ic,#888) 26%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--ic,#888) 40%,transparent);}
-/* Repositionnement libre : affordance visuelle sur les cibles déplaçables */
-body.creator-reposition .vp-p,
-body.creator-reposition .dcell,
-body.creator-reposition .dcell-purple,
-body.creator-reposition .dcell-chawatch{
-  outline:2px dashed rgba(255,215,0,.75);outline-offset:3px;cursor:move !important;
-  animation:crRepoPulse 1.8s ease-in-out infinite;
-}
-@keyframes crRepoPulse{0%,100%{outline-color:rgba(255,215,0,.4);}50%{outline-color:rgba(255,215,0,.9);}}
 /* Fiches sticker (7 sphères) */
 .cr-sticker-row{
   display:flex;align-items:center;gap:.6rem;padding:.5rem;border-radius:10px;
@@ -2235,10 +2255,24 @@ body.creator-reposition .dcell-chawatch{
   </div>
 
   <div class="creator-sec">
-    <div class="creator-sec-title">Repositionnement libre</div>
-    <div class="cust-hint">Active le mode, puis glisse n'importe quelle sphère (oscillateurs + maître) ou cellule du dock où tu veux à l'écran. Désactive pour retrouver l'usage normal (tap/appui long).</div>
-    <button class="creator-btn2" id="cr-reposition-btn" style="--ic:#FFD700;" onclick="toggleCreatorReposition()"><span class="ico">✋</span><span>Mode repositionnement : OFF</span></button>
-    <button class="creator-btn2" style="--ic:#FF8E8E;" onclick="resetCreatorPositions()"><span class="ico">↺</span><span>Réinitialiser les positions</span></button>
+    <div class="creator-sec-title">Sphère Flux (jeu aléatoire)</div>
+    <div class="cust-hint">Taille et position de la grande sphère dorée, réglables et mémorisées d'une session à l'autre. Les sphères "+" (raccourcis) restent collées aux bords gauche/droite, et ChaWatch + fréquence maître restent groupés en bas — ça, ça ne bouge pas.</div>
+    <div class="creator-row">
+      <span class="creator-lbl">Taille</span>
+      <input type="range" id="cr-flux-scale" min="50" max="150" step="5" value="100" oninput="setFluxScale(this.value)">
+      <span class="creator-val" id="cr-flux-scale-v">100%</span>
+    </div>
+    <div class="creator-row">
+      <span class="creator-lbl">Position horizontale</span>
+      <input type="range" id="cr-flux-dx" min="-150" max="150" step="5" value="0" oninput="setFluxOffsetX(this.value)">
+      <span class="creator-val" id="cr-flux-dx-v">0px</span>
+    </div>
+    <div class="creator-row">
+      <span class="creator-lbl">Position verticale</span>
+      <input type="range" id="cr-flux-dy" min="-80" max="150" step="5" value="0" oninput="setFluxOffsetY(this.value)">
+      <span class="creator-val" id="cr-flux-dy-v">0px</span>
+    </div>
+    <button class="cr-mini-btn" onclick="resetFluxLayout()" style="align-self:flex-start;">↺ Réinitialiser la sphère Flux</button>
   </div>
 
   <div class="creator-sec">
@@ -3086,19 +3120,27 @@ function freqColorA(f, l, a) { return `hsla(${freqHue(f)},72%,${l != null ? l : 
 // tombe SA fréquence RÉELLE actuelle — donc change de couleur si un tirage
 // la déplace dans une autre bande, indépendamment de la couleur "identité"
 // fixe de sa paire (PAIRS[i].color, gardée ailleurs pour d'autres usages).
+// #157 : noms alignés sur la nomenclature confirmée par l'utilisateur
+// (capture d'écran de référence) — "Doré" plutôt que "Jaune". Plage
+// contiguë 54→475 (54-108/109-162/163-216/217-288/289-324/324-396/396-475,
+// arrondis à la borne commune) + clamp dans bandColorFor + repli sur la
+// dernière bande en fin de boucle : AUCUNE fréquence ne peut retomber
+// "sans bande" (le bug de sphère vierge vu sur une ancienne version de
+// l'app, avec un moteur de rendu différent, est structurellement
+// impossible ici).
 const FREQ_BANDS = [
   { lo: 54,  hi: 108, name: 'Rouge',     c: '#FF4B4B' },
   { lo: 108, hi: 162, name: 'Orange',    c: '#FF9A3C' },
-  { lo: 162, hi: 216, name: 'Jaune',     c: '#F5DC46' },
+  { lo: 162, hi: 216, name: 'Doré',      c: '#F5DC46' },
   { lo: 216, hi: 288, name: 'Vert',      c: '#4CE06A' },
   { lo: 288, hi: 324, name: 'Cyan',      c: '#3CE0D8' },
-  { lo: 324, hi: 396, name: 'Bleu nuit', c: '#3C5CE0' },
+  { lo: 324, hi: 396, name: 'Bleu',      c: '#3C5CE0' },
   { lo: 396, hi: 475, name: 'Violet',    c: '#A24CE0' },
 ];
 function bandColorFor(freq) {
   const f = Math.max(54, Math.min(475, freq));
   for (const b of FREQ_BANDS) { if (f <= b.hi) return b; }
-  return FREQ_BANDS[FREQ_BANDS.length - 1];
+  return FREQ_BANDS[FREQ_BANDS.length - 1]; // filet de sécurité — jamais atteint en pratique, garde-fou pur
 }
 // Assombrit une couleur hex (#RRGGBB) de amt (0-1) vers le noir — utilisé
 // pour le cercle de bordure "légèrement plus foncé" que le halo de la sphère.
@@ -5572,12 +5614,8 @@ function buildVesicaPairs() {
   for (let i = 0; i < 6 && !simple; i++) {
     const pair = PAIRS[i];
     const rad  = (HEX_DEG[i] - 90) * Math.PI / 180;
-    // #155 : décalage libre (Créateur → mode repositionnement) — {dx,dy}
-    // additionné à la position calculée, jamais l'inverse (le calcul
-    // "naturel" reste la base, l'utilisateur ne fait que la décaler).
-    const _off = SPHERE_POS[i] || {dx:0,dy:0};
-    const px   = cx + R * Math.cos(rad) + _off.dx;
-    const py   = cy + R * Math.sin(rad) + _off.dy;
+    const px   = cx + R * Math.cos(rad);
+    const py   = cy + R * Math.sin(rad);
     const isMutedP = !!mutedOscs[pair.pingala.id];
     const pF   = calcPFreq(i);
     // #153 : couleur "mandala" pilotée par la BANDE DE FRÉQUENCE réelle du
@@ -5666,15 +5704,6 @@ function buildVesicaPairs() {
       <span class="ms-state" id="ms-state">Binaural</span>
     </div>`;
   layer.appendChild(vcw);
-
-  // #155 : décalage libre (Créateur → mode repositionnement) — appliqué en
-  // plus du transform de base (centrage + --bubble-scale), jamais à la
-  // place : sinon le zoom des bulles se perdrait dès qu'on déplace la
-  // sphère maître.
-  const _offM = SPHERE_POS[MASTER_IDX];
-  if (_offM && (_offM.dx || _offM.dy)) {
-    vcw.style.transform = `translate(-50%,-50%) translate(${_offM.dx}px,${_offM.dy}px) scale(var(--bubble-scale,1))`;
-  }
 
   // #154 : étoile sous la sphère maître elle aussi désormais (même geste que
   // les satellites → ouvre son menu oscillateur), SANS chiffre — cf. .ms-freq
@@ -9078,11 +9107,10 @@ function init() {
   _loadExtraPos();
   _loadBubbleSize();
   _loadDisplayFilter();
-  // #155 : module Créateur — police/tailles/couleur, positions libres
-  // (sphères + cellules dock), stickers (async, redessine seule à la fin).
+  // #155/#156 : module Créateur — police/tailles/couleur, taille/position
+  // de la sphère Flux, stickers (async, redessine seule à la fin).
   _loadCreatorAppearance();
-  _loadSpherePos();
-  _loadCrCellPos();
+  _loadFluxLayout();
   _loadStickers();
   _loadBackground();
   _loadAudioQuality(); // #33 (perf)
@@ -9657,117 +9685,55 @@ function _loadCreatorAppearance() {
   if (typeof s.hue === 'number') setCreatorHue(s.hue);
 }
 
-/* ---------- Repositionnement libre (sphères + cellules dock) ---------- */
-// Sphères (oscillateurs 0-5 + maître 6) : décalage {dx,dy} additionné à la
-// position calculée dans buildVesicaPairs() — cf. #155 plus haut.
-const SPHERE_POS_KEY = 'fbf432-spherePos';
-let SPHERE_POS = {};
-function _loadSpherePos() {
-  try { SPHERE_POS = JSON.parse(localStorage.getItem(SPHERE_POS_KEY)) || {}; } catch(e) { SPHERE_POS = {}; }
+/* ---------- #156 : Sphère Flux — taille + position réglables, persistantes ----------
+   Remplace l'ancien "mode repositionnement" libre (retiré : glisser une
+   cellule du dock, dépendante du flux flexbox pour sa taille, la faisait
+   "grossir" une fois détachée en position:fixed — repéré par l'utilisateur
+   en test réel). #dcFluxFloat est déjà en position:fixed sans dépendance de
+   layout (cf. #146), donc curseurs simples = 0 risque de ce bug. */
+const FLUX_LAYOUT_KEY = 'fbf432-fluxLayout';
+function setFluxScale(pct) {
+  pct = Math.max(50, Math.min(150, parseInt(pct) || 100));
+  document.documentElement.style.setProperty('--flux-scale', pct / 100);
+  const v = document.getElementById('cr-flux-scale-v'); if (v) v.textContent = pct + '%';
+  const sl = document.getElementById('cr-flux-scale'); if (sl && +sl.value !== pct) sl.value = pct;
+  _fluxLayoutPersist();
 }
-function _saveSpherePos() { try { localStorage.setItem(SPHERE_POS_KEY, JSON.stringify(SPHERE_POS)); } catch(e) {} }
-
-// Cellules du dock (les 4 principales + violette + ChaWatch) : même
-// mécanique que DOCK_EXTRA_POS (petits "+"), store séparé pour ne jamais
-// risquer d'interférer avec ce système déjà en place.
-const CR_CELL_POS_KEY = 'fbf432-crCellPos';
-let CR_CELL_POS = {};
-function _loadCrCellPos() {
-  try { CR_CELL_POS = JSON.parse(localStorage.getItem(CR_CELL_POS_KEY)) || {}; } catch(e) { CR_CELL_POS = {}; }
-  Object.keys(CR_CELL_POS).forEach(id => {
-    const el = document.getElementById(id);
-    const p = CR_CELL_POS[id];
-    if (!el || !p) return;
-    if (!el._homeParent && el.parentElement) el._homeParent = el.parentElement;
-    if (el.parentElement !== document.body) document.body.appendChild(el);
-    el.style.position = 'fixed'; el.style.left = p.left + 'px'; el.style.top = p.top + 'px';
-    el.style.right = 'auto'; el.style.transform = 'none'; el.style.zIndex = 100;
-  });
+function setFluxOffsetX(px) {
+  px = Math.max(-150, Math.min(150, parseInt(px) || 0));
+  document.documentElement.style.setProperty('--flux-dx', px + 'px');
+  const v = document.getElementById('cr-flux-dx-v'); if (v) v.textContent = px + 'px';
+  const sl = document.getElementById('cr-flux-dx'); if (sl && +sl.value !== px) sl.value = px;
+  _fluxLayoutPersist();
 }
-function _saveCrCellPos(id, left, top) {
-  if (!id || isNaN(left) || isNaN(top)) return;
-  CR_CELL_POS[id] = { left, top };
-  try { localStorage.setItem(CR_CELL_POS_KEY, JSON.stringify(CR_CELL_POS)); } catch(e) {}
+function setFluxOffsetY(px) {
+  px = Math.max(-80, Math.min(150, parseInt(px) || 0));
+  document.documentElement.style.setProperty('--flux-dy', px + 'px');
+  const v = document.getElementById('cr-flux-dy-v'); if (v) v.textContent = px + 'px';
+  const sl = document.getElementById('cr-flux-dy'); if (sl && +sl.value !== px) sl.value = px;
+  _fluxLayoutPersist();
 }
-
-let CREATOR_REPOSITION_MODE = false;
-function toggleCreatorReposition() {
-  CREATOR_REPOSITION_MODE = !CREATOR_REPOSITION_MODE;
-  document.body.classList.toggle('creator-reposition', CREATOR_REPOSITION_MODE);
-  const btn = document.getElementById('cr-reposition-btn');
-  if (btn) {
-    btn.classList.toggle('on', CREATOR_REPOSITION_MODE);
-    const s = btn.querySelector('span:last-child');
-    if (s) s.textContent = 'Mode repositionnement : ' + (CREATOR_REPOSITION_MODE ? 'ON' : 'OFF');
-  }
+function _fluxLayoutPersist() {
+  const cs = getComputedStyle(document.documentElement);
+  _lsSetDebounced(FLUX_LAYOUT_KEY, JSON.stringify({
+    scale: Math.round((parseFloat(cs.getPropertyValue('--flux-scale')) || 1) * 100),
+    dx: parseInt(cs.getPropertyValue('--flux-dx')) || 0,
+    dy: parseInt(cs.getPropertyValue('--flux-dy')) || 0,
+  }), 300);
 }
-function resetCreatorPositions() {
-  SPHERE_POS = {};
-  try { localStorage.removeItem(SPHERE_POS_KEY); } catch(e) {}
-  CR_CELL_POS = {};
-  try { localStorage.removeItem(CR_CELL_POS_KEY); } catch(e) {}
-  ['dcRed','dcOrange','dcGreen','dcBlue','dcPurple','dcChaWatch'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.style.position = ''; el.style.left = ''; el.style.top = ''; el.style.right = '';
-    el.style.transform = ''; el.style.zIndex = '';
-    if (el.parentElement === document.body && el._homeParent) el._homeParent.appendChild(el);
-  });
-  if (typeof buildVesicaPairs === 'function') buildVesicaPairs();
+function resetFluxLayout() {
+  setFluxScale(100);
+  setFluxOffsetX(0);
+  setFluxOffsetY(0);
 }
-// Glisser en mode Créateur : délégué (document, phase capture) — n'agit QUE
-// si CREATOR_REPOSITION_MODE est actif, donc n'interfère JAMAIS avec le tap/
-// appui long normal des cellules/sphères quand le mode est désactivé.
-let _crDrag = null;
-document.addEventListener('pointerdown', e => {
-  if (!CREATOR_REPOSITION_MODE) return;
-  const dockEl = e.target.closest('.dcell, .dcell-purple, .dcell-chawatch');
-  const sphereEl = !dockEl ? e.target.closest('.vp-p') : null;
-  const el = dockEl || sphereEl;
-  if (!el) return;
-  e.preventDefault(); e.stopPropagation();
-  const r = el.getBoundingClientRect();
-  _crDrag = { el, kind: dockEl ? 'dock' : 'sphere', startX: e.clientX, startY: e.clientY, origLeft: r.left, origTop: r.top, w: r.width, h: r.height };
-  if (dockEl) {
-    if (!el._homeParent && el.parentElement) el._homeParent = el.parentElement;
-    if (el.parentElement !== document.body) document.body.appendChild(el);
-    el.style.position = 'fixed'; el.style.left = r.left + 'px'; el.style.top = r.top + 'px';
-    el.style.right = 'auto'; el.style.transform = 'none'; el.style.zIndex = 999;
-  }
-}, true);
-document.addEventListener('pointermove', e => {
-  if (!_crDrag) return;
-  e.preventDefault();
-  const dx = e.clientX - _crDrag.startX, dy = e.clientY - _crDrag.startY;
-  if (_crDrag.kind === 'dock') {
-    const nl = Math.max(0, Math.min(window.innerWidth  - _crDrag.w, _crDrag.origLeft + dx));
-    const nt = Math.max(0, Math.min(window.innerHeight - _crDrag.h, _crDrag.origTop  + dy));
-    _crDrag.el.style.left = nl + 'px'; _crDrag.el.style.top = nt + 'px';
-  } else {
-    // Aperçu visuel seul pendant le drag — .vp-p n'a pas de transform de
-    // base (contrairement à .vp-center-wrap), un simple translate suffit.
-    _crDrag.el.style.transform = `translate(${dx}px,${dy}px)`;
-  }
-}, true);
-document.addEventListener('pointerup', e => {
-  if (!_crDrag) return;
-  const d = _crDrag; _crDrag = null;
-  if (d.kind === 'dock') {
-    d.el.style.zIndex = 100;
-    _saveCrCellPos(d.el.id, parseFloat(d.el.style.left), parseFloat(d.el.style.top));
-  } else {
-    const dx = e.clientX - d.startX, dy = e.clientY - d.startY;
-    const i = parseInt(String(d.el.id).replace('vpc-p', ''), 10);
-    if (!isNaN(i)) {
-      const prev = SPHERE_POS[i] || { dx: 0, dy: 0 };
-      SPHERE_POS[i] = { dx: prev.dx + dx, dy: prev.dy + dy };
-      _saveSpherePos();
-    }
-    d.el.style.transform = ''; // buildVesicaPairs reprend la main avec le nouvel offset
-    if (typeof buildVesicaPairs === 'function') buildVesicaPairs();
-  }
-}, true);
-document.addEventListener('pointercancel', () => { _crDrag = null; }, true);
+function _loadFluxLayout() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(FLUX_LAYOUT_KEY)); } catch(e) {}
+  if (!s) return;
+  if (s.scale) setFluxScale(s.scale);
+  if (typeof s.dx === 'number') setFluxOffsetX(s.dx);
+  if (typeof s.dy === 'number') setFluxOffsetY(s.dy);
+}
 
 /* ---------- Stickers personnalisés (7 sphères) ---------- */
 const CRST_DB_NAME = 'omcvibe_stickers', CRST_STORE = 'stickers';
