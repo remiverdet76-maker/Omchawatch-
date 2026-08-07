@@ -6,6 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
+<!-- #154 : les styles référencent 'Cinzel Decorative'/'IM Fell English' partout
+     depuis le début, mais aucun <link> ne les chargeait jamais — repli silencieux
+     sur serif générique. Preconnect + Google Fonts (fallback serif déjà en place
+     si l'appareil est hors-ligne au premier lancement). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
 <title>OmcVibe432</title>
 <style>
 /* ═══════════════════════════════════════════
@@ -100,7 +107,7 @@ body{
 /* Dock bas — Flux + Nav horizontaux */
 #bottom-dock{
   position:fixed;
-  bottom:0;left:0;right:0;height:148px; /* #32 : cellules/sphères agrandies (92px→115px) ; #40 : +33px pour la cellule violette fréquence maître sous Flux (115px→148px) */
+  bottom:0;left:0;right:0;height:154px; /* #32 : cellules/sphères agrandies (92px→115px) ; #40 : +33px pour la cellule violette fréquence maître sous Flux (115px→154px) */
   display:flex;flex-direction:row;align-items:center;justify-content:center;
   gap:.5rem;padding:0 .5rem;
   z-index:100;
@@ -119,11 +126,11 @@ body{
   box-shadow:0 -4px 24px rgba(80,40,160,.18),inset 0 1px 0 rgba(255,255,255,.06);
   transition:transform .35s cubic-bezier(.4,0,.2,1);
 }
-#bottom-dock.collapsed{transform:translateY(148px);}
+#bottom-dock.collapsed{transform:translateY(154px);}
 /* Chevron (masquer/afficher le dock) + plein écran : conteneur commun,
    aimantés ensemble — ils se déplacent comme un seul bloc. */
 #dock-toggle-row{
-  position:fixed;bottom:148px;right:.5rem;
+  position:fixed;bottom:154px;right:.5rem;
   display:flex;gap:.35rem;
   z-index:101;
   transition:bottom .35s cubic-bezier(.4,0,.2,1);
@@ -131,14 +138,16 @@ body{
 #dock-toggle-row.dock-up{bottom:0;}
 #dock-chevron, #btn-fs{
   width:48px;height:28px;
-  background:rgba(10,4,30,.94);
-  border:1.5px solid rgba(200,140,255,.55);border-bottom:none;
+  /* #154 : fond translucide (au lieu de quasi-opaque) — cohérent avec le
+     reste du dock (backdrop-filter + rgba faible, cf. #bottom-dock). */
+  background:rgba(10,4,30,.55);backdrop-filter:blur(8px);
+  border:1.5px solid rgba(200,140,255,.5);border-bottom:none;
   border-radius:10px 10px 0 0;
   color:rgba(220,180,255,.95);font-size:1.05rem;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;
   box-shadow:0 0 14px rgba(160,80,255,.3);
-  transition:box-shadow .2s;
+  transition:box-shadow .2s,background .2s;
 }
 #dock-chevron:hover, #btn-fs:hover{box-shadow:0 0 20px rgba(180,100,255,.5);}
 
@@ -153,7 +162,7 @@ body{
 /* Visualiseur spectral — au-dessus du dock */
 #spectroid-bar{
   position:fixed;
-  bottom:148px;left:50%;transform:translateX(-50%);
+  bottom:154px;left:50%;transform:translateX(-50%);
   width:min(680px,88vw);height:80px;
   z-index:22;
   background:linear-gradient(135deg,rgba(180,180,200,.12),rgba(220,220,240,.06),rgba(150,160,180,.10));
@@ -244,7 +253,7 @@ body{
 #osc-modal-inner{
   background:rgba(8,0,26,.97);
   border-bottom:1.5px solid rgba(200,100,255,.4);
-  width:100vw;height:calc(100vh - 148px);
+  width:100vw;height:calc(100vh - 154px);
   display:flex;flex-direction:column;
   backdrop-filter:blur(22px);
   box-shadow:0 0 70px rgba(120,0,255,.3);
@@ -275,10 +284,11 @@ body{
 }
 #backdrop.open{display:block;}
 
-/* Bouton Retour — visible uniquement quand un panneau/modal est ouvert */
+/* Bouton Retour — visible uniquement quand un panneau/modal est ouvert.
+   #154 : repositionné à GAUCHE du chevron (persiste au même endroit, bas-
+   gauche, dans chaque sous-menu — le chevron/plein écran restent à droite). */
 #btn-back{
-  /* Empilé au-dessus du bloc chevron + plein écran (28px de haut + marge) */
-  position:fixed;right:1rem;bottom:calc(148px + 38px);z-index:90;
+  position:fixed;left:1rem;bottom:calc(154px + 38px);z-index:90;
   padding:.6rem 1.1rem;border-radius:24px;
   background:rgba(10,4,30,.92);border:1.5px solid rgba(200,140,255,.55);
   color:rgba(230,210,255,.95);font-family:'Cinzel Decorative',serif;
@@ -420,6 +430,11 @@ body{
 }
 .ms-freq{font-family:'IM Fell English',serif;font-size:2.2rem;color:#F3D9FF;line-height:1;cursor:text;text-shadow:0 0 14px rgba(220,130,255,.55);font-weight:bold;}
 .ms-freq:hover{color:#FFD700;}
+/* #154 : la sphère maître n'affiche plus son chiffre — désormais visible/
+   réglable uniquement via le modificateur violet du dock (.dcell-purple).
+   La saisie tactile directe (openFreqEdit/#freq-input-master) reste posée
+   mais dormante, pas supprimée (0 risque de casser un appelant existant). */
+.vp-center-wrap .ms-freq{ display:none; }
 .ms-state{font-size:.7rem;font-style:italic;letter-spacing:.1em;color:rgba(220,180,255,.7);text-transform:uppercase;transition:color .5s;font-weight:bold;}
 #freq-input-master{
   display:none;width:95px;background:transparent;border:none;border-bottom:2px solid rgba(220,140,255,.75);
@@ -850,7 +865,7 @@ body{
 .dcell{
   position:relative;
   display:flex;align-items:center;justify-content:center;gap:.35rem;
-  flex:1 1 0;min-width:0;width:auto;height:58px;padding:0 .4rem; /* #52 : +36% vs #32 (43px→58px), le texte tenait pas dans les cellules */
+  flex:1 1 0;min-width:0;width:auto;height:64px;padding:0 .4rem; /* #52 : +36% vs #32 (43px→58px) ; #154 : +6px, optimisation d'espace demandée */
   border-radius:18px;border:1.5px solid; /* #137 : 11px→18px, galbe plus organique qu'un rectangle strict */
   cursor:pointer;user-select:none;-webkit-user-select:none;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
@@ -870,6 +885,14 @@ body{
 .dcell-sub{ font-family:'IM Fell English',serif;font-size:.98rem;font-weight:bold;opacity:.85;
   white-space:normal;overflow-wrap:break-word;max-width:100%;text-align:center; }
 .dcell-ico{ font-size:1.56rem;flex-shrink:0; } /* #52 : +36% */
+/* #154 : ⚙ discrète, uniforme sur les 4 cellules principales du dock —
+   signale que le tap ouvre un écran de réglages (Effet/Aléatoire/
+   Samples-Utilisateur/Paramètres), quelle que soit leur couleur/icône. */
+.dcell-gear{
+  position:absolute;top:4px;right:6px;
+  font-size:.62rem;opacity:.45;line-height:1;color:currentColor;
+  pointer-events:none;
+}
 
 /* ROUGE translucide — Option Jeu aléatoire */
 .dcell-red{ background:rgba(255,70,70,.14);border-color:rgba(255,90,90,.5);color:#FF8E8E; }
@@ -1246,7 +1269,7 @@ body.flux-muted .vp-i{
 .pan-left,.pan-right{
   position:fixed;top:0;right:0;left:0;
   width:100vw;
-  height:calc(100vh - 148px);
+  height:calc(100vh - 154px);
   overflow-y:auto;scrollbar-width:none;
   background:rgba(1,3,6,.97);
   border-bottom:1px solid rgba(0,204,255,.12);
@@ -1659,7 +1682,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 .tnav-params{font-family:'Cinzel Decorative',serif !important;letter-spacing:.08em;}
 .params-menu{display:flex;flex-direction:column;gap:.5rem;margin-top:.4rem;}
 .params-item{
-  display:flex;align-items:center;gap:.7rem;min-height:52px;padding:.6rem .9rem;
+  display:flex;align-items:center;gap:.7rem;min-height:58px;padding:.7rem .9rem; /* #154 : cellules un peu agrandies (52px→58px) */
   border-radius:12px;cursor:pointer;text-align:left;
   background:rgba(255,255,255,.04);border:1px solid color-mix(in srgb,var(--ic,#888) 35%,transparent);
   color:#FFD700;font-size:1.4rem;transition:all .18s;
@@ -1758,27 +1781,28 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 @media (max-width: 900px), (max-height: 500px) {
 
   /* Dock 5 touches — lisible et accessible (les parents doivent viser sans effort) */
-  /* #32 : cellules/sphères agrandies (96px→120px) ; #40 : +38px pour la cellule violette fréquence maître sous Flux (120px→158px) */
+  /* #32 : cellules/sphères agrandies (96px→120px) ; #40 : +38px pour la cellule violette fréquence maître sous Flux (120px→158px) ;
+     #154 : +3px de plus, cellules du dock légèrement agrandies (158px→161px) */
   #bottom-dock {
-    height: 158px !important;
+    height: 161px !important;
     padding: 0 .55rem !important;
     gap: .55rem !important;
   }
-  #dock-toggle-row { bottom: 158px !important; }
+  #dock-toggle-row { bottom: 161px !important; }
   #dock-toggle-row.dock-up { bottom: 0 !important; }
-  #bottom-dock.collapsed { transform: translateY(158px) !important; }
-  #spectroid-bar { bottom: 158px !important; width: 80vw !important; }
+  #bottom-dock.collapsed { transform: translateY(161px) !important; }
+  #spectroid-bar { bottom: 161px !important; width: 80vw !important; }
 
-  .dcell { height: 61px !important; } /* #52 : +36% vs #32 (45px→61px) */
+  .dcell { height: 64px !important; } /* #52 : +36% vs #32 (45px→61px) ; #154 : +3px */
   .dcell-name { font-size: .82rem !important; } /* #72 : réduit, "Aléatoire"/"Paramètres" débordaient */
   .dcell-sub  { font-size: .88rem !important; } /* #72 : réduit + retour à la ligne (cf. règle de base) au lieu de nowrap */
   .dcell-extra { width: 34px !important; height: 34px !important; } /* #52 : -36% vs #32 (53px→34px) */
   .dcell-flux { width: 96px !important; height: 96px !important; margin-bottom: 8px !important; } /* #147 : taille max sans chevauchement sur mobile (84px→96px) — le gap
     réel entre les 2 colonnes du dock ne descend jamais sous ~112px, même sur les plus petits écrans (320px CSS) ; 96px garde ≥8px de marge de chaque côté */
-  #dcFluxFloat { bottom: 116px !important; } /* #146 : dock mobile plus haut (158px) — recale le chevauchement */
+  #dcFluxFloat { bottom: 119px !important; } /* #146 : dock mobile plus haut (161px) — recale le chevauchement ; #154 : +3px */
 
   /* Panneaux : plein écran (largeur) pour la lisibilité, déroulement haut → bas,
-     hauteur toujours réservée au-dessus du dock (158px sur smartphone, dock agrandi) */
+     hauteur toujours réservée au-dessus du dock (161px sur smartphone, dock agrandi) */
   .pan-left.open,
   .pan-right.open {
     top: 0 !important;
@@ -1787,14 +1811,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     width: 100vw !important;
     min-width: 0 !important;
     max-width: none !important;
-    height: calc(100vh - 158px) !important;
+    height: calc(100vh - 161px) !important;
     border-bottom: none !important;
     padding: 14px 12px 30px 12px !important;
     overflow-y: auto !important;
     z-index: 80 !important;
   }
-  #osc-modal-inner { height: calc(100vh - 158px) !important; }
-  #btn-back { bottom: calc(158px + 38px) !important; }
+  #osc-modal-inner { height: calc(100vh - 161px) !important; }
+  #btn-back { bottom: calc(161px + 38px) !important; }
   #btn-back.dock-up { bottom: 38px !important; }
 
   /* Cacher non-essentiels sur smartphone */
@@ -1982,23 +2006,30 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     </div></div></div>
 
 <!-- Dock bas : 5 cellules × 3 actions (tap / appui long / bouton extra) -->
-<div id="bottom-dock" class="dock5 canva-container" data-html-import-id="html-import-14" data-template-id="div-7" style="background: rgba(2, 1, 14, 0.92);">
+<div id="bottom-dock" class="dock5 canva-container" data-html-import-id="html-import-14" data-template-id="div-7">
 
-  <!-- Colonne gauche : ROUGE (haut) sur ORANGE (bas) -->
+  <!-- #154 : réorg dock — "Effet" et "Aléatoire" ensemble à gauche,
+       "Paramètre" et "Utilisateur" (ex-Samples) ensemble à droite (colonne
+       droite plus bas). Chaque cellule principale porte désormais une
+       petite ⚙ discrète (.dcell-gear) : signale que le tap ouvre un écran
+       de réglages, uniforme sur les 4 cellules. -->
+  <!-- Colonne gauche : ROUGE (haut) sur VERT (bas) -->
   <div class="dock-col" data-html-import-id="html-import-15">
     <!-- ROUGE — Option Jeu aléatoire : tap=Options Aléatoire · long=Solo maître · sphères=raccourcis -->
     <div class="dcell-wrap" data-html-import-id="html-import-16">
       <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Afficher / masquer les oscillateurs">+</button>
       <button class="dcell dcell-red canva-button" id="dcRed" title="Tap : Options Aléatoire · Appui long : Solo fréquence maître" data-html-import-id="html-import-17" data-template-id="button-8" style="background: rgba(255, 70, 70, 0.14); color: rgb(255, 142, 142);">
+        <span class="dcell-gear">⚙</span>
         <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Option Jeu Aléatoire</b></span>
       </button>
     </div>
-    <!-- ORANGE — Samples : tap=ouvrir · long=jeu aléatoire sur fréquence du sample · sphère=raccourci -->
-    <div class="dcell-wrap" data-html-import-id="html-import-22">
-      <button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra" title="Solo sample + fréquence maître">+</button>
-      <button class="dcell dcell-orange canva-button" id="dcOrange" title="Tap : Samples · Appui long : jeu aléatoire sur fréquence du sample" data-html-import-id="html-import-23" data-template-id="button-13" style="background: rgba(255, 150, 40, 0.14); color: rgb(255, 192, 112);">
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-24" data-template-id="span-14" style="color: rgb(255, 192, 112);"><b class="dcell-name canva-text" data-html-import-id="html-import-25" data-template-id="b-15" style="color: rgb(255, 192, 112); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Samples</b></span>
+    <!-- VERT — Effet Audio : tap=ouvrir Effet · long=Effet Aléatoire (≤72%) · sphères=raccourcis -->
+    <div class="dcell-wrap" data-html-import-id="html-import-31">
+      <button class="dcell dcell-green canva-button" id="dcGreen" title="Tap : Effet · Appui long : Effet Aléatoire (≤72%)" data-html-import-id="html-import-32" data-template-id="button-19" style="background: rgba(90, 255, 160, 0.13); color: rgb(140, 255, 192);">
+        <span class="dcell-gear">⚙</span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-33" data-template-id="span-20" style="color: rgb(140, 255, 192);"><b class="dcell-name canva-text" data-html-import-id="html-import-34" data-template-id="b-21" style="color: rgb(140, 255, 192); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Effet Audio</b></span>
       </button>
+      <button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra" title="Ouvre le menu FX géométrie">+</button>
     </div>
   </div>
 
@@ -2022,18 +2053,20 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <button class="dcell-chawatch" id="dcChaWatch" onclick="chaWatchOpen()" title="Ouvre OmchaWatch · nouveau jeu accordé sur l'heure en cours">ChaWatch</button>
   </div>
 
-  <!-- Colonne droite : VERT (haut) sur BLEU (bas) -->
+  <!-- Colonne droite : ORANGE (haut, Samples/futur "Utilisateur") sur BLEU (bas) -->
   <div class="dock-col" data-html-import-id="html-import-30">
-    <!-- VERT — Effet Audio : tap=ouvrir Effet · long=Effet Aléatoire (≤72%) · sphères=raccourcis -->
-    <div class="dcell-wrap" data-html-import-id="html-import-31">
-      <button class="dcell dcell-green canva-button" id="dcGreen" title="Tap : Effet · Appui long : Effet Aléatoire (≤72%)" data-html-import-id="html-import-32" data-template-id="button-19" style="background: rgba(90, 255, 160, 0.13); color: rgb(140, 255, 192);">
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-33" data-template-id="span-20" style="color: rgb(140, 255, 192);"><b class="dcell-name canva-text" data-html-import-id="html-import-34" data-template-id="b-21" style="color: rgb(140, 255, 192); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Effet Audio</b></span>
+    <!-- ORANGE — Samples : tap=ouvrir · long=jeu aléatoire sur fréquence du sample · sphère=raccourci -->
+    <div class="dcell-wrap" data-html-import-id="html-import-22">
+      <button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra" title="Solo sample + fréquence maître">+</button>
+      <button class="dcell dcell-orange canva-button" id="dcOrange" title="Tap : Samples · Appui long : jeu aléatoire sur fréquence du sample" data-html-import-id="html-import-23" data-template-id="button-13" style="background: rgba(255, 150, 40, 0.14); color: rgb(255, 192, 112);">
+        <span class="dcell-gear">⚙</span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-24" data-template-id="span-14" style="color: rgb(255, 192, 112);"><b class="dcell-name canva-text" data-html-import-id="html-import-25" data-template-id="b-15" style="color: rgb(255, 192, 112); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Samples</b></span>
       </button>
-      <button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra" title="Ouvre le menu FX géométrie">+</button>
     </div>
     <!-- BLEU — Paramètres : tap=ouvrir · long=ouvrir Preset · sphère=raccourci -->
     <div class="dcell-wrap" data-html-import-id="html-import-35">
       <button class="dcell dcell-blue canva-button" id="dcBlue" title="Tap : Paramètres · Appui long : Preset" data-html-import-id="html-import-36" data-template-id="button-22" style="background: rgba(60, 170, 255, 0.14); color: rgb(120, 198, 255);">
+        <span class="dcell-gear">⚙</span>
         <span class="dcell-txt canva-text" data-html-import-id="html-import-37" data-template-id="span-23" style="color: rgb(120, 198, 255);"><b class="dcell-name canva-text" data-html-import-id="html-import-38" data-template-id="b-24" style="color: rgb(120, 198, 255); font-family: &quot;Cinzel Decorative&quot;; font-weight: 700; font-size: 12px;">Paramètres</b></span>
       </button>
       <button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra" title="Ajouter le jeu au preset">+</button>
@@ -2041,8 +2074,8 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   </div>
 </div>
 <div id="dock-toggle-row">
-  <button id="btn-fs" onclick="toggleFullscreen()" title="Plein écran" class="canva-button" style="background: rgba(2, 1, 14, 0.88); color: rgba(200, 140, 255, 0.8); font-size: 13px;">⤢</button>
-  <button id="dock-chevron" onclick="toggleDock()" title="Masquer / afficher le dock" data-html-import-id="html-import-39" data-template-id="button-25" class="canva-button" style="background: rgba(2, 1, 14, 0.88); color: rgba(200, 140, 255, 0.8); font-size: 13px;">⌄</button>
+  <button id="btn-fs" onclick="toggleFullscreen()" title="Plein écran" class="canva-button">⤢</button>
+  <button id="dock-chevron" onclick="toggleDock()" title="Masquer / afficher le dock" data-html-import-id="html-import-39" data-template-id="button-25" class="canva-button">⌄</button>
 </div>
 
 <!-- Panel : Paramètres (menu déroulant de tous les menus) — droite -->
@@ -2057,10 +2090,10 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <button class="params-item canva-button" style="--ic: #FFB0FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panNotice')" data-html-import-id="html-import-53" data-template-id="button-43"><canva-inline-text data-template-id="canva-inline-text-44" class="canva-text" style="color: #FFD700; font-size: 22px;">≡</canva-inline-text><span data-html-import-id="html-import-54" data-template-id="span-45" class="canva-text" style="color: color(srgb 1 0.752157 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Notice &amp; Thème</span></button>
     <button class="params-item canva-button" id="btn-advanced" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleAdvanced()" data-html-import-id="html-import-55" data-template-id="button-46"><canva-inline-text data-template-id="canva-inline-text-47" class="canva-text" style="color: #FFD700; font-size: 22px;">⊹</canva-inline-text><span data-html-import-id="html-import-56" data-template-id="span-48" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Mode avancé (6 sphères) : OFF</span></button>
     <button class="params-item canva-button" id="btn-vislite" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleVisLite()" data-html-import-id="html-import-57" data-template-id="button-49"><canva-inline-text data-template-id="canva-inline-text-50" class="canva-text" style="color: #FFD700; font-size: 22px;">◐</canva-inline-text><span data-html-import-id="html-import-58" data-template-id="span-51" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Visuel léger : OFF</span></button>
-    <!-- #148 : garde le flux binaural actif écran éteint / app en arrière-plan
-         (service natif Android de premier plan) — jusqu'à ce que l'utilisateur
-         quitte vraiment l'app. ON par défaut, cf. _loadBgAudio/toggleBgAudio. -->
-    <button class="params-item canva-button on" id="btn-bgaudio" style="--ic: #78C6FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleBgAudio()"><span style="color:#FFD700;font-size:22px;">☾</span><span style="color:#78C6FF;font-family:'Cinzel Decorative';font-size:14px;">Rester actif en arrière-plan : ON</span></button>
+    <!-- #154 : retiré du menu à la demande explicite — le flux binaural
+         reste actif écran éteint / app en arrière-plan (service natif
+         Android de premier plan) SANS réglage utilisateur désormais, cf.
+         _enableBackgroundAudio/_disableBackgroundAudio. -->
     <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panCustom')" data-html-import-id="html-import-59" data-template-id="button-52"><canva-inline-text data-template-id="canva-inline-text-53" class="canva-text" style="color: #FFD700; font-size: 22px;">◈</canva-inline-text><span data-html-import-id="html-import-60" data-template-id="span-54" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: &quot;Cinzel Decorative&quot;; font-size: 14px;">Personnaliser l'interface</span></button>
     <button class="params-item canva-button" style="--ic: #B0D8FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panTuto')"><span style="color:#FFD700;font-size:22px;">✎</span><span style="color:#B0D8FF;font-family:'Cinzel Decorative';font-size:14px;">Tutoriel</span></button>
   </div>
@@ -3874,15 +3907,11 @@ function _startBTKeepalive() {
    à ce projet — voir android/.../BackgroundAudioService.java) démarre un
    service de premier plan (notification discrète) + wake lock CPU, gardant le
    rendu audio régulier écran éteint ou app en arrière-plan. */
-// #148 : réglage utilisateur — le service de premier plan natif reste
-// disponible (le pont JS/plugin ne change pas), mais l'utilisateur garde
-// la main pour le désactiver s'il ne veut jamais de notification
-// persistante. ON par défaut (c'est le comportement attendu : l'app
-// continue tant qu'on ne l'a pas vraiment quittée).
-const BGAUDIO_KEY = 'fbf432-bgaudio';
-let BG_AUDIO_ENABLED = true;
+// #154 : plus de réglage utilisateur — toujours actif tant que l'app n'est
+// pas vraiment quittée (retiré du menu Paramètres à la demande explicite ;
+// le service de premier plan natif, lui, ne change pas — cf.
+// BackgroundAudioService.java / BackgroundAudioPlugin.java).
 function _enableBackgroundAudio() {
-  if (!BG_AUDIO_ENABLED) return;
   try {
     const ba = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundAudio;
     if (ba && typeof ba.start === 'function') ba.start();
@@ -3893,21 +3922,6 @@ function _disableBackgroundAudio() {
     const ba = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundAudio;
     if (ba && typeof ba.stop === 'function') ba.stop();
   } catch(e) {}
-}
-function toggleBgAudio() {
-  BG_AUDIO_ENABLED = !BG_AUDIO_ENABLED;
-  try { localStorage.setItem(BGAUDIO_KEY, BG_AUDIO_ENABLED ? '1' : '0'); } catch(e) {}
-  const b = document.getElementById('btn-bgaudio');
-  if (b) { b.classList.toggle('on', BG_AUDIO_ENABLED); const s = b.querySelector('span'); if (s) s.textContent = 'Rester actif en arrière-plan : ' + (BG_AUDIO_ENABLED ? 'ON' : 'OFF'); }
-  if (BG_AUDIO_ENABLED) { if (typeof flowing !== 'undefined' && flowing) _enableBackgroundAudio(); }
-  else { _disableBackgroundAudio(); }
-}
-function _loadBgAudio() {
-  let on = true; // défaut ON — la plupart des utilisateurs veulent que ça continue
-  try { const v = localStorage.getItem(BGAUDIO_KEY); if (v !== null) on = v === '1'; } catch(e) {}
-  BG_AUDIO_ENABLED = on;
-  const b = document.getElementById('btn-bgaudio');
-  if (b) { b.classList.toggle('on', on); const s = b.querySelector('span'); if (s) s.textContent = 'Rester actif en arrière-plan : ' + (on ? 'ON' : 'OFF'); }
 }
 
 // Media Session : signale à Android qu'il s'agit d'une lecture audio active
@@ -5484,6 +5498,28 @@ function buildVesicaPairs() {
       <span class="ms-state" id="ms-state">Binaural</span>
     </div>`;
   layer.appendChild(vcw);
+
+  // #154 : étoile sous la sphère maître elle aussi désormais (même geste que
+  // les satellites → ouvre son menu oscillateur), SANS chiffre — cf. .ms-freq
+  // masqué ci-dessus. Sibling de #sphere-layer comme pour les satellites
+  // (cf. #153 : évite le piège du contexte d'empilement de .vp-wrap/.vp-
+  // center-wrap). Position mesurée après pose (rect réel) plutôt que
+  // calculée à la main : la sphère maître change de taille entre mode solo
+  // (jusqu'à 540px) et mode avancé (200px), --bubble-scale en plus.
+  const mpEl = document.getElementById('vpc-p' + MASTER_IDX);
+  if (mpEl) {
+    const r = mpEl.getBoundingClientRect();
+    const mStar = document.createElement('span');
+    mStar.className = 'vp-star vp-star-standalone';
+    mStar.id = 'vp-star-' + MASTER_IDX;
+    mStar.title = 'Réglages de la fréquence maître';
+    mStar.textContent = '✦';
+    mStar.style.left = (r.left + r.width / 2) + 'px';
+    mStar.style.top  = (r.bottom + 10) + 'px';
+    mStar.onclick = (ev) => { ev.stopPropagation(); openOscModal(MASTER_IDX); };
+    mStar.addEventListener('touchend', ev => ev.stopPropagation());
+    layer.appendChild(mStar);
+  }
 
   const inp = document.getElementById('freq-input-master');
   if (inp && !inp._bound) {
@@ -8860,7 +8896,6 @@ function init() {
   _loadTheme();
   _loadVisLite();
   _loadAdvanced();
-  _loadBgAudio();
   _loadAppearance();
   _loadDockMap();
   _loadExtraPos();
