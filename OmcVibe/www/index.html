@@ -3219,34 +3219,49 @@ function shadeHex(hex, amt) {
   return `#${f(r).toString(16).padStart(2, '0')}${f(g).toString(16).padStart(2, '0')}${f(b).toString(16).padStart(2, '0')}`;
 }
 
-// #160 : mandala lotus organique EN RELIEF — remplace le fond plat
-// (dégradé radial uni) des 6 sphères SATELLITES uniquement (jamais la
-// maître, qui garde son propre halo + logo, cf. buildVesicaPairs).
-// v2 (retour terrain : "motif 3D plus complexe qui sort légèrement de
-// la sphère") — rendu comme un VRAI ENFANT SVG positionné en absolu par-
-// dessus la sphère (.vp-p en overflow:visible, cf. CSS .vp-lotus) au
-// lieu d'un simple fond CSS, qui serait de toute façon rogné au cercle
-// par border-radius : seule une sphère en enfant peut dépasser du
-// disque. Trois couronnes de pétales (6 grands qui débordent légèrement
-// du bord + 8 moyens + 12 fins) et un cœur lumineux ; chaque pétale a
-// son propre dégradé base→pointe (objectBoundingBox, donc cohérent quel
-// que soit son angle de rotation) pour un effet de relief/volume, plus
-// une ombre portée + halo (filter:drop-shadow) pour la profondeur 3D.
-// Coloré selon la bande de fréquence courante (bandColorFor). Aucun
-// asset externe, aucune animation par frame (régénéré seulement quand
-// buildVesicaPairs() tourne, donc coût trivial).
+// #161 : mandala lotus "géométrie sacrée" — v3 (retour terrain : "un
+// espace au centre où on voit bien la fréquence" + "pétales comme ceux
+// du lotus en géométrie sacrée" + "effet de profondeur/hauteur
+// fractale"). Reprend le principe v2 (enfant SVG positionné en absolu
+// par-dessus la sphère SATELLITE, jamais la maître, cf. buildVesicaPairs
+// et .vp-lotus en overflow:visible) mais :
+//  - cœur nettement dégagé (rien avant r=48 en unités viewBox, ≈24px
+//    réels) — la fréquence + "Canal N" (au-dessus, en z-index:1) ont
+//    toute la place pour rester lisibles, seulement un halo doux derrière ;
+//  - pétales moins nombreux (2 couronnes de 6, au lieu de 3 couronnes de
+//    26) mais plus précis/pointus, avec liseré fin (stroke) façon
+//    tracé de géométrie sacrée, la grande couronne débordant toujours
+//    légèrement du disque ;
+//  - "hauteur fractale" : chaque pétale contient un second pétale
+//    imbriqué, même formule réduite ~65% et recentrée vers la pointe —
+//    motif pétale-dans-le-pétale, plus deux cercles-guides discrets
+//    (structure de mandala géométrique classique) ;
+//  - ombre portée + halo (filter:drop-shadow) pour la profondeur 3D.
+// Coloré selon la bande de fréquence courante (bandColorFor). Toujours
+// aucun asset externe ni animation par frame.
 function _lotusPetalPath(rInner, rOuter, halfWidth) {
   const midR = (rInner + rOuter) / 2;
   return `M100,${(100-rInner).toFixed(1)} Q${(100-halfWidth).toFixed(1)},${(100-midR).toFixed(1)} 100,${(100-rOuter).toFixed(1)} `
        + `Q${(100+halfWidth).toFixed(1)},${(100-midR).toFixed(1)} 100,${(100-rInner).toFixed(1)} Z`;
 }
-function _lotusRing(rInner, rOuter, halfWidth, angles, gradId, opacity) {
-  const d = _lotusPetalPath(rInner, rOuter, halfWidth);
-  return angles.map(a => `<path d='${d}' fill='url(#${gradId})' opacity='${opacity}' transform='rotate(${a} 100 100)'/>`).join('');
+function _lotusRing(rInner, rOuter, halfWidth, angles, gradId, opacity, rim) {
+  const outer = _lotusPetalPath(rInner, rOuter, halfWidth);
+  // Pétale imbriqué (nervure) : même formule réduite/recentrée vers la
+  // pointe, simple contour — évoque un pétale "dans" le pétale (motif
+  // fractal), cohérent quel que soit l'angle puisqu'il tourne avec lui.
+  const nestLo = rInner + (rOuter - rInner) * 0.22;
+  const nestHi = rInner + (rOuter - rInner) * 0.88;
+  const nest = _lotusPetalPath(nestLo, nestHi, halfWidth * 0.4);
+  return angles.map(a => {
+    const t = `rotate(${a} 100 100)`;
+    return `<path d='${outer}' fill='url(#${gradId})' opacity='${opacity}' stroke='${rim}' stroke-width='.6' transform='${t}'/>`
+         + `<path d='${nest}' fill='none' stroke='${rim}' stroke-width='.55' opacity='${(opacity*0.75).toFixed(2)}' transform='${t}'/>`;
+  }).join('');
 }
 function _lotusMandalaSVG(hex) {
   const dark  = shadeHex(hex, 0.35);
   const light = shadeHex(hex, -0.35);
+  const rim   = shadeHex(hex, -0.6); // liseré/nervures, presque blanc
   const gid = 'lg' + hex.replace('#', '');
   // Dégradés base(sombre)→pointe(clair) DANS le repère propre de chaque
   // pétale (objectBoundingBox, par défaut) : suit la rotation du <path>
@@ -3254,23 +3269,26 @@ function _lotusMandalaSVG(hex) {
   // l'angle — contrairement à un dégradé en coordonnées absolues, qui
   // resterait figé et désaligné une fois le pétale tourné.
   const defs = `<defs>
-    <linearGradient id='${gid}a' x1='.5' y1='1' x2='.5' y2='0'><stop offset='0%' stop-color='${dark}'/><stop offset='100%' stop-color='${hex}'/></linearGradient>
-    <linearGradient id='${gid}b' x1='.5' y1='1' x2='.5' y2='0'><stop offset='0%' stop-color='${hex}'/><stop offset='100%' stop-color='${light}'/></linearGradient>
-    <linearGradient id='${gid}c' x1='.5' y1='1' x2='.5' y2='0'><stop offset='0%' stop-color='${light}'/><stop offset='100%' stop-color='#FFFFFF'/></linearGradient>
-    <radialGradient id='${gid}d'><stop offset='0%' stop-color='#FFFFFF'/><stop offset='55%' stop-color='${light}'/><stop offset='100%' stop-color='${hex}'/></radialGradient>
+    <linearGradient id='${gid}a' x1='.5' y1='1' x2='.5' y2='0'><stop offset='0%' stop-color='${hex}'/><stop offset='100%' stop-color='${light}'/></linearGradient>
+    <linearGradient id='${gid}b' x1='.5' y1='1' x2='.5' y2='0'><stop offset='0%' stop-color='${dark}'/><stop offset='100%' stop-color='${hex}'/></linearGradient>
+    <radialGradient id='${gid}d'><stop offset='0%' stop-color='#FFFFFF'/><stop offset='60%' stop-color='${light}'/><stop offset='100%' stop-color='${hex}' stop-opacity='0'/></radialGradient>
   </defs>`;
-  // Couronne A (grande, 6 pétales) : rOuter=112 > 100 → dépasse
-  // légèrement du disque (dont le bord correspond exactement à r=100,
-  // le SVG étant calé à la taille exacte de .vp-p, cf. CSS .vp-lotus).
-  const ringA  = _lotusRing(42, 112, 24, [0, 60, 120, 180, 240, 300], gid + 'a', .85);
-  // Couronne B (moyenne, 8 pétales, offset 22.5°) : reste dans le disque.
-  const ringB  = _lotusRing(28, 90, 16, [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5], gid + 'b', .92);
-  // Couronne C (12 fines pointes internes) : texture/complexité au cœur.
-  const ringC  = _lotusRing(12, 52, 6, [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330], gid + 'c', .95);
-  const bindu  = `<circle cx='100' cy='100' r='11' fill='url(#${gid}d)'/>`;
+  // Cercles-guides discrets — structure de mandala géométrique classique,
+  // à peine visibles (n'encombrent jamais le texte central).
+  const guides = `<circle cx='100' cy='100' r='100' fill='none' stroke='${rim}' stroke-width='.5' opacity='.28'/>`
+               + `<circle cx='100' cy='100' r='48' fill='none' stroke='${rim}' stroke-width='.5' opacity='.22'/>`;
+  // Halo doux au cœur (PAS un disque plein opaque) : dégagé pour que le
+  // texte (Canal N + fréquence, z-index:1, au-dessus) reste net.
+  const bindu = `<circle cx='100' cy='100' r='32' fill='url(#${gid}d)'/>`;
+  // Couronne B (principale, 6 pétales) : pointes au bord du disque (r=100
+  // = pile le bord, le SVG étant calé à la taille exacte de .vp-p).
+  const ringB = _lotusRing(48, 100, 15, [0, 60, 120, 180, 240, 300], gid + 'b', .82, rim);
+  // Couronne A (grande, 6 pétales, offset 30°) : rOuter=124 > 100 →
+  // dépasse légèrement du disque, comme demandé.
+  const ringA = _lotusRing(70, 124, 20, [30, 90, 150, 210, 270, 330], gid + 'a', .78, rim);
   return `<svg class='vp-lotus' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg' `
-       + `style='filter:drop-shadow(0 3px 5px rgba(0,0,0,.5)) drop-shadow(0 0 9px ${hex}77);'>`
-       + `${defs}${ringA}${ringB}${ringC}${bindu}</svg>`;
+       + `style='filter:drop-shadow(0 4px 6px rgba(0,0,0,.55)) drop-shadow(0 0 10px ${hex}88);'>`
+       + `${defs}${bindu}${guides}${ringB}${ringA}</svg>`;
 }
 
 // AudioContext natif — exposé via window.AC
