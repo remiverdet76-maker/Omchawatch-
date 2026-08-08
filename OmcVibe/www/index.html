@@ -1123,6 +1123,9 @@ body.flux-muted .vp-i{
   width:100%;max-width:204px;padding:.28rem .38rem;border-radius:16px;border:1.5px solid rgba(190,110,255,.5); /* #52 : +36% ; #137 : 10px→16px, cohérent avec le reste du dock */
   background:rgba(150,60,255,.14);backdrop-filter:blur(10px);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -8px 12px rgba(0,0,0,.12);
+  /* #159 : Organisation du dock (Créateur) — même mécanisme que .dcell
+     (translate/scale via variables CSS, jamais de détachement du flux). */
+  transform:translate(var(--dcell-dx,0px),var(--dcell-dy,0px)) scale(var(--dcell-sx,1),var(--dcell-sy,1));
 }
 .dcell-purple-step{
   width:30px;height:30px;border-radius:6px;border:1.5px solid rgba(190,110,255,.5); /* #52 : +36% */
@@ -1137,6 +1140,29 @@ body.flux-muted .vp-i{
   padding:.15rem 0;outline:none;-moz-appearance:textfield;
 }
 .dcell-purple-input::-webkit-inner-spin-button,.dcell-purple-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+
+/* #159 : cellule BLEU NUIT "Zen mode" — nouvelle, sous la fréquence
+   maître (même colonne centrale, même gabarit compact que l'ancien
+   ChaWatch). Comportement volontairement non défini pour l'instant
+   (pas de onclick) : introduite pour validation visuelle avant qu'on
+   décide de sa fonction dans une prochaine passe. */
+.dcell-zen{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;max-width:204px;padding:.32rem .5rem;border-radius:14px;
+  border:1.5px solid rgba(90,110,190,.55);
+  background:rgba(15,20,55,.55);backdrop-filter:blur(10px);
+  color:#A8BCFF;font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.74rem;letter-spacing:.06em;font-weight:700;
+  text-align:center;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 -6px 10px rgba(0,0,0,.25);
+  transition:transform .12s,box-shadow .2s;
+  /* Organisation du dock (Créateur) : même mécanisme que .dcell-purple ;
+     "Zen mode" n'est volontairement pas encore dans le sélecteur de
+     cellules du Créateur (pas de fonction/identité stable à régler tant
+     que son comportement n'est pas défini) — juste les variables CSS,
+     neutres par défaut, prêtes pour plus tard. */
+  transform:translate(var(--dcell-dx,0px),var(--dcell-dy,0px)) scale(var(--dcell-sx,1),var(--dcell-sy,1));
+}
+.dcell-zen:active{ transform:scale(.94); }
 
 /* #157 : cellule ORANGE "ChaWatch" retirée du dock — déménagée dans le
    menu Paramètres (.params-item, cf. #panParams) pour libérer la colonne
@@ -1887,7 +1913,15 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   .dcell-extra { width: 34px !important; height: 34px !important; } /* #52 : -36% vs #32 (53px→34px) */
   .dcell-flux { width: 96px !important; height: 96px !important; margin-bottom: 8px !important; } /* #147 : taille max sans chevauchement sur mobile (84px→96px) — le gap
     réel entre les 2 colonnes du dock ne descend jamais sous ~112px, même sur les plus petits écrans (320px CSS) ; 96px garde ≥8px de marge de chaque côté */
-  #dcFluxFloat { bottom: 119px !important; } /* #146 : dock mobile plus haut (161px) — recale le chevauchement ; #154 : +3px */
+  /* #159 : bug critique — ce !important figeait bottom à une valeur fixe,
+     ignorant totalement --flux-dy (curseur "Position verticale" du
+     Créateur, #156). Sur mobile (donc en pratique TOUJOURS, cette media
+     query s'appliquant à tous les écrans smartphone), la sphère Flux
+     restait bloquée à 119px pile, quel que soit le curseur — d'où le
+     "déplacement vertical impossible" remonté en test réel. Même formule
+     que la règle de base (calc(...+var(--flux-dy))), juste avec 119px au
+     lieu de 82px comme point de départ (dock mobile plus haut, 161px). */
+  #dcFluxFloat { bottom: calc(119px + var(--flux-dy,0px)) !important; }
 
   /* Panneaux : plein écran (largeur) pour la lisibilité, déroulement haut → bas,
      hauteur toujours réservée au-dessus du dock (161px sur smartphone, dock agrandi) */
@@ -2139,6 +2173,12 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <input type="number" id="dcell-purple-input" class="dcell-purple-input" inputmode="numeric" autocomplete="off" onkeydown="_purpleFreqKey(event)" onblur="_purpleFreqValidate()">
       <button class="dcell-purple-step" onclick="_purpleFreqStep(9)" title="+9 Hz">+9</button>
     </div>
+    <!-- #159 : ZEN MODE — nouvelle cellule bleu nuit, introduite dans le
+         dock sans comportement défini pour l'instant (fonction à venir
+         dans une prochaine passe). Reprend le même slot compact que
+         l'ancien ChaWatch (#152, déménagé dans le menu Paramètres au
+         #157), sous la fréquence maître. -->
+    <button class="dcell-zen" id="dcZen" title="Zen mode — à venir">Zen mode</button>
   </div>
 
   <!-- Colonne droite : ORANGE (haut, Samples/futur "Utilisateur") sur BLEU (bas) -->
@@ -2257,11 +2297,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   <div class="creator-sec">
     <div class="creator-sec-title">Organisation du dock (cellule + sphère)</div>
     <div class="cust-hint">Choisis une cellule, puis ajuste sa position, sa largeur/hauteur et le côté de sa petite sphère "+". Chaque cellule garde ses propres réglages, mémorisés d'une session à l'autre.</div>
-    <div class="creator-row" style="gap:.4rem;">
+    <div class="creator-row" style="gap:.4rem;flex-wrap:wrap;">
       <button class="cr-cell-tab on" id="crCellTab-red"    onclick="_crSelectCell('red')"    style="--ec:#FF5050;">Rouge</button>
       <button class="cr-cell-tab"    id="crCellTab-green"  onclick="_crSelectCell('green')"  style="--ec:#5AFFA0;">Vert</button>
       <button class="cr-cell-tab"    id="crCellTab-orange" onclick="_crSelectCell('orange')" style="--ec:#FF9628;">Orange</button>
       <button class="cr-cell-tab"    id="crCellTab-blue"   onclick="_crSelectCell('blue')"   style="--ec:#3CAAFF;">Bleu</button>
+      <!-- #159 : cellule violette (fréquence maître) manquait au sélecteur —
+           pas de sphère "+" associée (rangée "Petite sphère" masquée pour elle). -->
+      <button class="cr-cell-tab"    id="crCellTab-purple" onclick="_crSelectCell('purple')" style="--ec:#C080FF;">Violet</button>
     </div>
     <div class="creator-row">
       <span class="creator-lbl">Horizontal</span>
@@ -2283,7 +2326,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <input type="range" id="cr-cell-h" min="70" max="140" step="1" value="100" oninput="setDockCellHeight(this.value)">
       <span class="creator-val" id="cr-cell-h-v">100%</span>
     </div>
-    <div class="creator-row">
+    <div class="creator-row" id="cr-cell-extra-row">
       <span class="creator-lbl">Petite sphère</span>
       <button class="cr-mini-btn" id="cr-cell-extra-left" onclick="setDockCellExtraSide('left')">◀ Gauche</button>
       <button class="cr-mini-btn" id="cr-cell-extra-right" onclick="setDockCellExtraSide('right')">Droite ▶</button>
@@ -9743,16 +9786,20 @@ function _loadFluxLayout() {
   if (typeof s.dy === 'number') setFluxOffsetY(s.dy);
 }
 
-/* ---------- #157 : Organisation du dock — position/taille/côté de la
-   sphère "+", par cellule (Rouge/Vert/Orange/Bleu) ----------
+/* ---------- #157/#159 : Organisation du dock — position/taille/côté de
+   la sphère "+", par cellule (Rouge/Vert/Orange/Bleu/Violet) ----------
    Même principe de sûreté que la Sphère Flux ci-dessus : jamais de
    détachement du flux flexbox. Horizontal/Vertical/Largeur/Hauteur sont
-   de pures transformations CSS (translate/scale, cf. règle .dcell plus
-   haut) — la cellule garde sa boîte de layout d'origine, donc aucun
-   risque du bug "cellule qui grossit" (#155/#156). Le côté de la sphère
-   "+" utilise `order` (flex), indépendant de l'ordre DOM. */
+   de pures transformations CSS (translate/scale, cf. règle .dcell/
+   .dcell-purple plus haut) — la cellule garde sa boîte de layout
+   d'origine, donc aucun risque du bug "cellule qui grossit" (#155/#156).
+   Le côté de la sphère "+" utilise `order` (flex), indépendant de
+   l'ordre DOM. #159 : la cellule violette (fréquence maître) manquait à
+   ce sélecteur — ajoutée, sans sphère "+" associée (DOCK_CELL_EXTRA_IDS
+   n'a volontairement pas d'entrée "purple", la rangée correspondante est
+   masquée pour elle dans l'UI, cf. _syncDockCellLayoutUI). */
 const DOCK_CELL_LAYOUT_KEY = 'fbf432-dockCellLayout-v1';
-const DOCK_CELL_IDS = { red: 'dcRed', green: 'dcGreen', orange: 'dcOrange', blue: 'dcBlue' };
+const DOCK_CELL_IDS = { red: 'dcRed', green: 'dcGreen', orange: 'dcOrange', blue: 'dcBlue', purple: 'dcPurple' };
 const DOCK_CELL_EXTRA_IDS = { red: 'dcRedExtra', green: 'dcGreenExtra', orange: 'dcOrangeExtra', blue: 'dcBlueExtra' };
 let DOCK_CELL_LAYOUT = {};
 let _crCellSel = 'red'; // cellule actuellement affichée dans le sélecteur Créateur
@@ -9772,7 +9819,7 @@ function _applyDockCellLayout(key) {
 }
 function _crSelectCell(key) {
   _crCellSel = key;
-  ['red','green','orange','blue'].forEach(k => {
+  Object.keys(DOCK_CELL_IDS).forEach(k => {
     const tab = document.getElementById('crCellTab-' + k);
     if (tab) tab.classList.toggle('on', k === key);
   });
@@ -9791,6 +9838,9 @@ function _syncDockCellLayoutUI() {
   const lb = document.getElementById('cr-cell-extra-left'), rb = document.getElementById('cr-cell-extra-right');
   if (lb) lb.classList.toggle('on', L.extraSide === 'left');
   if (rb) rb.classList.toggle('on', L.extraSide === 'right');
+  // #159 : la cellule violette n'a pas de sphère "+" — masque la rangée.
+  const extraRow = document.getElementById('cr-cell-extra-row');
+  if (extraRow) extraRow.style.display = (_crCellSel === 'purple') ? 'none' : '';
 }
 function setDockCellDX(px) {
   const L = _dcellLayout(_crCellSel);
