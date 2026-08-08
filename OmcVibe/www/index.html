@@ -3219,47 +3219,52 @@ function shadeHex(hex, amt) {
   return `#${f(r).toString(16).padStart(2, '0')}${f(g).toString(16).padStart(2, '0')}${f(b).toString(16).padStart(2, '0')}`;
 }
 
-// #162 : mandala "bouquet de bulles" — v4, calée sur une capture de
-// référence fournie par l'utilisateur ("exactement le design à
-// reproduire avec changement de couleurs + Halo") : une seule couronne
-// de 8 pétales ronds et glacés (chacun un simple cercle avec un dégradé
-// radial fixe — reflet clair en haut-gauche, comme une bulle/perle),
-// serrés en bouquet, PAS de dépassement du disque (contrairement aux
-// v2/v3 précédentes). Rendu comme enfant SVG positionné en absolu
+// #163 : mandala "Fleur de Vie" — v5. Les tentatives précédentes (v3
+// "géométrie sacrée" à pétales pointus, v4 "bouquet de bulles" façon
+// capture de référence) ont été jugées trop chargées / pas assez
+// raffinées ("très laid" — retour direct). Repart de ce qui fonctionne
+// déjà visuellement dans OmcVibe : le fond cosmique de l'app porte déjà
+// un mandala fin-tracé, semi-transparent, en fil de lumière (jamais des
+// aplats pleins) — cf. l'image mandala derrière le dock. Ce nouveau
+// motif suit la même grammaire : la "Fleur de Vie" (7 cercles égaux,
+// motif de géométrie sacrée le plus reconnu, dont les lentilles de
+// recouvrement DESSINENT naturellement des pétales de lotus, sans avoir
+// à les tracer explicitement) rendue en traits fins lumineux + glow
+// doux, PAS en aplats de couleur — organique et cohérent avec le reste
+// de l'identité visuelle de l'app plutôt qu'un dessin vectoriel plaqué
+// dessus. Cœur naturellement dégagé (les cercles se recouvrent sur les
+// bords, jamais au centre), donc la fréquence reste lisible sans rien
+// de spécial à prévoir. Rendu comme enfant SVG positionné en absolu
 // par-dessus la sphère SATELLITE (jamais la maître, cf. buildVesicaPairs
-// et .vp-lotus). Le halo demandé est porté par le box-shadow existant de
-// .vp-p (renforcé, cf. buildVesicaPairs) plutôt que dupliqué ici.
-// Coloré selon la bande de fréquence courante (bandColorFor). Toujours
-// aucun asset externe ni animation par frame.
-const _LOTUS_BUBBLE_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
+// et .vp-lotus). Halo porté par le box-shadow de .vp-p (cf.
+// buildVesicaPairs). Coloré selon la bande de fréquence (bandColorFor).
 function _lotusMandalaSVG(hex) {
-  const light = shadeHex(hex, -0.45); // reflet clair (haut-gauche de chaque bulle)
-  const dark  = shadeHex(hex, 0.30);  // bord plus sombre (profondeur/volume)
+  const glow = shadeHex(hex, -0.35);
+  const rim  = shadeHex(hex, -0.15);
   const gid = 'lg' + hex.replace('#', '');
-  // Dégradé radial à direction FIXE (cx/cy décentrés vers le haut-gauche) :
-  // comme chaque pétale est un simple cercle (jamais tourné), le même
-  // dégradé s'applique identique à tous — lumière cohérente sur tout le
-  // bouquet, effet "bulle de verre" façon la référence.
-  const defs = `<defs><radialGradient id='${gid}p' cx='32%' cy='28%' r='75%'>
-    <stop offset='0%' stop-color='#FFFFFF' stop-opacity='.95'/>
-    <stop offset='32%' stop-color='${light}' stop-opacity='.9'/>
-    <stop offset='72%' stop-color='${hex}' stop-opacity='.82'/>
-    <stop offset='100%' stop-color='${dark}' stop-opacity='.7'/>
+  const defs = `<defs><radialGradient id='${gid}f' cx='50%' cy='50%' r='50%'>
+    <stop offset='0%' stop-color='${glow}' stop-opacity='.16'/>
+    <stop offset='75%' stop-color='${hex}' stop-opacity='.05'/>
+    <stop offset='100%' stop-color='${hex}' stop-opacity='0'/>
   </radialGradient></defs>`;
-  // Couronne unique, 8 pétales-bulles serrés (rayon de pose 42, rayon de
-  // bulle 36 : chevauchement volontaire — bouquet dense, comme la
-  // référence), qui restent DANS le disque (contrairement au débordement
-  // des versions précédentes — la réf. montre les pétales contenus par
-  // l'anneau de couleur, pas au-delà).
-  const placeR = 42, petalR = 36;
-  const petals = _LOTUS_BUBBLE_ANGLES.map(a => {
+  // 7 cercles égaux (motif "Fleur de Vie") : 1 au centre + 6 disposés
+  // tout autour à la même distance que leur propre rayon — chaque
+  // cercle voisin passe exactement par le centre du suivant, le
+  // recouvrement classique de ce tracé. r=40 : les 6 cercles extérieurs
+  // atteignent 80 en unités viewBox (donc restent dans le disque, dont
+  // le bord correspond à r=100 — .vp-lotus est calé à la taille exacte
+  // de .vp-p), avec une marge nette avant l'anneau de couleur du disque.
+  const r = 40;
+  const offsets = [[0, 0]].concat([0, 60, 120, 180, 240, 300].map(a => {
     const rad = a * Math.PI / 180;
-    const cx = (100 + placeR * Math.cos(rad)).toFixed(1);
-    const cy = (100 + placeR * Math.sin(rad)).toFixed(1);
-    return `<circle cx='${cx}' cy='${cy}' r='${petalR}' fill='url(#${gid}p)'/>`;
+    return [r * Math.cos(rad), r * Math.sin(rad)];
+  }));
+  const circles = offsets.map(([dx, dy]) => {
+    const cx = (100 + dx).toFixed(1), cy = (100 + dy).toFixed(1);
+    return `<circle cx='${cx}' cy='${cy}' r='${r}' fill='url(#${gid}f)' stroke='${rim}' stroke-width='1.3' stroke-opacity='.6'/>`;
   }).join('');
   return `<svg class='vp-lotus' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg' `
-       + `style='filter:drop-shadow(0 3px 5px rgba(0,0,0,.4));'>${defs}${petals}</svg>`;
+       + `style='filter:drop-shadow(0 0 7px ${hex}70) blur(.3px);'>${defs}${circles}</svg>`;
 }
 
 // AudioContext natif — exposé via window.AC
