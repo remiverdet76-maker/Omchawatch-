@@ -380,11 +380,6 @@ body{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   cursor:pointer;transition:filter .35s,transform .25s,opacity .4s;
   flex-shrink:0;
-  /* #160 : nécessaire pour le mandala lotus en enfant positionné, qui
-     dépasse volontairement un peu du disque (overflow:visible, déjà la
-     valeur par défaut — explicite ici pour que ce ne soit jamais coupé
-     par mégarde si une règle future ajoute overflow:hidden). */
-  position:relative;overflow:visible;
 }
 .vp-p:hover{filter:brightness(1.5);transform:scale(1.1);}
 .vp-p:active{animation:tap-flash .25s ease-out;}
@@ -398,16 +393,8 @@ body{
 }
 .vp-p.vp-live{animation:vplive 8s ease-in-out infinite;}
 @keyframes vplive{0%,100%{filter:brightness(1);}50%{filter:brightness(1.38);}}
-/* #160 : mandala lotus — même taille EXACTE que .vp-p (mapping 1:1 avec
-   son viewBox 0 0 200 200 : le rayon 100 = pile le bord du disque), donc
-   toute pointe de pétale au-delà de r=100 dépasse naturellement du
-   disque, "légèrement" comme demandé (cf. _lotusMandalaSVG, couronne A
-   jusqu'à r=112). pointer-events:none : décoratif, ne capte aucun tap
-   (le tap reste géré par .vp-p lui-même, cf. onmousedown/ontouchstart). */
-.vp-lotus{ position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible; } /* #160 : explicite — certains moteurs de rendu (WebView Android inclus) appliquent overflow:hidden par défaut à la racine d'un <svg>, ce qui aurait tronqué net les pointes de pétales au bord de la boîte au lieu de les laisser légèrement déborder. */
-.vp-p.vp-muted .vp-lotus{ display:none; } /* coupée = quartz plat, cf. règle ci-dessus */
-.vp-type{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.65rem;letter-spacing:.06em;opacity:.7;position:relative;z-index:1;}
-.vp-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:calc(1.7rem * var(--sphere-digit-scale,1));line-height:1;color:#f5eedc;text-shadow:0 0 12px rgba(255,255,255,.45);font-weight:700;position:relative;z-index:1;}
+.vp-type{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.65rem;letter-spacing:.06em;opacity:.7;}
+.vp-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:calc(1.7rem * var(--sphere-digit-scale,1));line-height:1;color:#f5eedc;text-shadow:0 0 12px rgba(255,255,255,.45);font-weight:700;}
 .vp-hz{display:none;}
 /* #153 : étoile discrète sous chaque sphère satellite → ouvre son menu
    oscillateur (openOscModal). SIBLING direct de #sphere-layer (positionnée
@@ -3219,54 +3206,6 @@ function shadeHex(hex, amt) {
   return `#${f(r).toString(16).padStart(2, '0')}${f(g).toString(16).padStart(2, '0')}${f(b).toString(16).padStart(2, '0')}`;
 }
 
-// #163 : mandala "Fleur de Vie" — v5. Les tentatives précédentes (v3
-// "géométrie sacrée" à pétales pointus, v4 "bouquet de bulles" façon
-// capture de référence) ont été jugées trop chargées / pas assez
-// raffinées ("très laid" — retour direct). Repart de ce qui fonctionne
-// déjà visuellement dans OmcVibe : le fond cosmique de l'app porte déjà
-// un mandala fin-tracé, semi-transparent, en fil de lumière (jamais des
-// aplats pleins) — cf. l'image mandala derrière le dock. Ce nouveau
-// motif suit la même grammaire : la "Fleur de Vie" (7 cercles égaux,
-// motif de géométrie sacrée le plus reconnu, dont les lentilles de
-// recouvrement DESSINENT naturellement des pétales de lotus, sans avoir
-// à les tracer explicitement) rendue en traits fins lumineux + glow
-// doux, PAS en aplats de couleur — organique et cohérent avec le reste
-// de l'identité visuelle de l'app plutôt qu'un dessin vectoriel plaqué
-// dessus. Cœur naturellement dégagé (les cercles se recouvrent sur les
-// bords, jamais au centre), donc la fréquence reste lisible sans rien
-// de spécial à prévoir. Rendu comme enfant SVG positionné en absolu
-// par-dessus la sphère SATELLITE (jamais la maître, cf. buildVesicaPairs
-// et .vp-lotus). Halo porté par le box-shadow de .vp-p (cf.
-// buildVesicaPairs). Coloré selon la bande de fréquence (bandColorFor).
-function _lotusMandalaSVG(hex) {
-  const glow = shadeHex(hex, -0.35);
-  const rim  = shadeHex(hex, -0.15);
-  const gid = 'lg' + hex.replace('#', '');
-  const defs = `<defs><radialGradient id='${gid}f' cx='50%' cy='50%' r='50%'>
-    <stop offset='0%' stop-color='${glow}' stop-opacity='.16'/>
-    <stop offset='75%' stop-color='${hex}' stop-opacity='.05'/>
-    <stop offset='100%' stop-color='${hex}' stop-opacity='0'/>
-  </radialGradient></defs>`;
-  // 7 cercles égaux (motif "Fleur de Vie") : 1 au centre + 6 disposés
-  // tout autour à la même distance que leur propre rayon — chaque
-  // cercle voisin passe exactement par le centre du suivant, le
-  // recouvrement classique de ce tracé. r=40 : les 6 cercles extérieurs
-  // atteignent 80 en unités viewBox (donc restent dans le disque, dont
-  // le bord correspond à r=100 — .vp-lotus est calé à la taille exacte
-  // de .vp-p), avec une marge nette avant l'anneau de couleur du disque.
-  const r = 40;
-  const offsets = [[0, 0]].concat([0, 60, 120, 180, 240, 300].map(a => {
-    const rad = a * Math.PI / 180;
-    return [r * Math.cos(rad), r * Math.sin(rad)];
-  }));
-  const circles = offsets.map(([dx, dy]) => {
-    const cx = (100 + dx).toFixed(1), cy = (100 + dy).toFixed(1);
-    return `<circle cx='${cx}' cy='${cy}' r='${r}' fill='url(#${gid}f)' stroke='${rim}' stroke-width='1.3' stroke-opacity='.6'/>`;
-  }).join('');
-  return `<svg class='vp-lotus' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg' `
-       + `style='filter:drop-shadow(0 0 7px ${hex}70) blur(.3px);'>${defs}${circles}</svg>`;
-}
-
 // AudioContext natif — exposé via window.AC
 let AC = null;
 
@@ -5746,17 +5685,9 @@ function buildVesicaPairs() {
     // bande reste identique tout autour.
     const _st = STICKERS[i];
     const _hasSt = _st && _st.dataUrl;
-    // #162 : mandala "bouquet de bulles" par défaut (cf.
-    // _lotusMandalaSVG) — rendu comme un enfant SVG (pas un fond CSS,
-    // qui serait rogné par border-radius), inséré juste après l'ouverture
-    // de .vp-p ci-dessous ; halo renforcé sur le box-shadow juste
-    // au-dessous (+ Halo demandé). Le sticker personnalisé (Créateur,
-    // #155) garde la priorité s'il existe : image importée en fond, PAS
-    // de mandala par-dessus (comportement inchangé pour les stickers).
     const _bgStyle = _hasSt
       ? `background:url('${_st.dataUrl}') ${_st.panX}% ${_st.panY}% / ${_st.zoom}% ${_st.zoom}% no-repeat,radial-gradient(circle,${c}55 0%,${c}22 60%,transparent 100%);filter:${_stickerFilterCss(_st)};`
-      : `background:radial-gradient(circle,${c}40 0%,${c}18 60%,transparent 100%);`;
-    const _lotusHTML = _hasSt ? '' : _lotusMandalaSVG(c);
+      : `background:radial-gradient(circle,${c}55 0%,${c}22 60%,transparent 100%);`;
 
     const vp = document.createElement('div');
     vp.className = 'vp-wrap';
@@ -5766,10 +5697,9 @@ function buildVesicaPairs() {
     vp.innerHTML = `
       <div class="vp-p ${isMutedP?'vp-muted':''} ${flowing&&!isMutedP?'vp-live':''}"
            id="vpc-p${i}"
-           style="border-color:${cDark};${_bgStyle}box-shadow:0 0 26px ${cDark}90,0 0 46px ${c}66,0 0 72px ${c}36;cursor:pointer;user-select:none;"
+           style="border-color:${cDark};${_bgStyle}box-shadow:0 0 20px ${cDark}80,0 0 34px ${c}40;cursor:pointer;user-select:none;"
            onmousedown="_vpStart(${i},event)" onmouseup="_vpEnd(${i})" onmouseleave="_vpCancel()" onmousemove="_vpMove(${i},event)"
            ontouchstart="_vpStart(${i},event)" ontouchend="_vpEnd(${i})" ontouchmove="_vpMove(${i},event)">
-        ${_lotusHTML}
         <span class="vp-type" style="color:${c}CC">Canal ${i+1}</span>
         <span class="vp-freq" id="vp-pf-${i}">${fmtShort(pF)}</span>
       </div>`;
