@@ -456,8 +456,13 @@ function toggleOscBin(i) {
   rebuildOsc(i);
   renderOsc(i);
 }
+// #158 : v arrive maintenant en pourcentage UI (0-100, cf. curseur Volume
+// dans renderOsc) — reconverti ici vers l'échelle interne réelle 0-VOL_MAX
+// (celle utilisée partout ailleurs : isosonicGain, presets, randomize...).
 function setOscVol(i, v) {
-  const o = OSC[i]; o.vol = Math.max(0, Math.min(VOL_MAX, parseFloat(v)));
+  const o = OSC[i];
+  const pct = Math.max(0, Math.min(100, parseFloat(v) || 0));
+  o.vol = (pct / 100) * VOL_MAX;
   if (o.nodes && !o.muted) o.nodes.g.gain.setTargetAtTime(isosonicGain(o.freq, o.vol), AC.currentTime, 0.05);
   renderOsc(i);
 }
@@ -572,8 +577,16 @@ function renderOsc(i) {
         <button class="n-mute${o.muted?' muted':''}" onclick="toggleOscMute(${i})">${o.muted?'✕':'■'}</button>
         <button class="n-step" onclick="stepOscN(${i},0.1)">+</button>
       </div>
-      <div class="ctl-lv"><span class="ctl-l">Volume</span><span class="ctl-v">${Math.round(o.vol*100)}% <span style="opacity:.5;font-size:.85em;">(max ${Math.round(VOL_MAX*100)}%)</span></span></div>
-      <input type="range" class="pink" min="0" max="${VOL_MAX}" step="0.005" value="${o.vol}" oninput="setOscVol(${i},this.value)">
+      <!-- #158 : le curseur affichait 0-15% (VOL_MAX brut) — une plage
+           minuscule et peu lisible en pratique (retour terrain : la quasi-
+           totalité du geste utile tenait dans les tout premiers % du
+           curseur). Le curseur couvre maintenant 0-100% comme n'importe
+           quel volume ; en interne, ce 0-100% est reconverti vers le
+           plafond réel anti-saturation VOL_MAX (cf. isosonicGain, #147) —
+           la protection contre la saturation des 7 oscillateurs sommés
+           reste entière, seule la présentation change. -->
+      <div class="ctl-lv"><span class="ctl-l">Volume</span><span class="ctl-v">${Math.round(o.vol/VOL_MAX*100)}%</span></div>
+      <input type="range" class="pink" min="0" max="100" step="0.5" value="${(o.vol/VOL_MAX*100).toFixed(1)}" oninput="setOscVol(${i},this.value)">
       ${!o.bin ? `
       <div class="ctl-lv" style="margin-top:.5rem"><span class="ctl-l">Pan L↔R</span><span class="ctl-v">${o.pan.toFixed(2)}</span></div>
       <input type="range" min="-1" max="1" step="0.02" value="${o.pan}" oninput="setOscPan(${i},this.value)">` : ''}
