@@ -897,9 +897,15 @@ body{
   box-shadow:0 3px 12px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.09),inset 0 -10px 16px rgba(0,0,0,.14); /* #137 : sheen + profondeur — moins plat/minimaliste */
   transition:transform .12s,box-shadow .2s,background .2s,border-color .2s;
   overflow:hidden;
+  /* #157 : Organisation du dock (Créateur) — décalage horizontal/vertical
+     + largeur/hauteur par cellule, réglés via ces 4 variables (défauts
+     neutres). Reste dans le flux flexbox normal (translate/scale sont de
+     pures transformations visuelles, la cellule garde sa boîte de layout
+     d'origine) : aucun risque du bug "cellule qui grossit" (#155/#156). */
+  transform:translate(var(--dcell-dx,0px),var(--dcell-dy,0px)) scale(var(--dcell-sx,1),var(--dcell-sy,1));
 }
-.dcell:active{ transform:scale(.96); }
-.dcell.dc-hold{ transform:scale(1.05); box-shadow:0 0 22px currentColor; }
+.dcell:active{ transform:translate(var(--dcell-dx,0px),var(--dcell-dy,0px)) scale(calc(var(--dcell-sx,1) * .96),calc(var(--dcell-sy,1) * .96)); }
+.dcell.dc-hold{ transform:translate(var(--dcell-dx,0px),var(--dcell-dy,0px)) scale(calc(var(--dcell-sx,1) * 1.05),calc(var(--dcell-sy,1) * 1.05)); box-shadow:0 0 22px currentColor; }
 .dcell-txt{ display:flex;flex-direction:column;align-items:center;line-height:1.05;min-width:0;overflow:hidden; }
 .dcell-name{ font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.92rem;letter-spacing:.04em;font-weight:700; /* #72 : -0.06rem, laisse de la marge à .dcell-sub */
   white-space:normal;overflow:hidden;max-width:100%;text-align:center;overflow-wrap:break-word; }
@@ -960,6 +966,11 @@ body{
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
   transition:transform .16s,box-shadow .16s,border-color .16s;
   box-shadow:0 0 6px rgba(0,0,0,.55);
+  /* #157 : Organisation du dock — "Petite sphère gauche/droite" par
+     cellule, via flex `order` (indépendant de l'ordre DOM) : -1 = avant
+     la cellule (gauche), 1 = après (droite), 0/défaut = ordre DOM
+     d'origine (déjà correct par défaut, colonnes gauche/droite du dock). */
+  order:var(--extra-order,0);
 }
 .dcell-extra:active{ transform:scale(.88); }
 .dcell-extra.active{ border-color:#FFD700;box-shadow:0 0 12px rgba(255,215,0,.65); }
@@ -1572,17 +1583,9 @@ input.param-input{
 .ctl-row .ctl-v{font-size:.72rem;font-family:var(--font-body,'IM Fell English'),serif;color:rgba(225,205,255,.85);
   min-width:54px;text-align:right;}
 
-/* Tableau ratio → Hz */
-.rt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.28rem;}
-.rt-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  min-height:40px;border-radius:7px;cursor:pointer;padding:.15rem;
-  background:rgba(255,255,255,.03);border:1px solid color-mix(in srgb,var(--ec,#888) 26%,transparent);transition:all .16s;}
-.rt-cell .rt-l{font-size:.64rem;color:color-mix(in srgb,var(--ec,#888) 80%,white);line-height:1.1;}
-.rt-cell .rt-hz{font-size:.7rem;font-family:var(--font-body,'IM Fell English'),serif;color:rgba(225,205,255,.7);}
-.rt-cell.on{background:color-mix(in srgb,var(--ec,#888) 26%,transparent);border-color:var(--ec,#888);
-  box-shadow:0 0 10px color-mix(in srgb,var(--ec,#888) 40%,transparent);}
-.rt-cell.on .rt-l,.rt-cell.on .rt-hz{color:#D7DAE0;}
-.rt-cell:active{transform:scale(.94);}
+/* #157 : .rt-grid/.rt-cell (tableau ratio → Hz de sélection rapide)
+   retirées — doublon de l'onglet ⑤ Ratios Fréquence, cf. _ratioTableHTML
+   (fonction JS retirée aussi). */
 
 /* Patchbay */
 .patch-grid{display:grid;grid-template-columns:auto repeat(5,1fr);gap:.3rem;align-items:stretch;}
@@ -1760,6 +1763,19 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:rgba(230,220,255,.85);
 }
 .cr-mini-btn:active{transform:scale(.94);}
+.cr-mini-btn.on{background:rgba(255,208,96,.22);border-color:rgba(255,208,96,.55);color:#FFD700;}
+/* #157 : Organisation du dock — sélecteur de cellule (Rouge/Vert/
+   Orange/Bleu), même thème que .params-item (--ec = couleur de la
+   cellule choisie). */
+.cr-cell-tab{
+  flex:1;font-size:.72rem;padding:.4rem .3rem;border-radius:8px;cursor:pointer;text-align:center;
+  background:rgba(255,255,255,.04);border:1.5px solid color-mix(in srgb,var(--ec,#888) 30%,transparent);
+  color:color-mix(in srgb,var(--ec,#888) 70%,#F3D9FF 30%);font-family:var(--font-deco,'Cinzel Decorative'),serif;
+  transition:all .16s;
+}
+.cr-cell-tab.on{background:color-mix(in srgb,var(--ec,#888) 26%,transparent);border-color:var(--ec,#888);
+  box-shadow:0 0 10px color-mix(in srgb,var(--ec,#888) 35%,transparent);}
+.cr-cell-tab:active{transform:scale(.95);}
 .cr-sticker-edit{display:none;flex-direction:column;gap:.35rem;margin-top:.4rem;}
 .cr-sticker-edit.open{display:flex;}
 .cr-sticker-edit .creator-row{gap:.4rem;}
@@ -2236,6 +2252,46 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <span class="creator-val" id="cr-hue-v">0°</span>
     </div>
     <button class="cr-mini-btn" onclick="resetCreatorAppearance()" style="align-self:flex-start;">↺ Réinitialiser police/tailles/couleur</button>
+  </div>
+
+  <div class="creator-sec">
+    <div class="creator-sec-title">Organisation du dock (cellule + sphère)</div>
+    <div class="cust-hint">Choisis une cellule, puis ajuste sa position, sa largeur/hauteur et le côté de sa petite sphère "+". Chaque cellule garde ses propres réglages, mémorisés d'une session à l'autre.</div>
+    <div class="creator-row" style="gap:.4rem;">
+      <button class="cr-cell-tab on" id="crCellTab-red"    onclick="_crSelectCell('red')"    style="--ec:#FF5050;">Rouge</button>
+      <button class="cr-cell-tab"    id="crCellTab-green"  onclick="_crSelectCell('green')"  style="--ec:#5AFFA0;">Vert</button>
+      <button class="cr-cell-tab"    id="crCellTab-orange" onclick="_crSelectCell('orange')" style="--ec:#FF9628;">Orange</button>
+      <button class="cr-cell-tab"    id="crCellTab-blue"   onclick="_crSelectCell('blue')"   style="--ec:#3CAAFF;">Bleu</button>
+    </div>
+    <div class="creator-row">
+      <span class="creator-lbl">Horizontal</span>
+      <input type="range" id="cr-cell-dx" min="-40" max="40" step="1" value="0" oninput="setDockCellDX(this.value)">
+      <span class="creator-val" id="cr-cell-dx-v">0px</span>
+    </div>
+    <div class="creator-row">
+      <span class="creator-lbl">Vertical</span>
+      <input type="range" id="cr-cell-dy" min="-30" max="30" step="1" value="0" oninput="setDockCellDY(this.value)">
+      <span class="creator-val" id="cr-cell-dy-v">0px</span>
+    </div>
+    <div class="creator-row">
+      <span class="creator-lbl">Largeur</span>
+      <input type="range" id="cr-cell-w" min="70" max="140" step="1" value="100" oninput="setDockCellWidth(this.value)">
+      <span class="creator-val" id="cr-cell-w-v">100%</span>
+    </div>
+    <div class="creator-row">
+      <span class="creator-lbl">Hauteur</span>
+      <input type="range" id="cr-cell-h" min="70" max="140" step="1" value="100" oninput="setDockCellHeight(this.value)">
+      <span class="creator-val" id="cr-cell-h-v">100%</span>
+    </div>
+    <div class="creator-row">
+      <span class="creator-lbl">Petite sphère</span>
+      <button class="cr-mini-btn" id="cr-cell-extra-left" onclick="setDockCellExtraSide('left')">◀ Gauche</button>
+      <button class="cr-mini-btn" id="cr-cell-extra-right" onclick="setDockCellExtraSide('right')">Droite ▶</button>
+    </div>
+    <div class="creator-row" style="gap:.4rem;">
+      <button class="cr-mini-btn" onclick="resetDockCellLayout()" style="align-self:flex-start;">↺ Réinitialiser cette cellule</button>
+      <button class="cr-mini-btn" onclick="resetAllDockCellLayout()" style="align-self:flex-start;">↺ Réinitialiser les 4 cellules</button>
+    </div>
   </div>
 
   <div class="creator-sec">
@@ -8118,15 +8174,12 @@ function buildPairHTML(pair, i) {
           </div>
         </div>
       </div>
-    </div>
-    <div style="margin-top:.5rem;padding:.3rem .5rem;background:${c}1c;border-radius:7px;display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-size:.7rem;color:rgba(200,170,255,.55);letter-spacing:.06em;">LFO doux</span>
-      <button id="btn-lfo-${i}" onclick="toggleOscVolLFO(${i})"
-        style="font-size:.68rem;padding:.18rem .5rem;background:transparent;border:1px solid ${c}44;color:${c}88;border-radius:6px;cursor:pointer;">〜 Activer</button>
-    </div>
-    ${_ratioTableHTML(i, c)}`;
+    </div>`;
+  // #157 : "LFO doux" (volume) déplacé dans l'onglet ④ Modulation (ex-
+  // Patchbay) — regroupé avec le rythme LFO. Tableau ratio → Hz retiré
+  // (doublon de l'onglet ⑤ Ratios Fréquence, ex-Matrice).
 
-  // ── ② OSCILLO (façon FL MiniSynth) ──────────────────────────────
+  // ── ② TYPE ONDE (façon FL MiniSynth, ex-Oscillo) ─────────────────
   const curEng = OSC_WAVES[PAIRS[i].pingala.id] || 'sine';
   // #59 : fcut/fres/env retirés d'ici — Cutoff/Résonance/Attaque/Relâche se
   // règlent désormais au pad tactile (onglet ③ FX, cf. #56). fmode reste
@@ -8148,24 +8201,21 @@ function buildPairHTML(pair, i) {
       <button id="btn-dslfo-${i}" onclick="togglePairDualSineLFO(${i})"
         style="font-size:.68rem;padding:.18rem .5rem;background:transparent;border:1px solid ${c}44;color:${c}88;border-radius:6px;cursor:pointer;">〜 Activer</button>
     </div>
-    <div class="osc-sec-t" style="color:${c}aa;">Filtre · Type</div>
-    <div class="filt-mode-row">
-      ${['off','hpf','bpf','lpf'].map(m=>`<button class="osc-filt-mode-btn${fmode===m?' active':''}" data-pair="${i}" data-filt="${m}"
-        onclick="setPairFilterMode(${i},'${m}')">${m.toUpperCase()}</button>`).join('')}
-    </div>
-    <div class="osc-hint">Cutoff / Résonance / Attaque / Relâche : réglage tactile 2D dans l'onglet ③ FX</div>
-    <div class="osc-sec-t" style="color:${c}aa;">LFO · Rythme</div>
-    <div class="ctl-row"><span class="ctl-l">Rythme</span>
-      <input type="range" min="0.02" max="12" step="0.02" value="0.4" style="color:${c};"
-        oninput="setPairLfoRate(${i},this.value);this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)+' Hz'">
-      <span class="ctl-v">0.40 Hz</span></div>
-    <div class="osc-hint">Routage du LFO → onglet ④ Patch</div>`;
+    <div class="osc-hint">Filtre (type/cutoff/résonance) : onglet ③ Effet · Modulation LFO (rythme, câblage) : onglet ④ Modulation</div>`;
+  // #157 : "Filtre · Type" déplacé dans l'onglet ③ Effet (ex-FX) ; "LFO ·
+  // Rythme" déplacé et renommé "Modulation Onde" dans l'onglet ④
+  // Modulation (ex-Patchbay), regroupé avec "LFO doux" (volume).
 
   // ── ③ FX ─────────────────────────────────────────────────────────
   const bd2 = PAIR_BD2[i] || { on:false, drive:0.25, tone:0.5, level:0.25 };
   const tpadMode = PAIR_TPAD_MODE[i] || 'cutoff';
   const tpadAuto = PAIR_TPAD_AUTO[i] || { on:false, period:36 };
   const fxTabHTML = `
+    <div class="osc-sec-t" style="color:${c}aa;">Filtre · Type</div>
+    <div class="filt-mode-row">
+      ${['off','hpf','bpf','lpf'].map(m=>`<button class="osc-filt-mode-btn${fmode===m?' active':''}" data-pair="${i}" data-filt="${m}"
+        onclick="setPairFilterMode(${i},'${m}')">${m.toUpperCase()}</button>`).join('')}
+    </div>
     <div class="osc-sec-t" style="color:${c}aa;">Color FX · Overdrive Halogène (chaud, rond)</div>
     <div class="fx-onoff-row">
       <span class="ctl-l">Overdrive</span>
@@ -8212,8 +8262,18 @@ function buildPairHTML(pair, i) {
         oninput="setPair3DWidth(${i},this.value);this.nextElementSibling.textContent=Math.round(this.value*100)+'%'">
       <span class="ctl-v">${Math.round(Math.abs((OSC_PAN[i]||[0.5])[0])*100)}%</span></div>`;
 
-  // ── ④ PATCHBAY (MiniBrute 2S tactile) ───────────────────────────
+  // ── ④ MODULATION (ex-Patchbay, MiniBrute 2S tactile) ─────────────
   const patchTabHTML = `
+    <div class="osc-sec-t" style="color:${c}aa;">Modulation Onde · Rythme LFO</div>
+    <div class="ctl-row"><span class="ctl-l">Rythme</span>
+      <input type="range" min="0.02" max="12" step="0.02" value="0.4" style="color:${c};"
+        oninput="setPairLfoRate(${i},this.value);this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)+' Hz'">
+      <span class="ctl-v">0.40 Hz</span></div>
+    <div style="margin-top:.3rem;padding:.3rem .5rem;background:${c}1c;border-radius:7px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:.7rem;color:rgba(200,170,255,.55);letter-spacing:.06em;">LFO doux (volume)</span>
+      <button id="btn-lfo-${i}" onclick="toggleOscVolLFO(${i})"
+        style="font-size:.68rem;padding:.18rem .5rem;background:transparent;border:1px solid ${c}44;color:${c}88;border-radius:6px;cursor:pointer;">〜 Activer</button>
+    </div>
     <div class="osc-sec-t" style="color:${c}aa;">Patchbay · tap pour câbler</div>
     <div class="patch-grid">
       <div class="patch-cell head"></div>
@@ -8242,11 +8302,11 @@ function buildPairHTML(pair, i) {
       <button class="osc-lockbtn${(typeof isLocked==='function'&&isLocked(i))?' locked':''}" id="lockm-${i}" onclick="toggleLock(${i})" title="Verrouiller">${(typeof isLocked==='function'&&isLocked(i))?'◉':'◎'}</button>
     </div>
     <div class="osc-tabs">
-      <button class="osc-tab on" id="otab-${i}-1" onclick="oscTab(${i},1)" style="--ec:${c};">① Binaural</button>
-      <button class="osc-tab"    id="otab-${i}-2" onclick="oscTab(${i},2)" style="--ec:${c};">② Oscillo</button>
-      <button class="osc-tab"    id="otab-${i}-3" onclick="oscTab(${i},3)" style="--ec:${c};">③ FX</button>
-      <button class="osc-tab"    id="otab-${i}-4" onclick="oscTab(${i},4)" style="--ec:${c};">④ Patch</button>
-      <button class="osc-tab"    id="otab-${i}-5" onclick="oscTab(${i},5)" style="--ec:${c};">⑤ Matrice 🌀</button>
+      <button class="osc-tab on" id="otab-${i}-1" onclick="oscTab(${i},1)" style="--ec:${c};">① Fréquence</button>
+      <button class="osc-tab"    id="otab-${i}-2" onclick="oscTab(${i},2)" style="--ec:${c};">② Type Onde</button>
+      <button class="osc-tab"    id="otab-${i}-3" onclick="oscTab(${i},3)" style="--ec:${c};">③ Effet</button>
+      <button class="osc-tab"    id="otab-${i}-4" onclick="oscTab(${i},4)" style="--ec:${c};">④ Modulation</button>
+      <button class="osc-tab"    id="otab-${i}-5" onclick="oscTab(${i},5)" style="--ec:${c};">⑤ Ratios Fréq. 🌀</button>
     </div>
     <div class="osc-pane" id="opane-${i}-1">${binauralHTML}</div>
     <div class="osc-pane hidden" id="opane-${i}-2">${oscTabHTML}</div>
@@ -8286,7 +8346,7 @@ function _matrixHTML(i, c) {
     }).join('');
     return `<div class="mx-row"><span class="mx-ratio-label" style="color:${c};">${r.l}</span><div class="mx-row-cells">${cells}</div></div>`;
   }).join('');
-  return `<div class="osc-sec-t" style="color:${c}aa;">🌀 Matrice — 36 assignations rapides (ratio × n), plafonnées à 432 Hz</div>
+  return `<div class="osc-sec-t" style="color:${c}aa;">🌀 Ratios Fréquence — 36 assignations rapides (ratio × n), plafonnées à 432 Hz</div>
     <div class="mx-grid">${rows}</div>
     <button class="btn-flow" style="width:100%;margin-top:.5rem;border-color:${c}88;color:${c};background:${c}18;" onclick="_matrixReshuffle(${i})">⚄ Nouveau tirage</button>
     <div class="osc-hint">Tap une cellule : assigne ratio + n à cette sphère, en direct</div>`;
@@ -8314,18 +8374,9 @@ function openMatrixTab(i) {
   oscTab(i, 5);
 }
 
-// Tableau Hz par ratio — sélection rapide (54 → 396)
-function _ratioTableHTML(i, c) {
-  const n = PAIRS[i].pingala.n;
-  const cells = RATIO_OPTS.map((r, j) => {
-    const f = Math.max(F_MIN, Math.min(F_MAX, masterFreq * r.r * n));
-    const on = j === PAIRS[i].pingala.ri;
-    return `<button class="rt-cell${on?' on':''}" style="--ec:${c};" onclick="setRatio(${i},${j})">
-      <span class="rt-l">${r.l}</span><span class="rt-hz">${f.toFixed(0)}</span></button>`;
-  }).join('');
-  return `<div class="osc-sec-t" style="color:${c}aa;margin-top:.6rem;">Tableau ratio → Hz (sélection rapide)</div>
-    <div class="rt-grid">${cells}</div>`;
-}
+// #157 : _ratioTableHTML (tableau ratio → Hz de sélection rapide) retiré —
+// doublon de l'onglet ⑤ Ratios Fréquence (ex-Matrice 🌀), qui couvre déjà
+// les mêmes assignations ratio × n de façon plus complète (36 cellules).
 
 // Switch d'onglet du modal oscillateur
 function oscTab(i, n) {
@@ -9091,10 +9142,12 @@ function init() {
   _loadExtraPos();
   _loadBubbleSize();
   _loadDisplayFilter();
-  // #155/#156 : module Créateur — police/tailles/couleur, taille/position
-  // de la sphère Flux, stickers (async, redessine seule à la fin).
+  // #155/#156/#157 : module Créateur — police/tailles/couleur,
+  // taille/position de la sphère Flux, organisation par cellule du dock,
+  // stickers (async, redessine seule à la fin).
   _loadCreatorAppearance();
   _loadFluxLayout();
+  _loadDockCellLayout();
   _loadStickers();
   _loadBackground();
   _loadAudioQuality(); // #33 (perf)
@@ -9717,6 +9770,99 @@ function _loadFluxLayout() {
   if (s.scale) setFluxScale(s.scale);
   if (typeof s.dx === 'number') setFluxOffsetX(s.dx);
   if (typeof s.dy === 'number') setFluxOffsetY(s.dy);
+}
+
+/* ---------- #157 : Organisation du dock — position/taille/côté de la
+   sphère "+", par cellule (Rouge/Vert/Orange/Bleu) ----------
+   Même principe de sûreté que la Sphère Flux ci-dessus : jamais de
+   détachement du flux flexbox. Horizontal/Vertical/Largeur/Hauteur sont
+   de pures transformations CSS (translate/scale, cf. règle .dcell plus
+   haut) — la cellule garde sa boîte de layout d'origine, donc aucun
+   risque du bug "cellule qui grossit" (#155/#156). Le côté de la sphère
+   "+" utilise `order` (flex), indépendant de l'ordre DOM. */
+const DOCK_CELL_LAYOUT_KEY = 'fbf432-dockCellLayout-v1';
+const DOCK_CELL_IDS = { red: 'dcRed', green: 'dcGreen', orange: 'dcOrange', blue: 'dcBlue' };
+const DOCK_CELL_EXTRA_IDS = { red: 'dcRedExtra', green: 'dcGreenExtra', orange: 'dcOrangeExtra', blue: 'dcBlueExtra' };
+let DOCK_CELL_LAYOUT = {};
+let _crCellSel = 'red'; // cellule actuellement affichée dans le sélecteur Créateur
+function _dcellDefaults() { return { dx: 0, dy: 0, w: 100, h: 100, extraSide: 'auto' }; }
+function _dcellLayout(key) { return DOCK_CELL_LAYOUT[key] || (DOCK_CELL_LAYOUT[key] = _dcellDefaults()); }
+function _applyDockCellLayout(key) {
+  const el = document.getElementById(DOCK_CELL_IDS[key]);
+  const L = _dcellLayout(key);
+  if (el) {
+    el.style.setProperty('--dcell-dx', L.dx + 'px');
+    el.style.setProperty('--dcell-dy', L.dy + 'px');
+    el.style.setProperty('--dcell-sx', L.w / 100);
+    el.style.setProperty('--dcell-sy', L.h / 100);
+  }
+  const extraEl = document.getElementById(DOCK_CELL_EXTRA_IDS[key]);
+  if (extraEl) extraEl.style.setProperty('--extra-order', L.extraSide === 'left' ? -1 : (L.extraSide === 'right' ? 1 : 0));
+}
+function _crSelectCell(key) {
+  _crCellSel = key;
+  ['red','green','orange','blue'].forEach(k => {
+    const tab = document.getElementById('crCellTab-' + k);
+    if (tab) tab.classList.toggle('on', k === key);
+  });
+  _syncDockCellLayoutUI();
+}
+function _syncDockCellLayoutUI() {
+  const L = _dcellLayout(_crCellSel);
+  const setSlider = (id, val, suffix) => {
+    const sl = document.getElementById(id); if (sl) sl.value = val;
+    const v = document.getElementById(id + '-v'); if (v) v.textContent = val + suffix;
+  };
+  setSlider('cr-cell-dx', L.dx, 'px');
+  setSlider('cr-cell-dy', L.dy, 'px');
+  setSlider('cr-cell-w', L.w, '%');
+  setSlider('cr-cell-h', L.h, '%');
+  const lb = document.getElementById('cr-cell-extra-left'), rb = document.getElementById('cr-cell-extra-right');
+  if (lb) lb.classList.toggle('on', L.extraSide === 'left');
+  if (rb) rb.classList.toggle('on', L.extraSide === 'right');
+}
+function setDockCellDX(px) {
+  const L = _dcellLayout(_crCellSel);
+  L.dx = Math.max(-40, Math.min(40, parseInt(px) || 0));
+  _applyDockCellLayout(_crCellSel); _syncDockCellLayoutUI(); _dockCellLayoutPersist();
+}
+function setDockCellDY(px) {
+  const L = _dcellLayout(_crCellSel);
+  L.dy = Math.max(-30, Math.min(30, parseInt(px) || 0));
+  _applyDockCellLayout(_crCellSel); _syncDockCellLayoutUI(); _dockCellLayoutPersist();
+}
+function setDockCellWidth(pct) {
+  const L = _dcellLayout(_crCellSel);
+  L.w = Math.max(70, Math.min(140, parseInt(pct) || 100));
+  _applyDockCellLayout(_crCellSel); _syncDockCellLayoutUI(); _dockCellLayoutPersist();
+}
+function setDockCellHeight(pct) {
+  const L = _dcellLayout(_crCellSel);
+  L.h = Math.max(70, Math.min(140, parseInt(pct) || 100));
+  _applyDockCellLayout(_crCellSel); _syncDockCellLayoutUI(); _dockCellLayoutPersist();
+}
+function setDockCellExtraSide(side) {
+  const L = _dcellLayout(_crCellSel);
+  L.extraSide = (L.extraSide === side) ? 'auto' : side; // re-tap = revient à auto
+  _applyDockCellLayout(_crCellSel); _syncDockCellLayoutUI(); _dockCellLayoutPersist();
+}
+function resetDockCellLayout() {
+  DOCK_CELL_LAYOUT[_crCellSel] = _dcellDefaults();
+  _applyDockCellLayout(_crCellSel); _syncDockCellLayoutUI(); _dockCellLayoutPersist();
+}
+function resetAllDockCellLayout() {
+  Object.keys(DOCK_CELL_IDS).forEach(k => { DOCK_CELL_LAYOUT[k] = _dcellDefaults(); _applyDockCellLayout(k); });
+  _syncDockCellLayoutUI(); _dockCellLayoutPersist();
+}
+function _dockCellLayoutPersist() {
+  _lsSetDebounced(DOCK_CELL_LAYOUT_KEY, JSON.stringify(DOCK_CELL_LAYOUT), 300);
+}
+function _loadDockCellLayout() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(DOCK_CELL_LAYOUT_KEY)); } catch(e) {}
+  if (s && typeof s === 'object') DOCK_CELL_LAYOUT = s;
+  Object.keys(DOCK_CELL_IDS).forEach(k => _applyDockCellLayout(k));
+  _syncDockCellLayoutUI();
 }
 
 /* ---------- Stickers personnalisés (7 sphères) ---------- */
