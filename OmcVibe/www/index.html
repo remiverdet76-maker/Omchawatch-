@@ -3219,76 +3219,47 @@ function shadeHex(hex, amt) {
   return `#${f(r).toString(16).padStart(2, '0')}${f(g).toString(16).padStart(2, '0')}${f(b).toString(16).padStart(2, '0')}`;
 }
 
-// #161 : mandala lotus "géométrie sacrée" — v3 (retour terrain : "un
-// espace au centre où on voit bien la fréquence" + "pétales comme ceux
-// du lotus en géométrie sacrée" + "effet de profondeur/hauteur
-// fractale"). Reprend le principe v2 (enfant SVG positionné en absolu
-// par-dessus la sphère SATELLITE, jamais la maître, cf. buildVesicaPairs
-// et .vp-lotus en overflow:visible) mais :
-//  - cœur nettement dégagé (rien avant r=48 en unités viewBox, ≈24px
-//    réels) — la fréquence + "Canal N" (au-dessus, en z-index:1) ont
-//    toute la place pour rester lisibles, seulement un halo doux derrière ;
-//  - pétales moins nombreux (2 couronnes de 6, au lieu de 3 couronnes de
-//    26) mais plus précis/pointus, avec liseré fin (stroke) façon
-//    tracé de géométrie sacrée, la grande couronne débordant toujours
-//    légèrement du disque ;
-//  - "hauteur fractale" : chaque pétale contient un second pétale
-//    imbriqué, même formule réduite ~65% et recentrée vers la pointe —
-//    motif pétale-dans-le-pétale, plus deux cercles-guides discrets
-//    (structure de mandala géométrique classique) ;
-//  - ombre portée + halo (filter:drop-shadow) pour la profondeur 3D.
+// #162 : mandala "bouquet de bulles" — v4, calée sur une capture de
+// référence fournie par l'utilisateur ("exactement le design à
+// reproduire avec changement de couleurs + Halo") : une seule couronne
+// de 8 pétales ronds et glacés (chacun un simple cercle avec un dégradé
+// radial fixe — reflet clair en haut-gauche, comme une bulle/perle),
+// serrés en bouquet, PAS de dépassement du disque (contrairement aux
+// v2/v3 précédentes). Rendu comme enfant SVG positionné en absolu
+// par-dessus la sphère SATELLITE (jamais la maître, cf. buildVesicaPairs
+// et .vp-lotus). Le halo demandé est porté par le box-shadow existant de
+// .vp-p (renforcé, cf. buildVesicaPairs) plutôt que dupliqué ici.
 // Coloré selon la bande de fréquence courante (bandColorFor). Toujours
 // aucun asset externe ni animation par frame.
-function _lotusPetalPath(rInner, rOuter, halfWidth) {
-  const midR = (rInner + rOuter) / 2;
-  return `M100,${(100-rInner).toFixed(1)} Q${(100-halfWidth).toFixed(1)},${(100-midR).toFixed(1)} 100,${(100-rOuter).toFixed(1)} `
-       + `Q${(100+halfWidth).toFixed(1)},${(100-midR).toFixed(1)} 100,${(100-rInner).toFixed(1)} Z`;
-}
-function _lotusRing(rInner, rOuter, halfWidth, angles, gradId, opacity, rim) {
-  const outer = _lotusPetalPath(rInner, rOuter, halfWidth);
-  // Pétale imbriqué (nervure) : même formule réduite/recentrée vers la
-  // pointe, simple contour — évoque un pétale "dans" le pétale (motif
-  // fractal), cohérent quel que soit l'angle puisqu'il tourne avec lui.
-  const nestLo = rInner + (rOuter - rInner) * 0.22;
-  const nestHi = rInner + (rOuter - rInner) * 0.88;
-  const nest = _lotusPetalPath(nestLo, nestHi, halfWidth * 0.4);
-  return angles.map(a => {
-    const t = `rotate(${a} 100 100)`;
-    return `<path d='${outer}' fill='url(#${gradId})' opacity='${opacity}' stroke='${rim}' stroke-width='.6' transform='${t}'/>`
-         + `<path d='${nest}' fill='none' stroke='${rim}' stroke-width='.55' opacity='${(opacity*0.75).toFixed(2)}' transform='${t}'/>`;
-  }).join('');
-}
+const _LOTUS_BUBBLE_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
 function _lotusMandalaSVG(hex) {
-  const dark  = shadeHex(hex, 0.35);
-  const light = shadeHex(hex, -0.35);
-  const rim   = shadeHex(hex, -0.6); // liseré/nervures, presque blanc
+  const light = shadeHex(hex, -0.45); // reflet clair (haut-gauche de chaque bulle)
+  const dark  = shadeHex(hex, 0.30);  // bord plus sombre (profondeur/volume)
   const gid = 'lg' + hex.replace('#', '');
-  // Dégradés base(sombre)→pointe(clair) DANS le repère propre de chaque
-  // pétale (objectBoundingBox, par défaut) : suit la rotation du <path>
-  // qui le référence, donc cohérent pétale par pétale quel que soit
-  // l'angle — contrairement à un dégradé en coordonnées absolues, qui
-  // resterait figé et désaligné une fois le pétale tourné.
-  const defs = `<defs>
-    <linearGradient id='${gid}a' x1='.5' y1='1' x2='.5' y2='0'><stop offset='0%' stop-color='${hex}'/><stop offset='100%' stop-color='${light}'/></linearGradient>
-    <linearGradient id='${gid}b' x1='.5' y1='1' x2='.5' y2='0'><stop offset='0%' stop-color='${dark}'/><stop offset='100%' stop-color='${hex}'/></linearGradient>
-    <radialGradient id='${gid}d'><stop offset='0%' stop-color='#FFFFFF'/><stop offset='60%' stop-color='${light}'/><stop offset='100%' stop-color='${hex}' stop-opacity='0'/></radialGradient>
-  </defs>`;
-  // Cercles-guides discrets — structure de mandala géométrique classique,
-  // à peine visibles (n'encombrent jamais le texte central).
-  const guides = `<circle cx='100' cy='100' r='100' fill='none' stroke='${rim}' stroke-width='.5' opacity='.28'/>`
-               + `<circle cx='100' cy='100' r='48' fill='none' stroke='${rim}' stroke-width='.5' opacity='.22'/>`;
-  // Halo doux au cœur (PAS un disque plein opaque) : dégagé pour que le
-  // texte (Canal N + fréquence, z-index:1, au-dessus) reste net.
-  const bindu = `<circle cx='100' cy='100' r='32' fill='url(#${gid}d)'/>`;
-  // Couronne B (principale, 6 pétales) : pointes au bord du disque (r=100
-  // = pile le bord, le SVG étant calé à la taille exacte de .vp-p).
-  const ringB = _lotusRing(48, 100, 15, [0, 60, 120, 180, 240, 300], gid + 'b', .82, rim);
-  // Couronne A (grande, 6 pétales, offset 30°) : rOuter=124 > 100 →
-  // dépasse légèrement du disque, comme demandé.
-  const ringA = _lotusRing(70, 124, 20, [30, 90, 150, 210, 270, 330], gid + 'a', .78, rim);
+  // Dégradé radial à direction FIXE (cx/cy décentrés vers le haut-gauche) :
+  // comme chaque pétale est un simple cercle (jamais tourné), le même
+  // dégradé s'applique identique à tous — lumière cohérente sur tout le
+  // bouquet, effet "bulle de verre" façon la référence.
+  const defs = `<defs><radialGradient id='${gid}p' cx='32%' cy='28%' r='75%'>
+    <stop offset='0%' stop-color='#FFFFFF' stop-opacity='.95'/>
+    <stop offset='32%' stop-color='${light}' stop-opacity='.9'/>
+    <stop offset='72%' stop-color='${hex}' stop-opacity='.82'/>
+    <stop offset='100%' stop-color='${dark}' stop-opacity='.7'/>
+  </radialGradient></defs>`;
+  // Couronne unique, 8 pétales-bulles serrés (rayon de pose 42, rayon de
+  // bulle 36 : chevauchement volontaire — bouquet dense, comme la
+  // référence), qui restent DANS le disque (contrairement au débordement
+  // des versions précédentes — la réf. montre les pétales contenus par
+  // l'anneau de couleur, pas au-delà).
+  const placeR = 42, petalR = 36;
+  const petals = _LOTUS_BUBBLE_ANGLES.map(a => {
+    const rad = a * Math.PI / 180;
+    const cx = (100 + placeR * Math.cos(rad)).toFixed(1);
+    const cy = (100 + placeR * Math.sin(rad)).toFixed(1);
+    return `<circle cx='${cx}' cy='${cy}' r='${petalR}' fill='url(#${gid}p)'/>`;
+  }).join('');
   return `<svg class='vp-lotus' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg' `
-       + `style='filter:drop-shadow(0 4px 6px rgba(0,0,0,.55)) drop-shadow(0 0 10px ${hex}88);'>`
-       + `${defs}${bindu}${guides}${ringB}${ringA}</svg>`;
+       + `style='filter:drop-shadow(0 3px 5px rgba(0,0,0,.4));'>${defs}${petals}</svg>`;
 }
 
 // AudioContext natif — exposé via window.AC
@@ -5770,12 +5741,13 @@ function buildVesicaPairs() {
     // bande reste identique tout autour.
     const _st = STICKERS[i];
     const _hasSt = _st && _st.dataUrl;
-    // #160 : mandala lotus organique EN RELIEF par défaut (cf.
+    // #162 : mandala "bouquet de bulles" par défaut (cf.
     // _lotusMandalaSVG) — rendu comme un enfant SVG (pas un fond CSS,
     // qui serait rogné par border-radius), inséré juste après l'ouverture
-    // de .vp-p ci-dessous. Le sticker personnalisé (Créateur, #155)
-    // garde la priorité s'il existe : image importée en fond, PAS de
-    // mandala par-dessus (comportement inchangé pour les stickers).
+    // de .vp-p ci-dessous ; halo renforcé sur le box-shadow juste
+    // au-dessous (+ Halo demandé). Le sticker personnalisé (Créateur,
+    // #155) garde la priorité s'il existe : image importée en fond, PAS
+    // de mandala par-dessus (comportement inchangé pour les stickers).
     const _bgStyle = _hasSt
       ? `background:url('${_st.dataUrl}') ${_st.panX}% ${_st.panY}% / ${_st.zoom}% ${_st.zoom}% no-repeat,radial-gradient(circle,${c}55 0%,${c}22 60%,transparent 100%);filter:${_stickerFilterCss(_st)};`
       : `background:radial-gradient(circle,${c}40 0%,${c}18 60%,transparent 100%);`;
@@ -5789,7 +5761,7 @@ function buildVesicaPairs() {
     vp.innerHTML = `
       <div class="vp-p ${isMutedP?'vp-muted':''} ${flowing&&!isMutedP?'vp-live':''}"
            id="vpc-p${i}"
-           style="border-color:${cDark};${_bgStyle}box-shadow:0 0 20px ${cDark}80,0 0 34px ${c}40;cursor:pointer;user-select:none;"
+           style="border-color:${cDark};${_bgStyle}box-shadow:0 0 26px ${cDark}90,0 0 46px ${c}66,0 0 72px ${c}36;cursor:pointer;user-select:none;"
            onmousedown="_vpStart(${i},event)" onmouseup="_vpEnd(${i})" onmouseleave="_vpCancel()" onmousemove="_vpMove(${i},event)"
            ontouchstart="_vpStart(${i},event)" ontouchend="_vpEnd(${i})" ontouchmove="_vpMove(${i},event)">
         ${_lotusHTML}
