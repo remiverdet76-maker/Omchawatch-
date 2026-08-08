@@ -380,6 +380,11 @@ body{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   cursor:pointer;transition:filter .35s,transform .25s,opacity .4s;
   flex-shrink:0;
+  /* #160 : nécessaire pour le mandala lotus en enfant positionné, qui
+     dépasse volontairement un peu du disque (overflow:visible, déjà la
+     valeur par défaut — explicite ici pour que ce ne soit jamais coupé
+     par mégarde si une règle future ajoute overflow:hidden). */
+  position:relative;overflow:visible;
 }
 .vp-p:hover{filter:brightness(1.5);transform:scale(1.1);}
 .vp-p:active{animation:tap-flash .25s ease-out;}
@@ -393,8 +398,16 @@ body{
 }
 .vp-p.vp-live{animation:vplive 8s ease-in-out infinite;}
 @keyframes vplive{0%,100%{filter:brightness(1);}50%{filter:brightness(1.38);}}
-.vp-type{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.65rem;letter-spacing:.06em;opacity:.7;}
-.vp-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:calc(1.7rem * var(--sphere-digit-scale,1));line-height:1;color:#f5eedc;text-shadow:0 0 12px rgba(255,255,255,.45);font-weight:700;}
+/* #160 : mandala lotus — même taille EXACTE que .vp-p (mapping 1:1 avec
+   son viewBox 0 0 200 200 : le rayon 100 = pile le bord du disque), donc
+   toute pointe de pétale au-delà de r=100 dépasse naturellement du
+   disque, "légèrement" comme demandé (cf. _lotusMandalaSVG, couronne A
+   jusqu'à r=112). pointer-events:none : décoratif, ne capte aucun tap
+   (le tap reste géré par .vp-p lui-même, cf. onmousedown/ontouchstart). */
+.vp-lotus{ position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible; } /* #160 : explicite — certains moteurs de rendu (WebView Android inclus) appliquent overflow:hidden par défaut à la racine d'un <svg>, ce qui aurait tronqué net les pointes de pétales au bord de la boîte au lieu de les laisser légèrement déborder. */
+.vp-p.vp-muted .vp-lotus{ display:none; } /* coupée = quartz plat, cf. règle ci-dessus */
+.vp-type{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.65rem;letter-spacing:.06em;opacity:.7;position:relative;z-index:1;}
+.vp-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:calc(1.7rem * var(--sphere-digit-scale,1));line-height:1;color:#f5eedc;text-shadow:0 0 12px rgba(255,255,255,.45);font-weight:700;position:relative;z-index:1;}
 .vp-hz{display:none;}
 /* #153 : étoile discrète sous chaque sphère satellite → ouvre son menu
    oscillateur (openOscModal). SIBLING direct de #sphere-layer (positionnée
@@ -2223,6 +2236,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
          Android de premier plan) SANS réglage utilisateur désormais, cf.
          _enableBackgroundAudio/_disableBackgroundAudio. -->
     <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panCustom')" data-html-import-id="html-import-59" data-template-id="button-52"><canva-inline-text data-template-id="canva-inline-text-53" class="canva-text" style="color: #FFD700; font-size: 22px;">◈</canva-inline-text><span data-html-import-id="html-import-60" data-template-id="span-54" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Personnaliser l'interface</span></button>
+    <!-- #160 : Sauvegarder les réglages — force l'écriture immédiate de
+         TOUT ce qui est normalement sauvegardé automatiquement mais avec
+         un léger différé anti-saturation I/O (cf. _lsSetDebounced/
+         saveState) : utile si l'app est fermée dans la fraction de
+         seconde qui suit un dernier réglage, avant que le différé n'ait
+         eu le temps de s'écrire. Confirmation visuelle inline (pas de
+         système de toast dans l'app). -->
+    <button class="params-item canva-button" id="btn-save-settings" style="--ic: #86FFC0;" onclick="saveAllUserSettings()"><span>💾</span><span>Sauvegarder les réglages</span></button>
     <!-- #157 : ChaWatch — déménagé du dock (cellule orange sous la fréquence
          maître) vers ce menu. Tap = même comportement qu'avant (tirage
          aléatoire accordé sur l'heure en cours + ouverture d'OmchaWatch,
@@ -3167,21 +3188,21 @@ function freqColorA(f, l, a) { return `hsla(${freqHue(f)},72%,${l != null ? l : 
 // tombe SA fréquence RÉELLE actuelle — donc change de couleur si un tirage
 // la déplace dans une autre bande, indépendamment de la couleur "identité"
 // fixe de sa paire (PAIRS[i].color, gardée ailleurs pour d'autres usages).
-// #157 : noms alignés sur la nomenclature confirmée par l'utilisateur
-// (capture d'écran de référence) — "Doré" plutôt que "Jaune". Plage
-// contiguë 54→475 (54-108/109-162/163-216/217-288/289-324/324-396/396-475,
-// arrondis à la borne commune) + clamp dans bandColorFor + repli sur la
-// dernière bande en fin de boucle : AUCUNE fréquence ne peut retomber
-// "sans bande" (le bug de sphère vierge vu sur une ancienne version de
-// l'app, avec un moteur de rendu différent, est structurellement
-// impossible ici).
+// #160 : noms/plages réalignés sur la dernière nomenclature confirmée par
+// l'utilisateur — "Jaune" (plutôt que "Doré", #157) et "Bleu nuit"
+// (plutôt que "Bleu"). Plage contiguë 54→475
+// (54-108/108-162/163-216/217-288/289-324/325-396/396-475, arrondis à la
+// borne commune) + clamp dans bandColorFor + repli sur la dernière bande
+// en fin de boucle : AUCUNE fréquence ne peut retomber "sans bande" (le
+// bug de sphère vierge vu sur une ancienne version de l'app, avec un
+// moteur de rendu différent, est structurellement impossible ici).
 const FREQ_BANDS = [
   { lo: 54,  hi: 108, name: 'Rouge',     c: '#FF4B4B' },
   { lo: 108, hi: 162, name: 'Orange',    c: '#FF9A3C' },
-  { lo: 162, hi: 216, name: 'Doré',      c: '#F5DC46' },
+  { lo: 162, hi: 216, name: 'Jaune',     c: '#F5DC46' },
   { lo: 216, hi: 288, name: 'Vert',      c: '#4CE06A' },
   { lo: 288, hi: 324, name: 'Cyan',      c: '#3CE0D8' },
-  { lo: 324, hi: 396, name: 'Bleu',      c: '#3C5CE0' },
+  { lo: 324, hi: 396, name: 'Bleu nuit', c: '#2F3FBF' },
   { lo: 396, hi: 475, name: 'Violet',    c: '#A24CE0' },
 ];
 function bandColorFor(freq) {
@@ -3196,6 +3217,60 @@ function shadeHex(hex, amt) {
   const r = parseInt(h.substring(0, 2), 16), g = parseInt(h.substring(2, 4), 16), b = parseInt(h.substring(4, 6), 16);
   const f = (v) => Math.max(0, Math.min(255, Math.round(v * (1 - amt))));
   return `#${f(r).toString(16).padStart(2, '0')}${f(g).toString(16).padStart(2, '0')}${f(b).toString(16).padStart(2, '0')}`;
+}
+
+// #160 : mandala lotus organique EN RELIEF — remplace le fond plat
+// (dégradé radial uni) des 6 sphères SATELLITES uniquement (jamais la
+// maître, qui garde son propre halo + logo, cf. buildVesicaPairs).
+// v2 (retour terrain : "motif 3D plus complexe qui sort légèrement de
+// la sphère") — rendu comme un VRAI ENFANT SVG positionné en absolu par-
+// dessus la sphère (.vp-p en overflow:visible, cf. CSS .vp-lotus) au
+// lieu d'un simple fond CSS, qui serait de toute façon rogné au cercle
+// par border-radius : seule une sphère en enfant peut dépasser du
+// disque. Trois couronnes de pétales (6 grands qui débordent légèrement
+// du bord + 8 moyens + 12 fins) et un cœur lumineux ; chaque pétale a
+// son propre dégradé base→pointe (objectBoundingBox, donc cohérent quel
+// que soit son angle de rotation) pour un effet de relief/volume, plus
+// une ombre portée + halo (filter:drop-shadow) pour la profondeur 3D.
+// Coloré selon la bande de fréquence courante (bandColorFor). Aucun
+// asset externe, aucune animation par frame (régénéré seulement quand
+// buildVesicaPairs() tourne, donc coût trivial).
+function _lotusPetalPath(rInner, rOuter, halfWidth) {
+  const midR = (rInner + rOuter) / 2;
+  return `M100,${(100-rInner).toFixed(1)} Q${(100-halfWidth).toFixed(1)},${(100-midR).toFixed(1)} 100,${(100-rOuter).toFixed(1)} `
+       + `Q${(100+halfWidth).toFixed(1)},${(100-midR).toFixed(1)} 100,${(100-rInner).toFixed(1)} Z`;
+}
+function _lotusRing(rInner, rOuter, halfWidth, angles, gradId, opacity) {
+  const d = _lotusPetalPath(rInner, rOuter, halfWidth);
+  return angles.map(a => `<path d='${d}' fill='url(#${gradId})' opacity='${opacity}' transform='rotate(${a} 100 100)'/>`).join('');
+}
+function _lotusMandalaSVG(hex) {
+  const dark  = shadeHex(hex, 0.35);
+  const light = shadeHex(hex, -0.35);
+  const gid = 'lg' + hex.replace('#', '');
+  // Dégradés base(sombre)→pointe(clair) DANS le repère propre de chaque
+  // pétale (objectBoundingBox, par défaut) : suit la rotation du <path>
+  // qui le référence, donc cohérent pétale par pétale quel que soit
+  // l'angle — contrairement à un dégradé en coordonnées absolues, qui
+  // resterait figé et désaligné une fois le pétale tourné.
+  const defs = `<defs>
+    <linearGradient id='${gid}a' x1='.5' y1='1' x2='.5' y2='0'><stop offset='0%' stop-color='${dark}'/><stop offset='100%' stop-color='${hex}'/></linearGradient>
+    <linearGradient id='${gid}b' x1='.5' y1='1' x2='.5' y2='0'><stop offset='0%' stop-color='${hex}'/><stop offset='100%' stop-color='${light}'/></linearGradient>
+    <linearGradient id='${gid}c' x1='.5' y1='1' x2='.5' y2='0'><stop offset='0%' stop-color='${light}'/><stop offset='100%' stop-color='#FFFFFF'/></linearGradient>
+    <radialGradient id='${gid}d'><stop offset='0%' stop-color='#FFFFFF'/><stop offset='55%' stop-color='${light}'/><stop offset='100%' stop-color='${hex}'/></radialGradient>
+  </defs>`;
+  // Couronne A (grande, 6 pétales) : rOuter=112 > 100 → dépasse
+  // légèrement du disque (dont le bord correspond exactement à r=100,
+  // le SVG étant calé à la taille exacte de .vp-p, cf. CSS .vp-lotus).
+  const ringA  = _lotusRing(42, 112, 24, [0, 60, 120, 180, 240, 300], gid + 'a', .85);
+  // Couronne B (moyenne, 8 pétales, offset 22.5°) : reste dans le disque.
+  const ringB  = _lotusRing(28, 90, 16, [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5], gid + 'b', .92);
+  // Couronne C (12 fines pointes internes) : texture/complexité au cœur.
+  const ringC  = _lotusRing(12, 52, 6, [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330], gid + 'c', .95);
+  const bindu  = `<circle cx='100' cy='100' r='11' fill='url(#${gid}d)'/>`;
+  return `<svg class='vp-lotus' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg' `
+       + `style='filter:drop-shadow(0 3px 5px rgba(0,0,0,.5)) drop-shadow(0 0 9px ${hex}77);'>`
+       + `${defs}${ringA}${ringB}${ringC}${bindu}</svg>`;
 }
 
 // AudioContext natif — exposé via window.AC
@@ -5677,9 +5752,16 @@ function buildVesicaPairs() {
     // bande reste identique tout autour.
     const _st = STICKERS[i];
     const _hasSt = _st && _st.dataUrl;
+    // #160 : mandala lotus organique EN RELIEF par défaut (cf.
+    // _lotusMandalaSVG) — rendu comme un enfant SVG (pas un fond CSS,
+    // qui serait rogné par border-radius), inséré juste après l'ouverture
+    // de .vp-p ci-dessous. Le sticker personnalisé (Créateur, #155)
+    // garde la priorité s'il existe : image importée en fond, PAS de
+    // mandala par-dessus (comportement inchangé pour les stickers).
     const _bgStyle = _hasSt
       ? `background:url('${_st.dataUrl}') ${_st.panX}% ${_st.panY}% / ${_st.zoom}% ${_st.zoom}% no-repeat,radial-gradient(circle,${c}55 0%,${c}22 60%,transparent 100%);filter:${_stickerFilterCss(_st)};`
-      : `background:radial-gradient(circle,${c}55 0%,${c}22 60%,transparent 100%);`;
+      : `background:radial-gradient(circle,${c}40 0%,${c}18 60%,transparent 100%);`;
+    const _lotusHTML = _hasSt ? '' : _lotusMandalaSVG(c);
 
     const vp = document.createElement('div');
     vp.className = 'vp-wrap';
@@ -5692,6 +5774,7 @@ function buildVesicaPairs() {
            style="border-color:${cDark};${_bgStyle}box-shadow:0 0 20px ${cDark}80,0 0 34px ${c}40;cursor:pointer;user-select:none;"
            onmousedown="_vpStart(${i},event)" onmouseup="_vpEnd(${i})" onmouseleave="_vpCancel()" onmousemove="_vpMove(${i},event)"
            ontouchstart="_vpStart(${i},event)" ontouchend="_vpEnd(${i})" ontouchmove="_vpMove(${i},event)">
+        ${_lotusHTML}
         <span class="vp-type" style="color:${c}CC">Canal ${i+1}</span>
         <span class="vp-freq" id="vp-pf-${i}">${fmtShort(pF)}</span>
       </div>`;
@@ -8506,6 +8589,28 @@ function _doSave() {
     }));
   } catch(e) {}
 }
+// #160 : "Sauvegarder les réglages" (Paramètres) — tout se sauvegarde
+// déjà automatiquement (saveState/_lsSetDebounced sur chaque
+// modification), mais avec un léger différé anti-saturation I/O
+// (300-500ms). Ce bouton force l'écriture IMMÉDIATE de tout ce qui
+// pourrait encore être en attente — utile si l'app est fermée dans la
+// fraction de seconde qui suit un dernier réglage — et donne une
+// confirmation visuelle claire (pas de système de toast dans l'app :
+// le texte du bouton lui-même change brièvement).
+let _saveBtnResetTimer = null;
+function saveAllUserSettings() {
+  clearTimeout(_saveTimer);
+  _doSave();      // gros état : fréquence maître, paires, options aléatoires...
+  _lsFlushAll();  // tout le reste en attente : Créateur, sphère Flux, cellules du dock, taille/teinte UI...
+  const btn = document.getElementById('btn-save-settings');
+  if (!btn) return;
+  const label = btn.querySelector('span:last-child');
+  if (!label) return;
+  if (!btn.dataset.origLabel) btn.dataset.origLabel = label.textContent;
+  label.textContent = '✓ Réglages sauvegardés';
+  clearTimeout(_saveBtnResetTimer);
+  _saveBtnResetTimer = setTimeout(() => { label.textContent = btn.dataset.origLabel; }, 1800);
+}
 function loadState() {
   try {
     const s = JSON.parse(localStorage.getItem(LS_KEY));
@@ -9591,9 +9696,24 @@ function updateDockDisplays() {
 // parfois lent sur WebView Android) peut affamer le thread audio. On
 // n'écrit qu'une fois le glissé stabilisé (~400ms sans nouvelle valeur).
 const _lsTimers = {};
+const _lsPending = {}; // #160 : valeurs en attente d'écriture — permet un flush immédiat (cf. _lsFlushAll)
 function _lsSetDebounced(key, value, delay) {
+  _lsPending[key] = value;
   clearTimeout(_lsTimers[key]);
-  _lsTimers[key] = setTimeout(() => { try { localStorage.setItem(key, value); } catch(e) {} }, delay || 400);
+  _lsTimers[key] = setTimeout(() => { _lsFlush(key); }, delay || 400);
+}
+function _lsFlush(key) {
+  clearTimeout(_lsTimers[key]);
+  if (!(key in _lsPending)) return;
+  try { localStorage.setItem(key, _lsPending[key]); } catch(e) {}
+  delete _lsPending[key];
+}
+// #160 : écrit immédiatement TOUT ce qui est en attente derrière le
+// différé anti-saturation I/O (taille/teinte UI, luminosité/contraste,
+// Créateur, sphère Flux, cellules du dock…) — appelé par le bouton
+// "Sauvegarder les réglages" et par _doSave (cf. saveAllUserSettings).
+function _lsFlushAll() {
+  Object.keys(_lsPending).forEach(_lsFlush);
 }
 
 // ═══ Apparence : taille & teinte du texte (paramétrable, persistant) ═══
