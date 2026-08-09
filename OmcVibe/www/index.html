@@ -3236,6 +3236,22 @@ const BREATH_STATE = {on:true, rate:0.11, depth:0.18};  // respiration douce par
 // amplitude aurait pu faire sortir le battement réel de la bande Delta.
 const DELTA_DRIFT_STATE = { on: true, amount: 0.06 }; // Hz
 const _deltaDriftLFOs = {}; // pairIdx → { lfo, depthGain }
+// #166 : MODE DÉTOUR — accessible depuis l'horloge OmchaWatch (cf.
+// omchawatch.html → parent._omcVibeDetourFromWatch()). Active par défaut
+// le LFO doux existant (intensité du détune Sinus Duo, cf.
+// PAIR_DUALSINE_LFO plus bas) sur TOUTES les paires, + un NOUVEAU LFO de
+// détune EN Hz (±10Hz, propre à chaque oscillateur/voix, rythme
+// indépendant — jamais synchronisé) sur toute voix jouant au-dessus de
+// 288Hz. La zone 288-432Hz est particulièrement sensible : figée/statique
+// elle peut "énerver" en 2 secondes (façon sinus klaxon binaural) ; animée
+// doucement elle reste douce, évolutive et aérienne — c'est tout l'objet
+// de ce mode. Off par défaut (comme tous les modes spéciaux de l'app),
+// activé explicitement via le bouton dédié dans OmchaWatch ou le
+// commutateur du panneau Effet Audio.
+let DETOUR_MODE = false;
+const DETOUR_HZ_THRESHOLD = 288; // Hz — au-delà : LFO détune Hz appliqué
+const DETOUR_HZ_DEPTH = 10;      // ±10 Hz d'amplitude
+const _detourLFOs = {}; // id (oscillateur) → [{lfo, depthGain}, ...] (1 par voix > seuil)
 let _lfoGain = null; // #42 : ne sert plus qu'à l'anti-crack (cf. _applyAntiCrack), plus de LFO trémolo dessus
 let _breathLFO = null, _breathGain = null, _breathDepthGain = null;
 // #150 : "Signature bol tibétain" — pulsation TRÈS lente (20-60s de
@@ -3755,6 +3771,8 @@ function buildOsc(id, freq, vol, pan) {
   // lui attache sa propre dérive lente (rythme + phase indépendants).
   const _driftPairIdx = PAIRS.findIndex(p => p.ida.id === id);
   if (_driftPairIdx >= 0) attachDeltaDriftToNode(_driftPairIdx, node);
+  // #166 : Mode Détour — LFO détune Hz sur les voix > 288Hz de CE node.
+  if (DETOUR_MODE) _attachDetourDetuneLFO(id, node);
   return node;
 }
 
@@ -3789,6 +3807,8 @@ function releaseOsc(node) {
     // CET oscillateur ; on l'arrête avant que le nœud ne soit détruit.
     const _dsPairIdx = PAIRS.findIndex(p => p.pingala.id === node._id || p.ida.id === node._id);
     if (_dsPairIdx >= 0 && typeof _clearPairDualSineLFO === 'function') _clearPairDualSineLFO(_dsPairIdx);
+    // #166 : même fuite possible pour le LFO détune Hz du Mode Détour.
+    _clearDetourDetuneLFO(node._id);
   }
   const _relPairIdx = PAIRS.findIndex(p => p.ida.id === node._id);
   if (_relPairIdx >= 0) clearDeltaDrift(_relPairIdx);
@@ -4433,6 +4453,12 @@ async function startFlow() {
     try { window.Capacitor?.Plugins?.KeepAwake?.keepAwake?.(); } catch(e) {}
     PAIRS.forEach((_, i) => setTimeout(() => swapPingala(i), 60 + i * 60));
     PAIRS.forEach((_, i) => updateOrbUI(i));
+    // #166 : Mode Détour restauré d'une session précédente (flag persisté,
+    // cf. loadState) — réattache le LFO doux par paire une fois les nodes
+    // construits (les swapPingala ci-dessus sont échelonnés dans le temps,
+    // cf. délai). Le LFO détune Hz (>288Hz), lui, s'attache déjà tout seul
+    // dans buildOsc() dès sa construction, pas besoin de le refaire ici.
+    if (DETOUR_MODE) setTimeout(() => activateDetourMode(), 60 + PAIRS.length * 60 + 80);
     _armBreathAnchor(); // #9 (roadmap)
     _armAudioWatchdog(); // #33 (perf)
     _armOrganicEvolution(); // #84
@@ -4474,6 +4500,11 @@ async function stopFlow() {
   const nodesCopy = {...nodes};
   nodes = {};
   flowing = false;
+  // #166 : arrêt complet du flux — évite que les LFO détune Hz du Mode
+  // Détour (des oscillateurs séparés, connectés mais jamais eux-mêmes
+  // stoppés par la boucle ci-dessous qui ne touche que node.subs) restent
+  // orphelins à tourner indéfiniment après la coupure.
+  _clearAllDetourDetuneLFO();
   Object.values(nodesCopy).forEach(n => {
     if (!n) return;
     const subs = n.subs || (n.o ? [{ osc: n.o }] : []);
@@ -5048,6 +5079,88 @@ function setDeltaDriftAmount(v) {
   const el = document.getElementById('sv-delta-drift'); if (el) el.textContent = '±' + DELTA_DRIFT_STATE.amount.toFixed(2) + ' Hz';
   saveState();
 }
+
+/* ---------- #166 : MODE DÉTOUR — LFO détune Hz (>288Hz), par voix ------
+   Même mécanique que attachDeltaDriftToNode (LFO natif connecté
+   ADDITIVEMENT sur .frequency, jamais sur .value — la ramp de tuneOsc()
+   n'est jamais touchée) mais appliqué à TOUS les partiels dont la
+   fréquence dépasse DETOUR_HZ_THRESHOLD, avec un rythme aléatoire propre
+   à CHAQUE voix (jamais synchronisé, même au sein d'un même oscillateur)
+   pour créer un vrai dynamisme plutôt qu'une pulsation uniforme. Attaché
+   automatiquement dans buildOsc() dès qu'un node est (re)créé — comme la
+   dérive du Δ, ne se réévalue pas sur un simple tuneOsc() (glisse en
+   place), seulement à la (re)construction du node. */
+function _attachDetourDetuneLFO(id, node) {
+  _clearDetourDetuneLFO(id);
+  if (!DETOUR_MODE || !node || !node.subs) return;
+  const c = audioCtx();
+  const entries = [];
+  node.subs.forEach(s => {
+    if (!s.osc || s.osc.frequency.value <= DETOUR_HZ_THRESHOLD) return;
+    // Rythme très lent et indépendant : 0.015-0.06 Hz ≈ cycle de 16 à 66s.
+    const rate = 0.015 + Math.random() * 0.045;
+    const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = rate;
+    const depthGain = c.createGain(); depthGain.gain.value = DETOUR_HZ_DEPTH;
+    lfo.connect(depthGain); depthGain.connect(s.osc.frequency);
+    lfo.start(c.currentTime + Math.random() / rate); // phase de départ aléatoire
+    entries.push({ lfo, depthGain });
+  });
+  if (entries.length) _detourLFOs[id] = entries;
+}
+function _clearDetourDetuneLFO(id) {
+  const arr = _detourLFOs[id]; if (!arr) return;
+  arr.forEach(d => { try { d.lfo.stop(); d.lfo.disconnect(); d.depthGain.disconnect(); } catch(e) {} });
+  delete _detourLFOs[id];
+}
+function _clearAllDetourDetuneLFO() { Object.keys(_detourLFOs).forEach(_clearDetourDetuneLFO); }
+
+// Active/désactive le Mode Détour dans son ensemble : (1) LFO doux
+// (intensité du détune Sinus Duo, PAIR_DUALSINE_LFO) sur TOUTES les
+// paires, (2) LFO détune Hz sur les voix déjà en cours de lecture qui
+// dépassent 288Hz (pas besoin d'attendre le prochain tirage — s'applique
+// aux nodes existants directement, purement additif, aucun risque de
+// discontinuité audible).
+function activateDetourMode() {
+  DETOUR_MODE = true;
+  PAIRS.forEach((_, i) => {
+    if (!PAIR_DUALSINE_LFO[i] && typeof _attachPairDualSineLFO === 'function') {
+      const rate = 0.05 + Math.random() * 0.18;
+      _attachPairDualSineLFO(i, rate, 10);
+      const btn = document.getElementById('btn-dslfo-' + i);
+      if (btn) { btn.textContent = '〜 Actif'; btn.style.opacity = '0.55'; }
+    }
+  });
+  if (flowing) {
+    PAIRS.forEach(pair => {
+      [pair.pingala.id, pair.ida.id].forEach(id => {
+        const node = nodes[id];
+        if (node) _attachDetourDetuneLFO(id, node);
+      });
+    });
+  }
+  const ck = document.getElementById('ck-detour-mode'); if (ck) ck.checked = true;
+  saveState();
+}
+function deactivateDetourMode() {
+  DETOUR_MODE = false;
+  _clearAllDetourDetuneLFO();
+  const ck = document.getElementById('ck-detour-mode'); if (ck) ck.checked = false;
+  saveState();
+}
+function toggleDetourMode(v) {
+  const on = v != null ? !!v : !DETOUR_MODE;
+  if (on) activateDetourMode(); else deactivateDetourMode();
+}
+// #166 : exposée sur window comme _closeModuleOverlay — appelée depuis
+// l'iframe enfant OmchaWatch (omchawatch.html) via
+// parent._omcVibeDetourFromWatch() (bouton "Détour" de l'horloge) :
+// active le mode sur l'instance OmcVibe déjà en cours (qui joue toujours
+// en dessous de l'overlay, cf. #87), puis referme l'overlay.
+function _omcVibeDetourFromWatch() {
+  activateDetourMode();
+  _closeModuleOverlay();
+}
+window._omcVibeDetourFromWatch = _omcVibeDetourFromWatch;
 
 function ui(state, text) {
   const dot=document.getElementById('dot'); if(dot) dot.classList.toggle('live', state === 'live');
@@ -7661,6 +7774,14 @@ function buildMasterFXHTML() {
         <div class="fxq-row"><span class="fxq-lbl">Amplitude</span>
           <input type="range" class="fx-slider" min="0.05" max="1" step="0.05" value="0.3" oninput="setDeltaDriftAmount(this.value)">
           <span class="fx-val-disp" id="sv-delta-drift">±0.30 Hz</span></div>
+        <!-- #166 : Mode Détour — LFO doux (par paire) + LFO détune Hz sur
+             les voix > 288Hz, zone sensible (peut "enchanter" ou "énerver"
+             en 2s) rendue douce/évolutive/aérienne plutôt que statique.
+             Accessible aussi directement depuis l'horloge OmchaWatch. -->
+        <div class="fx-row" style="justify-content:space-between;align-items:center;">
+          <span class="fx-label">Mode Détour (zone 288-432Hz animée)</span>
+          <label class="fx-toggle"><input type="checkbox" id="ck-detour-mode" onchange="toggleDetourMode(this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
         <div class="fxq-sep"></div>
         <!-- Fréquence maître -->
         <div class="fxq-row">
@@ -8376,7 +8497,8 @@ function _doSave() {
       breathAnchor: BREATH_ANCHOR_STATE.on,
       randOpts: { ...RAND_OPTS },
       fluxMuted: FLUX_MUTED,
-      bowlPulse: BOWL_STATE.on // #150 : fireworksIgnition est déjà couvert par randOpts (spread ci-dessus)
+      bowlPulse: BOWL_STATE.on, // #150 : fireworksIgnition est déjà couvert par randOpts (spread ci-dessus)
+      detourMode: DETOUR_MODE // #166
     }));
   } catch(e) {}
 }
@@ -8446,6 +8568,11 @@ function loadState() {
     if (s.randOpts && typeof s.randOpts==='object') Object.assign(RAND_OPTS, s.randOpts);
     if (typeof s.fluxMuted==='boolean') FLUX_MUTED = s.fluxMuted;
     if (typeof s.bowlPulse==='boolean') BOWL_STATE.on = s.bowlPulse; // #150
+    // #166 : simple drapeau ici — buildOsc() lit DETOUR_MODE à la
+    // construction de chaque node (comme PAIR_COMP_STATE/SUBDRONE_STATE
+    // ci-dessus), le LFO doux par paire est réattaché séparément dans
+    // startFlow() une fois les nodes prêts (cf. commentaire #166 là-bas).
+    if (typeof s.detourMode==='boolean') DETOUR_MODE = s.detourMode;
   } catch(e) {}
 }
 
@@ -8468,6 +8595,7 @@ function _syncRandOptsUI() {
   setCk('ck-bowlpulse', BOWL_STATE.on); // #150
   if (typeof _updateSessionArcUI === 'function') _updateSessionArcUI(); // #151
   setCk('ck-delta-drift',   DELTA_DRIFT_STATE.on);
+  setCk('ck-detour-mode', DETOUR_MODE); // #166
   setCk('ck-strict-headphone', STRICT_HEADPHONE_MODE);
   setCk('ck-pair-comp', PAIR_COMP_STATE.on);
   setCk('ck-subdrone', SUBDRONE_STATE.on);
@@ -9044,6 +9172,11 @@ function chaWatchOpen() {
 // ── Init ──────────────────────────────────────────────────────────
 function init() {
   loadState();
+  // #166 : "?detour=1" — OmchaWatch ouvert seul depuis le lanceur (aucune
+  // instance OmcVibe en cours), le bouton "Détour" de l'horloge navigue
+  // ici avec ce marqueur pour pré-activer le mode dès le démarrage du
+  // flux (cf. le hook déjà présent dans startFlow()).
+  try { if (new URLSearchParams(location.search).get('detour') === '1') DETOUR_MODE = true; } catch(e) {}
   _loadTheme();
   _loadVisLite();
   _loadAdvanced();
