@@ -367,6 +367,13 @@ body{
   --font-deco:'Cinzel Decorative';
   --font-body:'IM Fell English';
   --dock-cell-scale:1;
+  /* #165 : taille du TEXTE du dock, indépendante de --dock-cell-scale
+     (taille de la BOÎTE) et surtout de la taille de texte globale
+     (setUISize, qui change document.documentElement.style.fontSize) —
+     px fixes en base × cette variable, jamais du rem : sinon un réglage
+     "Taille du texte" élevé (140%) grossit aussi le dock, alors que la
+     demande explicite est de pouvoir régler les deux indépendamment. */
+  --dock-text-scale:1;
   --sphere-digit-scale:1;
   --sphere-hue:0deg;
   /* #156 : sphère Flux (jeu aléatoire) — taille/position réglables. */
@@ -459,8 +466,8 @@ body{
 }
 .ms-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:2.2rem;color:#F3D9FF;line-height:1;cursor:text;text-shadow:0 0 14px rgba(220,130,255,.55);font-weight:bold;}
 .ms-freq:hover{color:#FFD700;}
-/* #154 : la sphère maître n'affiche plus son chiffre — désormais visible/
-   réglable uniquement via le modificateur violet du dock (.dcell-purple).
+/* #154 : la sphère maître n'affiche plus son chiffre — réglable via le
+   +/-9 Hz sous la sphère "Jeu Aléatoire" (#165, cf. .flux-freq-mini).
    La saisie tactile directe (openFreqEdit/#freq-input-master) reste posée
    mais dormante, pas supprimée (0 risque de casser un appelant existant). */
 .vp-center-wrap .ms-freq{ display:none; }
@@ -471,51 +478,11 @@ body{
 }
 #freq-input-master::-webkit-inner-spin-button,#freq-input-master::-webkit-outer-spin-button{-webkit-appearance:none;}
 
-/* ── Menu rapide (appui long sur satellite, tap court sur le maître) ──────
-   #41 : simplifié à 2 cellules seules (plus d'arcs Volume/Detune, retirés
-   — ils restent réglables dans le panneau complet de l'oscillateur).
-   Cellule haute = Random ratio (garde cette sphère) · Cellule basse =
-   Verrou (appui long dessus = random ciblé sur cette sphère).
-   `inset:0` (pas -1%) : le menu ne dépasse plus JAMAIS le cadre (wrap) de
-   sa propre sphère — garantit qu'il ne peut plus chevaucher une sphère
-   voisine, quelle que soit la densité de la couronne de satellites.
-   Cellules resserrées et tirées vers l'INTÉRIEUR du cadre (top/bottom
-   positifs, pas négatifs) pour la même raison. */
-.vp-mastermenu{
-  position:absolute;inset:0;z-index:25;
-  opacity:0;transform:scale(.92);pointer-events:none;
-  transition:opacity .2s ease,transform .2s ease;
-}
-.vp-mastermenu.vpq-show{ opacity:1;transform:scale(1);pointer-events:auto; }
-/* Zone centrale libre : tap = ouvre le menu oscillateur complet */
-.mm-center{
-  position:absolute;inset:0;
-  cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-}
-.mm-cell{
-  position:absolute;left:50%;transform:translateX(-50%);
-  display:flex;flex-direction:column;align-items:center;gap:.05rem;
-  width:42px;height:36px;border-radius:10px;border:1.5px solid;
-  background:rgba(10,4,30,.92);backdrop-filter:blur(8px);
-  color:#D7DAE0;font-size:.92rem;cursor:pointer;transition:all .18s;
-  box-shadow:0 0 12px rgba(0,0,0,.6);
-}
-.mm-cell span{ font-size:.4rem;font-family:var(--font-deco,'Cinzel Decorative'),serif;letter-spacing:.02em;color:rgba(230,220,255,.75); }
-.mm-cell:hover{ transform:translateX(-50%) scale(1.08); }
-.mm-cell:active{ transform:translateX(-50%) scale(.94); }
-.mm-cell-top{ top:14%; }
-.mm-cell-bottom{ bottom:14%; }
-.mm-cell-bottom.locked{ border-color:#FFD060 !important;background:rgba(255,208,96,.18);box-shadow:0 0 18px rgba(255,208,96,.5); }
-/* #45/#46 : cellules gauche (Solo/All) et droite (FX on/off) — même style
-   que haut/bas, tournées de 90° (left/right au lieu de top/bottom).
-   Décalage plus prononcé que top/bottom (14%→18%) : dans la couronne de
-   satellites (disposition hexagonale), les voisines directes sont plus
-   proches latéralement que radialement — il faut se serrer davantage ici
-   pour ne jamais les chevaucher. */
-.mm-cell-left{ left:18%; top:50%; transform:translateY(-50%); }
-.mm-cell-left:hover{ transform:translateY(-50%) scale(1.08); }
-.mm-cell-left:active{ transform:translateY(-50%) scale(.94); }
-.mm-cell-left.soloed{ border-color:#63E6FF !important;background:rgba(99,230,255,.18);box-shadow:0 0 18px rgba(99,230,255,.5); }
+/* #165 : menu rapide (Random ratio/Solo/Verrouiller) supprimé — l'appui
+   long sur une sphère (satellite ou maître) ouvre directement le menu
+   oscillateur complet (openOscModal), sans étape intermédiaire. Le tap
+   court garde son comportement (mute/unmute direct, cf. toggleMutePair
+   dans _vpEnd). Les classes .vp-mastermenu/.mm-* n'existent plus. */
 
 
 </style>
@@ -921,12 +888,15 @@ body{
 .dcell:active{ transform:translate(var(--dcell-dx,0px),var(--dcell-dy,0px)) scale(calc(var(--dcell-sx,1) * .96),calc(var(--dcell-sy,1) * .96)); }
 .dcell.dc-hold{ transform:translate(var(--dcell-dx,0px),var(--dcell-dy,0px)) scale(calc(var(--dcell-sx,1) * 1.05),calc(var(--dcell-sy,1) * 1.05)); box-shadow:0 0 22px currentColor; }
 .dcell-txt{ display:flex;flex-direction:column;align-items:center;line-height:1.05;min-width:0;overflow:hidden; }
-.dcell-name{ font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.92rem;letter-spacing:.04em;font-weight:700; /* #72 : -0.06rem, laisse de la marge à .dcell-sub */
+/* #165 : font-size en px fixe × --dock-text-scale (jamais rem) — indépendant
+   de setUISize (Taille du texte globale), réglable séparément via Créateur
+   → "Taille texte du Dock" (cf. setCreatorDockTextScale). */
+.dcell-name{ font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:calc(14.72px * var(--dock-text-scale,1));letter-spacing:.04em;font-weight:700; /* #72 : -0.06rem, laisse de la marge à .dcell-sub */
   white-space:normal;overflow:hidden;max-width:100%;text-align:center;overflow-wrap:break-word; }
 /* #72 : "Aléatoire" débordait/était coupé ("Aléatoir") — même traitement
    que .dcell-name (retour à la ligne + coupure de mot en dernier recours)
    au lieu d'un nowrap qui débordait silencieusement de la cellule. */
-.dcell-sub{ font-family:var(--font-body,'IM Fell English'),serif;font-size:.98rem;font-weight:bold;opacity:.85;
+.dcell-sub{ font-family:var(--font-body,'IM Fell English'),serif;font-size:calc(15.68px * var(--dock-text-scale,1));font-weight:bold;opacity:.85;
   white-space:normal;overflow-wrap:break-word;max-width:100%;text-align:center; }
 .dcell-ico{ font-size:1.56rem;flex-shrink:0; } /* #52 : +36% */
 /* #154 : ⚙ discrète, uniforme sur les 4 cellules principales du dock —
@@ -948,7 +918,7 @@ body{
 .dcell-green.dc-on{ background:rgba(90,255,160,.28);box-shadow:0 0 14px rgba(90,255,160,.4); }
 /* BLEU translucide — Paramètres */
 .dcell-blue{ background:rgba(60,170,255,.14);border-color:rgba(80,190,255,.5);color:#78C6FF; }
-.dcell-blue .dcell-name{ font-size:.68rem !important;letter-spacing:.02em; } /* #72 : !important nécessaire — sinon écrasé par la règle mobile générique .dcell-name (cf. media query plus bas), "Paramètres" tient sur 2 lignes sans casser au milieu d'un mot */
+.dcell-blue .dcell-name{ font-size:calc(10.88px * var(--dock-text-scale,1)) !important;letter-spacing:.02em; } /* #72 : !important nécessaire — sinon écrasé par la règle mobile générique .dcell-name (cf. media query plus bas), "Paramètres" tient sur 2 lignes sans casser au milieu d'un mot */
 
 /* ── Chaque cellule = 1 sphère "extra" (raccourci) + bouton principal, en
    flux flexbox normal, SANS espace entre eux (gap:0 — sphère et cellule
@@ -1123,65 +1093,42 @@ body.flux-muted .vp-i{
    compacte (−9 / saisie / +9) plutôt que 2 lignes : la largeur ET la
    hauteur disponibles dans le dock sont très limitées (dock à hauteur
    fixe, colonnes à largeur égale) — chaque pixel compte ici.
-   #157 : ChaWatch déménagé dans le menu Paramètres (cf. #panParams) — la
-   colonne centrale ne contient plus QUE cette cellule violette. Retour au
-   flux flexbox normal du dock (plus de position:fixed/bottom:8px du
-   #156) : sans ChaWatch empilé dessous, elle tient largement dans la
-   hauteur du dock au même titre que les colonnes gauche/droite — plus
-   besoin de la sortir du flux pour éviter le chevauchement, ni de lui
-   donner une largeur explicite (elle hérite normalement de `.dock-col`,
-   cf. plus haut, `flex:1 1 0;max-width:253px`, sans risque de "grossir"
-   puisqu'elle reste dans le flux, jamais détachée). */
-.dcell-purple{
-  display:flex;align-items:center;justify-content:center;gap:.3rem;
-  width:100%;max-width:204px;padding:.28rem .38rem;border-radius:16px;border:1.5px solid rgba(190,110,255,.5); /* #52 : +36% ; #137 : 10px→16px, cohérent avec le reste du dock */
+   #157 : ChaWatch déménagé dans le menu Paramètres (cf. #panParams).
+   #165 : la cellule violette elle-même (dcPurple, colonne centrale du
+   dock) et la cellule "Zen mode" (dcZen) sont retirées de l'affichage —
+   seul le geste +/-9 Hz est conservé, déplacé et intégré directement
+   sous la sphère "Jeu Aléatoire" (#dcFluxFloat, cf. .flux-freq-mini
+   ci-dessous et le HTML de #dcFluxFloat). Colonne centrale du dock
+   désormais vide (simple espaceur flex, cf. .dock-col-center). */
+/* #165 : +/-9 Hz fréquence maître — repris à l'identique de l'ex-cellule
+   dock violette (mêmes id/fonctions JS, _purpleFreqStep/_purpleFreqKey/
+   _purpleFreqValidate, aucun changement requis côté script), juste
+   réintégré en petit pavé sous la sphère de jeu aléatoire au lieu d'une
+   cellule dédiée du dock. Police liée à --dock-text-scale comme le reste
+   du dock (cf. #165, Créateur → "Taille texte du Dock"). */
+.flux-freq-mini{
+  display:flex;align-items:center;justify-content:center;gap:.28rem;
+  margin-top:.32rem;padding:.22rem .3rem;border-radius:14px;
+  border:1.5px solid rgba(190,110,255,.5);
   background:rgba(150,60,255,.14);backdrop-filter:blur(10px);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -8px 12px rgba(0,0,0,.12);
-  /* #159 : Organisation du dock (Créateur) — même mécanisme que .dcell
-     (translate/scale via variables CSS, jamais de détachement du flux). */
-  transform:translate(var(--dcell-dx,0px),var(--dcell-dy,0px)) scale(var(--dcell-sx,1),var(--dcell-sy,1));
 }
 .dcell-purple-step{
-  width:30px;height:30px;border-radius:6px;border:1.5px solid rgba(190,110,255,.5); /* #52 : +36% */
-  background:rgba(150,60,255,.2);color:#D9B3FF;font-size:.84rem;font-weight:700;
+  width:26px;height:26px;border-radius:6px;border:1.5px solid rgba(190,110,255,.5);
+  background:rgba(150,60,255,.2);color:#D9B3FF;font-size:calc(13.44px * var(--dock-text-scale,1));font-weight:700;
   display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .12s;
 }
 .dcell-purple-step:active{ transform:scale(.9); }
 .dcell-purple-input{
-  width:52px;min-width:0;flex:1 1 auto;background:rgba(0,0,0,.32);border:1.5px solid rgba(190,110,255,.4);border-radius:6px; /* #52 : +36% */
-  color:#F0DCFF;font-family:var(--font-body,'IM Fell English'),serif;font-size:1.12rem;text-align:center;
+  width:46px;min-width:0;flex:1 1 auto;background:rgba(0,0,0,.32);border:1.5px solid rgba(190,110,255,.4);border-radius:6px;
+  color:#F0DCFF;font-family:var(--font-body,'IM Fell English'),serif;font-size:calc(17.92px * var(--dock-text-scale,1));text-align:center;
   padding:.15rem 0;outline:none;-moz-appearance:textfield;
 }
 .dcell-purple-input::-webkit-inner-spin-button,.dcell-purple-input::-webkit-outer-spin-button{-webkit-appearance:none;}
 
-/* #159 : cellule BLEU NUIT "Zen mode" — nouvelle, sous la fréquence
-   maître (même colonne centrale, même gabarit compact que l'ancien
-   ChaWatch). Comportement volontairement non défini pour l'instant
-   (pas de onclick) : introduite pour validation visuelle avant qu'on
-   décide de sa fonction dans une prochaine passe. */
-.dcell-zen{
-  display:flex;align-items:center;justify-content:center;
-  width:100%;max-width:204px;padding:.32rem .5rem;border-radius:14px;
-  border:1.5px solid rgba(90,110,190,.55);
-  background:rgba(15,20,55,.55);backdrop-filter:blur(10px);
-  color:#A8BCFF;font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.74rem;letter-spacing:.06em;font-weight:700;
-  text-align:center;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 -6px 10px rgba(0,0,0,.25);
-  transition:transform .12s,box-shadow .2s;
-  /* Organisation du dock (Créateur) : même mécanisme que .dcell-purple ;
-     "Zen mode" n'est volontairement pas encore dans le sélecteur de
-     cellules du Créateur (pas de fonction/identité stable à régler tant
-     que son comportement n'est pas défini) — juste les variables CSS,
-     neutres par défaut, prêtes pour plus tard. */
-  transform:translate(var(--dcell-dx,0px),var(--dcell-dy,0px)) scale(var(--dcell-sx,1),var(--dcell-sy,1));
-}
-.dcell-zen:active{ transform:scale(.94); }
-
 /* #157 : cellule ORANGE "ChaWatch" retirée du dock — déménagée dans le
-   menu Paramètres (.params-item, cf. #panParams) pour libérer la colonne
-   centrale, ne laissant que la fréquence maître (.dcell-purple juste
-   au-dessus), qui tient désormais largement dans le dock sans elle. */
+   menu Paramètres (.params-item, cf. #panParams). */
 
 /* ─── Navigation — ligne dans #bottom-dock ─── */
 #tab-nav{
@@ -1922,8 +1869,8 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   #spectroid-bar { bottom: 161px !important; width: 80vw !important; }
 
   .dcell { height: calc(64px * var(--dock-cell-scale,1)) !important; } /* #52 : +36% vs #32 (45px→61px) ; #154 : +3px ; #155 : réglable */
-  .dcell-name { font-size: .82rem !important; } /* #72 : réduit, "Aléatoire"/"Paramètres" débordaient */
-  .dcell-sub  { font-size: .88rem !important; } /* #72 : réduit + retour à la ligne (cf. règle de base) au lieu de nowrap */
+  .dcell-name { font-size: calc(13.12px * var(--dock-text-scale,1)) !important; } /* #72 : réduit, "Aléatoire"/"Paramètres" débordaient ; #165 : px×scale, pas rem */
+  .dcell-sub  { font-size: calc(14.08px * var(--dock-text-scale,1)) !important; } /* #72 : réduit + retour à la ligne (cf. règle de base) au lieu de nowrap ; #165 : idem */
   .dcell-extra { width: 34px !important; height: 34px !important; } /* #52 : -36% vs #32 (53px→34px) */
   .dcell-flux { width: 96px !important; height: 96px !important; margin-bottom: 8px !important; } /* #147 : taille max sans chevauchement sur mobile (84px→96px) — le gap
     réel entre les 2 colonnes du dock ne descend jamais sous ~112px, même sur les plus petits écrans (320px CSS) ; 96px garde ≥8px de marge de chaque côté */
@@ -2130,6 +2077,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <img class="flux-yy" id="flux-icon" src="img/random-game-logo.jpg" alt="" aria-hidden="true">
   </button>
   <span class="flux-state" id="flux-state-side">OFF</span>
+  <!-- #165 : +/-9 Hz fréquence maître, repris de l'ex-cellule dock violette
+       (dcPurple, supprimée) — même id/fonctions JS, juste réintégré ici,
+       visible sous la sphère de jeu aléatoire. -->
+  <div class="flux-freq-mini" title="Fréquence maître directe">
+    <button class="dcell-purple-step" onclick="_purpleFreqStep(-9)" title="-9 Hz">−9</button>
+    <input type="number" id="dcell-purple-input" class="dcell-purple-input" inputmode="numeric" autocomplete="off" onkeydown="_purpleFreqKey(event)" onblur="_purpleFreqValidate()">
+    <button class="dcell-purple-step" onclick="_purpleFreqStep(9)" title="+9 Hz">+9</button>
+  </div>
 </div>
 
 <div id="cosmic-bg" data-html-import-id="html-import-5" style="background-image: url(&quot;img/cosmic-flux.jpg&quot;); filter: hue-rotate(-23.8deg) saturate(1.15);"></div>
@@ -2156,14 +2111,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Afficher / masquer les oscillateurs">+</button>
       <button class="dcell dcell-red canva-button" id="dcRed" title="Tap : Options Aléatoire · Appui long : Solo fréquence maître" data-html-import-id="html-import-17" data-template-id="button-8" style="background: rgba(255, 70, 70, 0.14); color: rgb(255, 142, 142);">
         <span class="dcell-gear">⚙</span>
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Option Jeu Aléatoire</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700;">Jeu Aléatoire</b></span>
       </button>
     </div>
     <!-- VERT — Effet Audio : tap=ouvrir Effet · long=Effet Aléatoire (≤72%) · sphères=raccourcis -->
     <div class="dcell-wrap" data-html-import-id="html-import-31">
       <button class="dcell dcell-green canva-button" id="dcGreen" title="Tap : Effet · Appui long : Effet Aléatoire (≤72%)" data-html-import-id="html-import-32" data-template-id="button-19" style="background: rgba(90, 255, 160, 0.13); color: rgb(140, 255, 192);">
         <span class="dcell-gear">⚙</span>
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-33" data-template-id="span-20" style="color: rgb(140, 255, 192);"><b class="dcell-name canva-text" data-html-import-id="html-import-34" data-template-id="b-21" style="color: rgb(140, 255, 192); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Effet Audio</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-33" data-template-id="span-20" style="color: rgb(140, 255, 192);"><b class="dcell-name canva-text" data-html-import-id="html-import-34" data-template-id="b-21" style="color: rgb(140, 255, 192); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700;">Effet Audio</b></span>
       </button>
       <button class="dcell-extra dcell-extra-green canva-button" id="dcGreenExtra" title="Ouvre le menu FX géométrie">+</button>
     </div>
@@ -2175,25 +2130,12 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
        sortie d'ici — elle vit maintenant en position fixe indépendante
        (cf. #dcFluxFloat, juste après <body>) pour rester visible même
        dock replié, et utilisable par-dessus panneaux/overlay 3D. -->
-  <div class="dock-col dock-col-center">
-    <!-- #40/#52 : VIOLET — saisie directe de la fréquence maître (+9/-9). Bouton
-         "Valider" retiré (#52) : Entrée applique déjà la saisie clavier, les
-         pas -9/+9 s'appliquent immédiatement, ce bouton ne servait plus.
-         #157 : ChaWatch déménagé dans le menu Paramètres — cette colonne
-         centrale ne porte plus que la fréquence maître, dans le flux
-         flexbox normal du dock (plus de position:fixed dédiée). -->
-    <div class="dcell-purple" id="dcPurple" title="Fréquence maître directe">
-      <button class="dcell-purple-step" onclick="_purpleFreqStep(-9)" title="-9 Hz">−9</button>
-      <input type="number" id="dcell-purple-input" class="dcell-purple-input" inputmode="numeric" autocomplete="off" onkeydown="_purpleFreqKey(event)" onblur="_purpleFreqValidate()">
-      <button class="dcell-purple-step" onclick="_purpleFreqStep(9)" title="+9 Hz">+9</button>
-    </div>
-    <!-- #159 : ZEN MODE — nouvelle cellule bleu nuit, introduite dans le
-         dock sans comportement défini pour l'instant (fonction à venir
-         dans une prochaine passe). Reprend le même slot compact que
-         l'ancien ChaWatch (#152, déménagé dans le menu Paramètres au
-         #157), sous la fréquence maître. -->
-    <button class="dcell-zen" id="dcZen" title="Zen mode — à venir">Zen mode</button>
-  </div>
+  <!-- #165 : colonne centrale conservée VIDE — pur espaceur flex (nécessaire
+       pour que les colonnes gauche/droite gardent leur position/largeur
+       normales), la cellule violette (fréquence maître) et "Zen mode" ont
+       été retirées de l'affichage. Le geste +/-9 Hz vit désormais sous la
+       sphère "Jeu Aléatoire" (cf. #dcFluxFloat → .flux-freq-mini). -->
+  <div class="dock-col dock-col-center"></div>
 
   <!-- Colonne droite : ORANGE (haut, Samples/futur "Utilisateur") sur BLEU (bas) -->
   <div class="dock-col" data-html-import-id="html-import-30">
@@ -2202,14 +2144,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <button class="dcell-extra dcell-extra-orange canva-button" id="dcOrangeExtra" title="Solo sample + fréquence maître">+</button>
       <button class="dcell dcell-orange canva-button" id="dcOrange" title="Tap : Samples · Appui long : jeu aléatoire sur fréquence du sample" data-html-import-id="html-import-23" data-template-id="button-13" style="background: rgba(255, 150, 40, 0.14); color: rgb(255, 192, 112);">
         <span class="dcell-gear">⚙</span>
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-24" data-template-id="span-14" style="color: rgb(255, 192, 112);"><b class="dcell-name canva-text" data-html-import-id="html-import-25" data-template-id="b-15" style="color: rgb(255, 192, 112); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Samples</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-24" data-template-id="span-14" style="color: rgb(255, 192, 112);"><b class="dcell-name canva-text" data-html-import-id="html-import-25" data-template-id="b-15" style="color: rgb(255, 192, 112); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700;">Samples</b></span>
       </button>
     </div>
     <!-- BLEU — Paramètres : tap=ouvrir · long=ouvrir Preset · sphère=raccourci -->
     <div class="dcell-wrap" data-html-import-id="html-import-35">
       <button class="dcell dcell-blue canva-button" id="dcBlue" title="Tap : Paramètres · Appui long : Preset" data-html-import-id="html-import-36" data-template-id="button-22" style="background: rgba(60, 170, 255, 0.14); color: rgb(120, 198, 255);">
         <span class="dcell-gear">⚙</span>
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-37" data-template-id="span-23" style="color: rgb(120, 198, 255);"><b class="dcell-name canva-text" data-html-import-id="html-import-38" data-template-id="b-24" style="color: rgb(120, 198, 255); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700; font-size: 12px;">Paramètres</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-37" data-template-id="span-23" style="color: rgb(120, 198, 255);"><b class="dcell-name canva-text" data-html-import-id="html-import-38" data-template-id="b-24" style="color: rgb(120, 198, 255); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700;">Paramètres</b></span>
       </button>
       <button class="dcell-extra dcell-extra-blue canva-button" id="dcBlueExtra" title="Ajouter le jeu au preset">+</button>
     </div>
@@ -2304,6 +2246,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <span class="creator-val" id="cr-dock-scale-v">100%</span>
     </div>
     <div class="creator-row">
+      <!-- #165 : indépendant de "Taille du texte" (ci-dessus) — permet par
+           exemple de garder 140% partout ailleurs tout en gardant le dock
+           lisible sans déborder. -->
+      <span class="creator-lbl">Taille texte du Dock</span>
+      <input type="range" id="cr-dock-text-scale" min="50" max="140" step="5" value="100" oninput="setCreatorDockTextScale(this.value)">
+      <span class="creator-val" id="cr-dock-text-scale-v">100%</span>
+    </div>
+    <div class="creator-row">
       <span class="creator-lbl">Taille chiffres sphères</span>
       <input type="range" id="cr-digit-scale" min="50" max="180" step="1" value="100" oninput="setCreatorDigitScale(this.value)">
       <span class="creator-val" id="cr-digit-scale-v">100%</span>
@@ -2324,9 +2274,8 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <button class="cr-cell-tab"    id="crCellTab-green"  onclick="_crSelectCell('green')"  style="--ec:#5AFFA0;">Vert</button>
       <button class="cr-cell-tab"    id="crCellTab-orange" onclick="_crSelectCell('orange')" style="--ec:#FF9628;">Orange</button>
       <button class="cr-cell-tab"    id="crCellTab-blue"   onclick="_crSelectCell('blue')"   style="--ec:#3CAAFF;">Bleu</button>
-      <!-- #159 : cellule violette (fréquence maître) manquait au sélecteur —
-           pas de sphère "+" associée (rangée "Petite sphère" masquée pour elle). -->
-      <button class="cr-cell-tab"    id="crCellTab-purple" onclick="_crSelectCell('purple')" style="--ec:#C080FF;">Violet</button>
+      <!-- #165 : cellule violette retirée du sélecteur — supprimée du dock
+           (cf. .flux-freq-mini), plus de position/taille à y régler. -->
     </div>
     <div class="creator-row">
       <span class="creator-lbl">Horizontal</span>
@@ -5507,10 +5456,11 @@ function animMetatron(){
 
 // #41 : sphère MAÎTRE — inchangée : TAP court = menu rapide · APPUI LONG =
 // random global (façon dé, toutes les paires).
-// Sphère SATELLITE — permutées : TAP court = mute/unmute Pingala+Ida direct
-// (cf. toggleMutePair) · APPUI LONG = menu rapide (le random ciblé sur
-// cette seule paire, _pairRandomFreq, est désormais dans le menu rapide —
-// appui long sur son bouton verrou, cf. _mmLockLongPress).
+// Sphère SATELLITE — TAP court = mute/unmute Pingala+Ida direct
+// (cf. toggleMutePair) · APPUI LONG = ouvre directement le menu oscillateur
+// complet (openOscModal), même geste que le maître. #165 : le menu rapide
+// intermédiaire (Random ratio/Solo/Verrouiller) est supprimé — options
+// jugées superflues, l'appui long va droit au menu complet désormais.
 var _vpTimer=null, _vpLongFired=false, _vpSX=0, _vpSY=0;
 const VP_LONG_MS = 420;
 
@@ -5524,13 +5474,11 @@ function _vpStart(i,e){
   _vpTimer=setTimeout(()=>{
     _vpLongFired=true; _vpTimer=null;
     try{navigator.vibrate&&navigator.vibrate(16);}catch(x){}
-    // #89 : le maître suit désormais EXACTEMENT le même geste que les
-    // satellites (appui long = menu rapide) — avant, le maître ouvrait le
-    // menu rapide sur TAP COURT (comme un random reroll global), ce qui
-    // rendait le mute/unmute par simple tap impossible sur la sphère
-    // centrale (bug remonté). Le random global reste accessible par
-    // ailleurs (bouton dédié "⚄ Omchaléatoire"), donc rien n'est perdu.
-    _openQuickMenu(i);
+    // #165 : appui long = menu oscillateur complet, direct (maître et
+    // satellites suivent exactement le même geste). Le random global reste
+    // accessible par ailleurs (bouton dédié "⚄ Omchaléatoire"), donc rien
+    // n'est perdu.
+    openOscModal(i);
   },VP_LONG_MS);
 }
 function _vpMove(i,e){
@@ -5549,117 +5497,6 @@ function _vpEnd(i){
 }
 function _vpCancel(){clearTimeout(_vpTimer);_vpTimer=null;}
 
-// Random ciblé (appui long sur une satellite) : ne touche QUE la fréquence
-// de la paire i (ratio + registre), respecte son verrou. Volume/timbre/pan
-// de cette paire restent inchangés — c'est la fréquence maître qui varie
-// pour tout le monde, ici seule LA sphère touchée bouge.
-function _pairRandomFreq(i){
-  if(typeof isLocked==='function' && isLocked(i)) return;
-  const rMin=Math.max(F_MIN,Math.min(RAND_OPTS.freqMin,F_MAX));
-  const rMax=Math.max(rMin+1,Math.min(F_MAX,RAND_OPTS.freqMax));
-  const pair=PAIRS[i];
-  const ri=Math.floor(Math.random()*RATIO_OPTS.length);
-  const slot=Math.floor(Math.random()*6);
-  pair.pingala.ri=ri;
-  pair.pingala.n=aeratedN(masterFreq, RATIO_OPTS[ri].r, slot, RAND_OPTS.spread, rMin, rMax);
-  updatePairUI(i);
-  if(flowing){ tuneOsc(pair.pingala.id, calcPFreq(i)); tuneOsc(pair.ida.id, calcIFreq(i)); }
-  saveState();
-}
-
-function _quickMenuOutside(e){
-  const qm=document.querySelector('.vp-mastermenu');
-  if(qm && !qm.contains(e.target)) _closeQuickMenu();
-}
-function _closeQuickMenu(){
-  document.querySelectorAll('.vp-mastermenu').forEach(n=>n.remove());
-  // #51 : retire le z-index temporaire posé par _openQuickMenu
-  document.querySelectorAll('.vp-wrap,.vp-center-wrap').forEach(n=>{ if(n.style.zIndex) n.style.zIndex=''; });
-  document.removeEventListener('pointerdown',_quickMenuOutside,{capture:true});
-}
-
-// ═══════════════════════════════════════════════════════════════════
-//  MENU RAPIDE — #41 : simplifié à 2 cellules (haut/bas) + centre.
-//  Les arcs Volume/Detune sont retirés (ils restent réglables "en interne",
-//  dans le panneau complet de l'oscillateur, ouvert par le centre du menu
-//  ou par le tap sur une sphère puis le bouton dédié) — le mute/unmute est
-//  maintenant sur le TAP COURT de la sphère elle-même (cf. toggleMutePair),
-//  donc ce menu n'a plus besoin d'être un gros widget circulaire : juste
-//  assez pour Random ratio + Verrou (+ appui long dessus = random ciblé).
-//  Commun au MAÎTRE et à toutes les paires satellites (_qmIdx = sphère active).
-// ═══════════════════════════════════════════════════════════════════
-var _qmIdx = MASTER_IDX;
-
-function _openQuickMenu(i) {
-  _closeQuickMenu();
-  _qmIdx = i;
-  const wrap = document.getElementById('vp' + i); if (!wrap) return;
-  // #51 : le maître (#vp+MASTER_IDX) est toujours ajouté en DERNIER dans le DOM
-  // (cf. buildVesicaPairs), donc sans z-index explicite il peint PAR-DESSUS
-  // toutes les autres sphères — y compris le menu rapide ouvert sur une
-  // satellite, ce qui rendait les cellules gauche/droite (Solo/FX) injoignables
-  // au toucher (interceptées par le maître). On fait passer la sphère qui
-  // possède le menu ouvert au-dessus de tout le reste le temps qu'il est affiché.
-  wrap.style.zIndex = '60';
-  const isMaster = i === MASTER_IDX;
-  const pair = PAIRS[i];
-  const locked = (typeof isLocked === 'function') && isLocked(i);
-  const soloed = isPairSoloed(i);
-  const mc = isMaster
-    ? ((typeof freqColor === 'function') ? freqColor(masterFreq, 70) : '#F3D9FF')
-    : pair.color;
-  const mm = document.createElement('div');
-  mm.className = 'vp-mastermenu';
-  mm.id = 'vp-mm';
-  mm.innerHTML = `
-    <div class="mm-center" onclick="event.stopPropagation();_mmOpenModal()" title="${isMaster?'Menu oscillateur maître':'Menu oscillateur — '+pair.label}"></div>
-    <button class="mm-cell mm-cell-top" style="border-color:${mc}" onclick="event.stopPropagation();_mmRandomRatio()" title="${isMaster?'Random ratio (garde le maître)':'Random ratio (garde cette sphère)'}">
-      ⚄<span>Random ratio</span>
-    </button>
-    <button class="mm-cell mm-cell-bottom${locked?' locked':''}" id="mm-lock-btn" style="border-color:${mc}" title="${isMaster?'Verrouiller la fréquence maître · Appui long : random ciblé':'Verrouiller cette fréquence · Appui long : random ciblé'}">
-      ${locked?'◉':'◎'}<span>${locked?'Verrouillé':'Verrouiller'}</span>
-    </button>
-    <button class="mm-cell mm-cell-left${soloed?' soloed':''}" id="mm-solo-btn" style="border-color:${mc}" onclick="event.stopPropagation();_mmToggleSolo()" title="${soloed?'Retour au jeu global':'Solo cette fréquence'}">
-      ${soloed?'◈':'⦿'}<span>${soloed?'Solo':'All'}</span>
-    </button>`;
-  wrap.appendChild(mm);
-  const lockBtn = document.getElementById('mm-lock-btn');
-  if (lockBtn) _bindTapHold(lockBtn, _mmToggleLock, _mmLockLongPress, 420);
-  requestAnimationFrame(() => mm.classList.add('vpq-show'));
-  setTimeout(() => document.addEventListener('pointerdown', _quickMenuOutside, { capture: true }), 10);
-}
-function _mmRandomRatio() {
-  if(_qmIdx===MASTER_IDX) triggerMagicAuto({ keepMaster: true });
-  else triggerMagicAuto({ keepIdx: _qmIdx });
-}
-function _mmOpenModal() {
-  const i=_qmIdx;
-  _closeQuickMenu();
-  openOscModal(i);
-}
-function _mmToggleLock() {
-  toggleLock(_qmIdx);
-  const b = document.getElementById('mm-lock-btn');
-  const locked = (typeof isLocked === 'function') && isLocked(_qmIdx);
-  if (b) { b.classList.toggle('locked', locked); b.innerHTML = (locked?'◉':'◎') + '<span>' + (locked?'Verrouillé':'Verrouiller') + '</span>'; }
-}
-// #41 : appui long sur le bouton verrou du menu rapide = random ciblé sur
-// CETTE sphère (reprend l'ancien comportement de l'appui long sur la
-// sphère satellite elle-même, déplacé ici puisque ce raccourci sert
-// maintenant à mute/unmute). isLocked bloque déjà ce random s'il y a lieu
-// (cf. _pairRandomFreq). Sphère maître : reprend le random global (comme
-// son propre appui long, qui reste par ailleurs inchangé).
-function _mmLockLongPress() {
-  if (_qmIdx === MASTER_IDX) triggerMagicAuto();
-  else _pairRandomFreq(_qmIdx);
-}
-// #45 : bouton gauche — tap = solo cette fréquence, retap = retour au jeu
-// global (soloPair interroge l'état courant, pas besoin de mémoriser).
-function _mmToggleSolo() {
-  const solo = soloPair(_qmIdx);
-  const b = document.getElementById('mm-solo-btn');
-  if (b) { b.classList.toggle('soloed', solo); b.innerHTML = (solo?'◈':'⦿') + '<span>' + (solo?'Solo':'All') + '</span>'; }
-}
 function buildVesicaPairs() {
   const layer = document.getElementById('sphere-layer');
   if (!layer) return;
@@ -7534,7 +7371,7 @@ function buildRandomTable() {
         <input type="number" class="rand-n-input" id="rt-n-input-${i}" style="display:none;color:${pair.color};" min="0.1" max="${N_MAX}" step="0.01"
           onkeydown="_rtHandleNKey(${i},event)" onblur="_rtExitNEdit(${i},true)">
         <button class="rand-lock${lk?' locked':''}" id="lock-${i}" onclick="toggleLock(${i})" title="Verrouiller la fréquence">${lk?'◉':'◎'}</button>
-        <button class="rand-menu-btn" id="rt-menu-${i}" onclick="_openQuickMenu(${i})" title="Ouvrir le menu de cet oscillateur">☰</button>
+        <button class="rand-menu-btn" id="rt-menu-${i}" onclick="openOscModal(${i})" title="Ouvrir le menu de cet oscillateur">☰</button>
       </div>
       <div class="rand-freqline">
         <button class="rand-freq-step" onclick="_rtStepFreq(${i},-9)" title="−9 Hz">−9 Hz</button>
@@ -9774,6 +9611,18 @@ function setCreatorDigitScale(pct) {
   const sl = document.getElementById('cr-digit-scale'); if (sl && +sl.value !== pct) sl.value = pct;
   _creatorPersist();
 }
+// #165 : taille du TEXTE du dock — INDÉPENDANTE de "Taille du texte"
+// (setUISize, qui change le rem racine et grossit toute l'app y compris
+// le dock). Ici --dock-text-scale multiplie des px fixes (cf. .dcell-name
+// et consorts) : un utilisateur peut monter "Taille du texte" à 140% pour
+// le reste de l'app tout en gardant le dock à une taille raisonnable.
+function setCreatorDockTextScale(pct) {
+  pct = Math.max(50, Math.min(140, parseInt(pct) || 100));
+  document.documentElement.style.setProperty('--dock-text-scale', pct / 100);
+  const v = document.getElementById('cr-dock-text-scale-v'); if (v) v.textContent = pct + '%';
+  const sl = document.getElementById('cr-dock-text-scale'); if (sl && +sl.value !== pct) sl.value = pct;
+  _creatorPersist();
+}
 function setCreatorHue(deg) {
   deg = Math.max(-180, Math.min(180, parseInt(deg) || 0));
   document.documentElement.style.setProperty('--sphere-hue', deg + 'deg');
@@ -9787,6 +9636,7 @@ function _creatorPersist() {
     fontDeco: cs.getPropertyValue('--font-deco').trim().replace(/^'|'$/g, ''),
     fontBody: cs.getPropertyValue('--font-body').trim().replace(/^'|'$/g, ''),
     dockScale: Math.round((parseFloat(cs.getPropertyValue('--dock-cell-scale')) || 1) * 100),
+    dockTextScale: Math.round((parseFloat(cs.getPropertyValue('--dock-text-scale')) || 1) * 100),
     digitScale: Math.round((parseFloat(cs.getPropertyValue('--sphere-digit-scale')) || 1) * 100),
     hue: parseInt(cs.getPropertyValue('--sphere-hue')) || 0,
   }), 300);
@@ -9795,6 +9645,7 @@ function resetCreatorAppearance() {
   setCreatorFontDeco('Cinzel Decorative');
   setCreatorFontBody('IM Fell English');
   setCreatorDockScale(100);
+  setCreatorDockTextScale(100);
   setCreatorDigitScale(100);
   setCreatorHue(0);
   setUISize(100);
@@ -9806,6 +9657,7 @@ function _loadCreatorAppearance() {
   if (s.fontDeco)  setCreatorFontDeco(s.fontDeco);
   if (s.fontBody)  setCreatorFontBody(s.fontBody);
   if (s.dockScale)  setCreatorDockScale(s.dockScale);
+  if (s.dockTextScale) setCreatorDockTextScale(s.dockTextScale);
   if (s.digitScale) setCreatorDigitScale(s.digitScale);
   if (typeof s.hue === 'number') setCreatorHue(s.hue);
 }
@@ -9860,20 +9712,18 @@ function _loadFluxLayout() {
   if (typeof s.dy === 'number') setFluxOffsetY(s.dy);
 }
 
-/* ---------- #157/#159 : Organisation du dock — position/taille/côté de
-   la sphère "+", par cellule (Rouge/Vert/Orange/Bleu/Violet) ----------
+/* ---------- #157/#165 : Organisation du dock — position/taille/côté de
+   la sphère "+", par cellule (Rouge/Vert/Orange/Bleu) ----------
    Même principe de sûreté que la Sphère Flux ci-dessus : jamais de
    détachement du flux flexbox. Horizontal/Vertical/Largeur/Hauteur sont
-   de pures transformations CSS (translate/scale, cf. règle .dcell/
-   .dcell-purple plus haut) — la cellule garde sa boîte de layout
-   d'origine, donc aucun risque du bug "cellule qui grossit" (#155/#156).
+   de pures transformations CSS (translate/scale, cf. règle .dcell plus
+   haut) — la cellule garde sa boîte de layout d'origine, donc aucun
+   risque du bug "cellule qui grossit" (#155/#156).
    Le côté de la sphère "+" utilise `order` (flex), indépendant de
-   l'ordre DOM. #159 : la cellule violette (fréquence maître) manquait à
-   ce sélecteur — ajoutée, sans sphère "+" associée (DOCK_CELL_EXTRA_IDS
-   n'a volontairement pas d'entrée "purple", la rangée correspondante est
-   masquée pour elle dans l'UI, cf. _syncDockCellLayoutUI). */
+   l'ordre DOM. #165 : la cellule violette (fréquence maître) a été
+   retirée de ce sélecteur — supprimée du dock (cf. .flux-freq-mini). */
 const DOCK_CELL_LAYOUT_KEY = 'fbf432-dockCellLayout-v1';
-const DOCK_CELL_IDS = { red: 'dcRed', green: 'dcGreen', orange: 'dcOrange', blue: 'dcBlue', purple: 'dcPurple' };
+const DOCK_CELL_IDS = { red: 'dcRed', green: 'dcGreen', orange: 'dcOrange', blue: 'dcBlue' };
 const DOCK_CELL_EXTRA_IDS = { red: 'dcRedExtra', green: 'dcGreenExtra', orange: 'dcOrangeExtra', blue: 'dcBlueExtra' };
 let DOCK_CELL_LAYOUT = {};
 let _crCellSel = 'red'; // cellule actuellement affichée dans le sélecteur Créateur
@@ -9912,9 +9762,11 @@ function _syncDockCellLayoutUI() {
   const lb = document.getElementById('cr-cell-extra-left'), rb = document.getElementById('cr-cell-extra-right');
   if (lb) lb.classList.toggle('on', L.extraSide === 'left');
   if (rb) rb.classList.toggle('on', L.extraSide === 'right');
-  // #159 : la cellule violette n'a pas de sphère "+" — masque la rangée.
+  // #165 : les 4 cellules restantes (Rouge/Vert/Orange/Bleu) ont toutes
+  // une sphère "+" — la rangée est toujours affichée (l'ex-cas particulier
+  // "purple", sans sphère "+", n'existe plus).
   const extraRow = document.getElementById('cr-cell-extra-row');
-  if (extraRow) extraRow.style.display = (_crCellSel === 'purple') ? 'none' : '';
+  if (extraRow) extraRow.style.display = '';
 }
 function setDockCellDX(px) {
   const L = _dcellLayout(_crCellSel);
