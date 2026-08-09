@@ -71,6 +71,11 @@ input[type="range"]::-moz-range-thumb{
   box-shadow:0 0 10px rgba(0,0,0,.55),0 0 8px currentColor;
 }
 input[type="range"]:disabled{opacity:.35;cursor:default;}
+/* #165 : léger éclair rouge sur le rail quand un tap loin du curseur est
+   bloqué par le garde-fou anti-fausse-manip (cf. script _sliderGuard) —
+   signal discret, jamais de dialogue/alert qui casserait le flux. */
+input[type="range"].rng-blocked::-webkit-slider-runnable-track{background:rgba(255,140,140,.4);}
+input[type="range"].rng-blocked::-moz-range-track{background:rgba(255,140,140,.4);}
 
 body{
   width:100vw;height:100vh;overflow:hidden;
@@ -779,6 +784,15 @@ body{
   font-size:.82rem;color:#63CCFF;min-width:48px;text-align:center; }
 .fxq-sep{ height:1px;background:rgba(200,160,255,.16);margin:.15rem 0; }
 .btn-reset.sm{ width:30px;height:30px;font-size:1rem;flex-shrink:0; }
+/* #165 : 2 menus déroulants "Effet Audio" (fermés par défaut) sous Gain —
+   même mécanique <details>/<summary> que .rand-advanced, teintée verte
+   (accent Effet Audio) plutôt que cyan. */
+.fx-acc > summary{cursor:pointer;list-style:none;font-family:var(--font-deco,'Cinzel Decorative'),serif;
+  font-size:.72rem;letter-spacing:.1em;color:rgba(134,255,192,.85);padding:.5rem .2rem;user-select:none;}
+.fx-acc > summary::-webkit-details-marker{display:none;}
+.fx-acc > summary::before{content:'▸ ';}
+.fx-acc[open] > summary::before{content:'▾ ';}
+.fx-acc-body{margin-top:.5rem;}
 
 /* ─── Random panel ───────────────────────────── */
 .rand-panel{display:flex;flex-direction:column;gap:1rem;}
@@ -7769,114 +7783,129 @@ function buildMasterFXHTML() {
     </div>
 
     <!-- ══ Reste des réglages : fréquence + binaural + effets ══ -->
+    <!-- #165 : regroupés dans 2 menus déroulants fermés par défaut, sous Gain,
+         pour désencombrer l'écran — accès toujours possible en 1 tap. Le
+         potentiomètre "Effet" reste visible entre les deux : c'est lui qui
+         annonce/déclenche le 2e menu (Delay/Ping-Pong/Espace). -->
+    <details class="fx-acc">
+      <summary>Réglages avancés</summary>
+      <div class="fx-block fx-quick fx-acc-body">
+        <!-- Réglages avancés du Gain : fondu d'entrée/sortie + respiration organique -->
+        <div class="fx-row"><div class="fx-control-group" style="flex:1">
+          <span class="fx-label">Fondu</span>
+          <input type="range" class="fx-slider" id="fadeDur" min="0.5" max="15" step="0.5" value="2" oninput="setFadeDur(this.value)">
+          <span class="fx-val-disp" id="sv-fade">2.0s</span>
+        </div></div>
+        <!-- #42 : remplace l'ancien "LFO — Trémolo organique" — trop sec/mécanique
+             à l'usage. La respiration organique (BREATH_STATE) existait déjà en
+             interne, active par défaut, mais sans aucun contrôle visible ; elle
+             prend maintenant cette place, plus douce et agréable. -->
+        <div class="fx-row" style="justify-content:space-between;align-items:center;">
+          <span class="fx-label">Respiration organique</span>
+          <label class="fx-toggle"><input type="checkbox" id="gbreath-on" checked onchange="breathToggle(this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
+        <div class="fx-row">
+          <div class="fx-control-group"><span class="fx-label">Rythme</span>
+            <input type="range" class="fx-slider" id="gbreath-rate" min="0.02" max="0.5" step="0.01" value="0.11" oninput="breathSet('rate',this.value)">
+            <span class="fx-val-disp" id="sv-gbreath-rate">6.6 /min</span></div>
+          <div class="fx-control-group"><span class="fx-label">Profond.</span>
+            <input type="range" class="fx-slider" id="gbreath-depth" min="0.01" max="0.5" step="0.01" value="0.18" oninput="breathSet('depth',this.value)">
+            <span class="fx-val-disp" id="sv-gbreath-depth">0.18</span></div>
+        </div>
+        <!-- #3 : Détune Sinus Duo (moteur "sine2") — écart -72..+72 ¢ entre les 2 voix -->
+        <div class="fxq-row"><span class="fxq-lbl">Sinus Duo</span>
+          <input type="range" class="fx-slider" id="dualsine-detune" min="-72" max="72" step="1" value="0" oninput="setDualSineDetune(this.value)">
+          <span class="fx-val-disp" id="sv-dualsine">±0 ¢</span></div>
+        <!-- Dérive lente du battement (Δ) — session vivante, jamais un saut de bande -->
+        <div class="fx-row" style="justify-content:space-between;align-items:center;">
+          <span class="fx-label">Dérive lente du Δ (session vivante)</span>
+          <label class="fx-toggle"><input type="checkbox" id="ck-delta-drift" checked onchange="setDeltaDrift(this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
+        <div class="fxq-row"><span class="fxq-lbl">Amplitude</span>
+          <input type="range" class="fx-slider" min="0.05" max="1" step="0.05" value="0.3" oninput="setDeltaDriftAmount(this.value)">
+          <span class="fx-val-disp" id="sv-delta-drift">±0.30 Hz</span></div>
+        <div class="fxq-sep"></div>
+        <!-- Fréquence maître -->
+        <div class="fxq-row">
+          <span class="fxq-lbl">Maître</span>
+          <button class="fxq-step" onclick="masterStep(-1)">−</button>
+          <input type="number" id="master-input" class="fxq-num" min="54" max="475" value="252" step="1" oninput="onMasterInput(this.value)" onchange="onMasterChange(this.value)">
+          <button class="fxq-step" onclick="masterStep(1)">+</button>
+          <span class="fxq-unit">Hz</span>
+        </div>
+        <!-- #35 : Battement binaural verrouillé en bande Delta profonde, ±0,02 -->
+        <div class="fxq-row">
+          <span class="fxq-lbl">Binaural</span>
+          <button class="fxq-step" onclick="deltaStep(-0.02)">−</button>
+          <input type="number" id="global-delta-input" class="fxq-num" min="0.8" max="1.2" step="0.02" value="1.0" oninput="setGlobalDelta(this.value)" onchange="setGlobalDelta(this.value)">
+          <button class="fxq-step" onclick="deltaStep(0.02)">+</button>
+          <span class="fxq-wave" id="global-ws">Delta</span>
+        </div>
+        <!-- #1 : écart stéréo Pingala/Ida appliqué au Δ courant (anti-tremolo) -->
+        <div class="fxq-row" style="font-size:.62rem;color:rgba(200,170,255,.45);font-style:italic;justify-content:flex-end;">
+          <span>Séparation anti-tremolo&nbsp;: <span id="sv-binaural-sep" style="color:#63E6FF;">32%</span></span>
+        </div>
+        <!-- #5 : Pingala 100% gauche / Ida 100% droite pour toutes les paires -->
+        <div class="fx-row" style="justify-content:space-between;align-items:center;">
+          <span class="fx-label">Mode casque strict (zéro crosstalk)</span>
+          <label class="fx-toggle"><input type="checkbox" id="ck-strict-headphone" checked onchange="setStrictHeadphone(this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
+        <!-- #11 : compression douce anti-pompage par paire (bus dédié) -->
+        <div class="fx-row" style="justify-content:space-between;align-items:center;">
+          <span class="fx-label">Anti-pompage par paire (doux)</span>
+          <label class="fx-toggle"><input type="checkbox" id="ck-pair-comp" checked onchange="setPairCompression(this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
+        <!-- #16 : sub-drone d'ancrage — pad grave fixe (racine ÷ 2), non touché par le random -->
+        <div class="fx-row" style="justify-content:space-between;align-items:center;">
+          <span class="fx-label">Sub-drone d'ancrage (racine ÷ 2)</span>
+          <label class="fx-toggle"><input type="checkbox" id="ck-subdrone" checked onchange="setSubDrone(this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
+        <div class="fxq-row"><span class="fxq-lbl">Volume sub</span>
+          <input type="range" class="fx-slider" min="0" max="0.25" step="0.01" value="0.05" oninput="setSubDroneVol(this.value)">
+          <span class="fx-val-disp" id="sv-subdrone-vol">5%</span></div>
+      </div>
+    </details>
+
     <div class="fx-block fx-quick">
-      <!-- Réglages avancés du Gain : fondu d'entrée/sortie + respiration organique -->
-      <div class="fx-row"><div class="fx-control-group" style="flex:1">
-        <span class="fx-label">Fondu</span>
-        <input type="range" class="fx-slider" id="fadeDur" min="0.5" max="15" step="0.5" value="2" oninput="setFadeDur(this.value)">
-        <span class="fx-val-disp" id="sv-fade">2.0s</span>
-      </div></div>
-      <!-- #42 : remplace l'ancien "LFO — Trémolo organique" — trop sec/mécanique
-           à l'usage. La respiration organique (BREATH_STATE) existait déjà en
-           interne, active par défaut, mais sans aucun contrôle visible ; elle
-           prend maintenant cette place, plus douce et agréable. -->
-      <div class="fx-row" style="justify-content:space-between;align-items:center;">
-        <span class="fx-label">Respiration organique</span>
-        <label class="fx-toggle"><input type="checkbox" id="gbreath-on" checked onchange="breathToggle(this.checked)"><span class="fx-tog-track"></span></label>
-      </div>
-      <div class="fx-row">
-        <div class="fx-control-group"><span class="fx-label">Rythme</span>
-          <input type="range" class="fx-slider" id="gbreath-rate" min="0.02" max="0.5" step="0.01" value="0.11" oninput="breathSet('rate',this.value)">
-          <span class="fx-val-disp" id="sv-gbreath-rate">6.6 /min</span></div>
-        <div class="fx-control-group"><span class="fx-label">Profond.</span>
-          <input type="range" class="fx-slider" id="gbreath-depth" min="0.01" max="0.5" step="0.01" value="0.18" oninput="breathSet('depth',this.value)">
-          <span class="fx-val-disp" id="sv-gbreath-depth">0.18</span></div>
-      </div>
-      <!-- #3 : Détune Sinus Duo (moteur "sine2") — écart -72..+72 ¢ entre les 2 voix -->
-      <div class="fxq-row"><span class="fxq-lbl">Sinus Duo</span>
-        <input type="range" class="fx-slider" id="dualsine-detune" min="-72" max="72" step="1" value="7" oninput="setDualSineDetune(this.value)">
-        <span class="fx-val-disp" id="sv-dualsine">±7 ¢</span></div>
-      <!-- Dérive lente du battement (Δ) — session vivante, jamais un saut de bande -->
-      <div class="fx-row" style="justify-content:space-between;align-items:center;">
-        <span class="fx-label">Dérive lente du Δ (session vivante)</span>
-        <label class="fx-toggle"><input type="checkbox" id="ck-delta-drift" checked onchange="setDeltaDrift(this.checked)"><span class="fx-tog-track"></span></label>
-      </div>
-      <div class="fxq-row"><span class="fxq-lbl">Amplitude</span>
-        <input type="range" class="fx-slider" min="0.05" max="1" step="0.05" value="0.3" oninput="setDeltaDriftAmount(this.value)">
-        <span class="fx-val-disp" id="sv-delta-drift">±0.30 Hz</span></div>
-      <div class="fxq-sep"></div>
-      <!-- Fréquence maître -->
-      <div class="fxq-row">
-        <span class="fxq-lbl">Maître</span>
-        <button class="fxq-step" onclick="masterStep(-1)">−</button>
-        <input type="number" id="master-input" class="fxq-num" min="54" max="475" value="252" step="1" oninput="onMasterInput(this.value)" onchange="onMasterChange(this.value)">
-        <button class="fxq-step" onclick="masterStep(1)">+</button>
-        <span class="fxq-unit">Hz</span>
-      </div>
-      <!-- #35 : Battement binaural verrouillé en bande Delta profonde, ±0,02 -->
-      <div class="fxq-row">
-        <span class="fxq-lbl">Binaural</span>
-        <button class="fxq-step" onclick="deltaStep(-0.02)">−</button>
-        <input type="number" id="global-delta-input" class="fxq-num" min="0.8" max="1.2" step="0.02" value="1.0" oninput="setGlobalDelta(this.value)" onchange="setGlobalDelta(this.value)">
-        <button class="fxq-step" onclick="deltaStep(0.02)">+</button>
-        <span class="fxq-wave" id="global-ws">Delta</span>
-      </div>
-      <!-- #1 : écart stéréo Pingala/Ida appliqué au Δ courant (anti-tremolo) -->
-      <div class="fxq-row" style="font-size:.62rem;color:rgba(200,170,255,.45);font-style:italic;justify-content:flex-end;">
-        <span>Séparation anti-tremolo&nbsp;: <span id="sv-binaural-sep" style="color:#63E6FF;">32%</span></span>
-      </div>
-      <!-- #5 : Pingala 100% gauche / Ida 100% droite pour toutes les paires -->
-      <div class="fx-row" style="justify-content:space-between;align-items:center;">
-        <span class="fx-label">Mode casque strict (zéro crosstalk)</span>
-        <label class="fx-toggle"><input type="checkbox" id="ck-strict-headphone" checked onchange="setStrictHeadphone(this.checked)"><span class="fx-tog-track"></span></label>
-      </div>
-      <!-- #11 : compression douce anti-pompage par paire (bus dédié) -->
-      <div class="fx-row" style="justify-content:space-between;align-items:center;">
-        <span class="fx-label">Anti-pompage par paire (doux)</span>
-        <label class="fx-toggle"><input type="checkbox" id="ck-pair-comp" checked onchange="setPairCompression(this.checked)"><span class="fx-tog-track"></span></label>
-      </div>
-      <!-- #16 : sub-drone d'ancrage — pad grave fixe (racine ÷ 2), non touché par le random -->
-      <div class="fx-row" style="justify-content:space-between;align-items:center;">
-        <span class="fx-label">Sub-drone d'ancrage (racine ÷ 2)</span>
-        <label class="fx-toggle"><input type="checkbox" id="ck-subdrone" checked onchange="setSubDrone(this.checked)"><span class="fx-tog-track"></span></label>
-      </div>
-      <div class="fxq-row"><span class="fxq-lbl">Volume sub</span>
-        <input type="range" class="fx-slider" min="0" max="0.25" step="0.01" value="0.05" oninput="setSubDroneVol(this.value)">
-        <span class="fx-val-disp" id="sv-subdrone-vol">5%</span></div>
-      <div class="fxq-sep"></div>
-      <!-- Effets essentiels : sliders précis, espacés -->
-      <div class="fxq-row"><span class="fxq-lbl">Intensité FX</span>
+      <div class="fxq-row"><span class="fxq-lbl">Effet</span>
         <input type="range" class="fx-slider" id="fxIntensity" min="0" max="1" step="0.02" value="0.3" oninput="setFXIntensity(this.value)">
         <span class="fx-val-disp" id="sv-fxint">30%</span></div>
-      <div class="fxq-row"><span class="fxq-lbl">Delay</span>
-        <input type="range" class="fx-slider" id="delayWet" min="0" max="1" step="0.02" value="0" oninput="updateFX('delayWet',this.value)">
-        <span class="fx-val-disp" id="delayWet-val">0%</span></div>
-      <!-- Réglages avancés du Delay : temps / feedback -->
-      <div class="fx-row">
-        <div class="fx-control-group"><span class="fx-label">Temps</span>
-          <input type="range" class="fx-slider" id="delayTime" min="0.04" max="1.5" step="0.01" value="0.3" oninput="updateFX('delayTime',this.value)">
-          <span class="fx-val-disp" id="delayTime-val">0.30s</span></div>
-        <div class="fx-control-group"><span class="fx-label">Feedback</span>
-          <input type="range" class="fx-slider" id="delayFeedback" min="0" max="0.85" step="0.01" value="0.3" oninput="updateFX('delayFeedback',this.value)">
-          <span class="fx-val-disp" id="delayFeedback-val">30%</span></div>
-      </div>
-      <div class="fxq-row"><span class="fxq-lbl">Ping-Pong</span>
-        <input type="range" class="fx-slider" id="ppWetSlider" min="0" max="1" step="0.02" value="0" oninput="setPingPongWet(this.value);document.getElementById('ppWet-val').textContent=Math.round(this.value*100)+'%'">
-        <span class="fx-val-disp" id="ppWet-val">0%</span></div>
-      <!-- Réglages avancés du Ping-Pong : temps / feedback -->
-      <div class="fx-row">
-        <div class="fx-control-group"><span class="fx-label">Temps</span>
-          <input type="range" class="fx-slider" id="ppTime" min="0.04" max="1.5" step="0.01" value="0.25" oninput="setPingPongTime(this.value);document.getElementById('ppTime-val').textContent=parseFloat(this.value).toFixed(2)+'s'">
-          <span class="fx-val-disp" id="ppTime-val">0.25s</span></div>
-        <div class="fx-control-group"><span class="fx-label">Feedback</span>
-          <input type="range" class="fx-slider" id="ppFb" min="0" max="0.85" step="0.01" value="0.35" oninput="setPingPongFb(this.value);document.getElementById('ppFb-val').textContent=Math.round(this.value*100)+'%'">
-          <span class="fx-val-disp" id="ppFb-val">35%</span></div>
-      </div>
-      <div class="fxq-row"><span class="fxq-lbl">Espace</span>
-        <input type="range" class="fx-slider" id="randSpread" min="0" max="1" step="0.02" value="0.6" oninput="setRandSpread(this.value)">
-        <span class="fx-val-disp" id="sv-spread">60%</span></div>
-      <button class="btn-flow" style="width:100%;margin-top:.4rem;border-color:rgba(255,208,96,.5);color:#FFD060;background:rgba(255,208,96,.07);" onclick="triggerRandomFX()">✦ Random FX</button>
     </div>
+
+    <details class="fx-acc">
+      <summary>Delay, Ping-Pong, Espace</summary>
+      <div class="fx-block fx-quick fx-acc-body">
+        <div class="fxq-row"><span class="fxq-lbl">Delay</span>
+          <input type="range" class="fx-slider" id="delayWet" min="0" max="1" step="0.02" value="0" oninput="updateFX('delayWet',this.value)">
+          <span class="fx-val-disp" id="delayWet-val">0%</span></div>
+        <!-- Réglages avancés du Delay : temps / feedback -->
+        <div class="fx-row">
+          <div class="fx-control-group"><span class="fx-label">Temps</span>
+            <input type="range" class="fx-slider" id="delayTime" min="0.04" max="1.5" step="0.01" value="0.3" oninput="updateFX('delayTime',this.value)">
+            <span class="fx-val-disp" id="delayTime-val">0.30s</span></div>
+          <div class="fx-control-group"><span class="fx-label">Feedback</span>
+            <input type="range" class="fx-slider" id="delayFeedback" min="0" max="0.85" step="0.01" value="0.3" oninput="updateFX('delayFeedback',this.value)">
+            <span class="fx-val-disp" id="delayFeedback-val">30%</span></div>
+        </div>
+        <div class="fxq-row"><span class="fxq-lbl">Ping-Pong</span>
+          <input type="range" class="fx-slider" id="ppWetSlider" min="0" max="1" step="0.02" value="0" oninput="setPingPongWet(this.value);document.getElementById('ppWet-val').textContent=Math.round(this.value*100)+'%'">
+          <span class="fx-val-disp" id="ppWet-val">0%</span></div>
+        <!-- Réglages avancés du Ping-Pong : temps / feedback -->
+        <div class="fx-row">
+          <div class="fx-control-group"><span class="fx-label">Temps</span>
+            <input type="range" class="fx-slider" id="ppTime" min="0.04" max="1.5" step="0.01" value="0.25" oninput="setPingPongTime(this.value);document.getElementById('ppTime-val').textContent=parseFloat(this.value).toFixed(2)+'s'">
+            <span class="fx-val-disp" id="ppTime-val">0.25s</span></div>
+          <div class="fx-control-group"><span class="fx-label">Feedback</span>
+            <input type="range" class="fx-slider" id="ppFb" min="0" max="0.85" step="0.01" value="0.35" oninput="setPingPongFb(this.value);document.getElementById('ppFb-val').textContent=Math.round(this.value*100)+'%'">
+            <span class="fx-val-disp" id="ppFb-val">35%</span></div>
+        </div>
+        <div class="fxq-row"><span class="fxq-lbl">Espace</span>
+          <input type="range" class="fx-slider" id="randSpread" min="0" max="1" step="0.02" value="0.6" oninput="setRandSpread(this.value)">
+          <span class="fx-val-disp" id="sv-spread">60%</span></div>
+      </div>
+    </details>
+
+    <button class="btn-flow" style="width:100%;margin-top:.4rem;border-color:rgba(255,208,96,.5);color:#FFD060;background:rgba(255,208,96,.07);" onclick="triggerRandomFX()">✦ Random FX</button>
     <!-- #158 : "Presets de Session" et "Partager Config" retirés d'ici —
          doublons (Presets déjà accessible via Paramètres → ⊙ Presets). -->
   </div>`;
@@ -10101,6 +10130,73 @@ function _loadBackground() {
   }
   setBackground(kind);
 }
+
+// ── #165 : sécurité anti-fausse-manip sur TOUS les potentiomètres ──────
+// Comportement natif d'un <input type=range> : un tap n'importe où sur le
+// rail fait instantanément SAUTER le curseur à cet endroit — dangereux sur
+// une app pleine de sliders serrés (Delay, Feedback, Volume sub…), un
+// effleurement accidentel peut ruiner un réglage soigneusement ajusté.
+// Ce garde-fou global intercepte tout mousedown/touchstart AVANT que le
+// navigateur applique son comportement par défaut : si le point de contact
+// est loin du curseur actuel, on bloque (preventDefault) — le tap ne fait
+// plus rien, juste un léger éclair rouge sur le rail. S'il est sur/près du
+// curseur, on laisse faire : le drag normal (glisser depuis la poignée
+// jusqu'à la valeur cible) fonctionne exactement comme avant. Autrement dit
+// un vrai "glisser-déposer à la valeur cible" — plus aucun tap ailleurs sur
+// le rail ne peut modifier un réglage. Délégation sur document (capture),
+// donc s'applique à tous les input[type=range] présents ET futurs, dans
+// TOUS les modules (OmcVibe/Chaharmony/OmchaWatch/Boîte à rythme — un seul
+// document.html regroupe tout), aucune exception, aucun changement requis
+// sur chaque slider individuellement.
+(function () {
+  const GRAB_PAD = 24; // px de tolérance autour du curseur visuel (⌀28px, cf. CSS globale ci-dessus)
+  function _thumbFrac(el) {
+    const min = parseFloat(el.min || '0'), max = parseFloat(el.max || '100');
+    const val = parseFloat(el.value);
+    if (!isFinite(min) || !isFinite(max) || max <= min || !isFinite(val)) return 0.5;
+    return Math.min(1, Math.max(0, (val - min) / (max - min)));
+  }
+  function _isVertical(el) {
+    try { return getComputedStyle(el).writingMode.indexOf('vertical') === 0; } catch(e) { return false; }
+  }
+  function _flashBlocked(el) {
+    el.classList.add('rng-blocked');
+    setTimeout(() => el.classList.remove('rng-blocked'), 200);
+  }
+  function _sliderGuard(ev) {
+    const el = ev.target;
+    if (!el || el.tagName !== 'INPUT' || el.type !== 'range' || el.disabled) return;
+    const rect = el.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    let clientX, clientY;
+    if (ev.type === 'touchstart') {
+      const t = ev.touches && ev.touches[0];
+      if (!t) return;
+      clientX = t.clientX; clientY = t.clientY;
+    } else {
+      clientX = ev.clientX; clientY = ev.clientY;
+    }
+    const frac = _thumbFrac(el);
+    let dist;
+    if (_isVertical(el)) {
+      // writing-mode:vertical-lr + direction:rtl (cf. .eq12-band, EQ 12 bandes
+      // du Sample FX) : valeur max en HAUT, min en BAS — fader vertical standard.
+      dist = Math.abs(clientY - (rect.bottom - frac * rect.height));
+    } else {
+      dist = Math.abs(clientX - (rect.left + frac * rect.width));
+    }
+    if (dist > GRAB_PAD) {
+      ev.preventDefault();
+      _flashBlocked(el);
+    }
+  }
+  // passive:false explicite — indispensable pour que preventDefault() sur
+  // touchstart fonctionne réellement (Chrome/WebView Android rendent les
+  // écouteurs touchstart posés sur document passifs PAR DÉFAUT depuis
+  // Chrome 56, ce qui aurait silencieusement annulé tout le garde-fou).
+  document.addEventListener('mousedown', _sliderGuard, { capture: true, passive: false });
+  document.addEventListener('touchstart', _sliderGuard, { capture: true, passive: false });
+})();
 
 // ── Deux orientations supportées (app Android : paysage + portrait) ──
 function _checkOrientation() {
