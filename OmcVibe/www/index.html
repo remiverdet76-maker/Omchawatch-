@@ -1127,25 +1127,6 @@ body.flux-muted .vp-i{
 }
 .dcell-purple-input::-webkit-inner-spin-button,.dcell-purple-input::-webkit-outer-spin-button{-webkit-appearance:none;}
 
-/* #167 : OmcV Trip — bouton rapide sous la cellule violette (fréquence
-   maître directe), même famille visuelle (violet). */
-.dcell-trip-btn{
-  margin-top:.32rem;padding:.3rem .7rem;border-radius:14px;
-  border:1.5px solid rgba(190,110,255,.5);background:rgba(150,60,255,.14);
-  color:#D9B3FF;font-family:var(--font-deco,'Cinzel Decorative'),serif;
-  font-size:calc(10px * var(--dock-text-scale,1));letter-spacing:.06em;text-transform:uppercase;
-  cursor:pointer;backdrop-filter:blur(10px);transition:all .2s;
-  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-}
-.dcell-trip-btn.on{background:rgba(190,110,255,.4);color:#F5E8FF;box-shadow:0 0 16px rgba(190,110,255,.45);}
-.dcell-trip-btn:active{transform:scale(.95);}
-.trip-range-btn{
-  flex:1;padding:.3rem .4rem;border-radius:8px;border:1px solid rgba(190,110,255,.35);
-  background:rgba(150,60,255,.08);color:rgba(217,179,255,.75);font-size:.68rem;
-  cursor:pointer;transition:all .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-}
-.trip-range-btn.active{background:rgba(150,60,255,.32);color:#F0DCFF;border-color:rgba(190,110,255,.7);}
-
 /* #157 : cellule ORANGE "ChaWatch" retirée du dock — déménagée dans le
    menu Paramètres (.params-item, cf. #panParams). */
 
@@ -2104,10 +2085,6 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <input type="number" id="dcell-purple-input" class="dcell-purple-input" inputmode="numeric" autocomplete="off" onkeydown="_purpleFreqKey(event)" onblur="_purpleFreqValidate()">
     <button class="dcell-purple-step" onclick="_purpleFreqStep(9)" title="+9 Hz">+9</button>
   </div>
-  <!-- #167 : OmcV Trip — sous la cellule violette (fréquence maître), tap
-       démarre/arrête le voyage. Réglages fins (durée/cycles/plage) dans
-       Effet Audio → Réglages avancés. -->
-  <button class="dcell-trip-btn" id="dcTrip" onclick="toggleTrip()" title="OmcV Trip — voyage harmonique ascendant, +36Hz par palier">✦ OmcV Trip</button>
 </div>
 
 <div id="cosmic-bg" data-html-import-id="html-import-5" style="background-image: url(&quot;img/cosmic-flux.jpg&quot;); filter: hue-rotate(-23.8deg) saturate(1.15);"></div>
@@ -3796,8 +3773,6 @@ function buildOsc(id, freq, vol, pan) {
   if (_driftPairIdx >= 0) attachDeltaDriftToNode(_driftPairIdx, node);
   // #166 : Mode Retour — LFO détune Hz sur les voix > 288Hz de CE node.
   if (RETOUR_MODE) _attachRetourDetuneLFO(id, node);
-  // #167 : OmcV Trip — LFO filtre doux sur CE node.
-  if (TRIP_STATE.on) _tripAttachFilterLFO(id);
   return node;
 }
 
@@ -3834,8 +3809,6 @@ function releaseOsc(node) {
     if (_dsPairIdx >= 0 && typeof _clearPairDualSineLFO === 'function') _clearPairDualSineLFO(_dsPairIdx);
     // #166 : même fuite possible pour le LFO détune Hz du Mode Retour.
     _clearRetourDetuneLFO(node._id);
-    // #167 : même fuite possible pour le LFO filtre doux d'OmcV Trip.
-    _tripClearFilterLFO(node._id);
   }
   const _relPairIdx = PAIRS.findIndex(p => p.ida.id === node._id);
   if (_relPairIdx >= 0) clearDeltaDrift(_relPairIdx);
@@ -4532,17 +4505,6 @@ async function stopFlow() {
   // stoppés par la boucle ci-dessous qui ne touche que node.subs) restent
   // orphelins à tourner indéfiniment après la coupure.
   _clearAllRetourDetuneLFO();
-  // #167 : idem pour le LFO filtre doux d'OmcV Trip + arrêt complet du
-  // séquenceur (le voyage ne "reprend" jamais tout seul après une coupure
-  // du flux — il faut le relancer explicitement, cf. startTrip()).
-  _tripClearAllFilterLFO();
-  if (TRIP_STATE.on) {
-    TRIP_STATE.on = false;
-    _tripClearTimers();
-    _tripActiveSat = []; _tripTransitionIdx = null; _tripCycleNum = 0; _tripSavedPrefs = null;
-    const ck = document.getElementById('ck-trip-mode'); if (ck) ck.checked = false;
-    document.getElementById('dcTrip')?.classList.remove('on');
-  }
   Object.values(nodesCopy).forEach(n => {
     if (!n) return;
     const subs = n.subs || (n.o ? [{ osc: n.o }] : []);
@@ -5006,10 +4968,6 @@ const ORGANIC_EVO_STATE = { on: true, intervalSec: 45 };
 let _organicEvoTimer = null;
 function _armOrganicEvolution() {
   clearInterval(_organicEvoTimer); _organicEvoTimer = null;
-  // #167 : OmcV Trip pilote déjà ses propres transitions de fréquence —
-  // l'évolution harmonique douce serait redondante (voire en conflit sur
-  // les mêmes paires) tant que le voyage tourne.
-  if (TRIP_STATE.on) return;
   if (!ORGANIC_EVO_STATE.on || !flowing) return;
   _organicEvoTimer = setInterval(_organicEvoTick, ORGANIC_EVO_STATE.intervalSec * 1000);
 }
@@ -5203,383 +5161,6 @@ function _omcVibeRetourFromWatch() {
   _closeModuleOverlay();
 }
 window._omcVibeRetourFromWatch = _omcVibeRetourFromWatch;
-
-/* ══════════════════════════════════════════════════════════════════════
-   #167 : OMCV TRIP — voyage harmonique ascendant, quasi infini.
-   ══════════════════════════════════════════════════════════════════════
-   Principe : le maître grimpe de 36Hz à chaque "palier" (36→72→108…),
-   replié d'une octave (÷2) s'il dépasse la borne haute — la boucle ne se
-   voit jamais. À tout instant, AU PLUS 6 des 7 voix (maître + 6
-   satellites) sont audibles : 1 satellite reste toujours en réserve.
-   Dans chaque palier, l'ensemble se construit par vagues successives
-   (2 voix de départ, +1 au quart, +1 à la moitié, +1 aux trois-quarts —
-   cette dernière étant la "voix de transition" qui survivra au palier
-   suivant) puis s'éteint/se recompose au saut de palier via le même
-   principe d'"échange silencieux" que l'évolution harmonique douce (#84) :
-   fondu à zéro → retune INAUDIBLE → refondu — jamais de glissando entendu.
-   Option "cycles avant palier" (défaut 1) : au lieu de sauter tout de
-   suite, on peut faire durer 1 fréquence maître sur plusieurs cycles
-   (chacun relançant un tirage aléatoire — triggerMagicAuto({keepMaster:
-   true}) — parmi les voix déjà actives) avant le saut réel : plus de
-   temps pour "travailler" une fréquence donnée.
-   Profil sonore dédié à l'activation (restauré à l'arrêt, cf.
-   _tripSavedPrefs) : sub-bass et anti-pompage coupés, FX (delay/
-   ping-pong/overdrive) coupés pour du binaural pur, Sinus Duo à 0
-   partout, LFO filtre doux ajouté sur chaque voix, dérive du Δ légère,
-   Mode Retour actif. Tout le reste (timbre aléatoire, profondeur 3D,
-   respiration…) reste tel quel — seuls ces points précis changent. */
-const TRIP_STATE = {
-  on: false,
-  cycleDurationSec: 72,   // durée d'un cycle (palier ou répétition)
-  cyclesPerPalier: 1,     // nb de cycles sur la même fréquence maître avant de monter
-  rangeMode: 'full',      // 'full' (36→432) | 'custom' (rangeMin→rangeMax)
-  rangeMin: 36,
-  rangeMax: 432,
-};
-let _tripTimers = [];          // setTimeout en attente pour le cycle en cours
-let _tripCycleNum = 0;         // n° du cycle courant au sein du palier (1-based)
-let _tripPalierFreq = 36;      // fréquence maître du palier courant
-let _tripActiveSat = [];       // indices (0-5) des paires satellites actuellement audibles
-let _tripTransitionIdx = null; // paire désignée pour survivre au palier suivant
-let _tripSavedPrefs = null;    // réglages d'avant activation, restaurés à l'arrêt
-
-function _tripClearTimers() { _tripTimers.forEach(clearTimeout); _tripTimers = []; }
-function _tripSchedule(fn, delayMs) { const id = setTimeout(fn, delayMs); _tripTimers.push(id); return id; }
-
-// ── LFO filtre doux, sur chaque voix (maître compris) — #167 ─────────
-// Même mécanique que _attachRetourDetuneLFO/attachDeltaDriftToNode (LFO
-// natif connecté ADDITIVEMENT), mais ciblant node.flt.frequency (le
-// BiquadFilterNode déjà présent dans la chaîne de chaque oscillateur,
-// cf. setOscFilter/_setOscFilterMode) — un balayage de cutoff très lent
-// et discret, jamais un wobble agressif.
-const _tripFilterLFOs = {}; // id → {lfo, dg}
-function _tripAttachFilterLFO(id) {
-  _tripClearFilterLFO(id);
-  if (!TRIP_STATE.on) return;
-  const node = nodes[id]; if (!node || !node.flt) return;
-  const c = audioCtx();
-  const base = node.flt.frequency.value || 4000;
-  const rate = 0.025 + Math.random() * 0.05; // cycle de ~20 à 40s
-  const depth = Math.min(base * 0.22, 500);  // doux — jamais plus de 500Hz d'amplitude
-  const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = rate;
-  const dg = c.createGain(); dg.gain.value = depth;
-  lfo.connect(dg); dg.connect(node.flt.frequency);
-  lfo.start(c.currentTime + Math.random() * 12); // phase de départ aléatoire
-  _tripFilterLFOs[id] = { lfo, dg };
-}
-function _tripClearFilterLFO(id) {
-  const l = _tripFilterLFOs[id]; if (!l) return;
-  try { l.lfo.stop(); l.lfo.disconnect(); l.dg.disconnect(); } catch(e) {}
-  delete _tripFilterLFOs[id];
-}
-function _tripClearAllFilterLFO() { Object.keys(_tripFilterLFOs).forEach(_tripClearFilterLFO); }
-function _tripAttachAllFilterLFO() {
-  PAIRS.forEach(p => { _tripAttachFilterLFO(p.pingala.id); _tripAttachFilterLFO(p.ida.id); });
-}
-
-// ── Fondu d'une paire (audible ↔ silencieuse), durée libre ───────────
-// Distinct de toggleMutePair (qui bascule l'état courant) : ici la
-// cible est explicite, et le drapeau mutedOscs n'est posé qu'à la FIN
-// du fondu sortant — le temps qu'il reste réellement inaudible (0 gain)
-// avant d'être considéré "coupé" par _activeSatIdxs (triggerMagicAuto).
-function _tripFadePair(i, audible, fadeSec) {
-  const pair = PAIRS[i]; if (!pair) return;
-  const pid = pair.pingala.id, iid = pair.ida.id;
-  const np = nodes[pid], ni = nodes[iid];
-  const dur = fadeSec != null ? fadeSec : 2;
-  if (audible) {
-    mutedOscs[pid] = false; mutedOscs[iid] = false;
-    if (np) safeRamp(np.g.gain, pair.pingala.vol, dur);
-    if (ni) safeRamp(ni.g.gain, pair.ida.vol, dur);
-  } else {
-    if (np) safeRamp(np.g.gain, 0, dur);
-    if (ni) safeRamp(ni.g.gain, 0, dur);
-    setTimeout(() => {
-      mutedOscs[pid] = true; mutedOscs[iid] = true;
-      if (typeof updatePairUI === 'function') updatePairUI(i);
-    }, dur * 1000);
-  }
-  if (typeof updatePairUI === 'function') updatePairUI(i);
-}
-
-// Tire une nouvelle couleur harmonique pour la paire i (ratio + registre),
-// dans le registre du maître ACTUEL — mini-version scopée d'un seul
-// oscillateur de la logique de triggerMagicAuto, avec la même marge de
-// 36Hz (MIN_FREQ_SPACING_HZ) vis-à-vis des voix déjà actives.
-function _tripDrawSatellite(i) {
-  const pair = PAIRS[i];
-  pair.pingala.ri = Math.floor(Math.random() * RATIO_OPTS.length);
-  let f, ok, tries = 0;
-  do {
-    pair.pingala.n = 0.3 + Math.random() * (Math.min(N_MAX, 3) - 0.3);
-    f = calcPFreq(i);
-    ok = Math.abs(f - masterFreq) >= MIN_FREQ_SPACING_HZ * 0.6 &&
-         _tripActiveSat.every(j => j === i || Math.abs(f - calcPFreq(j)) >= MIN_FREQ_SPACING_HZ);
-    tries++;
-  } while (!ok && tries < 14);
-  if (RAND_OPTS.characterOn) {
-    const DELTAS = DELTA_CHARACTER[DELTA_CHARACTER_MODE].deltas;
-    pair.ida.delta = DELTAS[Math.floor(Math.random() * DELTAS.length)];
-    pair.ida.polarity = 1;
-  }
-}
-// Amène une paire encore silencieuse dans le mix : tire sa couleur, la
-// retune INSTANTANÉMENT pendant qu'elle est encore à 0 gain (donc
-// inaudible), puis la fait entrer en fondu — jamais de glissando entendu.
-function _tripBringInSatellite(i, fadeSec) {
-  _tripDrawSatellite(i);
-  const pair = PAIRS[i];
-  tuneOsc(pair.pingala.id, calcPFreq(i), 0.05);
-  tuneOsc(pair.ida.id, calcIFreq(i), 0.05);
-  _tripFadePair(i, true, fadeSec);
-  if (!_tripActiveSat.includes(i)) _tripActiveSat.push(i);
-}
-// Retune silencieux d'une voix déjà à 0 gain (survivante d'un palier),
-// vers une nouvelle couleur dans le registre du NOUVEAU maître.
-function _tripSilentRetune(i) {
-  _tripDrawSatellite(i);
-  const pair = PAIRS[i];
-  tuneOsc(pair.pingala.id, calcPFreq(i), 0.05);
-  tuneOsc(pair.ida.id, calcIFreq(i), 0.05);
-}
-// Cycle de répétition (cyclesPerPalier > 1) : nouveau tirage sur les voix
-// déjà actives, avec une glisse de quelques secondes (esprit "évolution
-// harmonique douce", #84) — PAS un échange silencieux : ici c'est un
-// mouvement voulu, audible, qui fait "respirer" le jeu sur cette
-// fréquence. Volontairement PAS triggerMagicAuto({keepMaster:true}) :
-// cette fonction appelle setMasterFreq() même quand le maître est
-// "gardé", qui replancherait à F_MIN (54Hz) un maître de voyage en
-// dessous (36Hz notamment) ET le retunerait audiblement au passage.
-// La voix de transition (déjà callée sur le palier suivant) n'est jamais
-// re-tirée ici — seules les autres voix actives bougent.
-function _tripRedrawActive() {
-  const glideS = 4 + Math.random() * 3; // 4-7s
-  _tripActiveSat.forEach(i => {
-    if (i === _tripTransitionIdx) return;
-    _tripDrawSatellite(i);
-    const pair = PAIRS[i];
-    tuneOsc(pair.pingala.id, calcPFreq(i), glideS);
-    tuneOsc(pair.ida.id, calcIFreq(i), glideS);
-  });
-  if (typeof patchRandomTable === 'function') patchRandomTable();
-}
-function _tripPickUnused() {
-  const pool = [0, 1, 2, 3, 4, 5].filter(i => !_tripActiveSat.includes(i));
-  return pool.length ? pool[Math.floor(Math.random() * pool.length)] : _tripActiveSat[0];
-}
-// Baisse discrète (pas un mute) de l'ensemble déjà en place — le signal
-// "une transition approche" pour une oreille attentive (cf. demande).
-function _tripBeginDip() {
-  const DIP = 0.6;
-  _tripActiveSat.forEach(i => {
-    const pair = PAIRS[i];
-    const np = nodes[pair.pingala.id], ni = nodes[pair.ida.id];
-    if (np) safeRamp(np.g.gain, pair.pingala.vol * DIP, 3);
-    if (ni) safeRamp(ni.g.gain, pair.ida.vol * DIP, 3);
-  });
-}
-
-function _tripSetMasterSilent(hz) {
-  masterFreq = Math.max(20, Math.min(F_MAX, hz));
-  _tripPalierFreq = masterFreq;
-  if (typeof updateDisplay === 'function') updateDisplay();
-  saveState();
-}
-
-function _tripStartPalier() { _tripCycleNum = 0; _tripRunCycle(); }
-
-function _tripRunCycle() {
-  if (!TRIP_STATE.on) return;
-  _tripClearTimers();
-  _tripCycleNum++;
-  const isFirst = _tripCycleNum === 1;
-  const isLast  = _tripCycleNum >= TRIP_STATE.cyclesPerPalier;
-  const D = TRIP_STATE.cycleDurationSec;
-
-  if (isFirst) {
-    // Vagues d'entrée successives — 3e, 4e puis 5e voix (celle-ci double
-    // comme désignée "transition" vers le palier suivant).
-    _tripSchedule(() => _tripBringInSatellite(_tripPickUnused(), D * 0.4), D * 250);
-    _tripSchedule(() => _tripBringInSatellite(_tripPickUnused(), D * 0.4), D * 500);
-    _tripSchedule(() => {
-      const idx = _tripPickUnused();
-      _tripTransitionIdx = idx;
-      _tripBringInSatellite(idx, D * 0.4);
-      _tripBeginDip();
-    }, D * 750);
-  } else {
-    // Cycle de répétition : nouveau tirage sur les voix déjà actives,
-    // le maître (et la voix de transition déjà désignée) ne bougent pas.
-    _tripSchedule(() => _tripRedrawActive(), 50);
-    if (isLast) _tripSchedule(() => _tripBeginDip(), D * 750);
-  }
-
-  _tripSchedule(() => { if (isLast) _tripAdvancePalier(); else _tripRunCycle(); }, D * 1000);
-}
-
-function _tripAdvancePalier() {
-  if (!TRIP_STATE.on) return;
-  const carryIdx = _tripTransitionIdx;
-  const FADE_OUT = 2.2, FADE_IN = 2.6;
-  _tripActiveSat.forEach(i => _tripFadePair(i, false, FADE_OUT));
-  _tripActiveSat = [];
-  _tripSchedule(() => {
-    if (!TRIP_STATE.on) return;
-    let nextFreq = _tripPalierFreq + 36;
-    while (nextFreq > TRIP_STATE.rangeMax) nextFreq = Math.max(TRIP_STATE.rangeMin, nextFreq / 2);
-    _tripSetMasterSilent(nextFreq);
-    if (carryIdx != null) {
-      _tripSilentRetune(carryIdx);
-      _tripActiveSat = [carryIdx];
-      _tripFadePair(carryIdx, true, FADE_IN);
-    }
-    const pool = [0, 1, 2, 3, 4, 5].filter(k => k !== carryIdx);
-    const freshIdx = pool[Math.floor(Math.random() * pool.length)];
-    _tripBringInSatellite(freshIdx, FADE_IN);
-    _tripTransitionIdx = null;
-    _tripStartPalier();
-  }, FADE_OUT * 1000 + 150);
-}
-
-function _tripBeginJourney() {
-  if (!TRIP_STATE.on) return;
-  _tripActiveSat = []; _tripTransitionIdx = null;
-  _tripSetMasterSilent(TRIP_STATE.rangeMin);
-  // Le maître, lui, joue déjà (voix d'ancrage jamais coupée) : contrairement
-  // aux sauts de palier (échange silencieux), ce tout premier réglage est un
-  // geste délibéré de l'utilisateur (il vient de taper "Démarrer") — une
-  // glisse douce et audible ici est attendue, pas un artefact.
-  const master = PAIRS[MASTER_IDX];
-  if (nodes[master.pingala.id]) tuneOsc(master.pingala.id, calcPFreq(MASTER_IDX), 3);
-  if (nodes[master.ida.id])     tuneOsc(master.ida.id, calcIFreq(MASTER_IDX), 3);
-  _shuffle([0, 1, 2, 3, 4, 5]).slice(0, 2).forEach(i => _tripBringInSatellite(i, 2.5));
-  _tripStartPalier();
-}
-
-function startTrip() {
-  if (TRIP_STATE.on) return;
-  if (!flowing && typeof startFlow === 'function') startFlow();
-  _tripSavedPrefs = {
-    subDrone: SUBDRONE_STATE.on,
-    pairComp: PAIR_COMP_STATE.on,
-    randUseFX: RAND_OPTS.useFX,
-    randDualSine: RAND_OPTS.randomDualSine,
-    dualSineDetune: DUALSINE_DETUNE,
-    pairDualSine: { ...PAIR_DUALSINE },
-    deltaDrift: DELTA_DRIFT_STATE.on,
-    deltaDriftAmount: DELTA_DRIFT_STATE.amount,
-    retourMode: RETOUR_MODE,
-    delayWet: document.getElementById('delayWet')?.value,
-    pingPongWet: document.getElementById('ppWetSlider')?.value,
-    fxIntensity: document.getElementById('fxIntensity')?.value,
-    bd2: PAIRS.map((_, i) => PAIR_BD2[i] ? { ...PAIR_BD2[i] } : null),
-  };
-  TRIP_STATE.on = true;
-  // ── Silence IMMÉDIAT (synchrone) des 6 satellites, avant tout — #167 :
-  // certains réglages ci-dessous (Anti-pompage notamment) déclenchent une
-  // reconstruction ÉCHELONNÉE de tous les nodes (rebuildAllOscs, ~350ms) ;
-  // si mutedOscs n'est pas déjà à true AVANT cette reconstruction, buildOsc()
-  // les envelopperait à nouveau à l'ancien volume au lieu de les garder
-  // silencieux — d'où ce marquage synchrone en tout premier, séparé du
-  // fondu (qui lui n'a de sens QUE sur les nodes déjà existants).
-  PAIRS.forEach((pair, i) => {
-    if (i === MASTER_IDX) return; // le maître reste la voix d'ancrage, toujours audible
-    mutedOscs[pair.pingala.id] = true; mutedOscs[pair.ida.id] = true;
-    const np = nodes[pair.pingala.id], ni = nodes[pair.ida.id];
-    if (np) safeRamp(np.g.gain, 0, 0.5);
-    if (ni) safeRamp(ni.g.gain, 0, 0.5);
-  });
-  // ── Profil sonore dédié (cf. demande utilisateur) ──────────────────
-  setSubDrone(false);
-  setPairCompression(false); // peut déclencher un rebuild échelonné (~350ms)
-  setRandUseFX(false);
-  RAND_OPTS.randomDualSine = false;
-  setFXIntensity(0);
-  setPingPongWet(0);
-  if (typeof updateFX === 'function') updateFX('delayWet', 0);
-  PAIRS.forEach((_, i) => {
-    if (PAIR_BD2[i] && PAIR_BD2[i].on) {
-      PAIR_BD2[i].on = false;
-      if (flowing && typeof _rebuildPair === 'function') _rebuildPair(i);
-    }
-  });
-  setDeltaDrift(true);
-  setDeltaDriftAmount(0.15); // léger
-  const ck = document.getElementById('ck-trip-mode'); if (ck) ck.checked = true;
-  document.getElementById('dcTrip')?.classList.add('on');
-  saveState();
-  // ── Laisse le temps à un éventuel rebuild (Anti-pompage/BD-2) de se
-  // terminer avant tout ce qui dépend des nodes définitifs (LFO filtre,
-  // Mode Retour, Sinus Duo appliqué en direct, puis le voyage lui-même). ──
-  _tripSchedule(() => {
-    if (!TRIP_STATE.on) return;
-    setDualSineDetune(0);
-    Object.keys(PAIR_DUALSINE).forEach(k => delete PAIR_DUALSINE[k]);
-    PAIRS.forEach(p => { _applyDualSineDetune(p.pingala.id, 0); _applyDualSineDetune(p.ida.id, 0); });
-    if (typeof activateRetourMode === 'function') activateRetourMode();
-    _tripAttachAllFilterLFO();
-    _tripBeginJourney();
-  }, 600);
-}
-
-function stopTrip() {
-  if (!TRIP_STATE.on) return;
-  TRIP_STATE.on = false;
-  _tripClearTimers();
-  _tripClearAllFilterLFO();
-  if (_tripSavedPrefs) {
-    setSubDrone(_tripSavedPrefs.subDrone);
-    setPairCompression(_tripSavedPrefs.pairComp);
-    setRandUseFX(_tripSavedPrefs.randUseFX);
-    RAND_OPTS.randomDualSine = _tripSavedPrefs.randDualSine;
-    if (_tripSavedPrefs.fxIntensity != null) setFXIntensity(_tripSavedPrefs.fxIntensity);
-    if (_tripSavedPrefs.pingPongWet != null) setPingPongWet(_tripSavedPrefs.pingPongWet);
-    if (_tripSavedPrefs.delayWet != null && typeof updateFX === 'function') updateFX('delayWet', _tripSavedPrefs.delayWet);
-    setDualSineDetune(_tripSavedPrefs.dualSineDetune);
-    Object.keys(_tripSavedPrefs.pairDualSine || {}).forEach(k => { PAIR_DUALSINE[k] = _tripSavedPrefs.pairDualSine[k]; });
-    setDeltaDrift(_tripSavedPrefs.deltaDrift);
-    setDeltaDriftAmount(_tripSavedPrefs.deltaDriftAmount);
-    if (_tripSavedPrefs.retourMode) { if (typeof activateRetourMode === 'function') activateRetourMode(); }
-    else { if (typeof deactivateRetourMode === 'function') deactivateRetourMode(); }
-    if (_tripSavedPrefs.bd2) _tripSavedPrefs.bd2.forEach((v, i) => { if (v) PAIR_BD2[i] = v; });
-  }
-  _tripSavedPrefs = null;
-  _tripActiveSat = []; _tripTransitionIdx = null; _tripCycleNum = 0;
-  const ck = document.getElementById('ck-trip-mode'); if (ck) ck.checked = false;
-  document.getElementById('dcTrip')?.classList.remove('on');
-  saveState();
-}
-function toggleTrip(v) {
-  const on = v != null ? !!v : !TRIP_STATE.on;
-  if (on) startTrip(); else stopTrip();
-}
-
-// ── Réglages (onglet Effet Audio → Réglages avancés) ──────────────────
-function setTripCycleDuration(v) {
-  TRIP_STATE.cycleDurationSec = Math.max(18, Math.min(300, Math.round(parseFloat(v))));
-  const el = document.getElementById('sv-trip-cycledur'); if (el) el.textContent = TRIP_STATE.cycleDurationSec + 's';
-  saveState();
-}
-function setTripCyclesPerPalier(v) {
-  TRIP_STATE.cyclesPerPalier = Math.max(1, Math.min(8, Math.round(parseFloat(v))));
-  const el = document.getElementById('sv-trip-cycles'); if (el) el.textContent = TRIP_STATE.cyclesPerPalier;
-  saveState();
-}
-function setTripRangeMode(mode) {
-  TRIP_STATE.rangeMode = (mode === 'custom') ? 'custom' : 'full';
-  document.querySelectorAll('.trip-range-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === TRIP_STATE.rangeMode));
-  const custom = document.getElementById('trip-range-custom'); if (custom) custom.style.display = TRIP_STATE.rangeMode === 'custom' ? '' : 'none';
-  if (TRIP_STATE.rangeMode === 'full') { TRIP_STATE.rangeMin = 36; TRIP_STATE.rangeMax = 432; }
-  saveState();
-}
-function setTripRangeMin(v) {
-  TRIP_STATE.rangeMin = Math.max(20, Math.min(TRIP_STATE.rangeMax - 36, Math.round(parseFloat(v))));
-  saveState();
-}
-function setTripRangeMax(v) {
-  TRIP_STATE.rangeMax = Math.max(TRIP_STATE.rangeMin + 36, Math.min(F_MAX, Math.round(parseFloat(v))));
-  saveState();
-}
 
 function ui(state, text) {
   const dot=document.getElementById('dot'); if(dot) dot.classList.toggle('live', state === 'live');
@@ -8201,31 +7782,6 @@ function buildMasterFXHTML() {
           <span class="fx-label">Mode Retour (zone 288-432Hz animée)</span>
           <label class="fx-toggle"><input type="checkbox" id="ck-retour-mode" onchange="toggleRetourMode(this.checked)"><span class="fx-tog-track"></span></label>
         </div>
-        <!-- #167 : OmcV Trip — voyage ascendant +36Hz par palier, jusqu'à
-             6 voix sur 7 actives, transitions inaudibles (échange
-             silencieux). Le bouton rapide vit sous la sphère Jeu Aléatoire
-             (cf. #dcFluxFloat) ; réglages fins ici. -->
-        <div class="fx-row" style="justify-content:space-between;align-items:center;">
-          <span class="fx-label">OmcV Trip (voyage ascendant +36Hz)</span>
-          <label class="fx-toggle"><input type="checkbox" id="ck-trip-mode" onchange="toggleTrip(this.checked)"><span class="fx-tog-track"></span></label>
-        </div>
-        <div class="fxq-row"><span class="fxq-lbl">Durée / cycle</span>
-          <input type="range" class="fx-slider" id="trip-cycledur-slider" min="18" max="180" step="6" value="72" oninput="setTripCycleDuration(this.value)">
-          <span class="fx-val-disp" id="sv-trip-cycledur">72s</span></div>
-        <div class="fxq-row"><span class="fxq-lbl">Cycles avant palier</span>
-          <input type="range" class="fx-slider" id="trip-cycles-slider" min="1" max="8" step="1" value="1" oninput="setTripCyclesPerPalier(this.value)">
-          <span class="fx-val-disp" id="sv-trip-cycles">1</span></div>
-        <div class="fxq-row" style="gap:.4rem;">
-          <button class="trip-range-btn active" data-mode="full" onclick="setTripRangeMode('full')">Plage entière</button>
-          <button class="trip-range-btn" data-mode="custom" onclick="setTripRangeMode('custom')">Déterminée</button>
-        </div>
-        <div class="fxq-row" id="trip-range-custom" style="display:none;">
-          <span class="fxq-lbl">De</span>
-          <input type="number" class="fxq-num" id="trip-range-min-input" min="20" max="432" value="36" step="1" onchange="setTripRangeMin(this.value)">
-          <span class="fxq-lbl">à</span>
-          <input type="number" class="fxq-num" id="trip-range-max-input" min="72" max="475" value="432" step="1" onchange="setTripRangeMax(this.value)">
-          <span class="fxq-unit">Hz</span>
-        </div>
         <div class="fxq-sep"></div>
         <!-- Fréquence maître -->
         <div class="fxq-row">
@@ -8942,18 +8498,7 @@ function _doSave() {
       randOpts: { ...RAND_OPTS },
       fluxMuted: FLUX_MUTED,
       bowlPulse: BOWL_STATE.on, // #150 : fireworksIgnition est déjà couvert par randOpts (spread ci-dessus)
-      retourMode: RETOUR_MODE, // #166
-      // #167 : seule la CONFIGURATION du voyage est persistée, jamais l'état
-      // "on" — un voyage en cours ne reprend jamais tout seul après un
-      // rechargement (séquenceur + minuteurs perdus, mieux vaut relancer
-      // explicitement qu'essayer de deviner où on en était).
-      tripConfig: {
-        cycleDurationSec: TRIP_STATE.cycleDurationSec,
-        cyclesPerPalier: TRIP_STATE.cyclesPerPalier,
-        rangeMode: TRIP_STATE.rangeMode,
-        rangeMin: TRIP_STATE.rangeMin,
-        rangeMax: TRIP_STATE.rangeMax,
-      }
+      retourMode: RETOUR_MODE // #166
     }));
   } catch(e) {}
 }
@@ -9028,16 +8573,6 @@ function loadState() {
     // ci-dessus), le LFO doux par paire est réattaché séparément dans
     // startFlow() une fois les nodes prêts (cf. commentaire #166 là-bas).
     if (typeof s.retourMode==='boolean') RETOUR_MODE = s.retourMode;
-    // #167 : configuration seulement — TRIP_STATE.on reste toujours false
-    // au chargement (cf. commentaire dans _doSave).
-    if (s.tripConfig && typeof s.tripConfig==='object') {
-      const tc = s.tripConfig;
-      if (typeof tc.cycleDurationSec==='number' && tc.cycleDurationSec>=18 && tc.cycleDurationSec<=300) TRIP_STATE.cycleDurationSec = tc.cycleDurationSec;
-      if (typeof tc.cyclesPerPalier==='number' && tc.cyclesPerPalier>=1 && tc.cyclesPerPalier<=8) TRIP_STATE.cyclesPerPalier = tc.cyclesPerPalier;
-      if (tc.rangeMode==='full' || tc.rangeMode==='custom') TRIP_STATE.rangeMode = tc.rangeMode;
-      if (typeof tc.rangeMin==='number' && tc.rangeMin>=20 && tc.rangeMin<=F_MAX) TRIP_STATE.rangeMin = tc.rangeMin;
-      if (typeof tc.rangeMax==='number' && tc.rangeMax>=20 && tc.rangeMax<=F_MAX) TRIP_STATE.rangeMax = tc.rangeMax;
-    }
   } catch(e) {}
 }
 
@@ -9061,16 +8596,6 @@ function _syncRandOptsUI() {
   if (typeof _updateSessionArcUI === 'function') _updateSessionArcUI(); // #151
   setCk('ck-delta-drift',   DELTA_DRIFT_STATE.on);
   setCk('ck-retour-mode', RETOUR_MODE); // #166
-  // #167 : reflète la config persistée (jamais l'état "on", cf. loadState).
-  setCk('ck-trip-mode', TRIP_STATE.on);
-  { const el = document.getElementById('trip-cycledur-slider'); if (el) el.value = TRIP_STATE.cycleDurationSec; }
-  { const el = document.getElementById('sv-trip-cycledur'); if (el) el.textContent = TRIP_STATE.cycleDurationSec + 's'; }
-  { const el = document.getElementById('trip-cycles-slider'); if (el) el.value = TRIP_STATE.cyclesPerPalier; }
-  { const el = document.getElementById('sv-trip-cycles'); if (el) el.textContent = TRIP_STATE.cyclesPerPalier; }
-  { const el = document.getElementById('trip-range-min-input'); if (el) el.value = TRIP_STATE.rangeMin; }
-  { const el = document.getElementById('trip-range-max-input'); if (el) el.value = TRIP_STATE.rangeMax; }
-  document.querySelectorAll('.trip-range-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === TRIP_STATE.rangeMode));
-  { const el = document.getElementById('trip-range-custom'); if (el) el.style.display = TRIP_STATE.rangeMode === 'custom' ? '' : 'none'; }
   setCk('ck-strict-headphone', STRICT_HEADPHONE_MODE);
   setCk('ck-pair-comp', PAIR_COMP_STATE.on);
   setCk('ck-subdrone', SUBDRONE_STATE.on);
