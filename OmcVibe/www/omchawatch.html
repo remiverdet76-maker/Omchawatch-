@@ -228,29 +228,13 @@ input[type=color]{
 @keyframes ripple{0%{width:0;height:0;opacity:.55;margin:0}100%{width:140px;height:140px;opacity:0;margin:-70px}}
 
 /* ── FOND PERSONNALISÉ ── */
+/* #166 : mode retouche (glisser/zoomer pour recentrer) retiré — signalé
+   cassé, remplacé par le même mécanisme simple qu'OmcVibe (upload →
+   cover/center automatique, aucune interaction requise). */
 #cosmic-bg{
-  position:fixed;inset:0;z-index:-1;background-size:cover;background-position:50% 50%;
-  transform:scale(1);transition:transform .1s linear;pointer-events:none;
+  position:fixed;inset:0;z-index:-1;background-size:cover;background-position:50% 50%;background-repeat:no-repeat;
+  pointer-events:none;
 }
-#bgRetoucheHint{
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:250;
-  font:11px 'Nunito',sans-serif;color:var(--gold);text-align:center;line-height:1.6;
-  background:rgba(6,9,28,.72);border:1px solid var(--border);border-radius:12px;padding:14px 20px;
-  pointer-events:none;opacity:0;transition:opacity .25s;letter-spacing:.05em;
-}
-#bgRetoucheHint.on{opacity:1;}
-body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:none;}
-/* #bugfix-bg-import : le bouton "Terminé" doit rester cliquable même
-   quand le panneau est désactivé — sinon aucune sortie possible du mode
-   retouche (verrouillage total du menu, perçu comme "l'import ne
-   fonctionne pas"). */
-#bgRetoucheDone{
-  position:fixed;left:50%;bottom:56px;transform:translate(-50%,12px);z-index:260;
-  padding:9px 22px;border-radius:20px;background:linear-gradient(90deg,var(--violet),var(--gold));
-  border:none;color:#140428;font:600 10px/1 'Nunito',sans-serif;letter-spacing:.12em;
-  text-transform:uppercase;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;
-}
-#bgRetoucheDone.on{opacity:1;pointer-events:auto;transform:translate(-50%,0);}
 
 /* ── PLANISPHÈRE ── */
 #geo-modal{
@@ -336,8 +320,6 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
 <div id="cosmic-bg"></div>
 <div id="title">UTC432 · PROJECT · 396</div>
 <canvas id="c"></canvas>
-<div id="bgRetoucheHint">Glisse pour centrer ton image · pince/molette pour zoomer</div>
-<button id="bgRetoucheDone" onclick="setBgRetouche(false)">✓ Terminé</button>
 
 <!-- BARRE BAS : uniquement le choix d'échelle de lecture -->
 <div id="bar">
@@ -502,12 +484,12 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
         </label>
       </div>
       <div class="opt-section">
+        <!-- #166 : même mécanisme qu'OmcVibe (upload → cover/center
+             automatique) — l'ancien mode retouche (glisser/zoomer) était
+             cassé et retiré. -->
         <div class="opt-h">Fond personnalisé</div>
         <input type="file" id="bgFileInput" accept="image/*" style="display:none;" onchange="onBgImageFile(this.files[0])">
         <div class="opt-row" onclick="document.getElementById('bgFileInput').click()"><span>🖼 Importer une image</span></div>
-        <div class="opt-row" id="ck-bgretouche" onclick="toggleBgRetouche()"><span>✥ Mode retouche (centrer l'image)</span></div>
-        <div class="opt-row"><span>Zoom du fond — <span id="v-bgzoom">100%</span></span></div>
-        <input type="range" id="bg-zoom-slider" min="60" max="300" value="100" oninput="setBgZoom(this.value)">
         <div class="opt-row" onclick="clearBgImage()"><span>↺ Revenir au fond cosmique</span></div>
       </div>
     </div>
@@ -567,6 +549,25 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
           <input type="range" min="50" max="250" value="120"
             oninput="DESIGN.bubbleScale=this.value/100;document.getElementById('v-bubble').textContent=this.value+'%'">
         </div>
+      </div>
+      <div class="des-section">
+        <!-- #166 : comètes (points de lecture des anneaux) — taille, opacité,
+             mode rotation lente (étincelles décoratives en orbite). -->
+        <div class="des-h">Comètes (points de lecture)</div>
+        <div class="des-col">
+          <div class="des-head"><span>Taille</span><span class="des-val" id="v-cometScale">100%</span></div>
+          <input type="range" min="50" max="200" value="100"
+            oninput="DESIGN.cometScale=this.value/100;document.getElementById('v-cometScale').textContent=this.value+'%'">
+        </div>
+        <div class="des-col">
+          <div class="des-head"><span>Opacité</span><span class="des-val" id="v-cometOpacity">100%</span></div>
+          <input type="range" min="30" max="160" value="100"
+            oninput="DESIGN.cometOpacity=this.value/100;document.getElementById('v-cometOpacity').textContent=this.value+'%'">
+        </div>
+        <label class="opt-row" style="margin-top:4px;">
+          <span>✦ Rotation lente (étincelles)</span>
+          <input type="checkbox" class="sw" id="d-cometSpin" onchange="DESIGN.cometSpin=this.checked">
+        </label>
       </div>
       <div class="des-section">
         <div class="des-h">Typographie</div>
@@ -790,6 +791,9 @@ const DESIGN = {
   intensity:1, haloScale:1, nodeFontScale:1, centerFontScale:1,
   ringOmcWidth:1.9, ringWidth:1.6, ringOmcVWidth:1.4, bubbleScale:1.2,
   deepMode:false,
+  // #166 : comètes (points de lecture des anneaux) — taille/opacité
+  // réglables, + mode rotation lente (étincelles décoratives en orbite).
+  cometScale:1, cometOpacity:1, cometSpin:false,
 };
 
 // ─── CANVAS ──────────────────────────────────────────
@@ -1030,7 +1034,14 @@ function drawBg(t){
 }
 
 // ─── ARCS DE LECTURE ─────────────────────────────────
-function drawArc(radius,col,angle,sweep,lw){
+// #166 : taille (DESIGN.cometScale) et opacité (DESIGN.cometOpacity) des
+// comètes réglables — multiplient les tailles/alphas d'origine sans rien
+// changer d'autre. Mode rotation lente (DESIGN.cometSpin) : petite
+// constellation d'étincelles en orbite décorative autour du noyau,
+// vitesse propre à chaque anneau (dérivée de son rayon, jamais
+// synchronisée) — purement visuel, la position de LECTURE réelle (px,py,
+// dérivée de l'angle réel) n'est elle jamais touchée.
+function drawArc(radius,col,angle,sweep,lw,t){
   if(OPTS.trails){
     const a0=angle-sweep;
     const tx0=cx+Math.cos(a0)*radius,ty0=cy+Math.sin(a0)*radius;
@@ -1040,13 +1051,26 @@ function drawArc(radius,col,angle,sweep,lw){
     X.beginPath();X.arc(cx,cy,radius,a0,angle);X.strokeStyle=gq;X.lineWidth=lw;X.lineCap='round';X.stroke();
   }
   const px=cx+Math.cos(angle)*radius,py=cy+Math.sin(angle)*radius;
+  const cSc=DESIGN.cometScale||1, cOp=DESIGN.cometOpacity!=null?DESIGN.cometOpacity:1;
   // #ChaWatch-design : comète = vraie petite sphère 3D ombrée (halo
   // atmosphérique ×6.5 + noyau ×1.3 en relief), plus organique qu'un
   // simple disque plat.
-  const gg=X.createRadialGradient(px,py,0,px,py,lw*6.5);
-  gg.addColorStop(0,rgba(col,.85));gg.addColorStop(.4,rgba(col,.32));gg.addColorStop(1,rgba(col,0));
-  X.beginPath();X.arc(px,py,lw*6.5,0,TAU);X.fillStyle=gg;X.fill();
-  draw3DSphere(px,py,lw*1.3,col,1);
+  const haloR=lw*6.5*cSc, coreR=lw*1.3*cSc;
+  const gg=X.createRadialGradient(px,py,0,px,py,haloR);
+  gg.addColorStop(0,rgba(col,.85*cOp));gg.addColorStop(.4,rgba(col,.32*cOp));gg.addColorStop(1,rgba(col,0));
+  X.beginPath();X.arc(px,py,haloR,0,TAU);X.fillStyle=gg;X.fill();
+  draw3DSphere(px,py,coreR,col,cOp);
+  if(DESIGN.cometSpin&&t!=null){
+    // t en secondes (cf. loop() : t=(performance.now()-t0)/1000) — période
+    // d'environ 60 à 100s selon le rayon de l'anneau (jamais synchronisé).
+    const spinT=t*(.010+radius*.00002);
+    for(let i=0;i<4;i++){
+      const a=spinT*TAU+i*(TAU/4);
+      const sx=px+Math.cos(a)*coreR*2.2, sy=py+Math.sin(a)*coreR*2.2;
+      X.beginPath();X.arc(sx,sy,Math.max(.6,coreR*.16),0,TAU);
+      X.fillStyle=rgba(col,.7*cOp);X.fill();
+    }
+  }
   const tx=cx+Math.cos(angle)*(radius+R*.034),ty=cy+Math.sin(angle)*(radius+R*.034);
   X.beginPath();X.moveTo(px,py);X.lineTo(tx,ty);X.strokeStyle=col;X.lineWidth=2.2;X.lineCap='round';X.stroke();
 }
@@ -1082,25 +1106,25 @@ function drawReadingArcs(r, cfg, t){
     // pour rester visuellement distincte des 3 anneaux à comète.
     const rV=R*.97, w=DESIGN.ringOmcVWidth;
     X.beginPath();X.arc(cx,cy,rV,0,TAU);X.strokeStyle=rgba(DESIGN.colorOmcV,.12);X.lineWidth=1.2*w;X.stroke();
-    drawArc(rV,DESIGN.colorOmcV, fDay*TAU-Math.PI/2, Math.min(fDay*TAU*.985,TAU*.99), 4.2*w);
+    drawArc(rV,DESIGN.colorOmcV, fDay*TAU-Math.PI/2, Math.min(fDay*TAU*.985,TAU*.99), 4.2*w, t);
   }
   if(OPTS.ringPhase){
     const rH=R*.85, w=DESIGN.ringOmcWidth;
     drawRainbowRing(rH, 7*w, flow);
     drawTicks(rH,cfg.ringPN,DESIGN.colorPhase,cfg.ringPmaj,cfg.ringPL,fS,w);
-    drawArc(rH,DESIGN.colorPhase, fDay*TAU-Math.PI/2, Math.PI/3, 7*w);
+    drawArc(rH,DESIGN.colorPhase, fDay*TAU-Math.PI/2, Math.PI/3, 7*w, t);
   }
   if(OPTS.ringSouffle){
     const rS=R*.72, w=DESIGN.ringWidth;
     drawRainbowRing(rS, 5*w, -flow*1.3);
     drawTicks(rS,cfg.ringSN,DESIGN.colorSouffle,cfg.ringSmax,cfg.ringSL,fM,w);
-    drawArc(rS,DESIGN.colorSouffle, fPhase*TAU-Math.PI/2, Math.PI/6.5, 4.5*w);
+    drawArc(rS,DESIGN.colorSouffle, fPhase*TAU-Math.PI/2, Math.PI/6.5, 4.5*w, t);
   }
   if(OPTS.ringInstant){
     const rI=R*.60, w=DESIGN.ringWidth;
     drawRainbowRing(rI, 3.5*w, flow*1.8);
     drawTicks(rI,cfg.ringIN,DESIGN.colorInstant,cfg.ringImaj,cfg.ringIL,fI,w);
-    drawArc(rI,DESIGN.colorInstant, fSouffle*TAU-Math.PI/2, Math.PI/20, 3.2*w);
+    drawArc(rI,DESIGN.colorInstant, fSouffle*TAU-Math.PI/2, Math.PI/20, 3.2*w, t);
   }
   // Arc arc-en-ciel sur l'orbite des 36 nœuds
   if(OPTS.nodes) drawRainbowRing(R*.50, 1.8*DESIGN.bubbleScale, -flow*.7);
@@ -1367,77 +1391,41 @@ geoCV.addEventListener('wheel',e=>{
 window.addEventListener('resize',()=>{if(document.getElementById('geo-modal').classList.contains('open')){geoResize();geoDraw();}});
 
 // ─── FOND PERSONNALISÉ ────────────────────────────────────────────
-let BG_STATE={image:null,offX:50,offY:50,zoom:100};
-let BG_RETOUCHE=false;
+// #166 : même mécanisme qu'OmcVibe (cf. index.html setCustomBackground/
+// _loadBackground) — upload → background-size:cover + position:center,
+// sans réglage interactif. L'ancien mode "retouche" (glisser pour
+// centrer, molette pour zoomer, un état BG_RETOUCHE bloquant tout le
+// panneau tant qu'on ne retombait pas dessus) était signalé cassé ;
+// plutôt que de le déboguer, on adopte l'approche simple et déjà
+// éprouvée d'OmcVibe — aucune interaction requise, aucun risque de
+// rester "coincé" dans un mode.
+let BG_STATE={image:null};
 function loadBgState(){
-  try{const s=localStorage.getItem('chawatch-bg-state');if(s)Object.assign(BG_STATE,JSON.parse(s));}catch(e){}
   try{const img=localStorage.getItem('chawatch-bg-image');if(img)BG_STATE.image=img;}catch(e){}
   applyBgState();
-  const zv=document.getElementById('v-bgzoom'); if(zv)zv.textContent=Math.round(BG_STATE.zoom)+'%';
-  const sl=document.getElementById('bg-zoom-slider'); if(sl)sl.value=Math.round(BG_STATE.zoom);
 }
-function saveBgState(){try{localStorage.setItem('chawatch-bg-state',JSON.stringify({offX:BG_STATE.offX,offY:BG_STATE.offY,zoom:BG_STATE.zoom}));}catch(e){}}
 function applyBgState(){
   const el=document.getElementById('cosmic-bg');
   el.style.backgroundImage=BG_STATE.image?`url(${BG_STATE.image})`:'none';
-  el.style.backgroundPosition=BG_STATE.offX+'% '+BG_STATE.offY+'%';
-  el.style.transform='scale('+(BG_STATE.zoom/100)+')';
 }
 function onBgImageFile(file){
   if(!file)return;
   const reader=new FileReader();
   reader.onload=e=>{
-    BG_STATE.image=e.target.result;BG_STATE.offX=50;BG_STATE.offY=50;BG_STATE.zoom=100;
+    BG_STATE.image=e.target.result;
     try{
       localStorage.removeItem('chawatch-bg-image');
       if(BG_STATE.image.length<3800000)localStorage.setItem('chawatch-bg-image',BG_STATE.image);
     }catch(err){}
-    saveBgState();applyBgState();setBgRetouche(true);
+    applyBgState();
   };
   reader.readAsDataURL(file);
 }
 function clearBgImage(){
-  BG_STATE={image:null,offX:50,offY:50,zoom:100};
+  BG_STATE={image:null};
   try{localStorage.removeItem('chawatch-bg-image');localStorage.removeItem('chawatch-bg-state');}catch(e){}
-  applyBgState();setBgRetouche(false);
-  const zv=document.getElementById('v-bgzoom'); if(zv)zv.textContent='100%';
-  const sl=document.getElementById('bg-zoom-slider'); if(sl)sl.value=100;
-}
-function toggleBgRetouche(){setBgRetouche(!BG_RETOUCHE);}
-function setBgRetouche(on){
-  BG_RETOUCHE=on&&!!BG_STATE.image;
-  document.body.classList.toggle('bg-retouche',BG_RETOUCHE);
-  const hint=document.getElementById('bgRetoucheHint'); if(hint)hint.classList.toggle('on',BG_RETOUCHE);
-  const done=document.getElementById('bgRetoucheDone'); if(done)done.classList.toggle('on',BG_RETOUCHE);
-  const ck=document.getElementById('ck-bgretouche'); if(ck)ck.classList.toggle('on',BG_RETOUCHE);
-}
-function setBgZoom(v){
-  BG_STATE.zoom=parseFloat(v);
-  const zv=document.getElementById('v-bgzoom'); if(zv)zv.textContent=Math.round(BG_STATE.zoom)+'%';
-  applyBgState();saveBgState();
-}
-let _bgDrag=null;
-document.body.addEventListener('pointerdown',e=>{
-  if(!BG_RETOUCHE)return;
-  _bgDrag={x:e.clientX,y:e.clientY};
-});
-document.body.addEventListener('pointermove',e=>{
-  if(!BG_RETOUCHE||!_bgDrag)return;
-  const dx=e.clientX-_bgDrag.x, dy=e.clientY-_bgDrag.y;
-  _bgDrag={x:e.clientX,y:e.clientY};
-  BG_STATE.offX=Math.max(0,Math.min(100,BG_STATE.offX-dx/window.innerWidth*100));
-  BG_STATE.offY=Math.max(0,Math.min(100,BG_STATE.offY-dy/window.innerHeight*100));
   applyBgState();
-});
-document.body.addEventListener('pointerup',()=>{if(BG_RETOUCHE)saveBgState();_bgDrag=null;});
-document.body.addEventListener('wheel',e=>{
-  if(!BG_RETOUCHE)return;
-  e.preventDefault();
-  BG_STATE.zoom=Math.max(60,Math.min(300,BG_STATE.zoom*(e.deltaY<0?1.08:0.93)));
-  const zv=document.getElementById('v-bgzoom'); if(zv)zv.textContent=Math.round(BG_STATE.zoom)+'%';
-  const sl=document.getElementById('bg-zoom-slider'); if(sl)sl.value=Math.round(BG_STATE.zoom);
-  applyBgState();saveBgState();
-},{passive:false});
+}
 
 // ─── SIMULATION — verrou densité (avance/recule le temps sans attendre) ──
 // Remplace l'ancien mode "Civil" (UT18), jugé inutile : déverrouillé, on
