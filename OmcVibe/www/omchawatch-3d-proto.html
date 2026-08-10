@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>OmchaWatch — Prototype 3D</title>
+<!--
+  ══════════════════════════════════════════════════════════════════════
+  #166 — Prototype WebGL isolé (axe 9/35 du plan 36-axes).
+  Ne touche à AUCUN fichier de prod (index.html / omchawatch.html) : un
+  fichier autonome, comparable côte à côte, jetable si l'essai ne
+  convainc pas. Three.js embarqué en local (vendor/three.min.js) —
+  aucune dépendance réseau, fonctionne offline dans l'APK comme le
+  reste de l'app.
+
+  Règle d'or respectée partout dans ce fichier : le 3D habille, il ne
+  remplace jamais "lire l'heure en 2 secondes". Concrètement :
+    1) La densité en chiffres est un HUD 2D plaqué à l'écran (jamais un
+       objet 3D qui tourne/se déforme) — axes 1, 20.
+    2) La caméra a une position de repos fixe et y revient toujours
+       seule après quelques secondes d'inactivité — axes 2, 6, 32.
+    3) Chaque anneau est une "aiguille" d'horloge imbriquée (le repère
+       "maintenant" est la position réelle de la comète dans l'espace
+       3D, jamais dépendant de l'angle de caméra) — axe 3.
+  ══════════════════════════════════════════════════════════════════════
+-->
+<style>
+  :root{
+    --gold:#F0C060; --violet:#A060F0; --blue:#60A8F8; --ivoire:#EDE4C8;
+    --bg0:#04050c; --bg1:#0a0c1a;
+    --textS:#d8d0c0; --textD:#8a8474;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+  html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:var(--bg0);
+    font-family:Georgia,'Times New Roman',serif;color:var(--textS);}
+  #c3d{position:fixed;inset:0;display:block;touch-action:none;}
+
+  /* ── HUD (toujours en 2D, par-dessus le canvas WebGL) ────────────── */
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:10;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  /* #166 axe 1 : la lisibilité du HUD ne doit JAMAIS dépendre de ce qui
+     bouge derrière (sphère, halos, anneaux) — un socle sombre flouté fixe
+     le contraste quel que soit l'état de la scène 3D en dessous. */
+  #hudPlate{position:relative;padding:10px 26px 14px;border-radius:50%;
+    background:radial-gradient(ellipse at center, rgba(4,5,12,.62) 0%, rgba(4,5,12,.38) 55%, rgba(4,5,12,0) 78%);
+    backdrop-filter:blur(2px);display:flex;flex-direction:column;align-items:center;}
+  #density{font-family:Georgia,serif;font-weight:300;font-size:15vw;line-height:1;
+    color:var(--gold);text-shadow:0 0 16px rgba(4,5,12,.9),0 0 3px rgba(4,5,12,1),0 0 30px rgba(240,192,96,.5);
+    letter-spacing:.01em;}
+  #modeLabel{margin-top:2px;font-size:11px;letter-spacing:.28em;text-transform:uppercase;
+    color:rgba(216,208,192,.42);}
+  #readings{margin-top:14px;font-size:13px;letter-spacing:.04em;display:flex;gap:8px;align-items:center;
+    color:rgba(216,208,192,.7);}
+  #readings .dot{opacity:.3}
+  #readings .om{color:var(--gold)}
+  #readings .cv{color:var(--violet)}
+  #readings2{margin-top:4px;font-size:11px;color:var(--blue);opacity:.72;}
+
+  /* Bandeau prototype — juste pour ne pas confondre avec le module final */
+  #badge{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:20;
+    font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:rgba(240,192,96,.65);
+    background:rgba(10,8,20,.5);border:1px solid rgba(240,192,96,.28);border-radius:20px;
+    padding:5px 14px;pointer-events:none;backdrop-filter:blur(4px);}
+
+  /* Barre de contrôle bas — axes 6, 34, 36 */
+  #ctrl{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;
+    gap:8px;padding:12px 14px calc(12px + env(safe-area-inset-bottom));pointer-events:none;}
+  #ctrl button{pointer-events:auto;font-family:Georgia,serif;font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--textS);background:rgba(20,16,32,.55);
+    border:1px solid rgba(240,192,96,.25);border-radius:16px;padding:9px 14px;
+    backdrop-filter:blur(6px);transition:all .2s;}
+  #ctrl button:active{background:rgba(240,192,96,.22);}
+  #ctrl button.on{background:rgba(240,192,96,.28);color:var(--gold);border-color:rgba(240,192,96,.55);}
+
+  #backlink{position:fixed;top:10px;left:10px;z-index:20;pointer-events:auto;
+    font-size:10px;letter-spacing:.1em;color:rgba(216,208,192,.55);text-decoration:none;
+    background:rgba(20,16,32,.5);border:1px solid rgba(255,255,255,.12);border-radius:14px;
+    padding:6px 11px;backdrop-filter:blur(4px);}
+  #fps{position:fixed;top:10px;right:10px;z-index:20;font-size:10px;color:rgba(140,255,180,.75);
+    background:rgba(10,8,20,.5);border-radius:10px;padding:4px 8px;display:none;pointer-events:none;}
+  #fps.on{display:block;}
+
+  #fallback{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+    flex-direction:column;gap:14px;padding:40px;text-align:center;background:var(--bg0);}
+  #fallback.on{display:flex;}
+  #fallback p{max-width:320px;color:var(--textD);font-size:13px;line-height:1.6;}
+  #fallback a{color:var(--gold);text-decoration:none;border:1px solid rgba(240,192,96,.4);
+    border-radius:18px;padding:9px 20px;font-size:12px;letter-spacing:.08em;}
+</style>
+</head>
+<body>
+
+<canvas id="c3d"></canvas>
+
+<div id="hud">
+  <div id="hudPlate">
+    <div id="density">432.0</div>
+    <div id="modeLabel">OmcV·432 — prototype 3D</div>
+    <div id="readings"><span class="om" id="r-omc">Omc 1</span><span class="dot">·</span><span class="cv" id="r-cv">cV 1</span></div>
+    <div id="readings2"><span id="r-sol">Solônde 1 / 6</span></div>
+  </div>
+</div>
+
+<div id="badge">Prototype 3D — non intégré</div>
+<a id="backlink" href="omchawatch.html">↩ Version 2D</a>
+<div id="fps">-- fps</div>
+
+<div id="ctrl">
+  <button id="btn-home">⌂ Recentrer</button>
+  <button id="btn-immersion">◐ Immersion</button>
+  <button id="btn-fps">ⓘ Perf</button>
+</div>
+
+<div id="fallback">
+  <p>Le rendu 3D (WebGL) n'est pas disponible sur cet appareil ou ce navigateur.<br>
+     La version 2D d'OmchaWatch reste pleinement fonctionnelle.</p>
+  <a href="omchawatch.html">↩ Ouvrir la version 2D</a>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script>
+'use strict';
+
+// ════════════════════════════════════════════════════════════════════
+// 1. TEMPS RÉEL — repris à l'identique d'omchawatch.html (mêmes
+//    formules, mêmes constantes) pour que le prototype lise la même
+//    heure/densité vraie que le module 2D. Mode standard (432) figé
+//    pour ce prototype — le bascule 432/15552 est un axe de suite,
+//    pas un blocage pour juger la lisibilité 3D.
+// ════════════════════════════════════════════════════════════════════
+const TAU = Math.PI * 2;
+let LOCATION = { lat: 48.85, lon: 2.35 }; // défaut Paris, comme omchawatch.html
+
+function eqOfTime(date) {
+  const doy = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+  const B = (360 / 365 * (doy - 81)) * Math.PI / 180;
+  return 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+}
+function dayOfYearUTC(date) {
+  return Math.floor((Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+    - Date.UTC(date.getUTCFullYear(), 0, 1)) / 86400000) + 1;
+}
+function solarDeclinationDeg(doy) { return 23.44 * Math.sin(2 * Math.PI / 365 * (doy - 81)); }
+function computeSunTimes(date, lat) {
+  const doy = dayOfYearUTC(date);
+  const declR = solarDeclinationDeg(doy) * Math.PI / 180, latR = lat * Math.PI / 180;
+  const cosH0 = -Math.tan(latR) * Math.tan(declR);
+  let dayLenH, polar = null;
+  if (cosH0 <= -1) { dayLenH = 24; polar = 'soleil de minuit'; }
+  else if (cosH0 >= 1) { dayLenH = 0; polar = 'nuit polaire'; }
+  else { dayLenH = Math.acos(cosH0) * 180 / Math.PI / 7.5; }
+  return { doy, dayLenH, polar };
+}
+function frac01(v, lo, hi) { const s = hi - lo; return s > 1e-6 ? (v - lo) / s : 0; }
+function calcDensity(now) {
+  const eot = eqOfTime(now);
+  const m = now.getUTCHours() * 60 + now.getUTCMinutes() + now.getUTCSeconds() / 60;
+  const sm = (((m + LOCATION.lon * 4 + eot) % 1440) + 1440) % 1440;
+  const sun = computeSunTimes(now, LOCATION.lat);
+  if (sun.polar) return (sm / 1440 * 432 + 432) % 432;
+  const half = sun.dayLenH * 30, riseMin = 720 - half, setMin = 720 + half;
+  if (sm < riseMin) return frac01(sm, 0, riseMin) * 108;
+  if (sm < 720) return 108 + frac01(sm, riseMin, 720) * 108;
+  if (sm < setMin) return 216 + frac01(sm, 720, setMin) * 108;
+  return 324 + frac01(sm, setMin, 1440) * 108;
+}
+const MODE_CFG = { daily: 432, phases: 12, souffles: 36, instants: 6,
+  ringPL: i => i === 0 ? '432' : (i * 36) + '' };
+function getReadings(ut432, cfg) {
+  const fDay = ut432 / cfg.daily * (cfg.daily / 432); // fDay = fraction du jour 0-1
+  const fDayReal = ut432 / 432;
+  const phF = fDayReal * cfg.phases;
+  const phase = Math.min(cfg.phases, Math.floor(phF) + 1);
+  const fPhase = phF % 1;
+  const sfF = fPhase * cfg.souffles;
+  const souffle = Math.min(cfg.souffles, Math.floor(sfF) + 1);
+  const fSouffle = sfF % 1;
+  const inF = fSouffle * cfg.instants;
+  const instant = Math.min(cfg.instants, Math.floor(inF) + 1);
+  return { density: ut432, phase, souffle, instant, fPhase, fSouffle, fDay: fDayReal };
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 2. SUPPORT WEBGL — axe 11 : filet de sécurité, jamais un mur.
+// ════════════════════════════════════════════════════════════════════
+function hasWebGL() {
+  try {
+    const c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
+  } catch (e) { return false; }
+}
+if (typeof THREE === 'undefined' || !hasWebGL()) {
+  document.getElementById('fallback').classList.add('on');
+  document.getElementById('c3d').style.display = 'none';
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('ctrl').style.display = 'none';
+  throw new Error('WebGL indisponible — fallback affiché.');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 3. PALETTE — identique à DESIGN dans omchawatch.html (axe 28 :
+//    le 3D change le rendu, jamais le langage couleur).
+// ════════════════════════════════════════════════════════════════════
+const COL = {
+  omcV:    0xEDE4C8, // ivoire — anneau extérieur, progression du jour
+  omc:     0xF0C060, // or — phases (12 divisions), aiguille "heure"
+  cv:      0xA060F0, // violet — souffles, aiguille "minute"
+  solonde: 0x60A8F8, // bleu — instants, aiguille "seconde"
+};
+
+// ════════════════════════════════════════════════════════════════════
+// 4. SCÈNE THREE.JS
+// ════════════════════════════════════════════════════════════════════
+const canvas = document.getElementById('c3d');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x04050c);
+scene.fog = new THREE.FogExp2(0x04050c, 0.028);
+
+const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.1, 100);
+
+// ── Lumières douces 3 points (axe 27) ──
+scene.add(new THREE.AmbientLight(0x554466, 0.55));
+const keyLight = new THREE.DirectionalLight(0xffe6c0, 0.9);
+keyLight.position.set(4, 7, 3);
+scene.add(keyLight);
+const fillLight = new THREE.DirectionalLight(0x6080ff, 0.35);
+fillLight.position.set(-5, 2, -4);
+scene.add(fillLight);
+const rimLight = new THREE.PointLight(0xa060f0, 0.6, 20);
+rimLight.position.set(0, 3, -6);
+scene.add(rimLight);
+
+// ── Texture halo générique (glow additif — fausse "bloom" légère,
+//    axe 29 : pas de pipeline de postprocessing, juste des sprites
+//    additifs, beaucoup plus léger et robuste offline) ──
+function makeGlowTexture() {
+  const s = 128, c = document.createElement('canvas'); c.width = c.height = s;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.35, 'rgba(255,255,255,.45)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = g; x.fillRect(0, 0, s, s);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+const glowTex = makeGlowTexture();
+function makeGlowSprite(color, size, opacity) {
+  const mat = new THREE.SpriteMaterial({
+    map: glowTex, color, transparent: true, opacity,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  const spr = new THREE.Sprite(mat);
+  spr.scale.set(size, size, 1);
+  return spr;
+}
+
+// ── Étoiles d'ambiance (axe 24) — toujours en arrière-plan, jamais
+//    au premier plan, densité modeste (anti-clutter, axe 5) ──
+function buildStarfield(count) {
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const r = 18 + Math.random() * 22;
+    const th = Math.random() * TAU, ph = Math.acos(2 * Math.random() - 1);
+    pos[i * 3] = r * Math.sin(ph) * Math.cos(th);
+    pos[i * 3 + 1] = Math.abs(r * Math.cos(ph)) * 0.5 + 2;
+    pos[i * 3 + 2] = r * Math.sin(ph) * Math.sin(th);
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({
+    map: glowTex, size: 0.09, color: 0xcfc8ff, transparent: true,
+    opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+  });
+  return new THREE.Points(geo, mat);
+}
+let stars = buildStarfield(420);
+scene.add(stars);
+
+// ════════════════════════════════════════════════════════════════════
+// 5. SPHÈRE CENTRALE — volume 3D + shader de respiration organique
+//    (axes 18, 19, 21, 22). La densité en CHIFFRES reste un HUD 2D
+//    séparé (#density) : ce mesh ne porte jamais de texte.
+// ════════════════════════════════════════════════════════════════════
+const sphereUniforms = {
+  uTime: { value: 0 },
+  uAmp: { value: 0.045 },
+  uColor: { value: new THREE.Color(COL.omc) },
+  uOpacity: { value: 0.92 },
+};
+const sphereMat = new THREE.ShaderMaterial({
+  uniforms: sphereUniforms,
+  transparent: true,
+  vertexShader: `
+    varying vec3 vNormal;
+    uniform float uTime;
+    uniform float uAmp;
+    void main(){
+      vNormal = normalize(normalMatrix * normal);
+      vec3 p = position;
+      // Bruit organique bon marché (somme de sinus déphasés) — pas de
+      // dépendance à une lib de bruit externe, suffisant visuellement.
+      float n = sin(p.x*2.2+uTime*0.6)*0.5 + sin(p.y*2.6-uTime*0.45)*0.35 + sin(p.z*1.8+uTime*0.8)*0.4;
+      p += normal * n * uAmp;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(p,1.0);
+    }
+  `,
+  fragmentShader: `
+    varying vec3 vNormal;
+    uniform vec3 uColor;
+    uniform float uOpacity;
+    void main(){
+      // vNormal est déjà en espace vue (normalMatrix*normal) : comparer à
+      // (0,0,1) revient à comparer à la direction caméra, sans avoir besoin
+      // de modelMatrix (non déclaré côté fragment par défaut dans Three.js).
+      float fresnel = pow(1.0 - max(dot(normalize(vNormal), vec3(0.0,0.0,1.0)), 0.0), 2.0);
+      vec3 col = mix(uColor*0.5, uColor*1.6, fresnel);
+      gl_FragColor = vec4(col, uOpacity * (0.5 + 0.5*fresnel));
+    }
+  `,
+});
+const sphereGeo = new THREE.IcosahedronGeometry(0.68, 5);
+const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+scene.add(sphereMesh);
+scene.add(makeGlowSprite(COL.omc, 2.3, 0.32)); // halo derrière la sphère (bloom léger)
+
+// Respiration d'échelle (12/11 ↔ 11/12, esprit du BREATH_STATE d'OmcVibe)
+let breathT = 0;
+
+// ════════════════════════════════════════════════════════════════════
+// 6. ANNEAUX — rubans en tube (axe 25), légère parallaxe de profondeur
+//    entre eux (axe 15), convention "horloge vue du dessus" :
+//    angle=0 → nord (haut d'écran), sens horaire, cohérent avec la
+//    lecture 2D existante.
+// ════════════════════════════════════════════════════════════════════
+function polarPoint(radius, y, angle) {
+  return new THREE.Vector3(radius * Math.sin(angle), y, -radius * Math.cos(angle));
+}
+function buildRingTube(radius, y, fromAngle, toAngle, thickness, segments) {
+  const pts = [];
+  const n = Math.max(2, segments);
+  for (let i = 0; i <= n; i++) {
+    const a = fromAngle + (toAngle - fromAngle) * (i / n);
+    pts.push(polarPoint(radius, y, a));
+  }
+  const curve = new THREE.CatmullRomCurve3(pts);
+  const geo = new THREE.TubeGeometry(curve, Math.max(8, n), thickness, 6, false);
+  return geo;
+}
+function makeRingMesh(radius, y, color, opacity) {
+  const geo = buildRingTube(radius, y, 0, TAU * 0.999, 0.012, 96);
+  const mat = new THREE.MeshStandardMaterial({
+    color, emissive: color, emissiveIntensity: 0.35,
+    metalness: 0.15, roughness: 0.55, transparent: true, opacity,
+  });
+  return new THREE.Mesh(geo, mat);
+}
+function makeSweepMesh(radius, y, color, thickness) {
+  // Portion "active" (0 → angle courant), remplacée chaque frame.
+  const mat = new THREE.MeshStandardMaterial({
+    color, emissive: color, emissiveIntensity: 1.1,
+    metalness: 0.1, roughness: 0.3, transparent: true, opacity: 0.92,
+  });
+  const mesh = new THREE.Mesh(new THREE.BufferGeometry(), mat);
+  mesh.userData = { radius, y, thickness };
+  return mesh;
+}
+function updateSweepMesh(mesh, toAngle) {
+  const { radius, y, thickness } = mesh.userData;
+  if (mesh.geometry) mesh.geometry.dispose();
+  mesh.geometry = buildRingTube(radius, y, 0, Math.max(0.02, toAngle), thickness, 48);
+}
+
+const RINGS = [
+  { key: 'omcV',    r: 4.60, y: 0.10, color: COL.omcV,    thick: 0.014 },
+  { key: 'omc',     r: 3.90, y: 0.075,color: COL.omc,     thick: 0.017 },
+  { key: 'cv',      r: 3.20, y: 0.04, color: COL.cv,      thick: 0.014 },
+  { key: 'solonde', r: 2.55, y: 0.0,  color: COL.solonde, thick: 0.012 },
+];
+const ringGroup = new THREE.Group();
+scene.add(ringGroup);
+RINGS.forEach(r => {
+  r.track = makeRingMesh(r.r, r.y, r.color, 0.16);
+  ringGroup.add(r.track);
+  r.sweep = makeSweepMesh(r.r, r.y, r.color, r.thick);
+  ringGroup.add(r.sweep);
+  // Comète = point de lecture (billboard + halo additif)
+  r.comet = new THREE.Mesh(
+    new THREE.SphereGeometry(r.thick * 2.1, 12, 12),
+    new THREE.MeshBasicMaterial({ color: r.color })
+  );
+  ringGroup.add(r.comet);
+  r.halo = makeGlowSprite(r.color, 0.55, 0.85);
+  ringGroup.add(r.halo);
+});
+
+// ── Graduations + repères numériques sur l'anneau Omc (axe 2 : repère
+//    compréhensif) — les 4 points cardinaux réels (minuit/lever/
+//    zénith/coucher) sont étiquetés, le reste en simples ticks
+//    discrets (anti-clutter, axe 5). ──
+function makeTextSprite(text, color) {
+  const c = document.createElement('canvas');
+  c.width = 128; c.height = 48;
+  const x = c.getContext('2d');
+  x.font = '300 30px Georgia, serif';
+  x.fillStyle = color; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.shadowColor = color; x.shadowBlur = 10;
+  x.fillText(text, 64, 26);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
+  const spr = new THREE.Sprite(mat);
+  spr.scale.set(0.62, 0.23, 1);
+  return spr;
+}
+const omcRing = RINGS[1];
+for (let i = 0; i < MODE_CFG.phases; i++) {
+  const a = (i / MODE_CFG.phases) * TAU;
+  const major = i % 3 === 0;
+  const p0 = polarPoint(omcRing.r, omcRing.y, a);
+  const p1 = polarPoint(omcRing.r + (major ? 0.16 : 0.09), omcRing.y, a);
+  const tickGeo = new THREE.BufferGeometry().setFromPoints([p0, p1]);
+  const tickMat = new THREE.LineBasicMaterial({ color: COL.omc, transparent: true, opacity: major ? 0.75 : 0.28 });
+  ringGroup.add(new THREE.Line(tickGeo, tickMat));
+  if (i % 3 === 0) {
+    const label = makeTextSprite(MODE_CFG.ringPL(i), 'rgba(240,192,96,.85)');
+    const lp = polarPoint(omcRing.r + 0.42, omcRing.y + 0.05, a);
+    label.position.copy(lp);
+    ringGroup.add(label);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 7. CAMÉRA — orbite bornée, retour automatique, mode Immersion
+//    (axes 2, 6, 17, 31, 32, 34). Aucune dépendance externe
+//    (OrbitControls) — logique maison pour rester dans un seul fichier
+//    autonome et garder un contrôle total sur les bornes.
+// ════════════════════════════════════════════════════════════════════
+const HOME = { theta: 0, phi: 0.62, radius: 8.3 };
+const cam = { theta: HOME.theta, phi: HOME.phi, radius: HOME.radius, autoTheta: 0 };
+const PHI_MIN = 0.18, PHI_MAX = 1.18;
+const RADIUS_MIN = 5.5, RADIUS_MAX = 13;
+const THETA_DRAG_MAX = 1.25; // borne en mode Lecture (axe 31)
+const IDLE_MS = 3500;
+const IMMERSION_SPEED = 0.05; // rad/s
+
+let mode = 'lecture'; // 'lecture' | 'immersion'
+let dragging = false, lastPointer = null, lastInteraction = performance.now();
+let pinchStartDist = null, pinchStartRadius = null;
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function applyCamera() {
+  const p = polarToCartesian(cam.radius, cam.phi, cam.theta);
+  camera.position.set(p.x, p.y, p.z);
+  camera.lookAt(0, 0.3, 0);
+}
+function polarToCartesian(radius, phi, theta) {
+  return {
+    x: radius * Math.sin(phi) * Math.sin(theta),
+    y: radius * Math.cos(phi),
+    z: radius * Math.sin(phi) * Math.cos(theta),
+  };
+}
+
+function onPointerDown(e) {
+  if (e.isPrimary === false) return;
+  dragging = true; lastPointer = { x: e.clientX, y: e.clientY };
+  lastInteraction = performance.now();
+  canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
+}
+function onPointerMove(e) {
+  if (!dragging || !lastPointer) return;
+  const dx = e.clientX - lastPointer.x, dy = e.clientY - lastPointer.y;
+  lastPointer = { x: e.clientX, y: e.clientY };
+  cam.theta -= dx * 0.0055;
+  cam.phi = clamp(cam.phi - dy * 0.0045, PHI_MIN, PHI_MAX);
+  if (mode === 'lecture') cam.theta = clamp(cam.theta, -THETA_DRAG_MAX, THETA_DRAG_MAX);
+  lastInteraction = performance.now();
+}
+function onPointerUp() { dragging = false; lastPointer = null; lastInteraction = performance.now(); }
+function onWheel(e) {
+  e.preventDefault();
+  cam.radius = clamp(cam.radius + e.deltaY * 0.01, RADIUS_MIN, RADIUS_MAX);
+  lastInteraction = performance.now();
+}
+canvas.addEventListener('pointerdown', onPointerDown);
+canvas.addEventListener('pointermove', onPointerMove);
+window.addEventListener('pointerup', onPointerUp);
+canvas.addEventListener('wheel', onWheel, { passive: false });
+
+// Pincer pour zoomer (tactile 2 doigts) — axe 32
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    pinchStartDist = touchDist(e.touches);
+    pinchStartRadius = cam.radius;
+  }
+}, { passive: true });
+canvas.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && pinchStartDist) {
+    const d = touchDist(e.touches);
+    cam.radius = clamp(pinchStartRadius * (pinchStartDist / d), RADIUS_MIN, RADIUS_MAX);
+    lastInteraction = performance.now();
+  }
+}, { passive: true });
+canvas.addEventListener('touchend', () => { pinchStartDist = null; });
+function touchDist(t) { const dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY; return Math.hypot(dx, dy); }
+
+document.getElementById('btn-home').addEventListener('click', () => {
+  cam.theta = HOME.theta; cam.phi = HOME.phi; cam.radius = HOME.radius;
+  lastInteraction = performance.now() - IDLE_MS - 1; // permet un retour visuel immédiat
+});
+document.getElementById('btn-immersion').addEventListener('click', (e) => {
+  mode = mode === 'lecture' ? 'immersion' : 'lecture';
+  e.target.classList.toggle('on', mode === 'immersion');
+  e.target.textContent = mode === 'immersion' ? '◑ Lecture' : '◐ Immersion';
+});
+document.getElementById('btn-fps').addEventListener('click', (e) => {
+  const el = document.getElementById('fps');
+  el.classList.toggle('on');
+  e.target.classList.toggle('on', el.classList.contains('on'));
+});
+
+function updateCamera(dt) {
+  const idle = !dragging && (performance.now() - lastInteraction > IDLE_MS);
+  if (idle) {
+    if (mode === 'immersion') {
+      cam.autoTheta += IMMERSION_SPEED * dt;
+      cam.theta += (cam.autoTheta - cam.theta) * Math.min(1, dt * 1.4);
+      cam.phi += (HOME.phi - cam.phi) * Math.min(1, dt * 0.6);
+    } else {
+      cam.theta += (HOME.theta - cam.theta) * Math.min(1, dt * 0.9);
+      cam.phi += (HOME.phi - cam.phi) * Math.min(1, dt * 0.9);
+    }
+    cam.radius += (HOME.radius - cam.radius) * Math.min(1, dt * 0.9);
+  } else if (mode === 'immersion') {
+    cam.autoTheta = cam.theta; // resynchronise pour reprendre en douceur
+  }
+  applyCamera();
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 8. LOD / PERF — axes 10, 12, 36 : budget de perf mesuré en direct,
+//    dégradation automatique et discrète si le device peine.
+// ════════════════════════════════════════════════════════════════════
+let lodLevel = 0; // 0 = plein, 1 = allégé
+let fpsEMA = 60, lowFpsSince = null;
+const fpsEl = document.getElementById('fps');
+const FRAME_BUDGET_MS = 1000 / 45; // cap doux ~45fps (axe 10)
+let lastFrame = performance.now();
+
+function applyLod(level) {
+  if (level === lodLevel) return;
+  lodLevel = level;
+  if (level === 1) {
+    scene.remove(stars);
+    RINGS.forEach(r => { r.halo.visible = false; });
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 9. BOUCLE DE RENDU
+// ════════════════════════════════════════════════════════════════════
+function resize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+window.addEventListener('resize', resize);
+
+const densityEl = document.getElementById('density');
+const modeLabelEl = document.getElementById('modeLabel');
+const rOmcEl = document.getElementById('r-omc');
+const rCvEl = document.getElementById('r-cv');
+const rSolEl = document.getElementById('r-sol');
+
+applyCamera();
+
+function tick(now) {
+  requestAnimationFrame(tick);
+  const rawDt = Math.min(0.1, (now - lastFrame) / 1000);
+  if (now - lastFrame < FRAME_BUDGET_MS) return; // cap doux (axe 10)
+  const dt = Math.min(0.1, (now - lastFrame) / 1000);
+  lastFrame = now;
+
+  // FPS glissant + LOD auto (axes 10, 12, 36)
+  const instFps = 1 / Math.max(0.0001, dt);
+  fpsEMA += (instFps - fpsEMA) * 0.08;
+  if (fpsEl.classList.contains('on')) fpsEl.textContent = Math.round(fpsEMA) + ' fps' + (lodLevel ? ' · allégé' : '');
+  if (fpsEMA < 26) { if (lowFpsSince == null) lowFpsSince = now; else if (now - lowFpsSince > 2500) applyLod(1); }
+  else lowFpsSince = null;
+
+  // ── Temps réel → densité/anneaux ──
+  const nowDate = new Date();
+  const ut432 = calcDensity(nowDate);
+  const rd = getReadings(ut432, MODE_CFG);
+
+  const aOmcV = rd.fDay * TAU;
+  const aOmc = rd.fDay * TAU;
+  const aCv = rd.fPhase * TAU;
+  const aSol = rd.fSouffle * TAU;
+  updateSweepMesh(RINGS[0].sweep, aOmcV);
+  updateSweepMesh(RINGS[1].sweep, aOmc);
+  updateSweepMesh(RINGS[2].sweep, aCv);
+  updateSweepMesh(RINGS[3].sweep, aSol);
+  [aOmcV, aOmc, aCv, aSol].forEach((a, i) => {
+    const r = RINGS[i];
+    const p = polarPoint(r.r, r.y, a);
+    r.comet.position.copy(p);
+    r.halo.position.copy(p);
+  });
+
+  // ── Respiration sphère (esprit BREATH_STATE, 12/11 ↔ 11/12) ──
+  breathT += dt;
+  const breathScale = 1 + Math.sin(breathT * (TAU / 9)) * 0.055;
+  sphereMesh.scale.setScalar(breathScale);
+  sphereUniforms.uTime.value = breathT;
+
+  // ── Caméra ──
+  updateCamera(dt);
+
+  // ── HUD 2D (axes 1, 20 : jamais dans la scène 3D) ──
+  densityEl.textContent = ut432.toFixed(1);
+  modeLabelEl.textContent = 'OmcV·432 — prototype 3D';
+  rOmcEl.textContent = 'Omc ' + rd.phase;
+  rCvEl.textContent = 'cV ' + rd.souffle;
+  rSolEl.textContent = 'Solônde ' + rd.instant + ' / ' + MODE_CFG.instants;
+
+  renderer.render(scene, camera);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
