@@ -478,6 +478,47 @@ body{
 }
 #freq-input-master::-webkit-inner-spin-button,#freq-input-master::-webkit-outer-spin-button{-webkit-appearance:none;}
 
+/* #169 : Arpégiateur tactile — anneau englobant la sphère maître, visible
+   seulement en mode simple (cf. _arpUpdateVisibility). Container ENTIER
+   pointer-events:none : rien ne bloque la sphère en dessous ni le reste
+   de l'écran, SEUL le trait du cercle (pointer-events:stroke, posé sur le
+   <circle> lui-même) capte le glisser. z-index 9 > .vp-center-wrap (8)
+   pour que ce trait soit bien au-dessus, sans jamais intercepter le
+   centre (le SVG n'y peint rien). */
+#arpFloat{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:min(74vw,330px);height:min(74vw,330px);
+  z-index:9;pointer-events:none;display:none;
+}
+#arpFloat.arp-visible{ display:block; }
+#arpRingSvg{ width:100%;height:100%;display:block;overflow:visible; }
+#arpRingCircle{
+  pointer-events:stroke;cursor:grab;touch-action:none;
+  transition:stroke .2s;
+}
+#arpRingCircle:active{ cursor:grabbing; }
+/* Repère discret (imperceptible sauf en interaction) marquant le "zéro"
+   (12h, arpège à l'arrêt) — jamais de chiffre, juste une amorce visuelle. */
+#arpFloat::before{
+  content:'';position:absolute;left:50%;top:2%;width:3px;height:8px;
+  background:rgba(255,255,255,.22);border-radius:2px;transform:translateX(-50%);
+  pointer-events:none;
+}
+#arpBall{
+  position:absolute;width:20px;height:20px;border-radius:50%;
+  left:50%;top:2%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle at 35% 30%,#FFF6DE 0%,#FFD966 42%,#C9930E 100%);
+  box-shadow:0 0 9px rgba(255,215,90,.75),0 0 18px rgba(255,190,60,.35),inset 0 1px 2px rgba(255,255,255,.7);
+  pointer-events:none;transition:box-shadow .18s,width .12s,height .12s;
+  will-change:left,top;
+}
+#arpBall.arp-off{ opacity:.5;box-shadow:0 0 6px rgba(255,255,255,.3),inset 0 1px 2px rgba(255,255,255,.5); }
+#arpBall.arp-pulse{
+  width:24px;height:24px;
+  box-shadow:0 0 20px rgba(255,225,120,1),0 0 38px rgba(255,205,80,.65),inset 0 1px 3px rgba(255,255,255,.85);
+}
+body.vis-lite #arpBall.arp-pulse{ box-shadow:0 0 12px rgba(255,225,120,.8); } /* #23 : moins coûteux en mode léger */
+
 /* #165 : menu rapide (Random ratio/Solo/Verrouiller) supprimé — l'appui
    long sur une sphère (satellite ou maître) ouvre directement le menu
    oscillateur complet (openOscModal), sans étape intermédiaire. Le tap
@@ -993,6 +1034,32 @@ body{
 .dcell-extra-flux:hover{ transform:scale(1.12); }
 .dcell-extra-flux:active{ transform:scale(.88); }
 
+/* #169 : halo arc-en-ciel — derrière l'aura blanche, plus grand qu'elle,
+   pulsation douce indépendante. La couleur tourne en continu (filter:
+   hue-rotate sur un dégradé multicolore) : jamais deux instants identiques,
+   d'où "aléatoire" — un vrai RNG JS aurait forcé un cycle de re-render
+   permanent (perf) pour un résultat perçu de toute façon comme continu ;
+   une animation CSS déterministe donne le même ressenti pour un coût nul. */
+.flux-rainbow-halo{
+  position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);
+  width:230px;height:230px;border-radius:50%;pointer-events:none;z-index:0;
+  background:conic-gradient(from 0deg,
+    #ff6b6b,#ffd166,#8cf5a0,#6bd6ff,#a78bfa,#ff6bd6,#ff6b6b);
+  filter:blur(22px) saturate(1.3);
+  opacity:.4;
+  animation:fluxRainbowSpin 14s linear infinite, fluxRainbowPulse 3.2s ease-in-out infinite;
+  will-change:transform,opacity,filter;
+}
+@keyframes fluxRainbowSpin{
+  0%{ filter:blur(22px) saturate(1.3) hue-rotate(0deg); }
+  100%{ filter:blur(22px) saturate(1.3) hue-rotate(360deg); }
+}
+@keyframes fluxRainbowPulse{
+  0%,100%{ transform:translate(-50%,-50%) scale(.92); opacity:.28; }
+  50%{ transform:translate(-50%,-50%) scale(1.08); opacity:.5; }
+}
+body.vis-lite .flux-rainbow-halo{ animation:none;opacity:.32; }
+
 /* Aura blanche douce, respire en synchro avec la fréquence maître —
    toujours visible (même flux coupé) : c'est elle qui dit "c'est ici que
    ça se passe", indépendamment de l'état on/off du flux. */
@@ -1043,11 +1110,15 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
   0%,100%{ box-shadow:0 0 26px rgba(255,220,110,.5),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.3); }
   50%{ box-shadow:0 0 52px rgba(255,230,140,.9),0 8px 22px rgba(0,0,0,.55),inset 0 1px 3px rgba(255,255,255,.3); }
 }
-/* #146 : logo Jeu Aléatoire fourni tel quel (pas de recadrage — object-fit:
-   contain préserve l'image entière, ses coins sombres se fondent dans le
-   thème nuit du bouton). */
+/* #146 : logo Jeu Aléatoire.
+   #169 : le JPG source est nécessairement rectangulaire (pas de canal
+   alpha) — en `object-fit:contain` ses coins/bords carrés se voyaient
+   contre le fond du bouton, malgré ce dernier étant rond (signalé "pas
+   esthétique"). `cover` + `border-radius:50%` sur l'image ELLE-MÊME
+   (plus seulement sur le bouton qui la contient) découpe proprement le
+   logo en cercle parfait, quel que soit son format d'origine. */
 .dcell-flux .flux-yy{
-  width:88%;height:88%;object-fit:contain;
+  width:88%;height:88%;object-fit:cover;border-radius:50%;
   /* #152 : léger étalonnage couleur — rapproche la teinte du logo (fourni
      tel quel) de la palette or/violet du reste de l'app, sans le recadrer
      ni le dénaturer. */
@@ -1096,36 +1167,11 @@ body.flux-muted .vp-i{
    #157 : ChaWatch déménagé dans le menu Paramètres (cf. #panParams).
    #165 : la cellule violette elle-même (dcPurple, colonne centrale du
    dock) et la cellule "Zen mode" (dcZen) sont retirées de l'affichage —
-   seul le geste +/-9 Hz est conservé, déplacé et intégré directement
-   sous la sphère "Jeu Aléatoire" (#dcFluxFloat, cf. .flux-freq-mini
-   ci-dessous et le HTML de #dcFluxFloat). Colonne centrale du dock
-   désormais vide (simple espaceur flex, cf. .dock-col-center). */
-/* #165 : +/-9 Hz fréquence maître — repris à l'identique de l'ex-cellule
-   dock violette (mêmes id/fonctions JS, _purpleFreqStep/_purpleFreqKey/
-   _purpleFreqValidate, aucun changement requis côté script), juste
-   réintégré en petit pavé sous la sphère de jeu aléatoire au lieu d'une
-   cellule dédiée du dock. Police liée à --dock-text-scale comme le reste
-   du dock (cf. #165, Créateur → "Taille texte du Dock"). */
-.flux-freq-mini{
-  display:flex;align-items:center;justify-content:center;gap:.28rem;
-  margin-top:.32rem;padding:.22rem .3rem;border-radius:14px;
-  border:1.5px solid rgba(190,110,255,.5);
-  background:rgba(150,60,255,.14);backdrop-filter:blur(10px);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -8px 12px rgba(0,0,0,.12);
-}
-.dcell-purple-step{
-  width:26px;height:26px;border-radius:6px;border:1.5px solid rgba(190,110,255,.5);
-  background:rgba(150,60,255,.2);color:#D9B3FF;font-size:calc(13.44px * var(--dock-text-scale,1));font-weight:700;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
-  touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .12s;
-}
-.dcell-purple-step:active{ transform:scale(.9); }
-.dcell-purple-input{
-  width:46px;min-width:0;flex:1 1 auto;background:rgba(0,0,0,.32);border:1.5px solid rgba(190,110,255,.4);border-radius:6px;
-  color:#F0DCFF;font-family:var(--font-body,'IM Fell English'),serif;font-size:calc(17.92px * var(--dock-text-scale,1));text-align:center;
-  padding:.15rem 0;outline:none;-moz-appearance:textfield;
-}
-.dcell-purple-input::-webkit-inner-spin-button,.dcell-purple-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+   colonne centrale du dock vide (simple espaceur flex, cf. .dock-col-center).
+   #169 : le geste +/-9 Hz (repris sous #dcFluxFloat par #165) est à son
+   tour retiré définitivement — redondant avec openFreqEdit (tap sphère)
+   et le champ "Maître" du panneau Effet Audio. dcFluxFloat ne porte plus
+   que le bouton Jeu Aléatoire. */
 
 /* #157 : cellule ORANGE "ChaWatch" retirée du dock — déménagée dans le
    menu Paramètres (.params-item, cf. #panParams). */
@@ -2071,21 +2117,21 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
      appelle directement triggerMagicAuto()/toggleFluxMuted(), pas besoin
      de dupliquer quoi que ce soit dans sphere432.html/torsion432.html/
      geometrie.html). Déborde volontairement au-dessus du dock/chevron. -->
+<!-- #169 : cellule violette (+/-9Hz) retirée définitivement — redondante
+     avec le tap direct sur la sphère maître (openFreqEdit) et le champ
+     "Maître" du panneau Effet Audio → Réglages avancés (master-input).
+     dcFluxFloat ne porte plus QUE le bouton Jeu Aléatoire, dissocié de
+     tout le reste — libre de se déplacer verticalement (cf. --flux-dy,
+     Créateur) jusqu'en bas du dock sans rien entraîner avec lui. -->
 <div id="dcFluxFloat">
+  <div class="flux-rainbow-halo" id="fluxRainbow" aria-hidden="true"></div>
   <div class="flux-aura" id="fluxAura" aria-hidden="true"></div>
   <button class="dcell-flux canva-button" id="dcFlux" title="Tap : nouveau jeu aléatoire · Appui long : Flux on/off">
     <img class="flux-yy" id="flux-icon" src="img/random-game-logo.jpg" alt="" aria-hidden="true">
   </button>
   <span class="flux-state" id="flux-state-side">OFF</span>
-  <!-- #165 : +/-9 Hz fréquence maître, repris de l'ex-cellule dock violette
-       (dcPurple, supprimée) — même id/fonctions JS, juste réintégré ici,
-       visible sous la sphère de jeu aléatoire. -->
-  <div class="flux-freq-mini" title="Fréquence maître directe">
-    <button class="dcell-purple-step" onclick="_purpleFreqStep(-9)" title="-9 Hz">−9</button>
-    <input type="number" id="dcell-purple-input" class="dcell-purple-input" inputmode="numeric" autocomplete="off" onkeydown="_purpleFreqKey(event)" onblur="_purpleFreqValidate()">
-    <button class="dcell-purple-step" onclick="_purpleFreqStep(9)" title="+9 Hz">+9</button>
-  </div>
 </div>
+
 
 <div id="cosmic-bg" data-html-import-id="html-import-5" style="background-image: url(&quot;img/cosmic-flux.jpg&quot;); filter: hue-rotate(-23.8deg) saturate(1.15);"></div>
 <canvas id="meta-canvas" width="540" height="1024" style="width: 540px; height: 1024px; cursor: grab; pointer-events: auto;" data-html-import-id="html-import-6"></canvas>
@@ -2095,6 +2141,27 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <input type="number" id="freq-input-master" min="54" max="475" placeholder="181" autocomplete="off" onkeydown="handleFreqKey(event);" data-html-import-id="html-import-12" data-template-id="input-5" class="canva-input" style="color: rgb(243, 217, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 29px;">
       <span class="ms-state canva-text" id="ms-state" data-html-import-id="html-import-13" data-template-id="span-6" style="color: rgba(220, 180, 255, 0.7); font-weight: 700; font-style: italic; font-size: 14px;">BINAURAL</span>
     </div></div></div>
+
+<!-- #169 : Arpégiateur tactile — remplace la cellule violette retirée.
+     Visible UNIQUEMENT en mode simple (sphère centrale seule, cf.
+     body.mode-simple / _arpUpdateVisibility) : un anneau qui englobe la
+     sphère maître, sans aucun chiffre. Le "potentiomètre" (petite sphère
+     dorée) glisse sur le cercle — l'angle fixe la vitesse à laquelle
+     l'arpège tourne parmi les voix satellites actives (accent de volume
+     bref et rotatif, jamais un mute/démute sec). Posé en dehors de
+     #sphere-layer (qui se vide/reconstruit à chaque buildVesicaPairs)
+     pour ne jamais être arraché par un rebuild. Anneau au-dessus de la
+     sphère (z-index) mais seul le TRAIT du cercle capte le toucher
+     (pointer-events:stroke, SVG) — le centre reste cliquable normalement
+     (openFreqEdit, mute). -->
+<div id="arpFloat" aria-hidden="true">
+  <svg id="arpRingSvg" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">
+    <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(255,255,255,.30)" stroke-width="10"
+      id="arpRingCircle"
+      onmousedown="_arpStart(event)" ontouchstart="_arpStart(event)" ontouchmove="_arpMove(event)" ontouchend="_arpEnd(event)"></circle>
+  </svg>
+  <div id="arpBall"></div>
+</div>
 
 <!-- Dock bas : 5 cellules × 3 actions (tap / appui long / bouton extra) -->
 <div id="bottom-dock" class="dock5 canva-container" data-html-import-id="html-import-14" data-template-id="div-7">
@@ -2323,7 +2390,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     </div>
     <div class="creator-row">
       <span class="creator-lbl">Position verticale</span>
-      <input type="range" id="cr-flux-dy" min="-80" max="150" step="5" value="0" oninput="setFluxOffsetY(this.value)">
+      <input type="range" id="cr-flux-dy" min="-112" max="150" step="5" value="0" oninput="setFluxOffsetY(this.value)">
       <span class="creator-val" id="cr-flux-dy-v">0px</span>
     </div>
     <button class="cr-mini-btn" onclick="resetFluxLayout()" style="align-self:flex-start;">↺ Réinitialiser la sphère Flux</button>
@@ -4463,6 +4530,8 @@ async function startFlow() {
     _armAudioWatchdog(); // #33 (perf)
     _armOrganicEvolution(); // #84
     if (SUBDRONE_STATE.on) _startSubDrone(); // #16 (roadmap)
+    if (ARPEGGIATOR_STATE.on) _arpReschedule(); // #169 : reprend le pas là où il en était
+    if (typeof _arpUpdateVisibility === 'function') _arpUpdateVisibility(); // #169
     ui('live', 'En expansion…');
   } catch(err) {
     flowing = false; nodes = {};
@@ -4472,6 +4541,7 @@ async function startFlow() {
 
 async function stopFlow() {
   ui('idle', 'Dissolution…');
+  clearTimeout(_arpTimer); _arpTimer = null; // #169 : plus de nodes à accentuer une fois le flux coupé
   if (startFlow._heartbeat) { clearInterval(startFlow._heartbeat); startFlow._heartbeat = null; }
   if (startFlow._headroomTimer) { clearInterval(startFlow._headroomTimer); startFlow._headroomTimer = null; }
   if (startFlow._wakeLock)  { try { startFlow._wakeLock.release(); } catch(e) {} startFlow._wakeLock = null; }
@@ -5078,6 +5148,134 @@ function setOrganicEvolution(v) {
   _armOrganicEvolution();
   saveState();
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   #169 : ARPÉGIATEUR TACTILE — remplace la cellule violette du dock.
+   ══════════════════════════════════════════════════════════════════════
+   Visible uniquement en mode simple (sphère centrale seule affichée,
+   body.mode-simple — cf. buildVesicaPairs/toggleAdvanced). L'anneau
+   englobe la sphère maître ; on glisse le doigt dessus pour positionner
+   le "potentiomètre" (petite sphère dorée) à un angle donné, 0° (haut,
+   petit repère discret) = arrêt, le reste du cercle en sens horaire =
+   vitesse croissante de l'arpège.
+   L'arpège lui-même : à intervalle régulier (fixé par l'angle), un accent
+   de volume BREF (ramp haut puis retour, jamais un mute/démute sec) passe
+   d'une voix satellite active à la suivante, en rotation — comme un
+   arpège classique joue les notes d'un accord l'une après l'autre. Si
+   aucune satellite n'est active, le maître lui-même reçoit l'accent (le
+   geste ne reste jamais sans effet).
+   Volontairement LÉGER (leçon de "OmcV Trip", #167→168, jugé trop
+   gourmand) : aucun nouveau nœud audio permanent — juste des
+   safeRamp(...) ponctuels sur des gains déjà existants, un seul
+   setTimeout auto-replanifié. */
+const ARPEGGIATOR_STATE = { angle: 0, rate: 0, on: false };
+let _arpTimer = null;
+let _arpStepIdx = -1;
+let _arpDragging = false;
+
+// Angle (0-360°, 0=haut, sens horaire) → vitesse (pas/seconde). Zone morte
+// autour de 0° = arrêt net (facile à retrouver au toucher, pas de valeur
+// "presque nulle" qui laisserait un accent perdu toutes les 10s). Au-delà,
+// courbe douce (exposant >1) : plus précis sur les vitesses lentes, qui
+// sont aussi les plus utiles/les plus musicales ici.
+function _arpAngleToRate(angle) {
+  const DEAD = 10; // degrés de zone neutre de part et d'autre du haut
+  if (angle < DEAD || angle > 360 - DEAD) return 0;
+  const norm = (angle - DEAD) / (360 - DEAD * 2); // 0..1
+  return 0.35 + Math.pow(norm, 1.6) * 5.65; // 0.35 à 6 pas/seconde
+}
+function _arpUpdateBallPosition(angle) {
+  const ring = document.getElementById('arpRingSvg');
+  const ball = document.getElementById('arpBall');
+  if (!ring || !ball) return;
+  const rect = ring.getBoundingClientRect();
+  if (!rect.width) return;
+  const cx = rect.width / 2, cy = rect.height / 2;
+  const r = (140 / 300) * rect.width; // même proportion que le viewBox (300, rayon 140)
+  const rad = angle * Math.PI / 180;
+  const x = cx + r * Math.sin(rad);
+  const y = cy - r * Math.cos(rad);
+  ball.style.left = x + 'px';
+  ball.style.top  = y + 'px';
+  ball.classList.toggle('arp-off', !ARPEGGIATOR_STATE.on);
+}
+function _arpPointerAngle(clientX, clientY) {
+  const ring = document.getElementById('arpRingSvg');
+  const rect = ring.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+  const dx = clientX - cx, dy = clientY - cy;
+  let deg = Math.atan2(dx, -dy) * 180 / Math.PI;
+  if (deg < 0) deg += 360;
+  return deg;
+}
+function _arpSetAngle(angle) {
+  ARPEGGIATOR_STATE.angle = angle;
+  const rate = _arpAngleToRate(angle);
+  ARPEGGIATOR_STATE.rate = rate;
+  ARPEGGIATOR_STATE.on = rate > 0;
+  _arpUpdateBallPosition(angle);
+  _arpReschedule();
+  saveState();
+}
+function _arpStart(e) {
+  _arpDragging = true;
+  const t = e.touches ? e.touches[0] : e;
+  _arpSetAngle(_arpPointerAngle(t.clientX, t.clientY));
+  e.preventDefault();
+}
+function _arpMove(e) {
+  if (!_arpDragging) return;
+  const t = e.touches ? e.touches[0] : e;
+  _arpSetAngle(_arpPointerAngle(t.clientX, t.clientY));
+  e.preventDefault();
+}
+function _arpEnd() { _arpDragging = false; }
+// Souris : le drag peut sortir du cercle en cours de route (doigt/souris
+// glissant plus vite que le rayon) — écoute sur window, pas seulement sur
+// l'anneau, comme les autres poignées de glisser de l'app.
+window.addEventListener('mousemove', _arpMove);
+window.addEventListener('mouseup', _arpEnd);
+
+function _arpReschedule() {
+  clearTimeout(_arpTimer); _arpTimer = null;
+  if (!ARPEGGIATOR_STATE.on || !flowing) return;
+  _arpTimer = setTimeout(_arpTick, 1000 / ARPEGGIATOR_STATE.rate);
+}
+function _arpTick() {
+  _arpTimer = null;
+  if (!ARPEGGIATOR_STATE.on || !flowing) return;
+  const candidates = [];
+  for (let i = 0; i < 6; i++) { if (!mutedOscs[PAIRS[i].pingala.id]) candidates.push(i); }
+  if (!candidates.length) candidates.push(MASTER_IDX); // repli : rien d'autre d'actif, on anime le maître
+  _arpStepIdx = (_arpStepIdx + 1) % candidates.length;
+  _arpAccent(candidates[_arpStepIdx]);
+  _arpPulseBall();
+  _arpReschedule(); // se replanifie avec le rate courant (peut avoir changé pendant le pas précédent)
+}
+// Accent de volume bref (jamais un mute/démute sec) — durée bornée pour
+// rester net même aux vitesses rapides.
+function _arpAccent(i) {
+  const pair = PAIRS[i];
+  const np = nodes[pair.pingala.id], ni = nodes[pair.ida.id];
+  const dur = Math.min(0.32, Math.max(0.06, 0.85 / ARPEGGIATOR_STATE.rate));
+  if (np) { const base = pair.pingala.vol; safeRamp(np.g.gain, Math.min(1, base * 1.4), dur * 0.35); setTimeout(() => safeRamp(np.g.gain, base, dur * 0.65), dur * 350); }
+  if (ni) { const base = pair.ida.vol;     safeRamp(ni.g.gain, Math.min(1, base * 1.4), dur * 0.35); setTimeout(() => safeRamp(ni.g.gain, base, dur * 0.65), dur * 350); }
+}
+function _arpPulseBall() {
+  const ball = document.getElementById('arpBall'); if (!ball) return;
+  ball.classList.add('arp-pulse');
+  setTimeout(() => ball.classList.remove('arp-pulse'), 160);
+}
+// Visible seulement en mode simple (sphère centrale seule) — appelé par
+// toggleAdvanced/_loadAdvanced/init. Recalcule aussi la position de la
+// bille (le conteneur peut avoir changé de taille, ex. rotation d'écran).
+function _arpUpdateVisibility() {
+  const el = document.getElementById('arpFloat'); if (!el) return;
+  const simple = document.body.classList.contains('mode-simple');
+  el.classList.toggle('arp-visible', simple);
+  if (simple) _arpUpdateBallPosition(ARPEGGIATOR_STATE.angle);
+}
+window.addEventListener('resize', () => { if (document.body.classList.contains('mode-simple')) _arpUpdateBallPosition(ARPEGGIATOR_STATE.angle); });
 
 // ── #16 (roadmap) : sub-drone d'ancrage optionnel ───────────────────
 // Pad grave fixe (racine ÷ 2), volume très bas, jamais touché par le jeu
@@ -6376,32 +6574,10 @@ function setMasterFreq(f) {
   _retuneSubDrone(); // #16 (roadmap)
   saveState();
 }
-// #40/#52 : cellule violette du dock — saisie directe de la fréquence maître.
-// Le bouton "Valider" a été retiré (#52) : Entrée (clavier) ou perte de focus
-// appliquent déjà la saisie via _purpleFreqValidate, les pas -9/+9 s'appliquent
-// immédiatement — ce bouton était redondant.
-// #124 : le pas ±9 reste un pas en Hz (nudge musical inchangé) — seul
-// l'affichage dans le champ bascule en Miaow ; on repart toujours de
-// masterFreq (état validé), jamais de inp.value qui peut être un Miaow
-// non-committé.
-function _purpleFreqStep(delta) {
-  const next = Math.round(Math.max(F_MIN, Math.min(F_MAX, masterFreq + delta)));
-  setMasterFreq(next);
-  const inp = document.getElementById('dcell-purple-input');
-  if (inp) inp.value = UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(2) : masterFreq;
-}
-function _purpleFreqValidate() {
-  const inp = document.getElementById('dcell-purple-input');
-  const fallback = UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(2) : masterFreq;
-  if (!inp || inp.value === '' || isNaN(parseFloat(inp.value))) { if (inp) inp.value = fallback; return; }
-  const raw = parseFloat(inp.value);
-  const hz  = UNIT_MODE === 'miaow' ? miaowToHz(raw) : raw;
-  setMasterFreq(Math.round(hz));
-  inp.value = UNIT_MODE === 'miaow' ? hzToMiaow(masterFreq).toFixed(2) : masterFreq;
-}
-function _purpleFreqKey(e) {
-  if (e.key === 'Enter') { e.preventDefault(); _purpleFreqValidate(); e.target.blur(); }
-}
+// #169 : cellule violette (_purpleFreqStep/_purpleFreqKey/_purpleFreqValidate)
+// retirée définitivement — la fréquence maître reste réglable par le tap
+// direct sur la sphère centrale (openFreqEdit) et le champ "Maître" du
+// panneau Effet Audio → Réglages avancés (master-input/masterStep).
 
 function deltaStep(delta) {
   setGlobalDelta(Math.round(Math.max(DELTA_MIN, Math.min(DELTA_MAX, globalDelta + delta)) * 100) / 100);
@@ -8575,7 +8751,8 @@ function _doSave() {
       randOpts: { ...RAND_OPTS },
       fluxMuted: FLUX_MUTED,
       bowlPulse: BOWL_STATE.on, // #150 : fireworksIgnition est déjà couvert par randOpts (spread ci-dessus)
-      retourMode: RETOUR_MODE // #166
+      retourMode: RETOUR_MODE, // #166
+      arpAngle: ARPEGGIATOR_STATE.angle // #169
     }));
   } catch(e) {}
 }
@@ -8650,6 +8827,16 @@ function loadState() {
     // ci-dessus), le LFO doux par paire est réattaché séparément dans
     // startFlow() une fois les nodes prêts (cf. commentaire #166 là-bas).
     if (typeof s.retourMode==='boolean') RETOUR_MODE = s.retourMode;
+    // #169 : angle restauré, mais le calcul rate/on (_arpSetAngle) est
+    // différé — au chargement le DOM (#arpRingSvg) n'a pas encore de
+    // taille réelle (getBoundingClientRect renverrait 0). Positionnement
+    // réel fait par _arpUpdateVisibility (appelée depuis _loadAdvanced,
+    // déjà après le premier layout).
+    if (typeof s.arpAngle==='number' && s.arpAngle>=0 && s.arpAngle<360) {
+      ARPEGGIATOR_STATE.angle = s.arpAngle;
+      ARPEGGIATOR_STATE.rate = _arpAngleToRate(s.arpAngle);
+      ARPEGGIATOR_STATE.on = ARPEGGIATOR_STATE.rate > 0;
+    }
   } catch(e) {}
 }
 
@@ -9132,6 +9319,7 @@ function toggleAdvanced() {
   const b = document.getElementById('btn-advanced');
   if (b) { b.classList.toggle('on', goAdvanced); const s=b.querySelector('span'); if(s) s.textContent = 'Mode avancé (6 sphères) : ' + (goAdvanced ? 'ON' : 'OFF'); }
   buildVesicaPairs();
+  if (typeof _arpUpdateVisibility === 'function') _arpUpdateVisibility(); // #169
 }
 function _loadAdvanced() {
   let adv = false;
@@ -9141,6 +9329,7 @@ function _loadAdvanced() {
     const b = document.getElementById('btn-advanced');
     if (b) { b.classList.add('on'); const s=b.querySelector('span'); if(s) s.textContent='Mode avancé (6 sphères) : ON'; }
   }
+  if (typeof _arpUpdateVisibility === 'function') _arpUpdateVisibility(); // #169
 }
 
 // #36 mode visuel "lite" : coupe le dessin du métatron (CPU) pour les appareils faibles
@@ -9894,7 +10083,10 @@ function setFluxOffsetX(px) {
   _fluxLayoutPersist();
 }
 function setFluxOffsetY(px) {
-  px = Math.max(-80, Math.min(150, parseInt(px) || 0));
+  // #169 : borne basse étendue (-80→-112) — le bouton, désormais dissocié
+  // de tout ce qu'il portait sous lui (cellule violette retirée), peut
+  // descendre jusqu'au ras du dock plutôt que de s'arrêter à mi-hauteur.
+  px = Math.max(-112, Math.min(150, parseInt(px) || 0));
   document.documentElement.style.setProperty('--flux-dy', px + 'px');
   const v = document.getElementById('cr-flux-dy-v'); if (v) v.textContent = px + 'px';
   const sl = document.getElementById('cr-flux-dy'); if (sl && +sl.value !== px) sl.value = px;
