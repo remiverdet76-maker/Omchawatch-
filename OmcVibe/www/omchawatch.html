@@ -98,11 +98,11 @@ canvas{display:block;}
 }
 #fs-btn:hover{background:rgba(140,80,240,.35);color:var(--gold);}
 
-/* ── #166 : BOUTON MODE DÉTOUR (OmcVibe) ── */
+/* ── #166 : BOUTON MODE RETOUR (OmcVibe) ── */
 /* #bar (mode-switch 432/15552/🔒) occupe déjà toute la largeur en bas
    (position:fixed;bottom:0;height:38px) — posé au-dessus (bottom:44px),
    pas à la même hauteur, pour ne jamais le chevaucher. */
-#detour-btn{
+#retour-btn{
   position:fixed;bottom:44px;left:14px;height:30px;padding:0 12px;
   background:rgba(100,60,200,.22);border:1px solid rgba(160,96,240,.40);
   border-radius:15px;cursor:pointer;
@@ -110,7 +110,7 @@ canvas{display:block;}
   font-family:'Cinzel',serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
   color:var(--textS);transition:all .25s;z-index:200;
 }
-#detour-btn:hover,#detour-btn.on{background:rgba(140,80,240,.35);color:var(--gold);}
+#retour-btn:hover,#retour-btn.on{background:rgba(140,80,240,.35);color:var(--gold);}
 
 /* ── PANNEAU MENU ── */
 #panel{
@@ -353,14 +353,14 @@ body.bg-retouche #panel,body.bg-retouche #menu-btn{opacity:.25;pointer-events:no
 <button id="menu-btn" onclick="togglePanel()">≡</button>
 <button id="fs-btn" onclick="toggleFullscreen()" title="Plein écran">⤢</button>
 
-<!-- #166 : Mode Détour OmcVibe — accessible directement depuis l'horloge.
+<!-- #166 : Mode Retour OmcVibe — accessible directement depuis l'horloge.
      Embarqué (cas normal : ouvert depuis le dock OmcVibe, cf. chaWatchOpen)
      → active le mode sur l'instance déjà en cours puis referme l'overlay,
-     via parent._omcVibeDetourFromWatch() (même mécanisme que
+     via parent._omcVibeRetourFromWatch() (même mécanisme que
      parent._closeModuleOverlay() déjà utilisé ailleurs dans l'app).
      Autonome (ouvert seul depuis le lanceur, aucun OmcVibe en cours) →
      ouvre OmcVibe avec le mode pré-activé au démarrage. -->
-<button id="detour-btn" onclick="omcVibeDetour()" title="Mode Détour OmcVibe — anime doucement la zone 288-432Hz">Détour</button>
+<button id="retour-btn" onclick="omcVibeRetour()" title="Mode Retour OmcVibe — anime doucement la zone 288-432Hz">Retour</button>
 
 <!-- PANNEAU -->
 <div id="panel">
@@ -824,19 +824,19 @@ function setTab(name){
   });
 }
 
-// #166 : Mode Détour — bouton dédié de l'horloge, cf. index.html
-// (DETOUR_MODE/activateDetourMode) pour le détail du LFO doux par paire +
+// #166 : Mode Retour — bouton dédié de l'horloge, cf. index.html
+// (RETOUR_MODE/activateRetourMode) pour le détail du LFO doux par paire +
 // LFO détune Hz (>288Hz) que ce mode active dans OmcVibe.
-function omcVibeDetour(){
-  if (window.self !== window.top && typeof parent._omcVibeDetourFromWatch === 'function') {
+function omcVibeRetour(){
+  if (window.self !== window.top && typeof parent._omcVibeRetourFromWatch === 'function') {
     // Cas normal : horloge ouverte en overlay depuis OmcVibe (cf.
     // chaWatchOpen dans index.html) — le binaural tourne déjà en dessous,
     // même mécanisme que parent._closeModuleOverlay() déjà utilisé ailleurs.
-    parent._omcVibeDetourFromWatch();
+    parent._omcVibeRetourFromWatch();
   } else {
     // Horloge ouverte seule depuis le lanceur (aucun OmcVibe en cours) —
     // ouvre OmcVibe avec le mode pré-activé dès le démarrage du flux.
-    location.href = 'index.html?detour=1';
+    location.href = 'index.html?retour=1';
   }
 }
 
