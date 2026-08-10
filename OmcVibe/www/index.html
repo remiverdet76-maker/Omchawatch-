@@ -1094,31 +1094,49 @@ body.vis-lite #arpBall.arp-pulse{ box-shadow:0 0 12px rgba(255,225,120,.8); } /*
 .dcell-extra-flux:hover{ transform:scale(1.12); }
 .dcell-extra-flux:active{ transform:scale(.88); }
 
-/* #169 : halo arc-en-ciel — derrière l'aura blanche, plus grand qu'elle,
-   pulsation douce indépendante. La couleur tourne en continu (filter:
-   hue-rotate sur un dégradé multicolore) : jamais deux instants identiques,
-   d'où "aléatoire" — un vrai RNG JS aurait forcé un cycle de re-render
-   permanent (perf) pour un résultat perçu de toute façon comme continu ;
-   une animation CSS déterministe donne le même ressenti pour un coût nul. */
+/* #169/#173 : halo arc-en-ciel — derrière l'aura blanche, plus grand
+   qu'elle, pulsation douce indépendante.
+   #173 (perf) : la V1 animait `filter` (hue-rotate) en continu — un
+   filter animé force un repaint/rastérisation à CHAQUE frame (contrairement
+   à transform/opacity, gérés par le seul compositeur), tournait en
+   PERMANENCE dès l'app ouverte (jamais lié à l'état Flux on/off), et
+   était de surcroît invisible pour le garde-fou anti-craquement déjà en
+   place (_perfAutoAdapt) qui ne surveille que la boucle canvas — ce
+   halo pouvait donc affamer le thread audio sans que rien ne puisse
+   jamais s'en rendre compte. Corrigé en séparant sur 2 éléments :
+   - le halo lui-même (`filter:blur` STATIQUE, jamais animé → calculé
+     une seule fois, la couche peut ensuite être bougée par le GPU sans
+     recalcul) porte le pouls d'échelle/opacité (transform+opacity =
+     compositeur pur) ;
+   - un enfant interne (`.flux-rainbow-halo-spin`) porte la SEULE
+     rotation (transform, compositeur pur) du dégradé conique — même
+     ressenti de couleur qui tourne, sans jamais retoucher au filtre. */
 .flux-rainbow-halo{
-  position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);
+  position:absolute;left:50%;top:44%;transform:translate(-50%,-50%); /* fallback statique si l'animation est coupée (vis-lite) */
   width:230px;height:230px;border-radius:50%;pointer-events:none;z-index:0;
+  overflow:hidden;
+  filter:blur(22px) saturate(1.3); /* statique — un seul calcul, jamais par frame */
+  opacity:.4;
+  animation:fluxRainbowPulse 3.2s ease-in-out infinite;
+  will-change:transform,opacity;
+}
+.flux-rainbow-halo-spin{
+  position:absolute;inset:0;border-radius:50%;
   background:conic-gradient(from 0deg,
     #ff6b6b,#ffd166,#8cf5a0,#6bd6ff,#a78bfa,#ff6bd6,#ff6b6b);
-  filter:blur(22px) saturate(1.3);
-  opacity:.4;
-  animation:fluxRainbowSpin 14s linear infinite, fluxRainbowPulse 3.2s ease-in-out infinite;
-  will-change:transform,opacity,filter;
+  animation:fluxRainbowSpin 14s linear infinite;
+  will-change:transform;
 }
 @keyframes fluxRainbowSpin{
-  0%{ filter:blur(22px) saturate(1.3) hue-rotate(0deg); }
-  100%{ filter:blur(22px) saturate(1.3) hue-rotate(360deg); }
+  0%{ transform:rotate(0deg); }
+  100%{ transform:rotate(360deg); }
 }
 @keyframes fluxRainbowPulse{
   0%,100%{ transform:translate(-50%,-50%) scale(.92); opacity:.28; }
   50%{ transform:translate(-50%,-50%) scale(1.08); opacity:.5; }
 }
 body.vis-lite .flux-rainbow-halo{ animation:none;opacity:.32; }
+body.vis-lite .flux-rainbow-halo-spin{ animation:none; }
 
 /* Aura blanche douce, respire en synchro avec la fréquence maître —
    toujours visible (même flux coupé) : c'est elle qui dit "c'est ici que
@@ -2185,7 +2203,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
      tout le reste — libre de se déplacer verticalement (cf. --flux-dy,
      Créateur) jusqu'en bas du dock sans rien entraîner avec lui. -->
 <div id="dcFluxFloat">
-  <div class="flux-rainbow-halo" id="fluxRainbow" aria-hidden="true"></div>
+  <div class="flux-rainbow-halo" id="fluxRainbow" aria-hidden="true"><div class="flux-rainbow-halo-spin"></div></div>
   <div class="flux-aura" id="fluxAura" aria-hidden="true"></div>
   <button class="dcell-flux canva-button" id="dcFlux" title="Tap : nouveau jeu aléatoire · Appui long : Flux on/off">
     <img class="flux-yy" id="flux-icon" src="img/random-game-logo.jpg" alt="" aria-hidden="true">
@@ -2194,38 +2212,106 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 </div>
 
 
-<!-- #172 : motif "lotus minimaliste" — écho discret du fond mandala en
-     fractale, réutilisé sur chaque sphère satellite (cf. buildVesicaPairs).
-     Défini UNE fois ici (symbole SVG caché, jamais redessiné par JS) puis
-     simplement cloné via <use> et recoloré par sphère avec la couleur de
-     SA bande de fréquence réelle (FREQ_BANDS, déjà utilisée pour le halo
-     — même palette, donc "dans le thème" par construction, pas une
-     nouvelle palette inventée). Deux couronnes de pétales (grande +
-     petite, décalée de 30°) partant d'un léger retrait du centre plutôt
-     que du centre exact : garde un petit disque dégagé au milieu pour
-     que le chiffre de fréquence reste lisible par-dessus, sans jamais
-     redessiner à chaque frame (juste du CSS/SVG statique, coût nul —
-     leçon d'"OmcV Trip"). -->
+<!-- #172/#174 : motif "lotus" — écho du fond mandala en fractale, réutilisé
+     sur chaque sphère satellite (cf. buildVesicaPairs). Défini UNE fois ici
+     (symbole SVG caché, jamais redessiné par JS) puis simplement cloné via
+     <use> et recoloré par sphère avec la couleur de SA bande de fréquence
+     réelle (FREQ_BANDS, déjà utilisée pour le halo — même palette, "dans
+     le thème" par construction).
+     #174 : refonte "plus lotus" — 3 couronnes de pétales (8 grands + 8
+     moyens décalés de 22.5° + 6 petits) au lieu de 2, pour une fleur plus
+     dense/réaliste. Remplissage en DEUX tons par pétale (base plus large
+     teintée --petal-dark + cœur de pétale plus étroit teinté
+     --petal-light superposé) pour un "fond couleur organique rempli"
+     façon dégradé, sans passer par un vrai <radialGradient> SVG : un
+     gradient partagé référencé via url(#id) vit dans le <defs> GLOBAL,
+     hors de l'arbre par-sphère où --petal-* sont posées (cf.
+     buildVesicaPairs) — ses <stop> ne peuvent alors jamais hériter la
+     bonne couleur (repéré en test : pétales rendus délavés/blancs au
+     lieu de la teinte attendue). Les <path>/<circle> eux, CLONÉS par
+     <use>, héritent correctement de --petal-* depuis le point d'usage —
+     donc uniquement des tons pleins ici, jamais de fill="url(...)".
+     Cœur élargi en 3 disques concentriques d'opacité croissante
+     (--petal-center, ~72% vers le noir) pour simuler un fondu doux et
+     faire contraste avec le chiffre de fréquence posé par-dessus
+     (lisibilité, même logique que le "hudPlate" du prototype 3D).
+     Toujours du SVG statique pur, jamais redessiné par JS — coût nul,
+     leçon d'"OmcV Trip". -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
   <defs>
     <symbol id="lotusMotif" viewBox="0 0 100 100">
-      <g fill="currentColor" fill-opacity=".22" stroke="currentColor" stroke-opacity=".85" stroke-width="1.1">
-        <path d="M50,44 Q38,26 50,5 Q62,26 50,44 Z" transform="rotate(0 50 50)"></path>
-        <path d="M50,44 Q38,26 50,5 Q62,26 50,44 Z" transform="rotate(60 50 50)"></path>
-        <path d="M50,44 Q38,26 50,5 Q62,26 50,44 Z" transform="rotate(120 50 50)"></path>
-        <path d="M50,44 Q38,26 50,5 Q62,26 50,44 Z" transform="rotate(180 50 50)"></path>
-        <path d="M50,44 Q38,26 50,5 Q62,26 50,44 Z" transform="rotate(240 50 50)"></path>
-        <path d="M50,44 Q38,26 50,5 Q62,26 50,44 Z" transform="rotate(300 50 50)"></path>
+      <!-- couronne extérieure : 8 grands pétales, base sombre + cœur clair -->
+      <g>
+        <g fill="var(--petal-dark, currentColor)" fill-opacity=".62" stroke="var(--petal-dark, currentColor)" stroke-opacity=".7" stroke-width=".9">
+          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(0 50 50)"></path>
+          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(45 50 50)"></path>
+          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(90 50 50)"></path>
+          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(135 50 50)"></path>
+          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(180 50 50)"></path>
+          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(225 50 50)"></path>
+          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(270 50 50)"></path>
+          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(315 50 50)"></path>
+        </g>
+        <g fill="var(--petal-light, currentColor)" fill-opacity=".55">
+          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(0 50 50)"></path>
+          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(45 50 50)"></path>
+          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(90 50 50)"></path>
+          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(135 50 50)"></path>
+          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(180 50 50)"></path>
+          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(225 50 50)"></path>
+          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(270 50 50)"></path>
+          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(315 50 50)"></path>
+        </g>
       </g>
-      <g fill="currentColor" fill-opacity=".32" stroke="currentColor" stroke-opacity=".9" stroke-width="1">
-        <path d="M50,46 Q43,35 50,21 Q57,35 50,46 Z" transform="rotate(30 50 50)"></path>
-        <path d="M50,46 Q43,35 50,21 Q57,35 50,46 Z" transform="rotate(90 50 50)"></path>
-        <path d="M50,46 Q43,35 50,21 Q57,35 50,46 Z" transform="rotate(150 50 50)"></path>
-        <path d="M50,46 Q43,35 50,21 Q57,35 50,46 Z" transform="rotate(210 50 50)"></path>
-        <path d="M50,46 Q43,35 50,21 Q57,35 50,46 Z" transform="rotate(270 50 50)"></path>
-        <path d="M50,46 Q43,35 50,21 Q57,35 50,46 Z" transform="rotate(330 50 50)"></path>
+      <!-- couronne médiane : 8 pétales moyens, décalés de 22.5° -->
+      <g>
+        <g fill="var(--petal-dark, currentColor)" fill-opacity=".66" stroke="var(--petal-dark, currentColor)" stroke-opacity=".72" stroke-width=".8">
+          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(22.5 50 50)"></path>
+          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(67.5 50 50)"></path>
+          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(112.5 50 50)"></path>
+          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(157.5 50 50)"></path>
+          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(202.5 50 50)"></path>
+          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(247.5 50 50)"></path>
+          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(292.5 50 50)"></path>
+          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(337.5 50 50)"></path>
+        </g>
+        <g fill="var(--petal-light, currentColor)" fill-opacity=".6">
+          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(22.5 50 50)"></path>
+          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(67.5 50 50)"></path>
+          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(112.5 50 50)"></path>
+          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(157.5 50 50)"></path>
+          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(202.5 50 50)"></path>
+          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(247.5 50 50)"></path>
+          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(292.5 50 50)"></path>
+          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(337.5 50 50)"></path>
+        </g>
       </g>
-      <circle cx="50" cy="50" r="4.2" fill="currentColor" fill-opacity=".55"></circle>
+      <!-- couronne intérieure : 6 petits pétales, resserrés autour du cœur -->
+      <g>
+        <g fill="var(--petal-dark, currentColor)" fill-opacity=".7" stroke="var(--petal-dark, currentColor)" stroke-opacity=".75" stroke-width=".7">
+          <path d="M50,47 Q43,34 50,29 Q57,34 50,47 Z" transform="rotate(0 50 50)"></path>
+          <path d="M50,47 Q43,34 50,29 Q57,34 50,47 Z" transform="rotate(60 50 50)"></path>
+          <path d="M50,47 Q43,34 50,29 Q57,34 50,47 Z" transform="rotate(120 50 50)"></path>
+          <path d="M50,47 Q43,34 50,29 Q57,34 50,47 Z" transform="rotate(180 50 50)"></path>
+          <path d="M50,47 Q43,34 50,29 Q57,34 50,47 Z" transform="rotate(240 50 50)"></path>
+          <path d="M50,47 Q43,34 50,29 Q57,34 50,47 Z" transform="rotate(300 50 50)"></path>
+        </g>
+        <g fill="var(--petal-light, currentColor)" fill-opacity=".65">
+          <path d="M50,45.5 Q44.5,35 50,31 Q55.5,35 50,45.5 Z" transform="rotate(0 50 50)"></path>
+          <path d="M50,45.5 Q44.5,35 50,31 Q55.5,35 50,45.5 Z" transform="rotate(60 50 50)"></path>
+          <path d="M50,45.5 Q44.5,35 50,31 Q55.5,35 50,45.5 Z" transform="rotate(120 50 50)"></path>
+          <path d="M50,45.5 Q44.5,35 50,31 Q55.5,35 50,45.5 Z" transform="rotate(180 50 50)"></path>
+          <path d="M50,45.5 Q44.5,35 50,31 Q55.5,35 50,45.5 Z" transform="rotate(240 50 50)"></path>
+          <path d="M50,45.5 Q44.5,35 50,31 Q55.5,35 50,45.5 Z" transform="rotate(300 50 50)"></path>
+        </g>
+      </g>
+      <!-- cœur contrastant — 3 disques concentriques (fondu simulé sans
+           <radialGradient>) de plus en plus sombres/opaques vers le
+           centre, pour porter le chiffre de fréquence par-dessus -->
+      <circle cx="50" cy="50" r="21" fill="var(--petal-center, currentColor)" fill-opacity=".38"></circle>
+      <circle cx="50" cy="50" r="16" fill="var(--petal-center, currentColor)" fill-opacity=".62"></circle>
+      <circle cx="50" cy="50" r="10.5" fill="var(--petal-center, currentColor)" fill-opacity=".88"></circle>
+      <circle cx="50" cy="50" r="14.5" fill="none" stroke="var(--petal-light, currentColor)" stroke-opacity=".55" stroke-width="1"></circle>
     </symbol>
   </defs>
 </svg>
@@ -5351,15 +5437,33 @@ function _arpStart(e) {
   document.getElementById('arpBall')?.classList.add('arp-pulse');
   e.preventDefault();
 }
+// #173 (perf) : mousemove/touchmove peuvent arriver bien plus vite que
+// l'écran ne rafraîchit (certains tactiles Android échantillonnent à
+// 120Hz+) — sans limitation, chaque mouvement du doigt envoyait un
+// setTargetAtTime() immédiat au thread audio, capable de saturer la
+// file d'automation en cas de glisser rapide. On coalesce désormais en
+// UNE seule mise à jour par frame (requestAnimationFrame) : ne garde
+// que la dernière position connue, le geste reste tout aussi précis à
+// l'œil/l'oreille (60fps largement suffisant pour un fader) sans
+// jamais spammer l'audio.
+let _arpPendingY = null, _arpRafPending = false;
 function _arpMove(e) {
   if (!_arpDragging) return;
   const t = e.touches ? e.touches[0] : e;
-  _arpSetFx(_arpClientYToFx(t.clientY), false);
+  _arpPendingY = t.clientY;
+  if (!_arpRafPending) {
+    _arpRafPending = true;
+    requestAnimationFrame(() => {
+      _arpRafPending = false;
+      if (_arpDragging && _arpPendingY != null) _arpSetFx(_arpClientYToFx(_arpPendingY), false);
+    });
+  }
   e.preventDefault();
 }
 function _arpEnd() {
   if (!_arpDragging) return;
   _arpDragging = false;
+  _arpPendingY = null;
   document.getElementById('arpBall')?.classList.remove('arp-pulse');
   _arpTeardownVoice();
 }
@@ -6047,6 +6151,7 @@ function buildVesicaPairs() {
     const band  = bandColorFor(pF);
     const c     = band.c;
     const cDark = shadeHex(c, 0.28);
+    const cCenter = shadeHex(c, 0.72); // #174 : cœur du lotus, bien plus sombre que le pétale — contraste avec le chiffre
     // #155 : sticker personnalisé (Créateur) — remplace le fond plat par
     // l'image importée (cadrage/zoom/filtre réglables), le halo/bordure de
     // bande reste identique tout autour.
@@ -6061,10 +6166,11 @@ function buildVesicaPairs() {
     vp.id = 'vp' + i;
     vp.style.left = px + 'px';
     vp.style.top  = py + 'px';
-    // #172 : motif lotus minimaliste, coloré à la bande de fréquence réelle
-    // du canal — désactivé si un sticker personnalisé (Créateur) est posé,
+    // #172/#174 : motif lotus, coloré à la bande de fréquence réelle du
+    // canal (3 tons — clair/foncé/cœur, cf. les <radialGradient> du
+    // symbole) — désactivé si un sticker personnalisé (Créateur) est posé,
     // pour ne jamais concurrencer une image choisie par l'utilisateur.
-    const _lotusSvg = _hasSt ? '' : `<svg class="vp-lotus" viewBox="0 0 100 100" style="color:${c}"><use href="#lotusMotif"></use></svg>`;
+    const _lotusSvg = _hasSt ? '' : `<svg class="vp-lotus" viewBox="0 0 100 100" style="color:${c};--petal-light:${c};--petal-dark:${cDark};--petal-center:${cCenter}"><use href="#lotusMotif"></use></svg>`;
     vp.innerHTML = `
       <div class="vp-p ${isMutedP?'vp-muted':''} ${flowing&&!isMutedP?'vp-live':''}"
            id="vpc-p${i}"
