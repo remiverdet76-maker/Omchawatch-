@@ -4954,18 +4954,31 @@ function setBreathAnchor(v) {
   saveState();
 }
 
-// ── #84 : Évolution harmonique douce ────────────────────────────────
+// ── #84/#168 : Évolution harmonique douce — ÉCHANGE SILENCIEUX ───────
 // Différent du tirage aléatoire (triggerMagicAuto, instantané et complet) :
 // ici, une SEULE paire satellite (jamais le maître, jamais plusieurs à la
-// fois) dérive très légèrement de registre (±12%, jamais un saut de
-// créneau entier) à intervalle long, avec une glisse de plusieurs
-// secondes (tuneOsc rampDur) — assez lent pour ne jamais s'entendre comme
-// un "changement", juste une respiration harmonique du jeu dans le temps.
-// Paires verrouillées/mute jamais touchées ; si le résultat sortirait de
-// la plage active (freqMin-freqMax), on ne fait rien ce cycle-là plutôt
+// fois) change de registre à intervalle long. Paires verrouillées/mute
+// jamais touchées ; si la cible sortirait de la plage active
+// (freqMin-freqMax) même après repli, on ne fait rien ce cycle-là plutôt
 // que de forcer un retour brusque en bord de plage.
+//
+// #168 : l'ancienne version glissait la fréquence en direct
+// (exponentialRampToValueAtTime sur 6-10s) — un vrai glissando continu,
+// entendu comme une sirène qui traverse des fréquences dissonantes par
+// rapport aux 5 autres voix encore fixes (signalé désagréable ~80% du
+// temps). Remplacé par un "échange silencieux" : la paire descend à zéro
+// (fondu, fréquence intouchée), est retunée INSTANTANÉMENT pendant
+// qu'elle est inaudible (donc jamais de pente entendue), puis remonte à
+// la nouvelle hauteur. Cible = octave (×2 ou ÷2) + un pas de 36/72/108Hz
+// (grille déjà utilisée ailleurs, cf. MIN_FREQ_SPACING_HZ), repliée dans
+// la plage active — un vrai saut de couleur harmonique, pas une dérive
+// de quelques %. Un flourish léger et TEMPORAIRE (Sinus Duo + LFO filtre,
+// tous deux retirés/restaurés à la fin de la transition, aucune trace
+// laissée) accompagne la fenêtre pour que le changement se sente comme
+// un souffle plutôt qu'un silence sec suivi d'une réapparition.
 const ORGANIC_EVO_STATE = { on: true, intervalSec: 45 };
 let _organicEvoTimer = null;
+const _organicEvoBusy = {}; // pairIdx → true tant qu'une transition est en cours (jamais 2 sur la même paire)
 function _armOrganicEvolution() {
   clearInterval(_organicEvoTimer); _organicEvoTimer = null;
   if (!ORGANIC_EVO_STATE.on || !flowing) return;
@@ -4975,6 +4988,7 @@ function _organicEvoTick() {
   if (!flowing) return;
   const candidates = [];
   for (let i = 0; i < 6; i++) {
+    if (_organicEvoBusy[i]) continue;
     if (typeof isLocked === 'function' && isLocked(i)) continue;
     if (mutedOscs[PAIRS[i].pingala.id]) continue;
     candidates.push(i);
@@ -4984,16 +4998,79 @@ function _organicEvoTick() {
   const pair = PAIRS[i];
   const rMin = Math.max(F_MIN, Math.min(RAND_OPTS.freqMin, F_MAX));
   const rMax = Math.max(rMin + 1, Math.min(F_MAX, RAND_OPTS.freqMax));
-  const factor = 0.88 + Math.random() * 0.24; // ±12%, jamais un saut brusque
-  const nextN = Math.max(0.1, Math.min(N_MAX, pair.pingala.n * factor));
-  const nextF = masterFreq * RATIO_OPTS[pair.pingala.ri].r * nextN;
-  if (nextF < rMin || nextF > rMax) return; // hors plage : on saute ce cycle, pas de correction brusque
-  pair.pingala.n = nextN;
-  const glideS = 6 + Math.random() * 4; // 6-10s, imperceptible en cours de route
-  tuneOsc(pair.pingala.id, calcPFreq(i), glideS);
-  tuneOsc(pair.ida.id, calcIFreq(i), glideS);
-  if (typeof patchRandomTable === 'function') patchRandomTable();
-  saveState();
+
+  // Cible : octave (×2 ou ÷2) + un pas de {0,36,72,108}Hz, repliée par
+  // pas de 36Hz si elle déborde — jamais de saut sec en bord de plage.
+  const curF = calcPFreq(i);
+  const octave = Math.random() < 0.5 ? 2 : 0.5;
+  const step = [0, 36, 72, 108][Math.floor(Math.random() * 4)] * (Math.random() < 0.5 ? -1 : 1);
+  let targetF = curF * octave + step;
+  let guard = 0;
+  while (targetF > rMax && guard++ < 12) targetF -= 36;
+  while (targetF < rMin && guard++ < 12) targetF += 36;
+  const nextN = Math.max(0.1, Math.min(N_MAX, targetF / (masterFreq * RATIO_OPTS[pair.pingala.ri].r)));
+  const checkF = masterFreq * RATIO_OPTS[pair.pingala.ri].r * nextN;
+  if (checkF < rMin || checkF > rMax) return; // hors plage même après repli : on saute ce cycle
+
+  _organicEvoTransition(i, nextN);
+}
+function _organicEvoTransition(i, nextN) {
+  const pair = PAIRS[i];
+  const pid = pair.pingala.id, iid = pair.ida.id;
+  const np = nodes[pid], ni = nodes[iid];
+  _organicEvoBusy[i] = true;
+  const FADE_OUT = 3 + Math.random() * 2, FADE_IN = 4 + Math.random() * 2; // 3-5s / 4-6s
+
+  // Flourish TEMPORAIRE (Sinus Duo, aucun nouveau nœud) — retiré à la fin.
+  const prevDualSine = typeof PAIR_DUALSINE[i] === 'number' ? PAIR_DUALSINE[i] : DUALSINE_DETUNE;
+  const flourishDetune = (Math.random() < 0.5 ? -1 : 1) * (18 + Math.random() * 24);
+  if (typeof _applyDualSineDetune === 'function') { _applyDualSineDetune(pid, flourishDetune); _applyDualSineDetune(iid, flourishDetune); }
+  // Flourish TEMPORAIRE (LFO filtre doux, ~10s max, auto-nettoyé — jamais
+  // un ajout permanent, contrairement à l'ancien essai "OmcV Trip").
+  const flourishDur = FADE_OUT + FADE_IN + 1;
+  const _flt1 = _organicEvoTempFilterLFO(pid, flourishDur);
+  const _flt2 = _organicEvoTempFilterLFO(iid, flourishDur);
+
+  if (np) safeRamp(np.g.gain, 0, FADE_OUT);
+  if (ni) safeRamp(ni.g.gain, 0, FADE_OUT);
+
+  setTimeout(() => {
+    // Retune INSTANTANÉ pendant que la paire est inaudible (gain à 0) —
+    // jamais de pente entendue, contrairement à l'ancien tuneOsc(...,6-10s).
+    pair.pingala.n = nextN;
+    tuneOsc(pid, calcPFreq(i), 0.05);
+    tuneOsc(iid, calcIFreq(i), 0.05);
+    if (typeof _applyDualSineDetune === 'function') { _applyDualSineDetune(pid, prevDualSine); _applyDualSineDetune(iid, prevDualSine); }
+    const np2 = nodes[pid], ni2 = nodes[iid];
+    if (np2) safeRamp(np2.g.gain, pair.pingala.vol, FADE_IN);
+    if (ni2) safeRamp(ni2.g.gain, pair.ida.vol, FADE_IN);
+    if (typeof patchRandomTable === 'function') patchRandomTable();
+    saveState();
+    setTimeout(() => { delete _organicEvoBusy[i]; }, FADE_IN * 1000);
+  }, FADE_OUT * 1000 + 200);
+}
+// LFO de cutoff léger et ÉPHÉMÈRE (jamais permanent) — même mécanique que
+// les LFO additifs déjà en place ailleurs (connecté sur node.flt.frequency,
+// n'écrase jamais un réglage manuel), mais avec une enveloppe d'amplitude
+// qui apparaît puis s'efface toute seule : à la fin de durationSec, il n'y
+// a plus ni gain, ni oscillateur — rien à nettoyer, rien qui traîne.
+function _organicEvoTempFilterLFO(id, durationSec) {
+  const node = nodes[id]; if (!node || !node.flt) return null;
+  try {
+    const c = audioCtx();
+    const base = node.flt.frequency.value || 4000;
+    const rate = 0.05 + Math.random() * 0.08;
+    const depth = Math.min(base * 0.2, 400);
+    const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = rate;
+    const dg = c.createGain(); dg.gain.value = 0;
+    lfo.connect(dg); dg.connect(node.flt.frequency);
+    lfo.start();
+    const now = c.currentTime;
+    dg.gain.setTargetAtTime(depth, now, 1.2);
+    dg.gain.setTargetAtTime(0, now + Math.max(0.5, durationSec - 2), 1.2);
+    setTimeout(() => { try { lfo.stop(); lfo.disconnect(); dg.disconnect(); } catch(e) {} }, durationSec * 1000 + 400);
+    return true;
+  } catch(e) { return null; }
 }
 function setOrganicEvolution(v) {
   ORGANIC_EVO_STATE.on = !!v;
