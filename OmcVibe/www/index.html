@@ -485,18 +485,14 @@ body{
 }
 #freq-input-master::-webkit-inner-spin-button,#freq-input-master::-webkit-outer-spin-button{-webkit-appearance:none;}
 
-/* #169/#171 : Arpégiateur tactile — déplacé de l'anneau autour de la
-   sphère vers un tiroir latéral gauche (plus précis, plus large, plus
-   simple à saisir qu'un arc fin). Poignée toujours visible, collée au
-   bord gauche, verticalement centrée ; tap pour ouvrir/fermer. Le
-   tiroir occupe 1/3 de la largeur d'écran (borné pour rester utilisable
-   sur tablette/desktop). IMPORTANT : le tiroir s'arrête AU-DESSUS du
-   dock (#bottom-dock, z-index:100, 154px/161px de haut) plutôt que de
-   passer par-dessus — sinon son bas (justement la zone "grave" du
-   fader) se ferait manger le toucher par les cellules du dock qui sont
-   posées plus haut en z-index. Le dock reste donc utilisable, tiroir
-   ouvert. */
-#arpDrawerHandle{
+/* #176 : Arpégiateur retiré, remplacé par un tiroir latéral gauche à 2
+   faders HORIZONTAUX : Maître (fréquence réelle du moteur, 54-432) et
+   Détune global (2e référence 54-432 — l'écart avec le maître, recalculé
+   à chaque glisser, retune tous les canaux actifs). Même conteneur/
+   poignée que l'ancien tiroir (position, ouverture, garde-fou dock —
+   cf. #171/#173) : seul le contenu change, une pile de 2 pistes
+   horizontales au lieu d'un unique fader vertical. */
+#fxDrawerHandle{
   position:fixed;left:0;top:50%;transform:translateY(-50%);
   width:22px;height:88px;border-radius:0 14px 14px 0;
   background:linear-gradient(135deg,rgba(255,214,120,.28),rgba(30,20,45,.55));
@@ -506,12 +502,12 @@ body{
   cursor:pointer;transition:left .32s cubic-bezier(.4,0,.2,1),opacity .2s;
   touch-action:none;
 }
-#arpDrawerHandle::before{
+#fxDrawerHandle::before{
   content:'';width:4px;height:34px;border-radius:3px;
   background:rgba(255,224,160,.75);box-shadow:0 0 6px rgba(255,200,100,.5);
 }
-body.arp-drawer-open #arpDrawerHandle{ left:min(33vw,260px); }
-#arpDrawer{
+body.fx-drawer-open #fxDrawerHandle{ left:min(33vw,260px); }
+#fxDrawer{
   position:fixed;left:0;top:0;bottom:154px;width:min(33vw,260px);
   min-width:128px;
   background:linear-gradient(160deg,rgba(18,12,28,.92),rgba(30,18,40,.88));
@@ -519,64 +515,52 @@ body.arp-drawer-open #arpDrawerHandle{ left:min(33vw,260px); }
   box-shadow:6px 0 26px rgba(0,0,0,.4);
   z-index:59;transform:translateX(-100%);
   transition:transform .32s cubic-bezier(.4,0,.2,1);
-  display:flex;flex-direction:column;align-items:center;
-  padding:min(6vh,32px) 0;backdrop-filter:blur(6px);
+  display:flex;flex-direction:column;align-items:stretch;justify-content:center;
+  gap:min(6vh,34px);
+  padding:0 16px;backdrop-filter:blur(6px);
 }
-body.arp-drawer-open #arpDrawer{ transform:translateX(0); }
-/* Piste du fader : verticale, occupe l'essentiel de la hauteur du
-   tiroir. Large bande de préhension invisible superposée à un trait
-   fin visible, même principe que l'ancien anneau. */
-#arpFaderTrack{
-  position:relative;flex:1 1 auto;width:64px;margin:18px 0 22px;
-  display:flex;justify-content:center;touch-action:none;cursor:grab;
+body.fx-drawer-open #fxDrawer{ transform:translateX(0); }
+.fx-fader{ display:flex;flex-direction:column;align-items:center;gap:8px; }
+.fx-fader-label{
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.62rem;
+  letter-spacing:.1em;text-transform:uppercase;color:rgba(255,224,170,.65);
 }
-#arpFaderTrack:active{ cursor:grabbing; }
-#arpFaderLine{
-  position:absolute;left:50%;top:0;bottom:0;width:3px;
-  transform:translateX(-50%);border-radius:3px;
-  background:linear-gradient(180deg,rgba(255,214,120,.55),rgba(255,255,255,.20));
+/* Piste horizontale, large bande de préhension (toute la hauteur de la
+   piste, pas seulement le trait visible) pour un glisser confortable. */
+.fx-fader-track{
+  position:relative;width:100%;height:36px;
+  display:flex;align-items:center;touch-action:none;cursor:grab;
 }
-/* Repères discrets haut (aigu) / bas (grave) — jamais de chiffre. */
-#arpFaderTrack::before{
-  content:'';position:absolute;left:50%;top:2%;width:10px;height:3px;
-  background:rgba(255,255,255,.32);border-radius:2px;transform:translateX(-50%);
+.fx-fader-track:active{ cursor:grabbing; }
+.fx-fader-line{
+  position:absolute;left:0;right:0;top:50%;height:3px;
+  transform:translateY(-50%);border-radius:3px;
+  background:linear-gradient(90deg,rgba(255,255,255,.18),rgba(255,214,120,.55),rgba(255,255,255,.18));
 }
-#arpFaderTrack::after{
-  content:'';position:absolute;left:50%;bottom:2%;width:10px;height:3px;
-  background:rgba(255,255,255,.32);border-radius:2px;transform:translateX(-50%);
+/* Repères discrets gauche (grave) / droite (aigu). */
+.fx-fader-track::before{
+  content:'';position:absolute;left:2%;top:50%;width:3px;height:10px;
+  background:rgba(255,255,255,.3);border-radius:2px;transform:translateY(-50%);
 }
-#arpBall{
-  position:absolute;width:26px;height:26px;border-radius:50%;left:50%;
+.fx-fader-track::after{
+  content:'';position:absolute;right:2%;top:50%;width:3px;height:10px;
+  background:rgba(255,255,255,.3);border-radius:2px;transform:translateY(-50%);
+}
+.fx-fader-ball{
+  position:absolute;top:50%;width:24px;height:24px;border-radius:50%;
   transform:translate(-50%,-50%);
   background:radial-gradient(circle at 35% 30%,#FFF6DE 0%,#FFD966 42%,#C9930E 100%);
-  box-shadow:0 0 9px rgba(255,215,90,.75),0 0 18px rgba(255,190,60,.35),inset 0 1px 2px rgba(255,255,255,.7);
+  box-shadow:0 0 9px rgba(255,215,90,.75),0 0 16px rgba(255,190,60,.35),inset 0 1px 2px rgba(255,255,255,.7);
   pointer-events:none;transition:box-shadow .18s,width .12s,height .12s;
-  will-change:top;
+  will-change:left;
 }
-#arpBall.arp-pulse{
-  width:30px;height:30px;
-  box-shadow:0 0 20px rgba(255,225,120,1),0 0 38px rgba(255,205,80,.65),inset 0 1px 3px rgba(255,255,255,.85);
+.fx-fader-ball.fx-fader-active{
+  width:28px;height:28px;
+  box-shadow:0 0 18px rgba(255,225,120,1),0 0 34px rgba(255,205,80,.65),inset 0 1px 3px rgba(255,255,255,.85);
 }
-body.vis-lite #arpBall.arp-pulse{ box-shadow:0 0 12px rgba(255,225,120,.8); } /* #23 : moins coûteux en mode léger */
-
-/* Octave +/- : deux boutons discrets sous le fader + rangée de puces
-   indiquant le décalage (jamais de chiffre, cf. consigne #169). */
-#arpOctaveRow{ display:flex;align-items:center;gap:14px; }
-.arp-oct-btn{
-  width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,214,120,.4);
-  background:radial-gradient(circle,rgba(255,214,120,.16) 0%,rgba(255,214,120,.04) 70%);
-  color:rgba(255,224,170,.92);font-size:20px;line-height:1;display:flex;
-  align-items:center;justify-content:center;cursor:pointer;user-select:none;
-  transition:background .15s,transform .1s;
-}
-.arp-oct-btn:active{ transform:scale(.9);background:rgba(255,214,120,.3); }
-#arpOctaveDots{ display:flex;gap:5px; }
-#arpOctaveDots span{
-  width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.18);
-  transition:background .2s,box-shadow .2s;
-}
-#arpOctaveDots span.arp-oct-on{
-  background:rgba(255,214,120,.95);box-shadow:0 0 6px rgba(255,200,100,.7);
+body.vis-lite .fx-fader-ball.fx-fader-active{ box-shadow:0 0 10px rgba(255,225,120,.8); } /* #23 : moins coûteux en mode léger */
+#fxDrawer .fx-fader:nth-child(2) .fx-fader-line{
+  background:linear-gradient(90deg,rgba(255,255,255,.18),rgba(140,255,220,.5),rgba(255,255,255,.18));
 }
 
 /* #165 : menu rapide (Random ratio/Solo/Verrouiller) supprimé — l'appui
@@ -1991,7 +1975,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   #dock-toggle-row.dock-up { bottom: 0 !important; }
   #bottom-dock.collapsed { transform: translateY(161px) !important; }
   #spectroid-bar { bottom: 161px !important; width: 80vw !important; }
-  #arpDrawer { bottom: 161px !important; } /* #171 : suit la hauteur mobile du dock */
+  #fxDrawer { bottom: 161px !important; } /* #171/#176 : suit la hauteur mobile du dock */
 
   .dcell { height: calc(64px * var(--dock-cell-scale,1)) !important; } /* #52 : +36% vs #32 (45px→61px) ; #154 : +3px ; #155 : réglable */
   .dcell-name { font-size: calc(13.12px * var(--dock-text-scale,1)) !important; } /* #72 : réduit, "Aléatoire"/"Paramètres" débordaient ; #165 : px×scale, pas rem */
@@ -2164,6 +2148,19 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   <div class="lch-title">OMCHA · UNIVERS 432</div>
   <div class="lch-sub">✦ Choisis ton module ✦</div>
   <div class="lch-cards">
+    <!-- #175 : carte "OmcVibe" manquante — le CSS (.lch-card.vibe) existait
+         déjà mais sans balise correspondante, rendant le lanceur incapable
+         de se refermer tout seul : _showLauncher() (raccourci dock #125)
+         le réaffiche par-dessus l'app déjà chargée, et sans cette carte
+         aucun tap ne pouvait jamais appeler _launcherGo('vibe') (qui se
+         contente de masquer le lanceur, l'app dessous n'a jamais été
+         déchargée) — seuls Chaharmony/OmchaWatch (navigation complète)
+         restaient joignables. -->
+    <div class="lch-card vibe" onclick="_launcherGo('vibe')">
+      <span class="lch-ico">✦</span>
+      <span class="lch-name">OmcVibe</span>
+      <span class="lch-desc">Champs binauraux 432 — 6 canaux, jeu aléatoire, faders maître/détune</span>
+    </div>
     <div class="lch-card chaharmony" onclick="_launcherGo('chaharmony')">
       <span class="lch-ico">⬡</span>
       <span class="lch-name">Chaharmony</span>
@@ -2212,12 +2209,18 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 </div>
 
 
-<!-- #172/#174 : motif "lotus" — écho du fond mandala en fractale, réutilisé
-     sur chaque sphère satellite (cf. buildVesicaPairs). Défini UNE fois ici
-     (symbole SVG caché, jamais redessiné par JS) puis simplement cloné via
-     <use> et recoloré par sphère avec la couleur de SA bande de fréquence
-     réelle (FREQ_BANDS, déjà utilisée pour le halo — même palette, "dans
-     le thème" par construction).
+<!-- #172/#174/#177 : motifs "lotus" — écho du fond mandala en fractale,
+     réutilisés sur chaque sphère satellite (cf. buildVesicaPairs). Définis
+     UNE fois ici (symboles SVG cachés, jamais redessinés par JS) puis
+     simplement clonés via <use> et recolorés par sphère avec la couleur de
+     SA bande de fréquence réelle (FREQ_BANDS, déjà utilisée pour le halo —
+     même palette, "dans le thème" par construction).
+     #177 : 3 VARIANTES de silhouette (A/B/C, cf. plus bas) — chaque canal
+     satellite tire la sienne une fois par session (LOTUS_PICK, cf. JS),
+     stable ensuite (pas de re-tirage à chaque reconstruction/mute, qui
+     ferait sauter la forme de façon disruptive) : "motifs différents qui
+     s'affichent aléatoirement" demandé, sans jamais dupliquer le coût —
+     toujours du SVG statique pur partagé par <use>.
      #174 : refonte "plus lotus" — 3 couronnes de pétales (8 grands + 8
      moyens décalés de 22.5° + 6 petits) au lieu de 2, pour une fleur plus
      dense/réaliste. Remplissage en DEUX tons par pétale (base plus large
@@ -2239,7 +2242,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
      leçon d'"OmcV Trip". -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
   <defs>
-    <symbol id="lotusMotif" viewBox="0 0 100 100">
+    <symbol id="lotusMotifA" viewBox="0 0 100 100">
       <!-- couronne extérieure : 8 grands pétales, base sombre + cœur clair -->
       <g>
         <g fill="var(--petal-dark, currentColor)" fill-opacity=".62" stroke="var(--petal-dark, currentColor)" stroke-opacity=".7" stroke-width=".9">
@@ -2313,6 +2316,105 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <circle cx="50" cy="50" r="10.5" fill="var(--petal-center, currentColor)" fill-opacity=".88"></circle>
       <circle cx="50" cy="50" r="14.5" fill="none" stroke="var(--petal-light, currentColor)" stroke-opacity=".55" stroke-width="1"></circle>
     </symbol>
+
+    <!-- #177 : variante B — pétales ARRONDIS (belly plein, courbes cubiques
+         au lieu de pointes), plus proche d'un vrai nénuphar/lotus
+         photographique (référence envoyée) qu'un pointu géométrique.
+         2 couronnes seulement (6 grands + 6 moyens décalés de 30°) —
+         moins de pétales mais chacun plus large, pour un rendu "fleur
+         épanouie" distinct de A. Même système 2 tons + cœur 3 disques. -->
+    <symbol id="lotusMotifB" viewBox="0 0 100 100">
+      <g>
+        <g fill="var(--petal-dark, currentColor)" fill-opacity=".64" stroke="var(--petal-dark, currentColor)" stroke-opacity=".7" stroke-width=".9">
+          <path d="M50,45 C33,40 28,16 50,5 C72,16 67,40 50,45 Z" transform="rotate(0 50 50)"></path>
+          <path d="M50,45 C33,40 28,16 50,5 C72,16 67,40 50,45 Z" transform="rotate(60 50 50)"></path>
+          <path d="M50,45 C33,40 28,16 50,5 C72,16 67,40 50,45 Z" transform="rotate(120 50 50)"></path>
+          <path d="M50,45 C33,40 28,16 50,5 C72,16 67,40 50,45 Z" transform="rotate(180 50 50)"></path>
+          <path d="M50,45 C33,40 28,16 50,5 C72,16 67,40 50,45 Z" transform="rotate(240 50 50)"></path>
+          <path d="M50,45 C33,40 28,16 50,5 C72,16 67,40 50,45 Z" transform="rotate(300 50 50)"></path>
+        </g>
+        <g fill="var(--petal-light, currentColor)" fill-opacity=".58">
+          <path d="M50,41 C38,37 35,20 50,11 C65,20 62,37 50,41 Z" transform="rotate(0 50 50)"></path>
+          <path d="M50,41 C38,37 35,20 50,11 C65,20 62,37 50,41 Z" transform="rotate(60 50 50)"></path>
+          <path d="M50,41 C38,37 35,20 50,11 C65,20 62,37 50,41 Z" transform="rotate(120 50 50)"></path>
+          <path d="M50,41 C38,37 35,20 50,11 C65,20 62,37 50,41 Z" transform="rotate(180 50 50)"></path>
+          <path d="M50,41 C38,37 35,20 50,11 C65,20 62,37 50,41 Z" transform="rotate(240 50 50)"></path>
+          <path d="M50,41 C38,37 35,20 50,11 C65,20 62,37 50,41 Z" transform="rotate(300 50 50)"></path>
+        </g>
+      </g>
+      <g>
+        <g fill="var(--petal-dark, currentColor)" fill-opacity=".68" stroke="var(--petal-dark, currentColor)" stroke-opacity=".74" stroke-width=".8">
+          <path d="M50,46.5 C38,43 34,27 50,18 C66,27 62,43 50,46.5 Z" transform="rotate(30 50 50)"></path>
+          <path d="M50,46.5 C38,43 34,27 50,18 C66,27 62,43 50,46.5 Z" transform="rotate(90 50 50)"></path>
+          <path d="M50,46.5 C38,43 34,27 50,18 C66,27 62,43 50,46.5 Z" transform="rotate(150 50 50)"></path>
+          <path d="M50,46.5 C38,43 34,27 50,18 C66,27 62,43 50,46.5 Z" transform="rotate(210 50 50)"></path>
+          <path d="M50,46.5 C38,43 34,27 50,18 C66,27 62,43 50,46.5 Z" transform="rotate(270 50 50)"></path>
+          <path d="M50,46.5 C38,43 34,27 50,18 C66,27 62,43 50,46.5 Z" transform="rotate(330 50 50)"></path>
+        </g>
+        <g fill="var(--petal-light, currentColor)" fill-opacity=".62">
+          <path d="M50,43.5 C41,40.5 38,29 50,22 C62,29 59,40.5 50,43.5 Z" transform="rotate(30 50 50)"></path>
+          <path d="M50,43.5 C41,40.5 38,29 50,22 C62,29 59,40.5 50,43.5 Z" transform="rotate(90 50 50)"></path>
+          <path d="M50,43.5 C41,40.5 38,29 50,22 C62,29 59,40.5 50,43.5 Z" transform="rotate(150 50 50)"></path>
+          <path d="M50,43.5 C41,40.5 38,29 50,22 C62,29 59,40.5 50,43.5 Z" transform="rotate(210 50 50)"></path>
+          <path d="M50,43.5 C41,40.5 38,29 50,22 C62,29 59,40.5 50,43.5 Z" transform="rotate(270 50 50)"></path>
+          <path d="M50,43.5 C41,40.5 38,29 50,22 C62,29 59,40.5 50,43.5 Z" transform="rotate(330 50 50)"></path>
+        </g>
+      </g>
+      <circle cx="50" cy="50" r="19" fill="var(--petal-center, currentColor)" fill-opacity=".4"></circle>
+      <circle cx="50" cy="50" r="14.5" fill="var(--petal-center, currentColor)" fill-opacity=".65"></circle>
+      <circle cx="50" cy="50" r="9.5" fill="var(--petal-center, currentColor)" fill-opacity=".9"></circle>
+      <circle cx="50" cy="50" r="13" fill="none" stroke="var(--petal-light, currentColor)" stroke-opacity=".55" stroke-width="1"></circle>
+    </symbol>
+
+    <!-- #177 : variante C — plus étoilée/foisonnante, rythme à 10 (10
+         grands + 10 petits décalés de 18°) : silhouette plus dense et
+         "rayonnante" pour varier encore le rythme visuel entre sphères. -->
+    <symbol id="lotusMotifC" viewBox="0 0 100 100">
+      <g>
+        <g fill="var(--petal-dark, currentColor)" fill-opacity=".6" stroke="var(--petal-dark, currentColor)" stroke-opacity=".68" stroke-width=".8">
+          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(0 50 50)"></path>
+          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(36 50 50)"></path>
+          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(72 50 50)"></path>
+          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(108 50 50)"></path>
+          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(144 50 50)"></path>
+          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(180 50 50)"></path>
+          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(216 50 50)"></path>
+          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(252 50 50)"></path>
+          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(288 50 50)"></path>
+          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(324 50 50)"></path>
+        </g>
+        <g fill="var(--petal-light, currentColor)" fill-opacity=".52">
+          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(0 50 50)"></path>
+          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(36 50 50)"></path>
+          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(72 50 50)"></path>
+          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(108 50 50)"></path>
+          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(144 50 50)"></path>
+          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(180 50 50)"></path>
+          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(216 50 50)"></path>
+          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(252 50 50)"></path>
+          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(288 50 50)"></path>
+          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(324 50 50)"></path>
+        </g>
+      </g>
+      <g>
+        <g fill="var(--petal-dark, currentColor)" fill-opacity=".72" stroke="var(--petal-dark, currentColor)" stroke-opacity=".76" stroke-width=".65">
+          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(18 50 50)"></path>
+          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(54 50 50)"></path>
+          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(90 50 50)"></path>
+          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(126 50 50)"></path>
+          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(162 50 50)"></path>
+          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(198 50 50)"></path>
+          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(234 50 50)"></path>
+          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(270 50 50)"></path>
+          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(306 50 50)"></path>
+          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(342 50 50)"></path>
+        </g>
+      </g>
+      <circle cx="50" cy="50" r="20" fill="var(--petal-center, currentColor)" fill-opacity=".36"></circle>
+      <circle cx="50" cy="50" r="15" fill="var(--petal-center, currentColor)" fill-opacity=".6"></circle>
+      <circle cx="50" cy="50" r="9.5" fill="var(--petal-center, currentColor)" fill-opacity=".88"></circle>
+      <circle cx="50" cy="50" r="13.5" fill="none" stroke="var(--petal-light, currentColor)" stroke-opacity=".5" stroke-width="1"></circle>
+    </symbol>
   </defs>
 </svg>
 <div id="cosmic-bg" data-html-import-id="html-import-5" style="background-image: url(&quot;img/cosmic-flux.jpg&quot;); filter: hue-rotate(-23.8deg) saturate(1.15);"></div>
@@ -2324,27 +2426,35 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <span class="ms-state canva-text" id="ms-state" data-html-import-id="html-import-13" data-template-id="span-6" style="color: rgba(220, 180, 255, 0.7); font-weight: 700; font-style: italic; font-size: 14px;">BINAURAL</span>
     </div></div></div>
 
-<!-- #169/#170/#171 : Arpégiateur tactile — remplace la cellule violette
-     retirée. Tiroir latéral gauche (1/3 largeur d'écran), ouvert/fermé
-     par tap sur la poignée collée au bord. Thérémine tactile vertical :
-     on glisse sur le fader, bas = grave / haut = aigu, joué par une
-     voix dédiée légère (jamais les oscillateurs du jeu). Octave +/-
-     décale la fréquence rendue par paliers de ×2, sans jamais toucher
-     au fader lui-même. Aucun chiffre affiché — juste la bille dorée sur
-     sa corde, et une rangée de puces pour l'octave. -->
-<div id="arpDrawerHandle" aria-hidden="true"
-  onclick="_arpToggleDrawer()"
-  ontouchend="event.preventDefault();_arpToggleDrawer()"></div>
-<div id="arpDrawer" aria-hidden="true">
-  <div id="arpFaderTrack"
-    onmousedown="_arpStart(event)" ontouchstart="_arpStart(event)" ontouchmove="_arpMove(event)" ontouchend="_arpEnd(event)">
-    <div id="arpFaderLine"></div>
-    <div id="arpBall"></div>
+<!-- #176 : Arpégiateur tactile retiré (demande explicite) — remplacé par
+     un tiroir latéral gauche (1/3 largeur d'écran, même conteneur/
+     poignée qu'avant) à 2 faders HORIZONTAUX :
+     - Maître : retune en direct la fréquence maître réelle du moteur
+       (setMasterFreq), 54-432Hz — tous les canaux suivent automatiquement
+       (calcPFreq/calcIFreq multiplient déjà par masterFreq).
+     - Détune global : une 2e référence 54-432Hz indépendante — l'ÉCART
+       avec le maître (recalculé à chaque glisser) est appliqué comme
+       décalage Hz direct à tous les canaux actifs (cf. _fxApplyDetune).
+       Écart nul par défaut (aucun effet tant qu'on n'y touche pas). -->
+<div id="fxDrawerHandle" aria-hidden="true"
+  onclick="_fxToggleDrawer()"
+  ontouchend="event.preventDefault();_fxToggleDrawer()"></div>
+<div id="fxDrawer" aria-hidden="true">
+  <div class="fx-fader">
+    <span class="fx-fader-label">Maître</span>
+    <div class="fx-fader-track" id="fxFaderMasterTrack"
+      onmousedown="_fxStart(event,'master')" ontouchstart="_fxStart(event,'master')" ontouchmove="_fxMove(event,'master')" ontouchend="_fxEnd(event,'master')">
+      <div class="fx-fader-line"></div>
+      <div class="fx-fader-ball" id="fxFaderMasterBall"></div>
+    </div>
   </div>
-  <div id="arpOctaveRow">
-    <div class="arp-oct-btn" onclick="_arpOctaveStep(-1)" aria-label="Octave -">−</div>
-    <div id="arpOctaveDots"><span></span><span></span><span class="arp-oct-on"></span><span></span><span></span></div>
-    <div class="arp-oct-btn" onclick="_arpOctaveStep(1)" aria-label="Octave +">+</div>
+  <div class="fx-fader">
+    <span class="fx-fader-label">Détune</span>
+    <div class="fx-fader-track" id="fxFaderDetuneTrack"
+      onmousedown="_fxStart(event,'detune')" ontouchstart="_fxStart(event,'detune')" ontouchmove="_fxMove(event,'detune')" ontouchend="_fxEnd(event,'detune')">
+      <div class="fx-fader-line"></div>
+      <div class="fx-fader-ball" id="fxFaderDetuneBall"></div>
+    </div>
   </div>
 </div>
 
@@ -4715,7 +4825,7 @@ async function startFlow() {
     _armAudioWatchdog(); // #33 (perf)
     _armOrganicEvolution(); // #84
     if (SUBDRONE_STATE.on) _startSubDrone(); // #16 (roadmap)
-    if (typeof _arpUpdateVisibility === 'function') _arpUpdateVisibility(); // #169
+    if (typeof _fxUpdateVisibility === 'function') _fxUpdateVisibility(); // #176
     ui('live', 'En expansion…');
   } catch(err) {
     flowing = false; nodes = {};
@@ -4725,7 +4835,9 @@ async function startFlow() {
 
 async function stopFlow() {
   ui('idle', 'Dissolution…');
-  if (typeof _arpTeardownVoice === 'function') _arpTeardownVoice(); // #169 : coupe la voix dédiée si un glisser était en cours
+  // #176 : plus de voix dédiée à couper — les faders retunent directement
+  // les vrais oscillateurs, que stopFlow() relâche normalement ci-dessous.
+  if (_fxDragTarget) { _fxBallEl(_fxDragTarget)?.classList.remove('fx-fader-active'); _fxDragTarget = null; _fxPendingX = null; }
   if (startFlow._heartbeat) { clearInterval(startFlow._heartbeat); startFlow._heartbeat = null; }
   if (startFlow._headroomTimer) { clearInterval(startFlow._headroomTimer); startFlow._headroomTimer = null; }
   if (startFlow._wakeLock)  { try { startFlow._wakeLock.release(); } catch(e) {} startFlow._wakeLock = null; }
@@ -5334,180 +5446,140 @@ function setOrganicEvolution(v) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   #169/#170/#171 : ARPÉGIATEUR TACTILE — remplace la cellule violette.
+   #176 : TIROIR 2 FADERS — remplace l'arpégiateur tactile (retiré).
    ══════════════════════════════════════════════════════════════════════
-   #170 : REFONTE V2 — la V1 (anneau rotatif, angle→vitesse) ne captait
-   AUCUN toucher (bug de z-index face à #sphere-layer, corrigé) + le
-   geste voulu était en fait un thérémine (glisser = fréquence), pas une
-   vitesse d'arpège.
-   #171 : REFONTE V3 — déplacé de l'anneau (fin, autour de la sphère,
-   seulement visible en mode simple) vers un TIROIR latéral gauche
-   (#arpDrawer, 1/3 largeur d'écran) contenant un fader VERTICAL large et
-   précis (#arpFaderTrack, 64px de large, pleine hauteur du tiroir —
-   bien plus de résolution tactile qu'un arc de ~300px de circonférence)
-   + un réglage Octave +/- qui décale la fréquence rendue par paliers de
-   ×2 (sans jamais recalculer fx, juste un multiplicateur appliqué après
-   coup). Poignée toujours visible collée au bord gauche, tap pour
-   ouvrir/fermer ; plus de dépendance au mode d'affichage (simple ou
-   avancé) puisque le tiroir ne chevauche plus la sphère. Toujours une
-   voix DÉDIÉE et légère (jamais les oscillateurs du jeu), fondu
-   entrée/glisse instantanée/fondu sortie — leçon d'"OmcV Trip" : aucun
-   nœud permanent. */
-const ARPEGGIATOR_STATE = { fx: 0.5 }; // dernière position verticale (0=grave/bas,1=aigu/haut), pour le rendu au repos
-const ARP_OCTAVE_STATE = { steps: 0 }; // décalage d'octave appliqué à la fréquence rendue, -2..+2
-let _arpDragging = false;
-let _arpOsc = null, _arpGain = null;
+   Même tiroir latéral gauche (#fxDrawer, 1/3 largeur d'écran, poignée
+   collée au bord, garde-fou dock hérité de #171/#173), mais 2 faders
+   HORIZONTAUX empilés au lieu d'un unique fader vertical + octave :
+   - "master" : retune EN DIRECT la vraie fréquence maître du moteur
+     (setMasterFreq) — pas une voix dédiée à part, les 6 canaux suivent
+     déjà automatiquement puisque calcPFreq/calcIFreq multiplient par
+     masterFreq. Glissando volontairement audible ici (contrôle direct
+     de l'utilisateur, rien à voir avec les transitions automatiques
+     du #84 qui elles doivent rester silencieuses).
+   - "detune" : une 2e référence 54-432Hz indépendante (FX_FADER_STATE.
+     detune). L'ÉCART avec masterFreq (recalculé à chaque glisser) est
+     appliqué comme décalage Hz direct à tous les canaux actifs non
+     coupés (_fxApplyDetune) — pas un paramètre persistant du moteur :
+     un tirage aléatoire ou un nouveau glisser du fader maître peut donc
+     "réinitialiser" l'effet tant qu'on ne rebouge pas le fader détune ;
+     c'est une action de retune ponctuelle rejouée à chaque interaction,
+     pas une formule ajoutée en dur dans calcPFreq/calcIFreq (risque de
+     régression trop élevé à ce stade pour toucher le cœur du moteur). */
+// #176 : `userSet` distingue "jamais touché par l'utilisateur" (resynchronisé
+// sur masterFreq à chaque appel de _fxUpdateVisibility, pour ne jamais
+// figer un écart non nul si masterFreq change entre le 1er sync et le
+// vrai démarrage du flux — ex. tirage aléatoire au chargement) de "valeur
+// restaurée d'une session précédente ou choisie par un glisser" (fixe).
+const FX_FADER_STATE = { detune: null, userSet: false }; // Hz absolu, écart nul par défaut tant que userSet=false
+let _fxDragTarget = null; // 'master' | 'detune' | null
+const FX_FADER_LO = 54, FX_FADER_HI = 432;
 
-// Position verticale (0..1, 0=bas/grave, 1=haut/aigu) → fréquence de
-// base, échelle logarithmique (le ressenti de hauteur est log, pas
-// linéaire) sur toute la plage active, puis décalage d'octave appliqué
-// et reclampé dans les bornes dures F_MIN/F_MAX.
-function _arpFxToFreq(fx) {
-  const lo = Math.max(F_MIN, Math.min(RAND_OPTS.freqMin, F_MAX));
-  const hi = Math.max(lo + 1, Math.min(F_MAX, RAND_OPTS.freqMax));
-  const t = Math.max(0, Math.min(1, fx));
-  const base = Math.exp(Math.log(lo) + t * (Math.log(hi) - Math.log(lo)));
-  const shifted = base * Math.pow(2, ARP_OCTAVE_STATE.steps);
-  return Math.max(F_MIN, Math.min(F_MAX, shifted));
+function _fxFreqToT(f) { return Math.max(0, Math.min(1, (f - FX_FADER_LO) / (FX_FADER_HI - FX_FADER_LO))); }
+function _fxTToFreq(t) { return FX_FADER_LO + Math.max(0, Math.min(1, t)) * (FX_FADER_HI - FX_FADER_LO); }
+function _fxClientXToT(clientX, track) {
+  const rect = track.getBoundingClientRect();
+  if (!rect.width) return 0.5;
+  return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
 }
-function _arpUpdateBallPosition(fx) {
-  const track = document.getElementById('arpFaderTrack');
-  const ball = document.getElementById('arpBall');
+function _fxTrackEl(which)  { return document.getElementById(which === 'master' ? 'fxFaderMasterTrack' : 'fxFaderDetuneTrack'); }
+function _fxBallEl(which)   { return document.getElementById(which === 'master' ? 'fxFaderMasterBall'  : 'fxFaderDetuneBall'); }
+function _fxUpdateBallPosition(which) {
+  const track = _fxTrackEl(which), ball = _fxBallEl(which);
   if (!track || !ball) return;
   const rect = track.getBoundingClientRect();
-  if (!rect.height) return;
-  const margin = rect.height * 0.06; // laisse la bille toujours visible, jamais collée au bord
-  const t = Math.max(0, Math.min(1, fx));
-  // 0=bas(grave) donc on part du bas vers le haut : y diminue quand fx augmente.
-  const y = margin + (1 - t) * (rect.height - margin * 2);
-  ball.style.top = y + 'px';
+  if (!rect.width) return;
+  const f = which === 'master' ? masterFreq : (FX_FADER_STATE.detune ?? masterFreq);
+  const margin = 12;
+  const x = margin + _fxFreqToT(f) * (rect.width - margin * 2);
+  ball.style.left = x + 'px';
 }
-function _arpClientYToFx(clientY) {
-  const track = document.getElementById('arpFaderTrack');
-  const rect = track.getBoundingClientRect();
-  if (!rect.height) return 0.5;
-  const t = (clientY - rect.top) / rect.height;
-  return Math.max(0, Math.min(1, 1 - t)); // haut=1(aigu), bas=0(grave)
+// Écart courant (fader détune − maître) réappliqué à tous les canaux non
+// coupés — léger : juste des tuneOsc() ciblés, aucun nœud audio créé.
+function _fxApplyDetune() {
+  if (!flowing || FX_FADER_STATE.detune == null) return;
+  const offset = FX_FADER_STATE.detune - masterFreq;
+  PAIRS.forEach((pair, i) => {
+    if (!mutedOscs[pair.pingala.id]) tuneOsc(pair.pingala.id, calcPFreq(i) + offset, 0.05);
+    if (!mutedOscs[pair.ida.id])     tuneOsc(pair.ida.id,     calcIFreq(i) + offset, 0.05);
+  });
 }
-function _arpEnsureVoice() {
-  if (_arpOsc) return;
-  try {
-    const c = audioCtx();
-    _arpOsc = c.createOscillator(); _arpOsc.type = 'sine';
-    _arpGain = c.createGain(); _arpGain.gain.value = 0;
-    _arpOsc.connect(_arpGain);
-    (masterGain || c.destination) && _arpGain.connect(masterGain || c.destination);
-    _arpOsc.start();
-  } catch(e) { _arpOsc = null; _arpGain = null; }
-}
-function _arpTeardownVoice() {
-  if (!_arpOsc) return;
-  const osc = _arpOsc, g = _arpGain;
-  _arpOsc = null; _arpGain = null;
-  try {
-    const now = audioCtx().currentTime;
-    g.gain.cancelScheduledValues(now);
-    g.gain.setTargetAtTime(0, now, 0.07);
-  } catch(e) {}
-  setTimeout(() => { try { osc.stop(); osc.disconnect(); g.disconnect(); } catch(e) {} }, 400);
-}
-function _arpSetFx(fx, isStart) {
-  ARPEGGIATOR_STATE.fx = fx;
-  _arpUpdateBallPosition(fx);
-  if (!flowing) return;
-  const freq = _arpFxToFreq(fx);
-  if (isStart) {
-    _arpEnsureVoice();
-    if (_arpOsc) {
-      const now = audioCtx().currentTime;
-      _arpOsc.frequency.setValueAtTime(freq, now);
-      _arpGain.gain.cancelScheduledValues(now);
-      _arpGain.gain.setTargetAtTime(0.16, now, 0.05); // attaque courte, pas de clic
-    }
-  } else if (_arpOsc) {
-    // #170 : réponse quasi immédiate (le doigt doit sentir un contrôle
-    // "précis"), juste assez lissée pour rester sans clic à un balayage rapide.
-    _arpOsc.frequency.setTargetAtTime(freq, audioCtx().currentTime, 0.025);
+function _fxSetFromClientX(clientX, which) {
+  const track = _fxTrackEl(which); if (!track) return;
+  const freq = _fxTToFreq(_fxClientXToT(clientX, track));
+  if (which === 'master') {
+    setMasterFreq(freq); // retune direct + persistance + UI, déjà tout géré
+    if (FX_FADER_STATE.detune != null) _fxApplyDetune(); // garde le même écart pendant qu'on bouge le maître
+  } else {
+    FX_FADER_STATE.detune = freq;
+    FX_FADER_STATE.userSet = true;
+    _fxApplyDetune();
+    saveState();
   }
+  _fxUpdateBallPosition('master');
+  _fxUpdateBallPosition('detune');
 }
-function _arpStart(e) {
-  _arpDragging = true;
+function _fxStart(e, which) {
+  _fxDragTarget = which;
   const t = e.touches ? e.touches[0] : e;
-  _arpSetFx(_arpClientYToFx(t.clientY), true);
-  document.getElementById('arpBall')?.classList.add('arp-pulse');
+  _fxSetFromClientX(t.clientX, which);
+  _fxBallEl(which)?.classList.add('fx-fader-active');
   e.preventDefault();
 }
-// #173 (perf) : mousemove/touchmove peuvent arriver bien plus vite que
-// l'écran ne rafraîchit (certains tactiles Android échantillonnent à
-// 120Hz+) — sans limitation, chaque mouvement du doigt envoyait un
-// setTargetAtTime() immédiat au thread audio, capable de saturer la
-// file d'automation en cas de glisser rapide. On coalesce désormais en
-// UNE seule mise à jour par frame (requestAnimationFrame) : ne garde
-// que la dernière position connue, le geste reste tout aussi précis à
-// l'œil/l'oreille (60fps largement suffisant pour un fader) sans
-// jamais spammer l'audio.
-let _arpPendingY = null, _arpRafPending = false;
-function _arpMove(e) {
-  if (!_arpDragging) return;
+// #173 (perf) : même leçon que l'ancien arpégiateur — coalesce les
+// mousemove/touchmove en UNE mise à jour par frame plutôt que d'envoyer
+// un ordre de retune au thread audio à chaque micro-mouvement du doigt.
+let _fxPendingX = null, _fxRafPending = false;
+function _fxMove(e, which) {
+  if (_fxDragTarget !== which) return;
   const t = e.touches ? e.touches[0] : e;
-  _arpPendingY = t.clientY;
-  if (!_arpRafPending) {
-    _arpRafPending = true;
+  _fxPendingX = t.clientX;
+  if (!_fxRafPending) {
+    _fxRafPending = true;
     requestAnimationFrame(() => {
-      _arpRafPending = false;
-      if (_arpDragging && _arpPendingY != null) _arpSetFx(_arpClientYToFx(_arpPendingY), false);
+      _fxRafPending = false;
+      if (_fxDragTarget === which && _fxPendingX != null) _fxSetFromClientX(_fxPendingX, which);
     });
   }
   e.preventDefault();
 }
-function _arpEnd() {
-  if (!_arpDragging) return;
-  _arpDragging = false;
-  _arpPendingY = null;
-  document.getElementById('arpBall')?.classList.remove('arp-pulse');
-  _arpTeardownVoice();
+function _fxEnd(e, which) {
+  if (_fxDragTarget !== which) return;
+  _fxDragTarget = null;
+  _fxPendingX = null;
+  _fxBallEl(which)?.classList.remove('fx-fader-active');
 }
 // Le drag peut sortir du fader en cours de route — écoute sur window,
-// pas seulement sur le fader, comme les autres poignées de glisser de
-// l'app.
-window.addEventListener('mousemove', _arpMove);
-window.addEventListener('mouseup', _arpEnd);
-window.addEventListener('touchend', _arpEnd);
-window.addEventListener('touchcancel', _arpEnd);
+// pas seulement sur la piste, comme les autres poignées de glisser de
+// l'app (le mousemove/touchmove natif ne capture pas au delà de
+// l'élément d'origine pour la souris).
+window.addEventListener('mousemove', (e) => { if (_fxDragTarget) _fxMove(e, _fxDragTarget); });
+window.addEventListener('mouseup',   (e) => { if (_fxDragTarget) _fxEnd(e, _fxDragTarget); });
+window.addEventListener('touchend',    (e) => { if (_fxDragTarget) _fxEnd(e, _fxDragTarget); });
+window.addEventListener('touchcancel', (e) => { if (_fxDragTarget) _fxEnd(e, _fxDragTarget); });
 
 // Ouverture/fermeture du tiroir (poignée collée au bord gauche).
-function _arpToggleDrawer() {
-  document.body.classList.toggle('arp-drawer-open');
+function _fxToggleDrawer() {
+  document.body.classList.toggle('fx-drawer-open');
   saveState();
-  // Le fader vient d'apparaître/changer de taille : repositionne la bille.
-  requestAnimationFrame(() => _arpUpdateBallPosition(ARPEGGIATOR_STATE.fx));
+  requestAnimationFrame(() => { _fxUpdateBallPosition('master'); _fxUpdateBallPosition('detune'); });
 }
-// Octave +/- : paliers entiers -2..+2, jamais de chiffre affiché — une
-// rangée de puces (cf. CSS) indique visuellement le décalage.
-function _arpOctaveStep(delta) {
-  ARP_OCTAVE_STATE.steps = Math.max(-2, Math.min(2, ARP_OCTAVE_STATE.steps + delta));
-  _arpUpdateOctaveDots();
-  saveState();
-}
-function _arpUpdateOctaveDots() {
-  const row = document.getElementById('arpOctaveDots'); if (!row) return;
-  const dots = row.children; // 5 puces, index 0..4 ↔ steps -2..+2
-  for (let i = 0; i < dots.length; i++) {
-    dots[i].classList.toggle('arp-oct-on', (i - 2) === ARP_OCTAVE_STATE.steps);
-  }
-}
-// Recalcule la position de la bille (conteneur qui vient d'apparaître,
-// rotation d'écran…) — appelé par toggleAdvanced/_loadAdvanced/init,
+// Synchronise l'écart détune sur le maître tant que l'utilisateur ne l'a
+// jamais bougé lui-même (userSet=false) — jamais d'effet par défaut, même
+// si masterFreq change entre 2 appels (tirage aléatoire au chargement,
+// etc.) — + repositionne les billes (conteneur qui vient d'apparaître,
+// rotation d'écran…). Appelé par startFlow/toggleAdvanced/_loadAdvanced,
 // conservés par simple compatibilité de nommage même si le tiroir n'est
 // plus lié au mode d'affichage.
-function _arpUpdateVisibility() {
-  if (document.body.classList.contains('arp-drawer-open')) {
-    requestAnimationFrame(() => _arpUpdateBallPosition(ARPEGGIATOR_STATE.fx));
-  } else if (_arpDragging) {
-    _arpEnd();
+function _fxUpdateVisibility() {
+  if (!FX_FADER_STATE.userSet) FX_FADER_STATE.detune = masterFreq;
+  if (document.body.classList.contains('fx-drawer-open')) {
+    requestAnimationFrame(() => { _fxUpdateBallPosition('master'); _fxUpdateBallPosition('detune'); });
+  } else if (_fxDragTarget) {
+    _fxEnd({}, _fxDragTarget);
   }
 }
-window.addEventListener('resize', () => { if (document.body.classList.contains('arp-drawer-open')) _arpUpdateBallPosition(ARPEGGIATOR_STATE.fx); });
+window.addEventListener('resize', () => { if (document.body.classList.contains('fx-drawer-open')) { _fxUpdateBallPosition('master'); _fxUpdateBallPosition('detune'); } });
 
 // ── #16 (roadmap) : sub-drone d'ancrage optionnel ───────────────────
 // Pad grave fixe (racine ÷ 2), volume très bas, jamais touché par le jeu
@@ -6117,6 +6189,13 @@ function _vpEnd(i){
 }
 function _vpCancel(){clearTimeout(_vpTimer);_vpTimer=null;}
 
+// #177 : silhouette de lotus tirée UNE fois par canal au chargement (pas à
+// chaque reconstruction — un mute/démute ou un tirage ne doit pas faire
+// "sauter" la forme, seulement sa couleur qui, elle, suit la fréquence
+// réelle à chaque rebuild). 3 variantes possibles (cf. #lotusMotifA/B/C).
+const LOTUS_SHAPES = ['A', 'B', 'C'];
+const LOTUS_PICK = Array.from({ length: 6 }, () => LOTUS_SHAPES[Math.floor(Math.random() * LOTUS_SHAPES.length)]);
+
 function buildVesicaPairs() {
   const layer = document.getElementById('sphere-layer');
   if (!layer) return;
@@ -6166,11 +6245,12 @@ function buildVesicaPairs() {
     vp.id = 'vp' + i;
     vp.style.left = px + 'px';
     vp.style.top  = py + 'px';
-    // #172/#174 : motif lotus, coloré à la bande de fréquence réelle du
-    // canal (3 tons — clair/foncé/cœur, cf. les <radialGradient> du
-    // symbole) — désactivé si un sticker personnalisé (Créateur) est posé,
-    // pour ne jamais concurrencer une image choisie par l'utilisateur.
-    const _lotusSvg = _hasSt ? '' : `<svg class="vp-lotus" viewBox="0 0 100 100" style="color:${c};--petal-light:${c};--petal-dark:${cDark};--petal-center:${cCenter}"><use href="#lotusMotif"></use></svg>`;
+    // #172/#174/#177 : motif lotus, coloré à la bande de fréquence réelle
+    // du canal (3 tons — clair/foncé/cœur), silhouette tirée une fois par
+    // canal (LOTUS_PICK) parmi 3 variantes — désactivé si un sticker
+    // personnalisé (Créateur) est posé, pour ne jamais concurrencer une
+    // image choisie par l'utilisateur.
+    const _lotusSvg = _hasSt ? '' : `<svg class="vp-lotus" viewBox="0 0 100 100" style="color:${c};--petal-light:${c};--petal-dark:${cDark};--petal-center:${cCenter}"><use href="#lotusMotif${LOTUS_PICK[i]}"></use></svg>`;
     vp.innerHTML = `
       <div class="vp-p ${isMutedP?'vp-muted':''} ${flowing&&!isMutedP?'vp-live':''}"
            id="vpc-p${i}"
@@ -8991,8 +9071,7 @@ function _doSave() {
       fluxMuted: FLUX_MUTED,
       bowlPulse: BOWL_STATE.on, // #150 : fireworksIgnition est déjà couvert par randOpts (spread ci-dessus)
       retourMode: RETOUR_MODE, // #166
-      arpFx: ARPEGGIATOR_STATE.fx, // #169
-      arpOctave: ARP_OCTAVE_STATE.steps // #171
+      fxDetune: FX_FADER_STATE.detune // #176
     }));
   } catch(e) {}
 }
@@ -9067,17 +9146,16 @@ function loadState() {
     // ci-dessus), le LFO doux par paire est réattaché séparément dans
     // startFlow() une fois les nodes prêts (cf. commentaire #166 là-bas).
     if (typeof s.retourMode==='boolean') RETOUR_MODE = s.retourMode;
-    // #169/#171 : dernière position verticale + décalage d'octave
-    // restaurés (repos uniquement — le rendu visuel réel est fait par
-    // _arpUpdateVisibility, appelée depuis _loadAdvanced, une fois le
-    // DOM déjà mis en page). Puces d'octave synchronisées ici aussi
-    // (indépendantes du layout, contrairement à la bille).
-    if (typeof s.arpFx==='number' && s.arpFx>=0 && s.arpFx<=1) {
-      ARPEGGIATOR_STATE.fx = s.arpFx;
-    }
-    if (typeof s.arpOctave==='number' && s.arpOctave>=-2 && s.arpOctave<=2) {
-      ARP_OCTAVE_STATE.steps = s.arpOctave;
-      if (typeof _arpUpdateOctaveDots === 'function') _arpUpdateOctaveDots();
+    // #176 : référence du fader Détune restaurée (repos uniquement — le
+    // rendu visuel réel est fait par _fxUpdateVisibility, appelée depuis
+    // _loadAdvanced, une fois le DOM déjà mis en page ; si absente,
+    // _fxUpdateVisibility la synchronise sur masterFreq, écart nul).
+    // userSet=true : une valeur restaurée ne doit PAS être re-synchronisée
+    // sur le maître au prochain démarrage du flux (sinon un écart choisi
+    // par l'utilisateur puis rechargé serait silencieusement effacé).
+    if (typeof s.fxDetune==='number' && s.fxDetune>=F_MIN && s.fxDetune<=F_MAX) {
+      FX_FADER_STATE.detune = s.fxDetune;
+      FX_FADER_STATE.userSet = true;
     }
   } catch(e) {}
 }
@@ -9561,7 +9639,7 @@ function toggleAdvanced() {
   const b = document.getElementById('btn-advanced');
   if (b) { b.classList.toggle('on', goAdvanced); const s=b.querySelector('span'); if(s) s.textContent = 'Mode avancé (6 sphères) : ' + (goAdvanced ? 'ON' : 'OFF'); }
   buildVesicaPairs();
-  if (typeof _arpUpdateVisibility === 'function') _arpUpdateVisibility(); // #169
+  if (typeof _fxUpdateVisibility === 'function') _fxUpdateVisibility(); // #176
 }
 function _loadAdvanced() {
   let adv = false;
@@ -9571,7 +9649,7 @@ function _loadAdvanced() {
     const b = document.getElementById('btn-advanced');
     if (b) { b.classList.add('on'); const s=b.querySelector('span'); if(s) s.textContent='Mode avancé (6 sphères) : ON'; }
   }
-  if (typeof _arpUpdateVisibility === 'function') _arpUpdateVisibility(); // #169
+  if (typeof _fxUpdateVisibility === 'function') _fxUpdateVisibility(); // #176
 }
 
 // #36 mode visuel "lite" : coupe le dessin du métatron (CPU) pour les appareils faibles
