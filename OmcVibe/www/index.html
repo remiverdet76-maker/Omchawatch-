@@ -482,13 +482,17 @@ body{
    seulement en mode simple (cf. _arpUpdateVisibility). Container ENTIER
    pointer-events:none : rien ne bloque la sphère en dessous ni le reste
    de l'écran, SEUL le trait du cercle (pointer-events:stroke, posé sur le
-   <circle> lui-même) capte le glisser. z-index 9 > .vp-center-wrap (8)
-   pour que ce trait soit bien au-dessus, sans jamais intercepter le
-   centre (le SVG n'y peint rien). */
+   <circle> lui-même) capte le glisser. #sphere-layer (qui contient
+   .vp-center-wrap, la grosse zone tactile de la sphère) est lui-même en
+   z-index:10 — comme il crée son propre contexte d'empilement, le
+   z-index:8 de .vp-center-wrap ne compte QUE face à ses propres frères ;
+   pour rivaliser depuis l'extérieur il faut dépasser le 10 du conteneur
+   lui-même, d'où z-index:11 ici (sinon le toucher est intégralement
+   absorbé par la sphère et l'arpégiateur reste muet). */
 #arpFloat{
   position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
   width:min(74vw,330px);height:min(74vw,330px);
-  z-index:9;pointer-events:none;display:none;
+  z-index:11;pointer-events:none;display:none;
 }
 #arpFloat.arp-visible{ display:block; }
 #arpRingSvg{ width:100%;height:100%;display:block;overflow:visible; }
@@ -497,24 +501,28 @@ body{
   transition:stroke .2s;
 }
 #arpRingCircle:active{ cursor:grabbing; }
-/* Repère discret (imperceptible sauf en interaction) marquant le "zéro"
-   (12h, arpège à l'arrêt) — jamais de chiffre, juste une amorce visuelle. */
+/* Repères discrets gauche (grave) / droite (aigu) — jamais de chiffre,
+   juste une amorce visuelle sur l'horizontale de glisser. */
 #arpFloat::before{
-  content:'';position:absolute;left:50%;top:2%;width:3px;height:8px;
-  background:rgba(255,255,255,.22);border-radius:2px;transform:translateX(-50%);
+  content:'';position:absolute;left:2%;top:50%;width:8px;height:3px;
+  background:rgba(255,255,255,.28);border-radius:2px;transform:translateY(-50%);
+  pointer-events:none;
+}
+#arpFloat::after{
+  content:'';position:absolute;right:2%;top:50%;width:8px;height:3px;
+  background:rgba(255,255,255,.28);border-radius:2px;transform:translateY(-50%);
   pointer-events:none;
 }
 #arpBall{
-  position:absolute;width:20px;height:20px;border-radius:50%;
-  left:50%;top:2%;transform:translate(-50%,-50%);
+  position:absolute;width:22px;height:22px;border-radius:50%;
+  left:50%;top:50%;transform:translate(-50%,-50%);
   background:radial-gradient(circle at 35% 30%,#FFF6DE 0%,#FFD966 42%,#C9930E 100%);
   box-shadow:0 0 9px rgba(255,215,90,.75),0 0 18px rgba(255,190,60,.35),inset 0 1px 2px rgba(255,255,255,.7);
   pointer-events:none;transition:box-shadow .18s,width .12s,height .12s;
   will-change:left,top;
 }
-#arpBall.arp-off{ opacity:.5;box-shadow:0 0 6px rgba(255,255,255,.3),inset 0 1px 2px rgba(255,255,255,.5); }
 #arpBall.arp-pulse{
-  width:24px;height:24px;
+  width:26px;height:26px;
   box-shadow:0 0 20px rgba(255,225,120,1),0 0 38px rgba(255,205,80,.65),inset 0 1px 3px rgba(255,255,255,.85);
 }
 body.vis-lite #arpBall.arp-pulse{ box-shadow:0 0 12px rgba(255,225,120,.8); } /* #23 : moins coûteux en mode léger */
@@ -2142,21 +2150,25 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <span class="ms-state canva-text" id="ms-state" data-html-import-id="html-import-13" data-template-id="span-6" style="color: rgba(220, 180, 255, 0.7); font-weight: 700; font-style: italic; font-size: 14px;">BINAURAL</span>
     </div></div></div>
 
-<!-- #169 : Arpégiateur tactile — remplace la cellule violette retirée.
+<!-- #169/#170 : Arpégiateur tactile — remplace la cellule violette retirée.
      Visible UNIQUEMENT en mode simple (sphère centrale seule, cf.
      body.mode-simple / _arpUpdateVisibility) : un anneau qui englobe la
-     sphère maître, sans aucun chiffre. Le "potentiomètre" (petite sphère
-     dorée) glisse sur le cercle — l'angle fixe la vitesse à laquelle
-     l'arpège tourne parmi les voix satellites actives (accent de volume
-     bref et rotatif, jamais un mute/démute sec). Posé en dehors de
-     #sphere-layer (qui se vide/reconstruit à chaque buildVesicaPairs)
-     pour ne jamais être arraché par un rebuild. Anneau au-dessus de la
-     sphère (z-index) mais seul le TRAIT du cercle capte le toucher
-     (pointer-events:stroke, SVG) — le centre reste cliquable normalement
-     (openFreqEdit, mute). -->
+     sphère maître, sans aucun chiffre. Thérémine tactile : on glisse le
+     doigt horizontalement sur l'anneau, gauche = grave / droite = aigu,
+     joué par une voix dédiée légère (jamais les oscillateurs du jeu).
+     Posé en dehors de #sphere-layer (qui se vide/reconstruit à chaque
+     buildVesicaPairs) pour ne jamais être arraché par un rebuild.
+     #arpFloat est en z-index:11, AU-DESSUS de #sphere-layer (10) lui-même
+     (pas seulement de .vp-center-wrap) — sphere-layer crée son propre
+     contexte d'empilement donc rien en dessous de 11 n'aurait jamais
+     capté le toucher. Deux cercles SVG superposés : un trait fin visible
+     (décoratif) + un trait large quasi invisible qui capte réellement le
+     glisser (pointer-events:stroke, grande bande de préhension) — le
+     centre de la sphère reste cliquable normalement (openFreqEdit, mute). -->
 <div id="arpFloat" aria-hidden="true">
   <svg id="arpRingSvg" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">
-    <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(255,255,255,.30)" stroke-width="10"
+    <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="3"></circle>
+    <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(0,0,0,.001)" stroke-width="46"
       id="arpRingCircle"
       onmousedown="_arpStart(event)" ontouchstart="_arpStart(event)" ontouchmove="_arpMove(event)" ontouchend="_arpEnd(event)"></circle>
   </svg>
@@ -4530,7 +4542,6 @@ async function startFlow() {
     _armAudioWatchdog(); // #33 (perf)
     _armOrganicEvolution(); // #84
     if (SUBDRONE_STATE.on) _startSubDrone(); // #16 (roadmap)
-    if (ARPEGGIATOR_STATE.on) _arpReschedule(); // #169 : reprend le pas là où il en était
     if (typeof _arpUpdateVisibility === 'function') _arpUpdateVisibility(); // #169
     ui('live', 'En expansion…');
   } catch(err) {
@@ -4541,7 +4552,7 @@ async function startFlow() {
 
 async function stopFlow() {
   ui('idle', 'Dissolution…');
-  clearTimeout(_arpTimer); _arpTimer = null; // #169 : plus de nodes à accentuer une fois le flux coupé
+  if (typeof _arpTeardownVoice === 'function') _arpTeardownVoice(); // #169 : coupe la voix dédiée si un glisser était en cours
   if (startFlow._heartbeat) { clearInterval(startFlow._heartbeat); startFlow._heartbeat = null; }
   if (startFlow._headroomTimer) { clearInterval(startFlow._headroomTimer); startFlow._headroomTimer = null; }
   if (startFlow._wakeLock)  { try { startFlow._wakeLock.release(); } catch(e) {} startFlow._wakeLock = null; }
@@ -5150,122 +5161,125 @@ function setOrganicEvolution(v) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   #169 : ARPÉGIATEUR TACTILE — remplace la cellule violette du dock.
+   #169/#170 : ARPÉGIATEUR TACTILE — remplace la cellule violette du dock.
    ══════════════════════════════════════════════════════════════════════
-   Visible uniquement en mode simple (sphère centrale seule affichée,
-   body.mode-simple — cf. buildVesicaPairs/toggleAdvanced). L'anneau
-   englobe la sphère maître ; on glisse le doigt dessus pour positionner
-   le "potentiomètre" (petite sphère dorée) à un angle donné, 0° (haut,
-   petit repère discret) = arrêt, le reste du cercle en sens horaire =
-   vitesse croissante de l'arpège.
-   L'arpège lui-même : à intervalle régulier (fixé par l'angle), un accent
-   de volume BREF (ramp haut puis retour, jamais un mute/démute sec) passe
-   d'une voix satellite active à la suivante, en rotation — comme un
-   arpège classique joue les notes d'un accord l'une après l'autre. Si
-   aucune satellite n'est active, le maître lui-même reçoit l'accent (le
-   geste ne reste jamais sans effet).
-   Volontairement LÉGER (leçon de "OmcV Trip", #167→168, jugé trop
-   gourmand) : aucun nouveau nœud audio permanent — juste des
-   safeRamp(...) ponctuels sur des gains déjà existants, un seul
-   setTimeout auto-replanifié. */
-const ARPEGGIATOR_STATE = { angle: 0, rate: 0, on: false };
-let _arpTimer = null;
-let _arpStepIdx = -1;
+   #170 : REFONTE — la V1 (anneau rotatif, angle→vitesse) ne captait AUCUN
+   toucher : #sphere-layer (z-index:10, dont .vp-center-wrap couvre en
+   pointer-events:all toute sa grande boîte même invisible) passait
+   au-dessus d'#arpFloat (z-index:9 à l'époque) et absorbait tout —
+   #sphere-layer crée son propre contexte d'empilement, le z-index:8 de
+   .vp-center-wrap ne comptait donc que PARMI les enfants de sphere-layer,
+   jamais face à un frère extérieur. Corrigé (z-index:11) + demande
+   reformulée entre-temps : gauche = grave, droite = aigu, glisser
+   horizontalement — plus une histoire de vitesse de rotation.
+   Nouveau geste : on pose le doigt n'importe où sur l'anneau (large bande
+   de préhension invisible, cf. CSS) puis on glisse à GAUCHE (grave) ou à
+   DROITE (aigu) — seule la position horizontale compte, comme un
+   thérémine tactile précis. La bille dorée suit le doigt sur la corde
+   horizontale du cercle. Son joué par une voix DÉDIÉE (jamais les
+   oscillateurs du jeu en cours, qu'on ne veut jamais perturber) : fondu
+   d'entrée au premier contact, glisse instantanée tant qu'on glisse,
+   fondu de sortie puis arrêt complet au relâcher — encore une fois
+   volontairement LÉGER (leçon d'"OmcV Trip") : aucun nœud permanent, la
+   voix n'existe que le temps du toucher. */
+const ARPEGGIATOR_STATE = { fx: 0.5 }; // dernière position horizontale (0=grave,1=aigu), pour le rendu visuel au repos
 let _arpDragging = false;
+let _arpOsc = null, _arpGain = null;
 
-// Angle (0-360°, 0=haut, sens horaire) → vitesse (pas/seconde). Zone morte
-// autour de 0° = arrêt net (facile à retrouver au toucher, pas de valeur
-// "presque nulle" qui laisserait un accent perdu toutes les 10s). Au-delà,
-// courbe douce (exposant >1) : plus précis sur les vitesses lentes, qui
-// sont aussi les plus utiles/les plus musicales ici.
-function _arpAngleToRate(angle) {
-  const DEAD = 10; // degrés de zone neutre de part et d'autre du haut
-  if (angle < DEAD || angle > 360 - DEAD) return 0;
-  const norm = (angle - DEAD) / (360 - DEAD * 2); // 0..1
-  return 0.35 + Math.pow(norm, 1.6) * 5.65; // 0.35 à 6 pas/seconde
+// Position horizontale (0..1) → fréquence, échelle logarithmique (le
+// ressenti de hauteur est log, pas linéaire) sur toute la plage active.
+function _arpFxToFreq(fx) {
+  const lo = Math.max(F_MIN, Math.min(RAND_OPTS.freqMin, F_MAX));
+  const hi = Math.max(lo + 1, Math.min(F_MAX, RAND_OPTS.freqMax));
+  const t = Math.max(0, Math.min(1, fx));
+  return Math.exp(Math.log(lo) + t * (Math.log(hi) - Math.log(lo)));
 }
-function _arpUpdateBallPosition(angle) {
+function _arpUpdateBallPosition(fx) {
   const ring = document.getElementById('arpRingSvg');
   const ball = document.getElementById('arpBall');
   if (!ring || !ball) return;
   const rect = ring.getBoundingClientRect();
   if (!rect.width) return;
-  const cx = rect.width / 2, cy = rect.height / 2;
-  const r = (140 / 300) * rect.width; // même proportion que le viewBox (300, rayon 140)
-  const rad = angle * Math.PI / 180;
-  const x = cx + r * Math.sin(rad);
-  const y = cy - r * Math.cos(rad);
+  const margin = rect.width * 0.10; // laisse la bille toujours visible, jamais collée au bord
+  const x = margin + Math.max(0, Math.min(1, fx)) * (rect.width - margin * 2);
   ball.style.left = x + 'px';
-  ball.style.top  = y + 'px';
-  ball.classList.toggle('arp-off', !ARPEGGIATOR_STATE.on);
+  ball.style.top  = (rect.height / 2) + 'px';
 }
-function _arpPointerAngle(clientX, clientY) {
+function _arpClientXToFx(clientX) {
   const ring = document.getElementById('arpRingSvg');
   const rect = ring.getBoundingClientRect();
-  const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
-  const dx = clientX - cx, dy = clientY - cy;
-  let deg = Math.atan2(dx, -dy) * 180 / Math.PI;
-  if (deg < 0) deg += 360;
-  return deg;
+  if (!rect.width) return 0.5;
+  return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
 }
-function _arpSetAngle(angle) {
-  ARPEGGIATOR_STATE.angle = angle;
-  const rate = _arpAngleToRate(angle);
-  ARPEGGIATOR_STATE.rate = rate;
-  ARPEGGIATOR_STATE.on = rate > 0;
-  _arpUpdateBallPosition(angle);
-  _arpReschedule();
-  saveState();
+function _arpEnsureVoice() {
+  if (_arpOsc) return;
+  try {
+    const c = audioCtx();
+    _arpOsc = c.createOscillator(); _arpOsc.type = 'sine';
+    _arpGain = c.createGain(); _arpGain.gain.value = 0;
+    _arpOsc.connect(_arpGain);
+    (masterGain || c.destination) && _arpGain.connect(masterGain || c.destination);
+    _arpOsc.start();
+  } catch(e) { _arpOsc = null; _arpGain = null; }
+}
+function _arpTeardownVoice() {
+  if (!_arpOsc) return;
+  const osc = _arpOsc, g = _arpGain;
+  _arpOsc = null; _arpGain = null;
+  try {
+    const now = audioCtx().currentTime;
+    g.gain.cancelScheduledValues(now);
+    g.gain.setTargetAtTime(0, now, 0.07);
+  } catch(e) {}
+  setTimeout(() => { try { osc.stop(); osc.disconnect(); g.disconnect(); } catch(e) {} }, 400);
+}
+function _arpSetFx(fx, isStart) {
+  ARPEGGIATOR_STATE.fx = fx;
+  _arpUpdateBallPosition(fx);
+  if (!flowing) return;
+  const freq = _arpFxToFreq(fx);
+  if (isStart) {
+    _arpEnsureVoice();
+    if (_arpOsc) {
+      const now = audioCtx().currentTime;
+      _arpOsc.frequency.setValueAtTime(freq, now);
+      _arpGain.gain.cancelScheduledValues(now);
+      _arpGain.gain.setTargetAtTime(0.16, now, 0.05); // attaque courte, pas de clic
+    }
+  } else if (_arpOsc) {
+    // #170 : réponse quasi immédiate (le doigt doit sentir un contrôle
+    // "précis"), juste assez lissée pour rester sans clic à un balayage rapide.
+    _arpOsc.frequency.setTargetAtTime(freq, audioCtx().currentTime, 0.025);
+  }
 }
 function _arpStart(e) {
+  if (!document.body.classList.contains('mode-simple')) return;
   _arpDragging = true;
   const t = e.touches ? e.touches[0] : e;
-  _arpSetAngle(_arpPointerAngle(t.clientX, t.clientY));
+  _arpSetFx(_arpClientXToFx(t.clientX), true);
+  document.getElementById('arpBall')?.classList.add('arp-pulse');
   e.preventDefault();
 }
 function _arpMove(e) {
   if (!_arpDragging) return;
   const t = e.touches ? e.touches[0] : e;
-  _arpSetAngle(_arpPointerAngle(t.clientX, t.clientY));
+  _arpSetFx(_arpClientXToFx(t.clientX), false);
   e.preventDefault();
 }
-function _arpEnd() { _arpDragging = false; }
-// Souris : le drag peut sortir du cercle en cours de route (doigt/souris
-// glissant plus vite que le rayon) — écoute sur window, pas seulement sur
-// l'anneau, comme les autres poignées de glisser de l'app.
+function _arpEnd() {
+  if (!_arpDragging) return;
+  _arpDragging = false;
+  document.getElementById('arpBall')?.classList.remove('arp-pulse');
+  _arpTeardownVoice();
+}
+// Souris : le drag peut sortir de l'anneau en cours de route — écoute sur
+// window, pas seulement sur l'anneau, comme les autres poignées de
+// glisser de l'app.
 window.addEventListener('mousemove', _arpMove);
 window.addEventListener('mouseup', _arpEnd);
+window.addEventListener('touchend', _arpEnd);
+window.addEventListener('touchcancel', _arpEnd);
 
-function _arpReschedule() {
-  clearTimeout(_arpTimer); _arpTimer = null;
-  if (!ARPEGGIATOR_STATE.on || !flowing) return;
-  _arpTimer = setTimeout(_arpTick, 1000 / ARPEGGIATOR_STATE.rate);
-}
-function _arpTick() {
-  _arpTimer = null;
-  if (!ARPEGGIATOR_STATE.on || !flowing) return;
-  const candidates = [];
-  for (let i = 0; i < 6; i++) { if (!mutedOscs[PAIRS[i].pingala.id]) candidates.push(i); }
-  if (!candidates.length) candidates.push(MASTER_IDX); // repli : rien d'autre d'actif, on anime le maître
-  _arpStepIdx = (_arpStepIdx + 1) % candidates.length;
-  _arpAccent(candidates[_arpStepIdx]);
-  _arpPulseBall();
-  _arpReschedule(); // se replanifie avec le rate courant (peut avoir changé pendant le pas précédent)
-}
-// Accent de volume bref (jamais un mute/démute sec) — durée bornée pour
-// rester net même aux vitesses rapides.
-function _arpAccent(i) {
-  const pair = PAIRS[i];
-  const np = nodes[pair.pingala.id], ni = nodes[pair.ida.id];
-  const dur = Math.min(0.32, Math.max(0.06, 0.85 / ARPEGGIATOR_STATE.rate));
-  if (np) { const base = pair.pingala.vol; safeRamp(np.g.gain, Math.min(1, base * 1.4), dur * 0.35); setTimeout(() => safeRamp(np.g.gain, base, dur * 0.65), dur * 350); }
-  if (ni) { const base = pair.ida.vol;     safeRamp(ni.g.gain, Math.min(1, base * 1.4), dur * 0.35); setTimeout(() => safeRamp(ni.g.gain, base, dur * 0.65), dur * 350); }
-}
-function _arpPulseBall() {
-  const ball = document.getElementById('arpBall'); if (!ball) return;
-  ball.classList.add('arp-pulse');
-  setTimeout(() => ball.classList.remove('arp-pulse'), 160);
-}
 // Visible seulement en mode simple (sphère centrale seule) — appelé par
 // toggleAdvanced/_loadAdvanced/init. Recalcule aussi la position de la
 // bille (le conteneur peut avoir changé de taille, ex. rotation d'écran).
@@ -5273,9 +5287,10 @@ function _arpUpdateVisibility() {
   const el = document.getElementById('arpFloat'); if (!el) return;
   const simple = document.body.classList.contains('mode-simple');
   el.classList.toggle('arp-visible', simple);
-  if (simple) _arpUpdateBallPosition(ARPEGGIATOR_STATE.angle);
+  if (simple) _arpUpdateBallPosition(ARPEGGIATOR_STATE.fx);
+  else if (_arpDragging) _arpEnd();
 }
-window.addEventListener('resize', () => { if (document.body.classList.contains('mode-simple')) _arpUpdateBallPosition(ARPEGGIATOR_STATE.angle); });
+window.addEventListener('resize', () => { if (document.body.classList.contains('mode-simple')) _arpUpdateBallPosition(ARPEGGIATOR_STATE.fx); });
 
 // ── #16 (roadmap) : sub-drone d'ancrage optionnel ───────────────────
 // Pad grave fixe (racine ÷ 2), volume très bas, jamais touché par le jeu
@@ -8752,7 +8767,7 @@ function _doSave() {
       fluxMuted: FLUX_MUTED,
       bowlPulse: BOWL_STATE.on, // #150 : fireworksIgnition est déjà couvert par randOpts (spread ci-dessus)
       retourMode: RETOUR_MODE, // #166
-      arpAngle: ARPEGGIATOR_STATE.angle // #169
+      arpFx: ARPEGGIATOR_STATE.fx // #169
     }));
   } catch(e) {}
 }
@@ -8827,15 +8842,11 @@ function loadState() {
     // ci-dessus), le LFO doux par paire est réattaché séparément dans
     // startFlow() une fois les nodes prêts (cf. commentaire #166 là-bas).
     if (typeof s.retourMode==='boolean') RETOUR_MODE = s.retourMode;
-    // #169 : angle restauré, mais le calcul rate/on (_arpSetAngle) est
-    // différé — au chargement le DOM (#arpRingSvg) n'a pas encore de
-    // taille réelle (getBoundingClientRect renverrait 0). Positionnement
-    // réel fait par _arpUpdateVisibility (appelée depuis _loadAdvanced,
-    // déjà après le premier layout).
-    if (typeof s.arpAngle==='number' && s.arpAngle>=0 && s.arpAngle<360) {
-      ARPEGGIATOR_STATE.angle = s.arpAngle;
-      ARPEGGIATOR_STATE.rate = _arpAngleToRate(s.arpAngle);
-      ARPEGGIATOR_STATE.on = ARPEGGIATOR_STATE.rate > 0;
+    // #169 : dernière position horizontale restaurée (repos uniquement —
+    // le rendu visuel réel est fait par _arpUpdateVisibility, appelée
+    // depuis _loadAdvanced, une fois le DOM déjà mis en page).
+    if (typeof s.arpFx==='number' && s.arpFx>=0 && s.arpFx<=1) {
+      ARPEGGIATOR_STATE.fx = s.arpFx;
     }
   } catch(e) {}
 }
