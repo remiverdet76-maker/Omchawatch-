@@ -2246,211 +2246,103 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 </div>
 
 
-<!-- #172/#174/#177 : motifs "lotus" — écho du fond mandala en fractale,
-     réutilisés sur chaque sphère satellite (cf. buildVesicaPairs). Définis
-     UNE fois ici (symboles SVG cachés, jamais redessinés par JS) puis
-     simplement clonés via <use> et recolorés par sphère avec la couleur de
-     SA bande de fréquence réelle (FREQ_BANDS, déjà utilisée pour le halo —
-     même palette, "dans le thème" par construction).
-     #177 : 3 VARIANTES de silhouette (A/B/C, cf. plus bas) — chaque canal
-     satellite tire la sienne une fois par session (LOTUS_PICK, cf. JS),
-     stable ensuite (pas de re-tirage à chaque reconstruction/mute, qui
-     ferait sauter la forme de façon disruptive) : "motifs différents qui
-     s'affichent aléatoirement" demandé, sans jamais dupliquer le coût —
-     toujours du SVG statique pur partagé par <use>.
-     #174 : refonte "plus lotus" — 3 couronnes de pétales (8 grands + 8
-     moyens décalés de 22.5° + 6 petits) au lieu de 2, pour une fleur plus
-     dense/réaliste. Remplissage en DEUX tons par pétale (base plus large
-     teintée --petal-dark + cœur de pétale plus étroit teinté
-     --petal-light superposé) pour un "fond couleur organique rempli"
-     façon dégradé, sans passer par un vrai <radialGradient> SVG : un
-     gradient partagé référencé via url(#id) vit dans le <defs> GLOBAL,
-     hors de l'arbre par-sphère où --petal-* sont posées (cf.
-     buildVesicaPairs) — ses <stop> ne peuvent alors jamais hériter la
-     bonne couleur (repéré en test : pétales rendus délavés/blancs au
-     lieu de la teinte attendue). Les <path>/<circle> eux, CLONÉS par
-     <use>, héritent correctement de --petal-* depuis le point d'usage —
-     donc uniquement des tons pleins ici, jamais de fill="url(...)".
-     Cœur élargi en 3 disques concentriques d'opacité croissante
-     (--petal-center, ~72% vers le noir) pour simuler un fondu doux et
-     faire contraste avec le chiffre de fréquence posé par-dessus
-     (lisibilité, même logique que le "hudPlate" du prototype 3D).
-     Toujours du SVG statique pur, jamais redessiné par JS — coût nul,
-     leçon d'"OmcV Trip". -->
+<!-- #179 : refonte "juste le motif" — d'après la référence envoyée par
+     l'utilisateur (ancienne version de l'app) : une SEULE couronne de
+     grands pétales, translucides, PAS de disque plein derrière (retiré
+     de _bgStyle en JS) — seuls l'anneau fin (.vp-p border) et la fleur
+     elle-même restent visibles, le fond de l'appli transparaît tout
+     autour. Abandon des 2-3 couronnes empilées de #174/#177 (jugées
+     encore trop "sphère" par l'utilisateur) au profit de cette silhouette
+     simple et reconnaissable, plus proche de la référence.
+     Réutilise le même mécanisme que #172/#174/#177 : symboles SVG cachés,
+     jamais redessinés par JS, clonés via <use> et recolorés par sphère
+     avec la couleur de SA bande de fréquence réelle (FREQ_BANDS).
+     3 VARIANTES de silhouette (A/B/C) — chaque canal satellite tire la
+     sienne une fois par session (LOTUS_PICK, cf. JS), stable ensuite.
+     Toujours 2 tons par pétale (base --petal-dark + cœur --petal-light)
+     + petit cœur contrastant (--petal-center) pour porter le chiffre de
+     fréquence, mais une seule couronne cette fois — pétales élargis,
+     allant presque jusqu'au bord de l'anneau, comme sur la référence.
+     Toujours du SVG statique pur, jamais redessiné par JS — coût nul. -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
   <defs>
     <symbol id="lotusMotifA" viewBox="0 0 100 100">
-      <!-- couronne extérieure : 8 grands pétales, base sombre + cœur clair -->
-      <g>
-        <g fill="var(--petal-dark, currentColor)" fill-opacity=".62" stroke="var(--petal-dark, currentColor)" stroke-opacity=".7" stroke-width=".9">
-          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(0 50 50)"></path>
-          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(45 50 50)"></path>
-          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(90 50 50)"></path>
-          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(135 50 50)"></path>
-          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(180 50 50)"></path>
-          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(225 50 50)"></path>
-          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(270 50 50)"></path>
-          <path d="M50,44 Q37,24 50,4 Q63,24 50,44 Z" transform="rotate(315 50 50)"></path>
-        </g>
-        <g fill="var(--petal-light, currentColor)" fill-opacity=".55">
-          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(0 50 50)"></path>
-          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(45 50 50)"></path>
-          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(90 50 50)"></path>
-          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(135 50 50)"></path>
-          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(180 50 50)"></path>
-          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(225 50 50)"></path>
-          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(270 50 50)"></path>
-          <path d="M50,40 Q40,24 50,9 Q60,24 50,40 Z" transform="rotate(315 50 50)"></path>
-        </g>
+      <!-- 8 grands pétales, une seule couronne -->
+      <g fill="var(--petal-dark, currentColor)" fill-opacity=".7" stroke="var(--petal-dark, currentColor)" stroke-opacity=".72" stroke-width=".9">
+        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(0 50 50)"></path>
+        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(45 50 50)"></path>
+        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(90 50 50)"></path>
+        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(135 50 50)"></path>
+        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(180 50 50)"></path>
+        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(225 50 50)"></path>
+        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(270 50 50)"></path>
+        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(315 50 50)"></path>
       </g>
-      <!-- couronne médiane : 8 pétales moyens, décalés de 22.5° -->
-      <g>
-        <g fill="var(--petal-dark, currentColor)" fill-opacity=".66" stroke="var(--petal-dark, currentColor)" stroke-opacity=".72" stroke-width=".8">
-          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(22.5 50 50)"></path>
-          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(67.5 50 50)"></path>
-          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(112.5 50 50)"></path>
-          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(157.5 50 50)"></path>
-          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(202.5 50 50)"></path>
-          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(247.5 50 50)"></path>
-          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(292.5 50 50)"></path>
-          <path d="M50,46 Q40,28 50,17 Q60,28 50,46 Z" transform="rotate(337.5 50 50)"></path>
-        </g>
-        <g fill="var(--petal-light, currentColor)" fill-opacity=".6">
-          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(22.5 50 50)"></path>
-          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(67.5 50 50)"></path>
-          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(112.5 50 50)"></path>
-          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(157.5 50 50)"></path>
-          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(202.5 50 50)"></path>
-          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(247.5 50 50)"></path>
-          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(292.5 50 50)"></path>
-          <path d="M50,43 Q42,29 50,20 Q58,29 50,43 Z" transform="rotate(337.5 50 50)"></path>
-        </g>
+      <g fill="var(--petal-light, currentColor)" fill-opacity=".6">
+        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(0 50 50)"></path>
+        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(45 50 50)"></path>
+        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(90 50 50)"></path>
+        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(135 50 50)"></path>
+        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(180 50 50)"></path>
+        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(225 50 50)"></path>
+        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(270 50 50)"></path>
+        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(315 50 50)"></path>
       </g>
-      <!-- couronne intérieure : 6 petits pétales, resserrés autour du cœur -->
-      <g>
-        <g fill="var(--petal-dark, currentColor)" fill-opacity=".7" stroke="var(--petal-dark, currentColor)" stroke-opacity=".75" stroke-width=".7">
-          <path d="M50,47 Q43,34 50,29 Q57,34 50,47 Z" transform="rotate(0 50 50)"></path>
-          <path d="M50,47 Q43,34 50,29 Q57,34 50,47 Z" transform="rotate(60 50 50)"></path>
-          <path d="M50,47 Q43,34 50,29 Q57,34 50,47 Z" transform="rotate(120 50 50)"></path>
-          <path d="M50,47 Q43,34 50,29 Q57,34 50,47 Z" transform="rotate(180 50 50)"></path>
-          <path d="M50,47 Q43,34 50,29 Q57,34 50,47 Z" transform="rotate(240 50 50)"></path>
-          <path d="M50,47 Q43,34 50,29 Q57,34 50,47 Z" transform="rotate(300 50 50)"></path>
-        </g>
-        <g fill="var(--petal-light, currentColor)" fill-opacity=".65">
-          <path d="M50,45.5 Q44.5,35 50,31 Q55.5,35 50,45.5 Z" transform="rotate(0 50 50)"></path>
-          <path d="M50,45.5 Q44.5,35 50,31 Q55.5,35 50,45.5 Z" transform="rotate(60 50 50)"></path>
-          <path d="M50,45.5 Q44.5,35 50,31 Q55.5,35 50,45.5 Z" transform="rotate(120 50 50)"></path>
-          <path d="M50,45.5 Q44.5,35 50,31 Q55.5,35 50,45.5 Z" transform="rotate(180 50 50)"></path>
-          <path d="M50,45.5 Q44.5,35 50,31 Q55.5,35 50,45.5 Z" transform="rotate(240 50 50)"></path>
-          <path d="M50,45.5 Q44.5,35 50,31 Q55.5,35 50,45.5 Z" transform="rotate(300 50 50)"></path>
-        </g>
-      </g>
-      <!-- cœur contrastant — 3 disques concentriques (fondu simulé sans
-           <radialGradient>) de plus en plus sombres/opaques vers le
-           centre, pour porter le chiffre de fréquence par-dessus -->
-      <circle cx="50" cy="50" r="21" fill="var(--petal-center, currentColor)" fill-opacity=".38"></circle>
-      <circle cx="50" cy="50" r="16" fill="var(--petal-center, currentColor)" fill-opacity=".62"></circle>
-      <circle cx="50" cy="50" r="10.5" fill="var(--petal-center, currentColor)" fill-opacity=".88"></circle>
-      <circle cx="50" cy="50" r="14.5" fill="none" stroke="var(--petal-light, currentColor)" stroke-opacity=".55" stroke-width="1"></circle>
+      <!-- petit cœur contrastant, juste assez pour porter le chiffre -->
+      <circle cx="50" cy="50" r="13" fill="var(--petal-center, currentColor)" fill-opacity=".55"></circle>
+      <circle cx="50" cy="50" r="8" fill="var(--petal-center, currentColor)" fill-opacity=".85"></circle>
     </symbol>
 
-    <!-- #177 : variante B — pétales ARRONDIS (belly plein, courbes cubiques
-         au lieu de pointes), plus proche d'un vrai nénuphar/lotus
-         photographique (référence envoyée) qu'un pointu géométrique.
-         2 couronnes seulement (6 grands + 6 moyens décalés de 30°) —
-         moins de pétales mais chacun plus large, pour un rendu "fleur
-         épanouie" distinct de A. Même système 2 tons + cœur 3 disques. -->
+    <!-- variante B : 6 pétales, plus larges/bulbeux (nénuphar épanoui) -->
     <symbol id="lotusMotifB" viewBox="0 0 100 100">
-      <g>
-        <g fill="var(--petal-dark, currentColor)" fill-opacity=".64" stroke="var(--petal-dark, currentColor)" stroke-opacity=".7" stroke-width=".9">
-          <path d="M50,45 C33,40 28,16 50,5 C72,16 67,40 50,45 Z" transform="rotate(0 50 50)"></path>
-          <path d="M50,45 C33,40 28,16 50,5 C72,16 67,40 50,45 Z" transform="rotate(60 50 50)"></path>
-          <path d="M50,45 C33,40 28,16 50,5 C72,16 67,40 50,45 Z" transform="rotate(120 50 50)"></path>
-          <path d="M50,45 C33,40 28,16 50,5 C72,16 67,40 50,45 Z" transform="rotate(180 50 50)"></path>
-          <path d="M50,45 C33,40 28,16 50,5 C72,16 67,40 50,45 Z" transform="rotate(240 50 50)"></path>
-          <path d="M50,45 C33,40 28,16 50,5 C72,16 67,40 50,45 Z" transform="rotate(300 50 50)"></path>
-        </g>
-        <g fill="var(--petal-light, currentColor)" fill-opacity=".58">
-          <path d="M50,41 C38,37 35,20 50,11 C65,20 62,37 50,41 Z" transform="rotate(0 50 50)"></path>
-          <path d="M50,41 C38,37 35,20 50,11 C65,20 62,37 50,41 Z" transform="rotate(60 50 50)"></path>
-          <path d="M50,41 C38,37 35,20 50,11 C65,20 62,37 50,41 Z" transform="rotate(120 50 50)"></path>
-          <path d="M50,41 C38,37 35,20 50,11 C65,20 62,37 50,41 Z" transform="rotate(180 50 50)"></path>
-          <path d="M50,41 C38,37 35,20 50,11 C65,20 62,37 50,41 Z" transform="rotate(240 50 50)"></path>
-          <path d="M50,41 C38,37 35,20 50,11 C65,20 62,37 50,41 Z" transform="rotate(300 50 50)"></path>
-        </g>
+      <g fill="var(--petal-dark, currentColor)" fill-opacity=".7" stroke="var(--petal-dark, currentColor)" stroke-opacity=".72" stroke-width=".9">
+        <path d="M50,50 C30,45 23,17 50,3 C77,17 70,45 50,50 Z" transform="rotate(0 50 50)"></path>
+        <path d="M50,50 C30,45 23,17 50,3 C77,17 70,45 50,50 Z" transform="rotate(60 50 50)"></path>
+        <path d="M50,50 C30,45 23,17 50,3 C77,17 70,45 50,50 Z" transform="rotate(120 50 50)"></path>
+        <path d="M50,50 C30,45 23,17 50,3 C77,17 70,45 50,50 Z" transform="rotate(180 50 50)"></path>
+        <path d="M50,50 C30,45 23,17 50,3 C77,17 70,45 50,50 Z" transform="rotate(240 50 50)"></path>
+        <path d="M50,50 C30,45 23,17 50,3 C77,17 70,45 50,50 Z" transform="rotate(300 50 50)"></path>
       </g>
-      <g>
-        <g fill="var(--petal-dark, currentColor)" fill-opacity=".68" stroke="var(--petal-dark, currentColor)" stroke-opacity=".74" stroke-width=".8">
-          <path d="M50,46.5 C38,43 34,27 50,18 C66,27 62,43 50,46.5 Z" transform="rotate(30 50 50)"></path>
-          <path d="M50,46.5 C38,43 34,27 50,18 C66,27 62,43 50,46.5 Z" transform="rotate(90 50 50)"></path>
-          <path d="M50,46.5 C38,43 34,27 50,18 C66,27 62,43 50,46.5 Z" transform="rotate(150 50 50)"></path>
-          <path d="M50,46.5 C38,43 34,27 50,18 C66,27 62,43 50,46.5 Z" transform="rotate(210 50 50)"></path>
-          <path d="M50,46.5 C38,43 34,27 50,18 C66,27 62,43 50,46.5 Z" transform="rotate(270 50 50)"></path>
-          <path d="M50,46.5 C38,43 34,27 50,18 C66,27 62,43 50,46.5 Z" transform="rotate(330 50 50)"></path>
-        </g>
-        <g fill="var(--petal-light, currentColor)" fill-opacity=".62">
-          <path d="M50,43.5 C41,40.5 38,29 50,22 C62,29 59,40.5 50,43.5 Z" transform="rotate(30 50 50)"></path>
-          <path d="M50,43.5 C41,40.5 38,29 50,22 C62,29 59,40.5 50,43.5 Z" transform="rotate(90 50 50)"></path>
-          <path d="M50,43.5 C41,40.5 38,29 50,22 C62,29 59,40.5 50,43.5 Z" transform="rotate(150 50 50)"></path>
-          <path d="M50,43.5 C41,40.5 38,29 50,22 C62,29 59,40.5 50,43.5 Z" transform="rotate(210 50 50)"></path>
-          <path d="M50,43.5 C41,40.5 38,29 50,22 C62,29 59,40.5 50,43.5 Z" transform="rotate(270 50 50)"></path>
-          <path d="M50,43.5 C41,40.5 38,29 50,22 C62,29 59,40.5 50,43.5 Z" transform="rotate(330 50 50)"></path>
-        </g>
+      <g fill="var(--petal-light, currentColor)" fill-opacity=".6">
+        <path d="M50,46 C36,42 30,22 50,10 C70,22 64,42 50,46 Z" transform="rotate(0 50 50)"></path>
+        <path d="M50,46 C36,42 30,22 50,10 C70,22 64,42 50,46 Z" transform="rotate(60 50 50)"></path>
+        <path d="M50,46 C36,42 30,22 50,10 C70,22 64,42 50,46 Z" transform="rotate(120 50 50)"></path>
+        <path d="M50,46 C36,42 30,22 50,10 C70,22 64,42 50,46 Z" transform="rotate(180 50 50)"></path>
+        <path d="M50,46 C36,42 30,22 50,10 C70,22 64,42 50,46 Z" transform="rotate(240 50 50)"></path>
+        <path d="M50,46 C36,42 30,22 50,10 C70,22 64,42 50,46 Z" transform="rotate(300 50 50)"></path>
       </g>
-      <circle cx="50" cy="50" r="19" fill="var(--petal-center, currentColor)" fill-opacity=".4"></circle>
-      <circle cx="50" cy="50" r="14.5" fill="var(--petal-center, currentColor)" fill-opacity=".65"></circle>
-      <circle cx="50" cy="50" r="9.5" fill="var(--petal-center, currentColor)" fill-opacity=".9"></circle>
-      <circle cx="50" cy="50" r="13" fill="none" stroke="var(--petal-light, currentColor)" stroke-opacity=".55" stroke-width="1"></circle>
+      <circle cx="50" cy="50" r="14" fill="var(--petal-center, currentColor)" fill-opacity=".55"></circle>
+      <circle cx="50" cy="50" r="8.5" fill="var(--petal-center, currentColor)" fill-opacity=".85"></circle>
     </symbol>
 
-    <!-- #177 : variante C — plus étoilée/foisonnante, rythme à 10 (10
-         grands + 10 petits décalés de 18°) : silhouette plus dense et
-         "rayonnante" pour varier encore le rythme visuel entre sphères. -->
+    <!-- variante C : 10 pétales fins et rayonnants -->
     <symbol id="lotusMotifC" viewBox="0 0 100 100">
-      <g>
-        <g fill="var(--petal-dark, currentColor)" fill-opacity=".6" stroke="var(--petal-dark, currentColor)" stroke-opacity=".68" stroke-width=".8">
-          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(0 50 50)"></path>
-          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(36 50 50)"></path>
-          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(72 50 50)"></path>
-          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(108 50 50)"></path>
-          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(144 50 50)"></path>
-          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(180 50 50)"></path>
-          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(216 50 50)"></path>
-          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(252 50 50)"></path>
-          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(288 50 50)"></path>
-          <path d="M50,45 Q41,26 50,3 Q59,26 50,45 Z" transform="rotate(324 50 50)"></path>
-        </g>
-        <g fill="var(--petal-light, currentColor)" fill-opacity=".52">
-          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(0 50 50)"></path>
-          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(36 50 50)"></path>
-          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(72 50 50)"></path>
-          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(108 50 50)"></path>
-          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(144 50 50)"></path>
-          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(180 50 50)"></path>
-          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(216 50 50)"></path>
-          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(252 50 50)"></path>
-          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(288 50 50)"></path>
-          <path d="M50,41 Q43,27 50,10 Q57,27 50,41 Z" transform="rotate(324 50 50)"></path>
-        </g>
+      <g fill="var(--petal-dark, currentColor)" fill-opacity=".68" stroke="var(--petal-dark, currentColor)" stroke-opacity=".7" stroke-width=".8">
+        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(0 50 50)"></path>
+        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(36 50 50)"></path>
+        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(72 50 50)"></path>
+        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(108 50 50)"></path>
+        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(144 50 50)"></path>
+        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(180 50 50)"></path>
+        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(216 50 50)"></path>
+        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(252 50 50)"></path>
+        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(288 50 50)"></path>
+        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(324 50 50)"></path>
       </g>
-      <g>
-        <g fill="var(--petal-dark, currentColor)" fill-opacity=".72" stroke="var(--petal-dark, currentColor)" stroke-opacity=".76" stroke-width=".65">
-          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(18 50 50)"></path>
-          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(54 50 50)"></path>
-          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(90 50 50)"></path>
-          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(126 50 50)"></path>
-          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(162 50 50)"></path>
-          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(198 50 50)"></path>
-          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(234 50 50)"></path>
-          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(270 50 50)"></path>
-          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(306 50 50)"></path>
-          <path d="M50,47 Q45,37 50,30 Q55,37 50,47 Z" transform="rotate(342 50 50)"></path>
-        </g>
+      <g fill="var(--petal-light, currentColor)" fill-opacity=".58">
+        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(0 50 50)"></path>
+        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(36 50 50)"></path>
+        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(72 50 50)"></path>
+        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(108 50 50)"></path>
+        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(144 50 50)"></path>
+        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(180 50 50)"></path>
+        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(216 50 50)"></path>
+        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(252 50 50)"></path>
+        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(288 50 50)"></path>
+        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(324 50 50)"></path>
       </g>
-      <circle cx="50" cy="50" r="20" fill="var(--petal-center, currentColor)" fill-opacity=".36"></circle>
-      <circle cx="50" cy="50" r="15" fill="var(--petal-center, currentColor)" fill-opacity=".6"></circle>
-      <circle cx="50" cy="50" r="9.5" fill="var(--petal-center, currentColor)" fill-opacity=".88"></circle>
-      <circle cx="50" cy="50" r="13.5" fill="none" stroke="var(--petal-light, currentColor)" stroke-opacity=".5" stroke-width="1"></circle>
+      <circle cx="50" cy="50" r="11" fill="var(--petal-center, currentColor)" fill-opacity=".55"></circle>
+      <circle cx="50" cy="50" r="6.5" fill="var(--petal-center, currentColor)" fill-opacity=".85"></circle>
     </symbol>
   </defs>
 </svg>
@@ -6318,9 +6210,17 @@ function buildVesicaPairs() {
     // bande reste identique tout autour.
     const _st = STICKERS[i];
     const _hasSt = _st && _st.dataUrl;
+    // #179 : demande explicite "ne plus voir la sphère des oscillateurs,
+    // uniquement le motif" (référence : ancienne version envoyée par
+    // l'utilisateur — fleur seule, anneau fin, PAS de disque plein derrière).
+    // Le disque radial-gradient qui remplissait tout le cercle est retiré :
+    // seuls l'anneau (.vp-p border, inchangé) et la fleur SVG restent
+    // visibles, le fond de l'appli transparaît autour/entre les pétales.
+    // Le sticker perso (Créateur), lui, garde son propre fond (l'image
+    // choisie par l'utilisateur doit rester pleine) — cas inchangé.
     const _bgStyle = _hasSt
-      ? `background:url('${_st.dataUrl}') ${_st.panX}% ${_st.panY}% / ${_st.zoom}% ${_st.zoom}% no-repeat,radial-gradient(circle,${c}55 0%,${c}22 60%,transparent 100%);filter:${_stickerFilterCss(_st)};`
-      : `background:radial-gradient(circle,${c}55 0%,${c}22 60%,transparent 100%);`;
+      ? `background:url('${_st.dataUrl}') ${_st.panX}% ${_st.panY}% / ${_st.zoom}% ${_st.zoom}% no-repeat;filter:${_stickerFilterCss(_st)};`
+      : ``;
 
     const vp = document.createElement('div');
     vp.className = 'vp-wrap';
