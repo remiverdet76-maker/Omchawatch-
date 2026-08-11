@@ -2246,103 +2246,68 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 </div>
 
 
-<!-- #179 : refonte "juste le motif" — d'après la référence envoyée par
-     l'utilisateur (ancienne version de l'app) : une SEULE couronne de
-     grands pétales, translucides, PAS de disque plein derrière (retiré
-     de _bgStyle en JS) — seuls l'anneau fin (.vp-p border) et la fleur
-     elle-même restent visibles, le fond de l'appli transparaît tout
-     autour. Abandon des 2-3 couronnes empilées de #174/#177 (jugées
-     encore trop "sphère" par l'utilisateur) au profit de cette silhouette
-     simple et reconnaissable, plus proche de la référence.
-     Réutilise le même mécanisme que #172/#174/#177 : symboles SVG cachés,
-     jamais redessinés par JS, clonés via <use> et recolorés par sphère
-     avec la couleur de SA bande de fréquence réelle (FREQ_BANDS).
-     3 VARIANTES de silhouette (A/B/C) — chaque canal satellite tire la
-     sienne une fois par session (LOTUS_PICK, cf. JS), stable ensuite.
-     Toujours 2 tons par pétale (base --petal-dark + cœur --petal-light)
-     + petit cœur contrastant (--petal-center) pour porter le chiffre de
-     fréquence, mais une seule couronne cette fois — pétales élargis,
-     allant presque jusqu'au bord de l'anneau, comme sur la référence.
-     Toujours du SVG statique pur, jamais redessiné par JS — coût nul. -->
+<!-- #180 : refonte fidèle à la référence photo envoyée par l'utilisateur —
+     ma première tentative (#179) gardait encore l'esprit "mandala lotus"
+     (pétales à pointe, double ton foncé/clair, contour tracé) : jugée
+     "hors sujet", rien à voir avec la capture. Ce que la référence montre
+     réellement, à l'inspection en gros plan (crop) :
+       - des pétales OVALES/ARRONDIS (pas de pointe), simples ellipses
+         allongées depuis le centre, PAS de silhouette "lotus" pointue ;
+       - un SEUL ton translucide par pétale (pas de double couche
+         foncé/clair, pas de contour/stroke tracé autour de chaque
+         pétale — juste une forme pleine semi-transparente) ;
+       - aucun cœur/disque central dessiné à part : le centre est juste
+         plus dense/lumineux par empilement naturel des pétales qui se
+         chevauchent tous au milieu ;
+       - un anneau fin autour (déjà géré par .vp-p border, inchangé).
+     Reproduit ici avec de simples <ellipse>, un seul remplissage
+     translucide (var(--petal-light)), sans trait. 3 variantes de nombre
+     de pétales (8/6/10) pour la diversité, mais TOUTES dans ce même
+     langage visuel simple — plus de dérive vers l'esthétique lotus/
+     mandala d'avant. Mécanisme LOTUS_PICK (tirage stable par canal)
+     inchangé. Toujours du SVG statique pur, jamais redessiné par JS. -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
   <defs>
     <symbol id="lotusMotifA" viewBox="0 0 100 100">
-      <!-- 8 grands pétales, une seule couronne -->
-      <g fill="var(--petal-dark, currentColor)" fill-opacity=".7" stroke="var(--petal-dark, currentColor)" stroke-opacity=".72" stroke-width=".9">
-        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(0 50 50)"></path>
-        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(45 50 50)"></path>
-        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(90 50 50)"></path>
-        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(135 50 50)"></path>
-        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(180 50 50)"></path>
-        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(225 50 50)"></path>
-        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(270 50 50)"></path>
-        <path d="M50,50 C36,47 29,22 50,4 C71,22 64,47 50,50 Z" transform="rotate(315 50 50)"></path>
+      <!-- 8 pétales ovales -->
+      <g fill="var(--petal-light, currentColor)" fill-opacity=".52">
+        <ellipse cx="50" cy="29" rx="15" ry="24" transform="rotate(0 50 50)"></ellipse>
+        <ellipse cx="50" cy="29" rx="15" ry="24" transform="rotate(45 50 50)"></ellipse>
+        <ellipse cx="50" cy="29" rx="15" ry="24" transform="rotate(90 50 50)"></ellipse>
+        <ellipse cx="50" cy="29" rx="15" ry="24" transform="rotate(135 50 50)"></ellipse>
+        <ellipse cx="50" cy="29" rx="15" ry="24" transform="rotate(180 50 50)"></ellipse>
+        <ellipse cx="50" cy="29" rx="15" ry="24" transform="rotate(225 50 50)"></ellipse>
+        <ellipse cx="50" cy="29" rx="15" ry="24" transform="rotate(270 50 50)"></ellipse>
+        <ellipse cx="50" cy="29" rx="15" ry="24" transform="rotate(315 50 50)"></ellipse>
       </g>
-      <g fill="var(--petal-light, currentColor)" fill-opacity=".6">
-        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(0 50 50)"></path>
-        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(45 50 50)"></path>
-        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(90 50 50)"></path>
-        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(135 50 50)"></path>
-        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(180 50 50)"></path>
-        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(225 50 50)"></path>
-        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(270 50 50)"></path>
-        <path d="M50,47 C40,44 34,26 50,11 C66,26 60,44 50,47 Z" transform="rotate(315 50 50)"></path>
-      </g>
-      <!-- petit cœur contrastant, juste assez pour porter le chiffre -->
-      <circle cx="50" cy="50" r="13" fill="var(--petal-center, currentColor)" fill-opacity=".55"></circle>
-      <circle cx="50" cy="50" r="8" fill="var(--petal-center, currentColor)" fill-opacity=".85"></circle>
     </symbol>
 
-    <!-- variante B : 6 pétales, plus larges/bulbeux (nénuphar épanoui) -->
+    <!-- variante B : 6 pétales, plus larges (nénuphar épanoui) -->
     <symbol id="lotusMotifB" viewBox="0 0 100 100">
-      <g fill="var(--petal-dark, currentColor)" fill-opacity=".7" stroke="var(--petal-dark, currentColor)" stroke-opacity=".72" stroke-width=".9">
-        <path d="M50,50 C30,45 23,17 50,3 C77,17 70,45 50,50 Z" transform="rotate(0 50 50)"></path>
-        <path d="M50,50 C30,45 23,17 50,3 C77,17 70,45 50,50 Z" transform="rotate(60 50 50)"></path>
-        <path d="M50,50 C30,45 23,17 50,3 C77,17 70,45 50,50 Z" transform="rotate(120 50 50)"></path>
-        <path d="M50,50 C30,45 23,17 50,3 C77,17 70,45 50,50 Z" transform="rotate(180 50 50)"></path>
-        <path d="M50,50 C30,45 23,17 50,3 C77,17 70,45 50,50 Z" transform="rotate(240 50 50)"></path>
-        <path d="M50,50 C30,45 23,17 50,3 C77,17 70,45 50,50 Z" transform="rotate(300 50 50)"></path>
+      <g fill="var(--petal-light, currentColor)" fill-opacity=".52">
+        <ellipse cx="50" cy="27" rx="19" ry="26" transform="rotate(0 50 50)"></ellipse>
+        <ellipse cx="50" cy="27" rx="19" ry="26" transform="rotate(60 50 50)"></ellipse>
+        <ellipse cx="50" cy="27" rx="19" ry="26" transform="rotate(120 50 50)"></ellipse>
+        <ellipse cx="50" cy="27" rx="19" ry="26" transform="rotate(180 50 50)"></ellipse>
+        <ellipse cx="50" cy="27" rx="19" ry="26" transform="rotate(240 50 50)"></ellipse>
+        <ellipse cx="50" cy="27" rx="19" ry="26" transform="rotate(300 50 50)"></ellipse>
       </g>
-      <g fill="var(--petal-light, currentColor)" fill-opacity=".6">
-        <path d="M50,46 C36,42 30,22 50,10 C70,22 64,42 50,46 Z" transform="rotate(0 50 50)"></path>
-        <path d="M50,46 C36,42 30,22 50,10 C70,22 64,42 50,46 Z" transform="rotate(60 50 50)"></path>
-        <path d="M50,46 C36,42 30,22 50,10 C70,22 64,42 50,46 Z" transform="rotate(120 50 50)"></path>
-        <path d="M50,46 C36,42 30,22 50,10 C70,22 64,42 50,46 Z" transform="rotate(180 50 50)"></path>
-        <path d="M50,46 C36,42 30,22 50,10 C70,22 64,42 50,46 Z" transform="rotate(240 50 50)"></path>
-        <path d="M50,46 C36,42 30,22 50,10 C70,22 64,42 50,46 Z" transform="rotate(300 50 50)"></path>
-      </g>
-      <circle cx="50" cy="50" r="14" fill="var(--petal-center, currentColor)" fill-opacity=".55"></circle>
-      <circle cx="50" cy="50" r="8.5" fill="var(--petal-center, currentColor)" fill-opacity=".85"></circle>
     </symbol>
 
-    <!-- variante C : 10 pétales fins et rayonnants -->
+    <!-- variante C : 10 pétales plus fins et nombreux -->
     <symbol id="lotusMotifC" viewBox="0 0 100 100">
-      <g fill="var(--petal-dark, currentColor)" fill-opacity=".68" stroke="var(--petal-dark, currentColor)" stroke-opacity=".7" stroke-width=".8">
-        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(0 50 50)"></path>
-        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(36 50 50)"></path>
-        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(72 50 50)"></path>
-        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(108 50 50)"></path>
-        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(144 50 50)"></path>
-        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(180 50 50)"></path>
-        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(216 50 50)"></path>
-        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(252 50 50)"></path>
-        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(288 50 50)"></path>
-        <path d="M50,49 Q39,24 50,5 Q61,24 50,49 Z" transform="rotate(324 50 50)"></path>
+      <g fill="var(--petal-light, currentColor)" fill-opacity=".5">
+        <ellipse cx="50" cy="30" rx="10.5" ry="22" transform="rotate(0 50 50)"></ellipse>
+        <ellipse cx="50" cy="30" rx="10.5" ry="22" transform="rotate(36 50 50)"></ellipse>
+        <ellipse cx="50" cy="30" rx="10.5" ry="22" transform="rotate(72 50 50)"></ellipse>
+        <ellipse cx="50" cy="30" rx="10.5" ry="22" transform="rotate(108 50 50)"></ellipse>
+        <ellipse cx="50" cy="30" rx="10.5" ry="22" transform="rotate(144 50 50)"></ellipse>
+        <ellipse cx="50" cy="30" rx="10.5" ry="22" transform="rotate(180 50 50)"></ellipse>
+        <ellipse cx="50" cy="30" rx="10.5" ry="22" transform="rotate(216 50 50)"></ellipse>
+        <ellipse cx="50" cy="30" rx="10.5" ry="22" transform="rotate(252 50 50)"></ellipse>
+        <ellipse cx="50" cy="30" rx="10.5" ry="22" transform="rotate(288 50 50)"></ellipse>
+        <ellipse cx="50" cy="30" rx="10.5" ry="22" transform="rotate(324 50 50)"></ellipse>
       </g>
-      <g fill="var(--petal-light, currentColor)" fill-opacity=".58">
-        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(0 50 50)"></path>
-        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(36 50 50)"></path>
-        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(72 50 50)"></path>
-        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(108 50 50)"></path>
-        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(144 50 50)"></path>
-        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(180 50 50)"></path>
-        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(216 50 50)"></path>
-        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(252 50 50)"></path>
-        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(288 50 50)"></path>
-        <path d="M50,46 Q42,26 50,13 Q58,26 50,46 Z" transform="rotate(324 50 50)"></path>
-      </g>
-      <circle cx="50" cy="50" r="11" fill="var(--petal-center, currentColor)" fill-opacity=".55"></circle>
-      <circle cx="50" cy="50" r="6.5" fill="var(--petal-center, currentColor)" fill-opacity=".85"></circle>
     </symbol>
   </defs>
 </svg>
@@ -6204,7 +6169,6 @@ function buildVesicaPairs() {
     const band  = bandColorFor(pF);
     const c     = band.c;
     const cDark = shadeHex(c, 0.28);
-    const cCenter = shadeHex(c, 0.72); // #174 : cœur du lotus, bien plus sombre que le pétale — contraste avec le chiffre
     // #155 : sticker personnalisé (Créateur) — remplace le fond plat par
     // l'image importée (cadrage/zoom/filtre réglables), le halo/bordure de
     // bande reste identique tout autour.
@@ -6227,12 +6191,13 @@ function buildVesicaPairs() {
     vp.id = 'vp' + i;
     vp.style.left = px + 'px';
     vp.style.top  = py + 'px';
-    // #172/#174/#177 : motif lotus, coloré à la bande de fréquence réelle
-    // du canal (3 tons — clair/foncé/cœur), silhouette tirée une fois par
+    // #180 : motif fleur, un seul ton translucide (fidèle à la référence
+    // envoyée — pas de contour foncé, pas de double ton), coloré à la
+    // bande de fréquence réelle du canal, silhouette tirée une fois par
     // canal (LOTUS_PICK) parmi 3 variantes — désactivé si un sticker
     // personnalisé (Créateur) est posé, pour ne jamais concurrencer une
     // image choisie par l'utilisateur.
-    const _lotusSvg = _hasSt ? '' : `<svg class="vp-lotus" viewBox="0 0 100 100" style="color:${c};--petal-light:${c};--petal-dark:${cDark};--petal-center:${cCenter}"><use href="#lotusMotif${LOTUS_PICK[i]}"></use></svg>`;
+    const _lotusSvg = _hasSt ? '' : `<svg class="vp-lotus" viewBox="0 0 100 100" style="color:${c};--petal-light:${c}"><use href="#lotusMotif${LOTUS_PICK[i]}"></use></svg>`;
     vp.innerHTML = `
       <div class="vp-p ${isMutedP?'vp-muted':''} ${flowing&&!isMutedP?'vp-live':''}"
            id="vpc-p${i}"
