@@ -412,8 +412,14 @@ body{
    filter du parent s'applique à tous ses descendants). */
 .vp-lotus{ position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none; }
 .vp-p.vp-muted .vp-lotus{ display:none; } /* #71 : le muet reste un quartz plat, sans motif */
-.vp-type{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.65rem;letter-spacing:.06em;opacity:.7;position:relative;z-index:1;text-shadow:0 1px 4px rgba(0,0,0,.75);}
-.vp-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:calc(1.7rem * var(--sphere-digit-scale,1));line-height:1;color:#f5eedc;text-shadow:0 0 12px rgba(255,255,255,.45);font-weight:700;position:relative;z-index:1;}
+.vp-type{font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.65rem;letter-spacing:.06em;opacity:.7;position:relative;z-index:1;text-shadow:0 1px 4px rgba(0,0,0,.85),0 0 6px rgba(0,0,0,.6);}
+/* #178 : la lueur blanche seule (text-shadow blanc) ne garantit RIEN sur
+   un fond clair — sur une bande de fréquence pâle (ou le cœur du lotus
+   dont l'opacité laisse le fond bleuter), le texte crème devenait
+   "blanc sur blanc", donc invisible (signalé par l'utilisateur). Ombre
+   sombre FORTE ajoutée en plus (jamais à la place) de la lueur : la
+   lisibilité ne dépend plus jamais de ce qu'il y a derrière. */
+.vp-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:calc(1.7rem * var(--sphere-digit-scale,1));line-height:1;color:#f5eedc;text-shadow:0 0 10px rgba(255,255,255,.4),0 2px 5px rgba(0,0,0,.9),0 0 9px rgba(0,0,0,.75),0 -1px 3px rgba(0,0,0,.7);font-weight:700;position:relative;z-index:1;}
 .vp-hz{display:none;}
 /* #153 : étoile discrète sous chaque sphère satellite → ouvre son menu
    oscillateur (openOscModal). SIBLING direct de #sphere-layer (positionnée
@@ -471,7 +477,7 @@ body{
   0%,100%{ transform:scale(1); }
   50%{ transform:scale(1.06); }
 }
-.ms-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:2.2rem;color:#F3D9FF;line-height:1;cursor:text;text-shadow:0 0 14px rgba(220,130,255,.55);font-weight:bold;}
+.ms-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:2.2rem;color:#F3D9FF;line-height:1;cursor:text;text-shadow:0 0 14px rgba(220,130,255,.55),0 2px 5px rgba(0,0,0,.85),0 0 8px rgba(0,0,0,.65);font-weight:bold;} /* #178 : ombre sombre ajoutée — même garde-fou de lisibilité que .vp-freq */
 .ms-freq:hover{color:#FFD700;}
 /* #154 : la sphère maître n'affiche plus son chiffre — réglable via le
    +/-9 Hz sous la sphère "Jeu Aléatoire" (#165, cf. .flux-freq-mini).
@@ -485,28 +491,38 @@ body{
 }
 #freq-input-master::-webkit-inner-spin-button,#freq-input-master::-webkit-outer-spin-button{-webkit-appearance:none;}
 
-/* #176 : Arpégiateur retiré, remplacé par un tiroir latéral gauche à 2
-   faders HORIZONTAUX : Maître (fréquence réelle du moteur, 54-432) et
+/* #176/#178 : Arpégiateur retiré, remplacé par un tiroir latéral gauche à
+   2 faders HORIZONTAUX : Maître (fréquence réelle du moteur, 54-432) et
    Détune global (2e référence 54-432 — l'écart avec le maître, recalculé
-   à chaque glisser, retune tous les canaux actifs). Même conteneur/
-   poignée que l'ancien tiroir (position, ouverture, garde-fou dock —
-   cf. #171/#173) : seul le contenu change, une pile de 2 pistes
-   horizontales au lieu d'un unique fader vertical. */
+   à chaque glisser, retune tous les canaux actifs).
+   #178 : refonte "vrai potentiomètre" (retour terrain : la V1 — simple
+   bille sur un trait fin — faisait "bâclé") — piste en RAINURE creuse
+   (ombre interne, comme un vrai channel de fader), 4 graduations
+   d'octave (54/108/216/432Hz, échelle désormais LOGARITHMIQUE — cf. JS
+   _fxFreqToT — donc parfaitement équidistantes), et un vrai bouton de
+   potentiomètre : plus gros, relief 3D marqué, avec une ENCOCHE
+   indicatrice (comme un vrai knob) plutôt qu'une bille plate. Poignée
+   du tiroir agrandie (32px→plus facile à attraper) + repère flèche
+   dont le sens s'inverse à l'ouverture (affordance claire
+   ouvrir/fermer) ; fermeture aussi possible en tapant n'importe où en
+   dehors du tiroir (cf. JS _fxOutsideCloseCheck) — la poignée fine
+   n'est plus le SEUL moyen de refermer. */
 #fxDrawerHandle{
   position:fixed;left:0;top:50%;transform:translateY(-50%);
-  width:22px;height:88px;border-radius:0 14px 14px 0;
-  background:linear-gradient(135deg,rgba(255,214,120,.28),rgba(30,20,45,.55));
-  border:1px solid rgba(255,214,120,.35);border-left:none;
-  box-shadow:2px 0 14px rgba(0,0,0,.35);
+  width:32px;height:104px;border-radius:0 16px 16px 0;
+  background:linear-gradient(135deg,rgba(255,214,120,.32),rgba(30,20,45,.6));
+  border:1px solid rgba(255,214,120,.4);border-left:none;
+  box-shadow:2px 0 16px rgba(0,0,0,.4);
   z-index:60;display:flex;align-items:center;justify-content:center;
   cursor:pointer;transition:left .32s cubic-bezier(.4,0,.2,1),opacity .2s;
   touch-action:none;
 }
 #fxDrawerHandle::before{
-  content:'';width:4px;height:34px;border-radius:3px;
-  background:rgba(255,224,160,.75);box-shadow:0 0 6px rgba(255,200,100,.5);
+  content:'▸';font-size:16px;line-height:1;color:rgba(255,224,160,.85);
+  text-shadow:0 0 6px rgba(255,200,100,.6);transition:transform .32s;
 }
 body.fx-drawer-open #fxDrawerHandle{ left:min(33vw,260px); }
+body.fx-drawer-open #fxDrawerHandle::before{ transform:rotate(180deg); }
 #fxDrawer{
   position:fixed;left:0;top:0;bottom:154px;width:min(33vw,260px);
   min-width:128px;
@@ -520,7 +536,7 @@ body.fx-drawer-open #fxDrawerHandle{ left:min(33vw,260px); }
   padding:0 16px;backdrop-filter:blur(6px);
 }
 body.fx-drawer-open #fxDrawer{ transform:translateX(0); }
-.fx-fader{ display:flex;flex-direction:column;align-items:center;gap:8px; }
+.fx-fader{ display:flex;flex-direction:column;align-items:center;gap:10px; }
 .fx-fader-label{
   font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.62rem;
   letter-spacing:.1em;text-transform:uppercase;color:rgba(255,224,170,.65);
@@ -528,39 +544,60 @@ body.fx-drawer-open #fxDrawer{ transform:translateX(0); }
 /* Piste horizontale, large bande de préhension (toute la hauteur de la
    piste, pas seulement le trait visible) pour un glisser confortable. */
 .fx-fader-track{
-  position:relative;width:100%;height:36px;
+  position:relative;width:100%;height:40px;
   display:flex;align-items:center;touch-action:none;cursor:grab;
 }
 .fx-fader-track:active{ cursor:grabbing; }
+/* Rainure creuse — ombre interne pour un vrai relief de "channel". */
 .fx-fader-line{
-  position:absolute;left:0;right:0;top:50%;height:3px;
-  transform:translateY(-50%);border-radius:3px;
-  background:linear-gradient(90deg,rgba(255,255,255,.18),rgba(255,214,120,.55),rgba(255,255,255,.18));
+  position:absolute;left:0;right:0;top:50%;height:6px;
+  transform:translateY(-50%);border-radius:4px;
+  background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.25));
+  box-shadow:inset 0 2px 3px rgba(0,0,0,.6),inset 0 -1px 1px rgba(255,255,255,.06);
 }
-/* Repères discrets gauche (grave) / droite (aigu). */
-.fx-fader-track::before{
-  content:'';position:absolute;left:2%;top:50%;width:3px;height:10px;
-  background:rgba(255,255,255,.3);border-radius:2px;transform:translateY(-50%);
+/* Remplissage doré de la rainure jusqu'à la position courante — posé par
+   JS (largeur en %) pour lire l'état d'un coup d'œil, comme un vrai
+   potentiomètre à piste éclairée. */
+.fx-fader-fill{
+  position:absolute;left:0;top:50%;height:6px;width:50%;
+  transform:translateY(-50%);border-radius:4px 0 0 4px;
+  background:linear-gradient(90deg,rgba(255,180,80,.35),rgba(255,214,120,.85));
+  pointer-events:none;
 }
-.fx-fader-track::after{
-  content:'';position:absolute;right:2%;top:50%;width:3px;height:10px;
-  background:rgba(255,255,255,.3);border-radius:2px;transform:translateY(-50%);
+/* 4 graduations d'octave (54/108/216/432Hz) — équidistantes grâce à
+   l'échelle log (cf. JS). Jamais de chiffre : juste un repère de
+   position, comme les crans d'un vrai potentiomètre. */
+.fx-fader-track .fx-tick{
+  position:absolute;top:50%;width:2px;height:14px;
+  background:rgba(255,255,255,.28);border-radius:1px;transform:translate(-50%,-50%);
+  pointer-events:none;
 }
-.fx-fader-ball{
-  position:absolute;top:50%;width:24px;height:24px;border-radius:50%;
+.fx-fader-track .fx-tick:first-child,.fx-fader-track .fx-tick:last-child{
+  height:18px;background:rgba(255,224,170,.4);
+}
+.fx-fader-knob{
+  position:absolute;top:50%;width:30px;height:30px;border-radius:50%;
   transform:translate(-50%,-50%);
-  background:radial-gradient(circle at 35% 30%,#FFF6DE 0%,#FFD966 42%,#C9930E 100%);
-  box-shadow:0 0 9px rgba(255,215,90,.75),0 0 16px rgba(255,190,60,.35),inset 0 1px 2px rgba(255,255,255,.7);
+  background:radial-gradient(circle at 32% 28%,#FFF6DE 0%,#FFD966 40%,#C9930E 82%,#9C6E12 100%);
+  box-shadow:0 2px 4px rgba(0,0,0,.5),0 0 10px rgba(255,215,90,.7),0 0 18px rgba(255,190,60,.3),inset 0 1px 2px rgba(255,255,255,.75),inset 0 -2px 3px rgba(120,70,10,.4);
   pointer-events:none;transition:box-shadow .18s,width .12s,height .12s;
   will-change:left;
 }
-.fx-fader-ball.fx-fader-active{
-  width:28px;height:28px;
-  box-shadow:0 0 18px rgba(255,225,120,1),0 0 34px rgba(255,205,80,.65),inset 0 1px 3px rgba(255,255,255,.85);
+/* Encoche indicatrice — vrai repère de "knob" mécanique, pointe toujours
+   vers le bas (12h → 6h), tourne avec rien (c'est un fader, pas un
+   rotatif) mais donne ce grain "instrument" plutôt qu'une bille plate. */
+.fx-fader-knob::after{
+  content:'';position:absolute;left:50%;top:50%;width:2px;height:11px;
+  background:rgba(70,40,5,.85);border-radius:1px;
+  transform:translate(-50%,-15%);
 }
-body.vis-lite .fx-fader-ball.fx-fader-active{ box-shadow:0 0 10px rgba(255,225,120,.8); } /* #23 : moins coûteux en mode léger */
-#fxDrawer .fx-fader:nth-child(2) .fx-fader-line{
-  background:linear-gradient(90deg,rgba(255,255,255,.18),rgba(140,255,220,.5),rgba(255,255,255,.18));
+.fx-fader-knob.fx-fader-active{
+  width:34px;height:34px;
+  box-shadow:0 2px 5px rgba(0,0,0,.55),0 0 20px rgba(255,225,120,1),0 0 36px rgba(255,205,80,.6),inset 0 1px 3px rgba(255,255,255,.85),inset 0 -2px 3px rgba(120,70,10,.45);
+}
+body.vis-lite .fx-fader-knob.fx-fader-active{ box-shadow:0 0 10px rgba(255,225,120,.8); } /* #23 : moins coûteux en mode léger */
+#fxDrawer .fx-fader:nth-child(2) .fx-fader-fill{
+  background:linear-gradient(90deg,rgba(90,255,210,.3),rgba(140,255,220,.85));
 }
 
 /* #165 : menu rapide (Random ratio/Solo/Verrouiller) supprimé — l'appui
@@ -2445,7 +2482,12 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <div class="fx-fader-track" id="fxFaderMasterTrack"
       onmousedown="_fxStart(event,'master')" ontouchstart="_fxStart(event,'master')" ontouchmove="_fxMove(event,'master')" ontouchend="_fxEnd(event,'master')">
       <div class="fx-fader-line"></div>
-      <div class="fx-fader-ball" id="fxFaderMasterBall"></div>
+      <div class="fx-fader-fill" id="fxFaderMasterFill"></div>
+      <span class="fx-tick" style="left:0%"></span>
+      <span class="fx-tick" style="left:33.333%"></span>
+      <span class="fx-tick" style="left:66.667%"></span>
+      <span class="fx-tick" style="left:100%"></span>
+      <div class="fx-fader-knob" id="fxFaderMasterBall"></div>
     </div>
   </div>
   <div class="fx-fader">
@@ -2453,7 +2495,12 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <div class="fx-fader-track" id="fxFaderDetuneTrack"
       onmousedown="_fxStart(event,'detune')" ontouchstart="_fxStart(event,'detune')" ontouchmove="_fxMove(event,'detune')" ontouchend="_fxEnd(event,'detune')">
       <div class="fx-fader-line"></div>
-      <div class="fx-fader-ball" id="fxFaderDetuneBall"></div>
+      <div class="fx-fader-fill" id="fxFaderDetuneFill"></div>
+      <span class="fx-tick" style="left:0%"></span>
+      <span class="fx-tick" style="left:33.333%"></span>
+      <span class="fx-tick" style="left:66.667%"></span>
+      <span class="fx-tick" style="left:100%"></span>
+      <div class="fx-fader-knob" id="fxFaderDetuneBall"></div>
     </div>
   </div>
 </div>
@@ -5475,8 +5522,22 @@ const FX_FADER_STATE = { detune: null, userSet: false }; // Hz absolu, écart nu
 let _fxDragTarget = null; // 'master' | 'detune' | null
 const FX_FADER_LO = 54, FX_FADER_HI = 432;
 
-function _fxFreqToT(f) { return Math.max(0, Math.min(1, (f - FX_FADER_LO) / (FX_FADER_HI - FX_FADER_LO))); }
-function _fxTToFreq(t) { return FX_FADER_LO + Math.max(0, Math.min(1, t)) * (FX_FADER_HI - FX_FADER_LO); }
+// #178 : échelle LOGARITHMIQUE plutôt que linéaire — 54→432Hz, c'est
+// EXACTEMENT 3 octaves (54×2=108, ×2=216, ×2=432), donc les 4 graduations
+// demandées tombent pile à t=0/.333/.667/1 en log, parfaitement
+// espacées visuellement (cf. CSS .fx-fader-track .fx-tick) ET musicalement
+// justes (l'oreille perçoit la hauteur de façon logarithmique, pas
+// linéaire — un glisser linéaire aurait écrasé tout le bas du spectre
+// dans le premier tiers du fader).
+const FX_OCTAVE_HZ = [54, 108, 216, 432];
+function _fxFreqToT(f) {
+  const t = (Math.log(Math.max(FX_FADER_LO, Math.min(FX_FADER_HI, f))) - Math.log(FX_FADER_LO)) / (Math.log(FX_FADER_HI) - Math.log(FX_FADER_LO));
+  return Math.max(0, Math.min(1, t));
+}
+function _fxTToFreq(t) {
+  const tt = Math.max(0, Math.min(1, t));
+  return Math.exp(Math.log(FX_FADER_LO) + tt * (Math.log(FX_FADER_HI) - Math.log(FX_FADER_LO)));
+}
 function _fxClientXToT(clientX, track) {
   const rect = track.getBoundingClientRect();
   if (!rect.width) return 0.5;
@@ -5484,15 +5545,18 @@ function _fxClientXToT(clientX, track) {
 }
 function _fxTrackEl(which)  { return document.getElementById(which === 'master' ? 'fxFaderMasterTrack' : 'fxFaderDetuneTrack'); }
 function _fxBallEl(which)   { return document.getElementById(which === 'master' ? 'fxFaderMasterBall'  : 'fxFaderDetuneBall'); }
+function _fxFillEl(which)   { return document.getElementById(which === 'master' ? 'fxFaderMasterFill'  : 'fxFaderDetuneFill'); }
 function _fxUpdateBallPosition(which) {
-  const track = _fxTrackEl(which), ball = _fxBallEl(which);
+  const track = _fxTrackEl(which), ball = _fxBallEl(which), fill = _fxFillEl(which);
   if (!track || !ball) return;
   const rect = track.getBoundingClientRect();
   if (!rect.width) return;
   const f = which === 'master' ? masterFreq : (FX_FADER_STATE.detune ?? masterFreq);
+  const t = _fxFreqToT(f);
   const margin = 12;
-  const x = margin + _fxFreqToT(f) * (rect.width - margin * 2);
+  const x = margin + t * (rect.width - margin * 2);
   ball.style.left = x + 'px';
+  if (fill) fill.style.width = x + 'px'; // #178 : piste éclairée jusqu'au bouton, comme un vrai potentiomètre
 }
 // Écart courant (fader détune − maître) réappliqué à tous les canaux non
 // coupés — léger : juste des tuneOsc() ciblés, aucun nœud audio créé.
@@ -5564,6 +5628,24 @@ function _fxToggleDrawer() {
   saveState();
   requestAnimationFrame(() => { _fxUpdateBallPosition('master'); _fxUpdateBallPosition('detune'); });
 }
+// #178 : retour terrain — la poignée fine (32px) était le SEUL moyen de
+// refermer le tiroir, difficile à retrouver/retaper précisément une fois
+// déplacée au bord droit du tiroir ouvert ("impossible de fermer le
+// menu"). Ajout d'une fermeture par tap n'importe où EN DEHORS du
+// tiroir/de la poignée (comportement standard de tiroir latéral) — la
+// poignée reste utilisable mais n'est plus le seul recours. Capture=true
+// pour agir avant tout autre gestionnaire de clic posé plus bas dans
+// l'app (sphère, dock…), sans jamais leur voler l'événement (on ne fait
+// qu'observer puis fermer, jamais preventDefault/stopPropagation ici).
+function _fxOutsideCloseCheck(e) {
+  if (!document.body.classList.contains('fx-drawer-open')) return;
+  const t = e.target;
+  if (t.closest && t.closest('#fxDrawer, #fxDrawerHandle')) return; // clic dedans → laisse faire (drag, poignée)
+  document.body.classList.remove('fx-drawer-open');
+  saveState();
+}
+document.addEventListener('mousedown', _fxOutsideCloseCheck, true);
+document.addEventListener('touchstart', _fxOutsideCloseCheck, true);
 // Synchronise l'écart détune sur le maître tant que l'utilisateur ne l'a
 // jamais bougé lui-même (userSet=false) — jamais d'effet par défaut, même
 // si masterFreq change entre 2 appels (tirage aléatoire au chargement,
