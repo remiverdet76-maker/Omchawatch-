@@ -14,8 +14,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- #155 : jeu élargi pour le sélecteur de police du module Créateur —
      mêmes 2 polices par défaut (Cinzel Decorative/IM Fell English) +
-     quelques alternatives décoratives/lisibles au choix. -->
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;700;900&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=MedievalSharp&family=Cormorant+Garamond:wght@400;500;600;700&family=Marcellus&family=Philosopher:wght@400;700&family=Uncial+Antiqua&family=EB+Garamond:wght@400;500;600;700&family=Crimson+Text:wght@400;600;700&family=Spectral:wght@400;500;600;700&display=swap" rel="stylesheet">
+     quelques alternatives décoratives/lisibles au choix.
+     #181 : + Comfortaa (chiffres de fréquence des sphères satellites) —
+     géométrique arrondie, terminaisons douces, plus "organique" que le
+     serif tranchant utilisé partout ailleurs, demandé explicitement pour
+     casser le côté "chiffre gravé" des sphères. -->
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;700;900&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=MedievalSharp&family=Cormorant+Garamond:wght@400;500;600;700&family=Marcellus&family=Philosopher:wght@400;700&family=Uncial+Antiqua&family=EB+Garamond:wght@400;500;600;700&family=Crimson+Text:wght@400;600;700&family=Spectral:wght@400;500;600;700&family=Comfortaa:wght@500;700&display=swap" rel="stylesheet">
 <title>OmcVibe432</title>
 <style>
 /* ═══════════════════════════════════════════
@@ -366,6 +370,9 @@ body{
      (défauts inchangés visuellement tant que l'utilisateur n'y touche pas). */
   --font-deco:'Cinzel Decorative';
   --font-body:'IM Fell English';
+  /* #181 : police dédiée aux chiffres de fréquence des sphères — arrondie/
+     organique, distincte du serif tranchant du reste de l'app. */
+  --font-num:'Comfortaa';
   --dock-cell-scale:1;
   /* #165 : taille du TEXTE du dock, indépendante de --dock-cell-scale
      (taille de la BOÎTE) et surtout de la taille de texte globale
@@ -419,7 +426,18 @@ body{
    "blanc sur blanc", donc invisible (signalé par l'utilisateur). Ombre
    sombre FORTE ajoutée en plus (jamais à la place) de la lueur : la
    lisibilité ne dépend plus jamais de ce qu'il y a derrière. */
-.vp-freq{font-family:var(--font-body,'IM Fell English'),serif;font-size:calc(1.7rem * var(--sphere-digit-scale,1));line-height:1;color:#f5eedc;text-shadow:0 0 10px rgba(255,255,255,.4),0 2px 5px rgba(0,0,0,.9),0 0 9px rgba(0,0,0,.75),0 -1px 3px rgba(0,0,0,.7);font-weight:700;position:relative;z-index:1;}
+/* #181 : police + couleur du chiffre revues (retour utilisateur : "police
+   plus organique et couleurs qui contrastent moins violent que le blanc").
+   - font-family → --font-num (Comfortaa, arrondie/géométrique) au lieu du
+     serif tranchant utilisé partout ailleurs.
+   - color n'est plus un blanc/crème fixe : posé en style inline par sphère
+     (buildVesicaPairs, tintHex(c, .6)) — une version pastel de LA COULEUR
+     DE SA PROPRE BANDE plutôt qu'un blanc plaqué dessus. #f5eedc reste le
+     repli si jamais l'inline manque.
+   - la lueur du text-shadow (1er terme) était un blanc pur ; adoucie en
+     ivoire chaud à opacité réduite — l'ombre sombre qui suit (garant de
+     lisibilité, #178) n'est elle jamais touchée. */
+.vp-freq{font-family:var(--font-num,'Comfortaa'),sans-serif;font-size:calc(1.7rem * var(--sphere-digit-scale,1));line-height:1;color:#f5eedc;text-shadow:0 0 10px rgba(255,238,210,.3),0 2px 5px rgba(0,0,0,.9),0 0 9px rgba(0,0,0,.75),0 -1px 3px rgba(0,0,0,.7);font-weight:700;position:relative;z-index:1;}
 .vp-hz{display:none;}
 /* #153 : étoile discrète sous chaque sphère satellite → ouvre son menu
    oscillateur (openOscModal). SIBLING direct de #sphere-layer (positionnée
@@ -3434,6 +3452,17 @@ function shadeHex(hex, amt) {
   const f = (v) => Math.max(0, Math.min(255, Math.round(v * (1 - amt))));
   return `#${f(r).toString(16).padStart(2, '0')}${f(g).toString(16).padStart(2, '0')}${f(b).toString(16).padStart(2, '0')}`;
 }
+// #181 : éclaircit une couleur hex vers le BLANC de amt (0-1) — utilisé
+// pour le chiffre de fréquence des sphères satellites : une version
+// pastel de SA PROPRE couleur de bande plutôt qu'un blanc/crème plaqué
+// dessus (retour utilisateur : "couleurs qui contrastent moins violent
+// que le blanc"). Contraire de shadeHex (qui assombrit vers le noir).
+function tintHex(hex, amt) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16), g = parseInt(h.substring(2, 4), 16), b = parseInt(h.substring(4, 6), 16);
+  const f = (v) => Math.max(0, Math.min(255, Math.round(v + (255 - v) * amt)));
+  return `#${f(r).toString(16).padStart(2, '0')}${f(g).toString(16).padStart(2, '0')}${f(b).toString(16).padStart(2, '0')}`;
+}
 
 // AudioContext natif — exposé via window.AC
 let AC = null;
@@ -6198,6 +6227,10 @@ function buildVesicaPairs() {
     // personnalisé (Créateur) est posé, pour ne jamais concurrencer une
     // image choisie par l'utilisateur.
     const _lotusSvg = _hasSt ? '' : `<svg class="vp-lotus" viewBox="0 0 100 100" style="color:${c};--petal-light:${c}"><use href="#lotusMotif${LOTUS_PICK[i]}"></use></svg>`;
+    // #181 : chiffre teinté dans la même famille que sa bande (pastel,
+    // tintHex vers le blanc) plutôt qu'un blanc/crème plat — moins violent,
+    // "organique", cohérent avec la fleur qui le porte.
+    const cText = tintHex(c, .6);
     vp.innerHTML = `
       <div class="vp-p ${isMutedP?'vp-muted':''} ${flowing&&!isMutedP?'vp-live':''}"
            id="vpc-p${i}"
@@ -6206,7 +6239,7 @@ function buildVesicaPairs() {
            ontouchstart="_vpStart(${i},event)" ontouchend="_vpEnd(${i})" ontouchmove="_vpMove(${i},event)">
         ${_lotusSvg}
         <span class="vp-type" style="color:${c}CC">Canal ${i+1}</span>
-        <span class="vp-freq" id="vp-pf-${i}">${fmtShort(pF)}</span>
+        <span class="vp-freq" id="vp-pf-${i}" style="color:${cText}">${fmtShort(pF)}</span>
       </div>`;
     layer.appendChild(vp);
 
