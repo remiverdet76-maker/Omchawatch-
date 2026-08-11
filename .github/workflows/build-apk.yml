@@ -37,6 +37,24 @@ jobs:
         working-directory: OmcVibe
         run: npm ci
 
+      - name: Install stable debug keystore
+        # Sans ça, le plugin Android Gradle génère un keystore de debug
+        # ALÉATOIRE différent à chaque run (aucun ~/.android/debug.keystore
+        # persistant sur un runner ubuntu-latest tout neuf) : chaque build
+        # se retrouve signé par une clé jamais vue par Android, ce qui peut
+        # déclencher un blocage strict côté téléphone ("Android ne reconnaît
+        # pas cette application", pas même de proposition d'analyse Play
+        # Protect) — en plus d'empêcher toute mise à jour propre par-dessus
+        # une install existante (signatures différentes à chaque fois).
+        # Un seul keystore de debug fixe, committé une fois pour toutes
+        # (mêmes paramètres que le keystore de debug standard d'Android :
+        # alias androiddebugkey, mot de passe "android", non secret par
+        # nature), réutilisé à chaque run → même signature stable dans le
+        # temps, comme un build local classique.
+        run: |
+          mkdir -p ~/.android
+          cp .github/ci-debug.keystore ~/.android/debug.keystore
+
       - name: Sync Capacitor Android project
         working-directory: OmcVibe
         run: npx cap sync android
