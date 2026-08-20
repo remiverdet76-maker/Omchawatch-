@@ -4758,6 +4758,7 @@ async function startFlow() {
     _armAudioWatchdog(); // #33 (perf)
     _armOrganicEvolution(); // #84
     if (SUBDRONE_STATE.on) _startSubDrone(); // #16 (roadmap)
+    if (EGOCHA_SAGE_STATE.on) _startEgochaSage(); // #181b
     if (typeof _fxUpdateVisibility === 'function') _fxUpdateVisibility(); // #176
     ui('live', 'En expansion…');
   } catch(err) {
@@ -4857,6 +4858,7 @@ async function stopFlow() {
     clearInterval(_audioWatchdogTimer); _audioWatchdogTimer = null; // #33 (perf)
     clearInterval(_organicEvoTimer); _organicEvoTimer = null; // #84
     _stopSubDrone(); // #16 (roadmap)
+    _stopEgochaSage(); // #181b
     _lfoGain=_breathLFO=_breathGain=_breathDepthGain=_driftLFO=_driftDepth=masterGain=analyser=null;
     PAIRS.forEach((_, i) => updateOrbUI(i));
     const mc = document.getElementById('vpc-p' + MASTER_IDX);
@@ -5585,6 +5587,140 @@ function setSubDroneVol(v) {
   SUBDRONE_STATE.vol = Math.max(0, Math.min(0.25, parseFloat(v)));
   if (_subDroneGain) _subDroneGain.gain.setTargetAtTime(SUBDRONE_STATE.vol, aNow(), 0.3);
   const el = document.getElementById('sv-subdrone-vol'); if (el) el.textContent = Math.round(SUBDRONE_STATE.vol * 100) + '%';
+  saveState();
+}
+
+// ── #181b : mode "Egocha Sage" ──────────────────────────────────────
+// Porteur d'ancrage fixe 432Hz (+ couche optionnelle 360Hz, -6dB) modulé
+// par un pouls (LFO d'amplitude, sinus pur) qui RALENTIT par paliers de
+// 90s selon le ratio de contraction 5/6 (0.15→0.125→0.1042→0.0868Hz)
+// tandis que sa profondeur MONTE sur la même cadence (40%→50%→60%→70%,
+// couplée au même palier — le prompt d'origine demandait "recalculée
+// toutes les 90s" pour les deux à la fois, interprété ici comme une
+// progression conjointe plutôt que deux horloges indépendantes non
+// spécifiées). Couche ADDITIVE, jamais branchée sur masterFreq/PAIRS —
+// 432Hz est ICI un repère fixe voulu, pas la fréquence maître courante
+// qui vagabonde au jeu aléatoire — n'interfère avec rien tant qu'elle
+// n'est pas explicitement activée (même connexion additive dans
+// masterGain que le sub-drone ci-dessus, cf. #16). 396Hz volontairement
+// exclu (facteur premier 11, élément "ouvert" — hors sujet ici).
+const EGOCHA_SAGE_STATE = { on: false, layer360: false };
+const EGOCHA_PULSE_STEPS = [0.15, 0.125, 0.1042, 0.0868]; // paliers ratio 5/6
+const EGOCHA_DEPTH_STEPS = [0.40, 0.50, 0.60, 0.70];       // montée progressive, même cadence
+const EGOCHA_STEP_MS  = 90000;
+const EGOCHA_FADE_IN  = 20, EGOCHA_FADE_OUT = 15; // secondes
+const EGOCHA_LVL_432  = 0.22, EGOCHA_LVL_360 = 0.22 * 0.501; // 0.501 ≈ -6dB
+let _egocha = null; // { osc432,gain432, osc360,gain360, lfo,lfoDepth,tremGain,envGain, stepTimer }
+
+function _egochaBuildLayer(freq, level) {
+  const c = audioCtx();
+  const osc = c.createOscillator(); osc.type = 'sine'; osc.frequency.value = freq;
+  const g = c.createGain(); g.gain.value = level;
+  osc.connect(g); osc.start();
+  return { osc, gain: g };
+}
+// Tremolo doux : tremGain.gain = (1-profondeur/2) + (profondeur/2)·sin(2π f t)
+// — oscille toujours SOUS le niveau plein (jamais au-dessus), donc jamais
+// de clipping même à profondeur=70%. lfoDepth/tremGain recalculés en
+// AudioParam.linearRampToValueAtTime (demandé), ancrés sur la valeur
+// courante avant chaque rampe pour un enchaînement toujours continu.
+function _egochaApplyStep(idx) {
+  if (!_egocha) return;
+  const t = aNow(), freq = EGOCHA_PULSE_STEPS[idx], depth = EGOCHA_DEPTH_STEPS[idx];
+  const RAMP = 3; // s — jamais de saut abrupt de timbre
+  _egocha.lfo.frequency.setValueAtTime(_egocha.lfo.frequency.value, t);
+  _egocha.lfo.frequency.linearRampToValueAtTime(freq, t + RAMP);
+  _egocha.tremGain.gain.setValueAtTime(_egocha.tremGain.gain.value, t);
+  _egocha.tremGain.gain.linearRampToValueAtTime(1 - depth / 2, t + RAMP);
+  _egocha.lfoDepth.gain.setValueAtTime(_egocha.lfoDepth.gain.value, t);
+  _egocha.lfoDepth.gain.linearRampToValueAtTime(depth / 2, t + RAMP);
+}
+function _egochaScheduleSteps() {
+  if (!_egocha) return;
+  let idx = 0;
+  const tick = () => {
+    if (!_egocha) return;
+    idx++;
+    if (idx >= EGOCHA_PULSE_STEPS.length) return; // dernier palier : tient indéfiniment
+    _egochaApplyStep(idx);
+    _egocha.stepTimer = setTimeout(tick, EGOCHA_STEP_MS);
+  };
+  _egocha.stepTimer = setTimeout(tick, EGOCHA_STEP_MS);
+}
+function _startEgochaSage() {
+  if (!EGOCHA_SAGE_STATE.on || !masterGain) return;
+  _stopEgochaSage();
+  const c = audioCtx(), t = aNow();
+
+  const l432 = _egochaBuildLayer(432, EGOCHA_LVL_432);
+  const l360 = EGOCHA_SAGE_STATE.layer360 ? _egochaBuildLayer(360, EGOCHA_LVL_360) : null;
+
+  const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = EGOCHA_PULSE_STEPS[0];
+  const lfoDepth = c.createGain(); lfoDepth.gain.value = EGOCHA_DEPTH_STEPS[0] / 2;
+  const tremGain = c.createGain(); tremGain.gain.value = 1 - EGOCHA_DEPTH_STEPS[0] / 2;
+  lfo.connect(lfoDepth); lfoDepth.connect(tremGain.gain); lfo.start();
+
+  l432.gain.connect(tremGain);
+  if (l360) l360.gain.connect(tremGain);
+
+  const envGain = c.createGain();
+  envGain.gain.setValueAtTime(0, t);
+  envGain.gain.linearRampToValueAtTime(1, t + EGOCHA_FADE_IN); // fade-in 20s, puis plateau
+  tremGain.connect(envGain); envGain.connect(masterGain);
+
+  _egocha = {
+    osc432: l432.osc, gain432: l432.gain,
+    osc360: l360 && l360.osc, gain360: l360 && l360.gain,
+    lfo, lfoDepth, tremGain, envGain, stepTimer: null
+  };
+  _egochaScheduleSteps();
+}
+function _stopEgochaSage() {
+  if (!_egocha) return;
+  const e = _egocha;
+  clearTimeout(e.stepTimer);
+  try {
+    const t = aNow();
+    e.envGain.gain.cancelScheduledValues(t);
+    e.envGain.gain.setValueAtTime(e.envGain.gain.value, t);
+    e.envGain.gain.linearRampToValueAtTime(0, t + EGOCHA_FADE_OUT); // fade-out 15s
+  } catch(err) {}
+  _egocha = null;
+  setTimeout(() => {
+    try {
+      e.osc432.stop(); e.osc432.disconnect(); e.gain432.disconnect();
+      if (e.osc360) { e.osc360.stop(); e.osc360.disconnect(); e.gain360.disconnect(); }
+      e.lfo.stop(); e.lfo.disconnect(); e.lfoDepth.disconnect();
+      e.tremGain.disconnect(); e.envGain.disconnect();
+    } catch(err) {}
+  }, (EGOCHA_FADE_OUT + 0.5) * 1000);
+}
+function setEgochaSage(v) {
+  EGOCHA_SAGE_STATE.on = !!v;
+  const ck = document.getElementById('ck-egocha-sage'); if (ck) ck.checked = EGOCHA_SAGE_STATE.on;
+  const sub = document.getElementById('egocha-360-row'); if (sub) sub.style.display = EGOCHA_SAGE_STATE.on ? '' : 'none';
+  if (flowing) { if (EGOCHA_SAGE_STATE.on) _startEgochaSage(); else _stopEgochaSage(); }
+  saveState();
+}
+function setEgocha360(v) {
+  EGOCHA_SAGE_STATE.layer360 = !!v;
+  const ck = document.getElementById('ck-egocha-360'); if (ck) ck.checked = EGOCHA_SAGE_STATE.layer360;
+  // Bascule à chaud sans redémarrer toute la couche (ne casse pas un
+  // fade-in/pouls déjà en cours si l'utilisateur change d'avis en session).
+  if (_egocha) {
+    if (EGOCHA_SAGE_STATE.layer360 && !_egocha.osc360) {
+      const l360 = _egochaBuildLayer(360, 0);
+      l360.gain.gain.setValueAtTime(0, aNow());
+      l360.gain.gain.linearRampToValueAtTime(EGOCHA_LVL_360, aNow() + 1.5);
+      l360.gain.connect(_egocha.tremGain);
+      _egocha.osc360 = l360.osc; _egocha.gain360 = l360.gain;
+    } else if (!EGOCHA_SAGE_STATE.layer360 && _egocha.osc360) {
+      const osc = _egocha.osc360, g = _egocha.gain360;
+      _egocha.osc360 = null; _egocha.gain360 = null;
+      try { g.gain.setTargetAtTime(0, aNow(), 0.4); } catch(e) {}
+      setTimeout(() => { try { osc.stop(); osc.disconnect(); g.disconnect(); } catch(e) {} }, 900);
+    }
+  }
   saveState();
 }
 
@@ -8373,6 +8509,19 @@ function buildMasterFXHTML() {
         <div class="fxq-row"><span class="fxq-lbl">Volume sub</span>
           <input type="range" class="fx-slider" min="0" max="0.25" step="0.01" value="0.05" oninput="setSubDroneVol(this.value)">
           <span class="fx-val-disp" id="sv-subdrone-vol">5%</span></div>
+        <!-- #181b : mode "Egocha Sage" — porteur 432Hz fixe + pouls qui
+             ralentit et s'approfondit par paliers de 90s. Couche additive
+             indépendante de la matrice, off par défaut (même esprit que
+             les autres modes spéciaux ci-dessus : rien d'actif tant qu'on
+             ne le demande pas explicitement). -->
+        <div class="fx-row" style="justify-content:space-between;align-items:center;">
+          <span class="fx-label">Egocha Sage (432Hz + pouls)</span>
+          <label class="fx-toggle"><input type="checkbox" id="ck-egocha-sage" onchange="setEgochaSage(this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
+        <div class="fx-row" id="egocha-360-row" style="justify-content:space-between;align-items:center;padding-left:1rem;display:none;">
+          <span class="fx-label" style="font-size:.68rem;opacity:.75;">+ couche 360Hz (-6dB)</span>
+          <label class="fx-toggle"><input type="checkbox" id="ck-egocha-360" onchange="setEgocha360(this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
       </div>
     </details>
 
@@ -9045,6 +9194,7 @@ function _doSave() {
       strictHeadphone: STRICT_HEADPHONE_MODE,
       pairComp: PAIR_COMP_STATE.on,
       subDrone: { ...SUBDRONE_STATE },
+      egochaSage: { ...EGOCHA_SAGE_STATE }, // #181b
       deltaCharacter: DELTA_CHARACTER_MODE,
       breathAnchor: BREATH_ANCHOR_STATE.on,
       randOpts: { ...RAND_OPTS },
@@ -9116,6 +9266,10 @@ function loadState() {
       if (typeof s.subDrone.on==='boolean') SUBDRONE_STATE.on = s.subDrone.on;
       if (typeof s.subDrone.vol==='number' && s.subDrone.vol>=0 && s.subDrone.vol<=0.25) SUBDRONE_STATE.vol = s.subDrone.vol;
     }
+    if (s.egochaSage && typeof s.egochaSage==='object') { // #181b
+      if (typeof s.egochaSage.on==='boolean') EGOCHA_SAGE_STATE.on = s.egochaSage.on;
+      if (typeof s.egochaSage.layer360==='boolean') EGOCHA_SAGE_STATE.layer360 = s.egochaSage.layer360;
+    }
     if (typeof s.deltaCharacter==='string' && DELTA_CHARACTER[s.deltaCharacter]) DELTA_CHARACTER_MODE = s.deltaCharacter;
     if (typeof s.breathAnchor==='boolean') BREATH_ANCHOR_STATE.on = s.breathAnchor;
     if (s.randOpts && typeof s.randOpts==='object') Object.assign(RAND_OPTS, s.randOpts);
@@ -9165,6 +9319,9 @@ function _syncRandOptsUI() {
   setCk('ck-subdrone', SUBDRONE_STATE.on);
   const sdv = document.getElementById('sv-subdrone-vol'); if (sdv) sdv.textContent = Math.round(SUBDRONE_STATE.vol * 100) + '%';
   const sdSlider = document.querySelector('input[oninput="setSubDroneVol(this.value)"]'); if (sdSlider) sdSlider.value = SUBDRONE_STATE.vol;
+  setCk('ck-egocha-sage', EGOCHA_SAGE_STATE.on); // #181b
+  setCk('ck-egocha-360', EGOCHA_SAGE_STATE.layer360);
+  const egRow = document.getElementById('egocha-360-row'); if (egRow) egRow.style.display = EGOCHA_SAGE_STATE.on ? '' : 'none';
   // Ratio (dropdown + case on/off) et Caractère du battement (dropdown +
   // case on/off) — indépendants l'un de l'autre, chacun persistant.
   const ratioSel = document.getElementById('rand-ratio-select'); if (ratioSel) ratioSel.value = RAND_OPTS.ratioMode;
@@ -9222,6 +9379,7 @@ function exportState() {
     deltaDrift: { ...DELTA_DRIFT_STATE }, deltaCharacter: DELTA_CHARACTER_MODE,
     strictHeadphone: STRICT_HEADPHONE_MODE, pairComp: PAIR_COMP_STATE.on,
     subDrone: { ...SUBDRONE_STATE },
+    egochaSage: { ...EGOCHA_SAGE_STATE }, // #181b
     randOpts: { ...RAND_OPTS },
     bowlPulse: BOWL_STATE.on
   };
@@ -10107,6 +10265,7 @@ const DQA_TOGGLES = [
   { label: 'Mode casque strict',     get: () => STRICT_HEADPHONE_MODE,  set: v => setStrictHeadphone(v) },
   { label: 'Anti-pompage par paire', get: () => PAIR_COMP_STATE.on,     set: v => setPairCompression(v) },
   { label: "Sub-drone d'ancrage",    get: () => SUBDRONE_STATE.on,      set: v => setSubDrone(v) },
+  { label: 'Egocha Sage',            get: () => EGOCHA_SAGE_STATE.on,   set: v => setEgochaSage(v) }, // #181b
 ];
 let _dqaCell = null, _dqaSlot = null;
 function _openDockQuickAssign(cellKey, slot) {
