@@ -2913,6 +2913,7 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
       </div>
       <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Ancre respiratoire périodique </span><input type="checkbox" class="sw" id="ck-breath-anchor" checked onchange="setBreathAnchor(this.checked)"></div>
       <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Évolution harmonique douce </span><input type="checkbox" class="sw" id="ck-organic-evo" checked onchange="setOrganicEvolution(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Main invisible (mute/octaves organiques) </span><input type="checkbox" class="sw" id="ck-invisible-hand" checked onchange="setInvisibleHand(this.checked)"></div>
       <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Battement rapproché (1–7.2 Hz) </span><input type="checkbox" class="sw" id="ck-rand-closebeat" checked onchange="setCloseBeatPair(this.checked)"></div>
       <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Détune Sinus Duo aléatoire </span><input type="checkbox" class="sw" id="ck-rand-dualsine" onchange="setRandDualSine(this.checked)"></div>
       <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Pré-mastering (filtres LPF/HPF/BPF) </span><input type="checkbox" class="sw" id="ck-rand-premaster" checked onchange="setPreMasterFilter(this.checked)"></div>
@@ -4757,6 +4758,7 @@ async function startFlow() {
     _armBreathAnchor(); // #9 (roadmap)
     _armAudioWatchdog(); // #33 (perf)
     _armOrganicEvolution(); // #84
+    _armInvisibleHand(); // main invisible
     if (SUBDRONE_STATE.on) _startSubDrone(); // #16 (roadmap)
     if (EGOCHA_SAGE_STATE.on) _startEgochaSage(); // #181b
     if (typeof _fxUpdateVisibility === 'function') _fxUpdateVisibility(); // #176
@@ -4857,6 +4859,8 @@ async function stopFlow() {
     clearInterval(_breathAnchorTimer); _breathAnchorTimer = null; // #9 (roadmap)
     clearInterval(_audioWatchdogTimer); _audioWatchdogTimer = null; // #33 (perf)
     clearInterval(_organicEvoTimer); _organicEvoTimer = null; // #84
+    clearTimeout(_ihPickTimer); _ihPickTimer = null; // main invisible
+    Object.keys(_ihHeldBy).forEach(k => { clearTimeout(_ihHeldBy[k]); delete _ihHeldBy[k]; });
     _stopSubDrone(); // #16 (roadmap)
     _stopEgochaSage(); // #181b
     _lfoGain=_breathLFO=_breathGain=_breathDepthGain=_driftLFO=_driftDepth=masterGain=analyser=null;
@@ -5550,6 +5554,113 @@ function _fxUpdateVisibility() {
   }
 }
 window.addEventListener('resize', () => { if (document.body.classList.contains('fx-drawer-open')) { _fxUpdateBallPosition('master'); _fxUpdateBallPosition('detune'); } });
+
+// ── "Main invisible" : mute/démute organique + vrais sauts d'octave ────
+// Retour terrain 21/08 : le jeu aléatoire classique bouge trop de choses
+// à la fois pour une écoute longue/hypersensible (ratios + registre +
+// detune + profondeur, tout d'un coup). Ceci est un mouvement d'une autre
+// nature, complémentaire à #84 ci-dessus (qui ne fait que dériver en
+// continu ±12%, toujours audible) : présence/absence, comme une boîte à
+// rythme binaural jouée par une main invisible — une paire satellite
+// s'efface (fondu doux, jamais de coupure sèche), reste silencieuse
+// quelques secondes, PARFOIS change d'octave PENDANT qu'elle est coupée
+// (donc jamais de glissando entendu, juste une redécouverte à une nouvelle
+// hauteur au retour), puis revient. Une seule paire bouge à la fois (au
+// plus 2 en attente de retour simultanément), jamais le maître (toujours
+// l'ancre), et au moins 3 paires satellites restent audibles en
+// permanence — jamais de vide, jamais de chaos.
+const INVISIBLE_HAND_STATE = { on: true, minGap: 15, maxGap: 40, holdMin: 8, holdMax: 18, octaveChance: 0.45 };
+let _ihPickTimer = null;
+const _ihHeldBy = {}; // { [pairIdx]: returnTimeoutId } — paires actuellement coupées PAR la main
+
+function _armInvisibleHand() {
+  clearTimeout(_ihPickTimer); _ihPickTimer = null;
+  if (!INVISIBLE_HAND_STATE.on || !flowing) return;
+  _ihScheduleNextPick();
+}
+function _ihScheduleNextPick() {
+  clearTimeout(_ihPickTimer);
+  const s = INVISIBLE_HAND_STATE;
+  _ihPickTimer = setTimeout(_ihPickTick, (s.minGap + Math.random() * (s.maxGap - s.minGap)) * 1000);
+}
+// Coupe une paire manipulée manuellement (sphère tapée, solo…) pendant
+// qu'elle était tenue par la main : le contrôle explicite gagne toujours,
+// la main n'insiste jamais contre un geste de l'utilisateur.
+function _ihRelease(i) {
+  if (i in _ihHeldBy) { clearTimeout(_ihHeldBy[i]); delete _ihHeldBy[i]; }
+}
+function _ihPickTick() {
+  if (!INVISIBLE_HAND_STATE.on || !flowing) return;
+  _ihScheduleNextPick(); // se replanifie tout de suite, indépendamment du résultat ci-dessous
+  if (Object.keys(_ihHeldBy).length >= 2) return; // jamais plus de 2 paires coupées à la fois
+  let audibleCount = 0;
+  const eligible = [];
+  for (let i = 0; i < 6; i++) {
+    const p = PAIRS[i];
+    const isAudible = !(mutedOscs[p.pingala.id] && mutedOscs[p.ida.id]);
+    if (isAudible) audibleCount++;
+    if (isAudible && !(i in _ihHeldBy) && !(typeof isLocked === 'function' && isLocked(i))) eligible.push(i);
+  }
+  if (audibleCount < 4 || !eligible.length) return; // toujours ≥3 audibles après la coupure
+  _ihMute(eligible[Math.floor(Math.random() * eligible.length)]);
+}
+function _ihMute(i) {
+  const pair = PAIRS[i], pid = pair.pingala.id, iid = pair.ida.id;
+  mutedOscs[pid] = true; mutedOscs[iid] = true;
+  clearOscVolLFO(pid); clearOscVolLFO(iid); // #83 : jamais de LFO respiration qui "pulse" une paire muette
+  const np = nodes[pid], ni = nodes[iid];
+  if (np) safeRamp(np.g.gain, 0, 1.2);
+  if (ni) safeRamp(ni.g.gain, 0, 1.2);
+  updatePairUI(i); updateOrbUI(i);
+  const s = INVISIBLE_HAND_STATE;
+  _ihHeldBy[i] = setTimeout(() => _ihReturn(i), (s.holdMin + Math.random() * (s.holdMax - s.holdMin)) * 1000);
+}
+function _ihReturn(i) {
+  delete _ihHeldBy[i];
+  if (!flowing) return; // le Flux s'est arrêté entre-temps : rien à ranimer
+  const pair = PAIRS[i];
+  // Le saut d'octave se fait ICI, paire encore muette — jamais de
+  // glissando entendu, juste une redécouverte à une nouvelle hauteur.
+  if (Math.random() < INVISIBLE_HAND_STATE.octaveChance) {
+    const proposed = pair.pingala.n * (Math.random() < 0.5 ? 2 : 0.5);
+    const rMin = Math.max(F_MIN, Math.min(RAND_OPTS.freqMin, 432));
+    const rMax = Math.max(rMin + 1, Math.min(432, RAND_OPTS.freqMax));
+    const proposedFreq = masterFreq * RATIO_OPTS[pair.pingala.ri].r * proposed;
+    if (proposed >= 0.1 && proposed <= N_MAX && proposedFreq >= rMin && proposedFreq <= rMax) {
+      pair.pingala.n = Math.round(proposed * 100) / 100;
+      tuneOsc(pair.pingala.id, calcPFreq(i));
+      tuneOsc(pair.ida.id, calcIFreq(i));
+    } // sinon : hors plage, on garde la hauteur telle quelle plutôt que de forcer
+  }
+  const pid = pair.pingala.id, iid = pair.ida.id;
+  mutedOscs[pid] = false; mutedOscs[iid] = false;
+  const np = nodes[pid], ni = nodes[iid];
+  if (np) safeRamp(np.g.gain, pair.pingala.vol, 2.2);
+  if (ni) safeRamp(ni.g.gain, pair.ida.vol, 2.2);
+  updatePairUI(i); updateOrbUI(i); updateMasterState();
+  if (typeof patchRandomTable === 'function') patchRandomTable();
+  saveState();
+}
+function setInvisibleHand(v) {
+  INVISIBLE_HAND_STATE.on = !!v;
+  const ck = document.getElementById('ck-invisible-hand'); if (ck) ck.checked = INVISIBLE_HAND_STATE.on;
+  if (!INVISIBLE_HAND_STATE.on) {
+    // Rend la parole immédiatement à toute paire encore tenue par la main.
+    const held = Object.keys(_ihHeldBy).map(Number);
+    held.forEach(i => { clearTimeout(_ihHeldBy[i]); delete _ihHeldBy[i]; });
+    held.forEach(i => {
+      const pair = PAIRS[i], pid = pair.pingala.id, iid = pair.ida.id;
+      mutedOscs[pid] = false; mutedOscs[iid] = false;
+      const np = nodes[pid], ni = nodes[iid];
+      if (np) safeRamp(np.g.gain, pair.pingala.vol, 1.5);
+      if (ni) safeRamp(ni.g.gain, pair.ida.vol, 1.5);
+      updatePairUI(i); updateOrbUI(i);
+    });
+    if (held.length) updateMasterState();
+  }
+  _armInvisibleHand();
+  saveState();
+}
 
 // ── #16 (roadmap) : sub-drone d'ancrage optionnel ───────────────────
 // Pad grave fixe (racine ÷ 2), volume très bas, jamais touché par le jeu
@@ -6894,6 +7005,7 @@ function togglePolarity(i) {
 // pmute-/imute- des réglages internes (tap court sur la sphère satellite
 // fait maintenant ce que faisaient ces 2 boutons, mais ensemble d'un coup).
 function toggleMutePair(i) {
+  _ihRelease(i); // geste manuel = le contrôle explicite gagne, la main invisible se retire
   const pair = PAIRS[i];
   const pid = pair.pingala.id, iid = pair.ida.id;
   const bothMuted = !!mutedOscs[pid] && !!mutedOscs[iid];
@@ -6919,10 +7031,22 @@ function toggleMutePair(i) {
 let _soloedIdx = null;
 let _soloSnapshot = null;
 function soloPair(i) {
+  _ihRelease(i); // geste manuel = le contrôle explicite gagne, la main invisible se retire
+  if (mutedOscs[PAIRS[i].pingala.id] || mutedOscs[PAIRS[i].ida.id]) {
+    // Solo demandé sur une paire que la main invisible avait coupée : elle
+    // doit s'entendre, pas rester silencieuse pendant son propre solo.
+    const pid = PAIRS[i].pingala.id, iid = PAIRS[i].ida.id;
+    mutedOscs[pid] = false; mutedOscs[iid] = false;
+    const np = nodes[pid], ni = nodes[iid];
+    if (np) safeRamp(np.g.gain, PAIRS[i].pingala.vol, 0.4);
+    if (ni) safeRamp(ni.g.gain, PAIRS[i].ida.vol, 0.4);
+    updatePairUI(i);
+  }
   if (_soloedIdx === i) {
     // Se désengage : restaure l'état de chaque paire tel qu'il était avant le solo.
     PAIRS.forEach((p, j) => {
       if (j === i) return;
+      _ihRelease(j);
       const wasMutedP = _soloSnapshot ? !!_soloSnapshot[p.pingala.id] : false;
       const wasMutedI = _soloSnapshot ? !!_soloSnapshot[p.ida.id]     : false;
       mutedOscs[p.pingala.id] = wasMutedP;
@@ -6944,6 +7068,7 @@ function soloPair(i) {
   _soloSnapshot = {};
   PAIRS.forEach((p, j) => {
     if (j === i) return;
+    _ihRelease(j);
     _soloSnapshot[p.pingala.id] = !!mutedOscs[p.pingala.id];
     _soloSnapshot[p.ida.id]     = !!mutedOscs[p.ida.id];
     mutedOscs[p.pingala.id] = true;
@@ -9197,6 +9322,7 @@ function _doSave() {
       egochaSage: { ...EGOCHA_SAGE_STATE }, // #181b
       deltaCharacter: DELTA_CHARACTER_MODE,
       breathAnchor: BREATH_ANCHOR_STATE.on,
+      invisibleHand: INVISIBLE_HAND_STATE.on,
       randOpts: { ...RAND_OPTS },
       fluxMuted: FLUX_MUTED,
       bowlPulse: BOWL_STATE.on, // #150 : fireworksIgnition est déjà couvert par randOpts (spread ci-dessus)
@@ -9272,6 +9398,7 @@ function loadState() {
     }
     if (typeof s.deltaCharacter==='string' && DELTA_CHARACTER[s.deltaCharacter]) DELTA_CHARACTER_MODE = s.deltaCharacter;
     if (typeof s.breathAnchor==='boolean') BREATH_ANCHOR_STATE.on = s.breathAnchor;
+    if (typeof s.invisibleHand==='boolean') INVISIBLE_HAND_STATE.on = s.invisibleHand;
     if (s.randOpts && typeof s.randOpts==='object') Object.assign(RAND_OPTS, s.randOpts);
     if (typeof s.fluxMuted==='boolean') FLUX_MUTED = s.fluxMuted;
     if (typeof s.bowlPulse==='boolean') BOWL_STATE.on = s.bowlPulse; // #150
@@ -9317,6 +9444,8 @@ function _syncRandOptsUI() {
   setCk('ck-strict-headphone', STRICT_HEADPHONE_MODE);
   setCk('ck-pair-comp', PAIR_COMP_STATE.on);
   setCk('ck-subdrone', SUBDRONE_STATE.on);
+  setCk('ck-organic-evo', ORGANIC_EVO_STATE.on);
+  setCk('ck-invisible-hand', INVISIBLE_HAND_STATE.on);
   const sdv = document.getElementById('sv-subdrone-vol'); if (sdv) sdv.textContent = Math.round(SUBDRONE_STATE.vol * 100) + '%';
   const sdSlider = document.querySelector('input[oninput="setSubDroneVol(this.value)"]'); if (sdSlider) sdSlider.value = SUBDRONE_STATE.vol;
   setCk('ck-egocha-sage', EGOCHA_SAGE_STATE.on); // #181b
@@ -9380,6 +9509,7 @@ function exportState() {
     strictHeadphone: STRICT_HEADPHONE_MODE, pairComp: PAIR_COMP_STATE.on,
     subDrone: { ...SUBDRONE_STATE },
     egochaSage: { ...EGOCHA_SAGE_STATE }, // #181b
+    invisibleHand: INVISIBLE_HAND_STATE.on,
     randOpts: { ...RAND_OPTS },
     bowlPulse: BOWL_STATE.on
   };
@@ -10182,6 +10312,7 @@ const DOCK_ACTIONS = {
   deltaDriftToggle:      { label: 'Dérive lente du Δ on/off',    fn: () => setDeltaDrift(!DELTA_DRIFT_STATE.on) },
   breathAnchorToggle:    { label: 'Ancre respiratoire on/off',   fn: () => setBreathAnchor(!BREATH_ANCHOR_STATE.on) },
   breathRandomToggle:    { label: 'Respiration par paire on/off', fn: () => setRandBreath(!RAND_OPTS.breathRandom) },
+  invisibleHandToggle:   { label: 'Main invisible on/off',       fn: () => setInvisibleHand(!INVISIBLE_HAND_STATE.on) },
   undoRandom:            { label: 'Annuler le dernier tirage',   fn: () => { if (typeof undoLastRandom === 'function') undoLastRandom(); } },
   // #125 : retour au lanceur 3 modules sans quitter index.html (le
   // binaural continue de jouer en dessous, cf. _launcherGo('vibe')).
