@@ -333,7 +333,13 @@ footer{text-align:center; color:var(--haze); font-size:11.5px; margin-top:6px; o
       <div class="stat-row">
         <div class="stat"><div class="n" id="statUnit">–</div><div class="l">UNITÉ (MS)</div></div>
         <div class="stat"><div class="n" id="statLum">–</div><div class="l">LUMINOSITÉ</div></div>
+        <div class="stat"><div class="n" id="statFps">–</div><div class="l">IMAGES/S</div></div>
       </div>
+      <!-- Une caméra qui tombe sous ~15 im/s (fréquent en faible luminosité, la
+           caméra ralentit l'obturation pour compenser) ne peut plus résoudre
+           des points/tirets courts — l'appareil "rate" les flashs entre deux
+           images. Vitesse fixe ≥ 4-5× ce chiffre (en ms) est le repère fiable. -->
+      <div class="hint" id="fpsHint" style="display:none;"></div>
 
       <label>Flux morse détecté</label>
       <div class="morse-out" id="morseLive"><span class="empty">en attente de signal…</span></div>
@@ -602,6 +608,8 @@ const fixedUnitLabel = document.getElementById('fixedUnitLabel');
 const recvOrb = document.getElementById('recvOrb');
 const statUnit = document.getElementById('statUnit');
 const statLum = document.getElementById('statLum');
+const statFps = document.getElementById('statFps');
+const fpsHint = document.getElementById('fpsHint');
 const morseLive = document.getElementById('morseLive');
 const decodedText = document.getElementById('decodedText');
 
@@ -638,9 +646,32 @@ fixedUnitSlider.addEventListener('input', ()=>{ fixedUnitLabel.textContent = fix
 camBtn.addEventListener('click', async ()=>{
   if(recvStream){ stopCamera(); return; }
   try{
-    recvStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false});
+    // frameRate en "ideal" (pas "min") : une caméra qui ne peut pas suivre
+    // ne doit pas faire échouer getUserMedia, juste retomber sur son
+    // propre maximum. Une cadence basse et/ou variable (fréquent en
+    // faible luminosité, l'appareil ralentit l'obturation) est la
+    // première cause de points/tirets "avalés" — cf. mesure de statFps
+    // plus bas et l'avertissement affiché quand elle est trop basse.
+    recvStream = await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'}, frameRate:{ideal:30}},
+      audio:false
+    });
     video.srcObject = recvStream;
     await video.play();
+    // Best-effort : fige l'exposition/la balance des blancs une fois la
+    // première image stable, si le navigateur/appareil le permet. Sans
+    // ça, l'auto-exposition "gomme" activement les flashs rapides en
+    // réajustant la luminosité globale image par image — exactement ce
+    // qu'on essaie de mesurer. Échec silencieux sur les appareils qui ne
+    // supportent pas ces contraintes (très répandu) : aucun impact.
+    try{
+      const track = recvStream.getVideoTracks()[0];
+      const caps = track.getCapabilities ? track.getCapabilities() : {};
+      const adv = [];
+      if(caps.exposureMode && caps.exposureMode.includes('continuous')) adv.push({exposureMode:'continuous'});
+      if(caps.whiteBalanceMode && caps.whiteBalanceMode.includes('continuous')) adv.push({whiteBalanceMode:'continuous'});
+      if(adv.length) await track.applyConstraints({advanced:adv}).catch(()=>{});
+    }catch(e){}
     camPlaceholder.style.display = 'none';
     camBtn.textContent = '■ Arrêter la caméra';
     resetDecoder();
@@ -659,17 +690,38 @@ function stopCamera(){
 }
 
 /* --- decoder state --- */
+// Réglages du décodeur — cf. notes détaillées dans loop() : la quasi-
+// totalité des signaux "non traduits" venaient de 3 causes qui se
+// cumulent (point suivi qui saute d'image en image en mode auto, bruit
+// capteur non lissé, et un seuil de bruit qui avalait purement et
+// simplement les points/tirets trop courts au lieu de les rejeter
+// proprement) — corrigées ci-dessous plutôt qu'un simple réglage de
+// sensibilité, qui ne pouvait pas compenser une position instable.
+const LOCK_SMOOTH   = 0.35; // lissage de la position suivie (mode auto) — 0=fige, 1=colle à l'image brute
+const LUM_SMOOTH     = 0.55; // lissage exponentiel de la luminosité mesurée
+const CONFIRM_FRAMES = 2;    // images consécutives requises avant de valider un changement d'état (délai symétrique, sans biais sur les durées mesurées)
+const MIN_PULSE_MS   = 18;   // filet de sécurité minimal, largement sous la durée d'un point même rapide
+
 let minLum = 255, maxLum = 0, lastReset = performance.now();
+let smoothLum = null;
 let state = false, lastChangeTime = null;
+let pendingState = null, pendingFrames = 0;
 let unitEstimate = 140;
 let letterBuffer = '';
 let liveMorse = '';
 let outputText = '';
+let lockPoint = null;       // {x,y} position suivie, lissée (mode auto)
+let frameTimestamps = [];   // fenêtre glissante ~1s pour la mesure d'images/s réelle
+let prevGrid = null, flickerGrid = null; // mode auto : mémoire du "score de clignotement" par cellule
 
 function resetDecoder(){
   minLum=255; maxLum=0; lastReset=performance.now();
+  smoothLum=null;
   state=false; lastChangeTime=null;
-  letterBuffer=''; liveMorse=''; 
+  pendingState=null; pendingFrames=0;
+  letterBuffer=''; liveMorse='';
+  lockPoint=null; frameTimestamps=[];
+  prevGrid=null; flickerGrid=null;
   morseLive.innerHTML = '<span class="empty">en attente de signal…</span>';
 }
 
@@ -711,33 +763,94 @@ function loop(){
   if(video.readyState >= 2){
     actx.drawImage(video, 0, 0, analysisCanvas.width, analysisCanvas.height);
     const w = analysisCanvas.width, h = analysisCanvas.height;
-    let px, py, lum;
+    const now = performance.now();
+
+    // Mesure d'images/s réelle — une caméra en faible lumière ralentit
+    // souvent son obturation (15, parfois 10 im/s) : sous ce régime, un
+    // point de 140ms tient sur 1-2 images à peine et devient impossible
+    // à mesurer fiablement, quel que soit le réglage de sensibilité.
+    frameTimestamps.push(now);
+    while(frameTimestamps.length && now - frameTimestamps[0] > 1000) frameTimestamps.shift();
+    const fps = frameTimestamps.length;
+    statFps.textContent = fps || '–';
+    if(fps && fps < 15){
+      fpsHint.style.display = 'block';
+      fpsHint.textContent = 'Caméra lente (' + fps + ' im/s) — visez une lumière plus franche, ou passez "Vitesse fixe" au-delà de ' + Math.round(4000/fps) + ' ms.';
+    } else {
+      fpsHint.style.display = 'none';
+    }
+
+    let px, py;
 
     if(detMode === 'auto'){
+      // Suit la cellule qui CLIGNOTE, pas la plus lumineuse à l'instant t.
+      // Une simple recherche "pixel le plus brillant de l'image" se fait
+      // piéger dès qu'un fond quelconque (reflet, ciel, écran) reste
+      // simplement plus clair que la source éteinte — le suivi saute alors
+      // sur ce fond dès que la vraie source s'éteint, ce qui casse toute
+      // mesure de durée. Un fond statique, même clair, a une luminosité
+      // stable d'une image à l'autre (variation quasi nulle) ; une vraie
+      // source qui clignote produit au contraire un grand écart d'une
+      // image à l'autre à CHAQUE transition. On mesure donc, par petite
+      // cellule de la grille, un score de clignotement (moyenne mobile de
+      // l'écart absolu avec l'image précédente) et on suit la cellule où
+      // ce score est le plus élevé — la position réellement utilisée
+      // (lockPoint) restant en plus lissée dans le temps pour ne pas
+      // sauter sur un pic isolé.
       const data = actx.getImageData(0,0,w,h).data;
-      let best = -1, bx=0, by=0;
+      const gw = Math.ceil(w/2), gh = Math.ceil(h/2);
+      if(!prevGrid || prevGrid.length !== gw*gh){
+        prevGrid = new Float32Array(gw*gh);
+        flickerGrid = new Float32Array(gw*gh);
+        let k0 = 0;
+        for(let y=0; y<h; y+=2){ for(let x=0; x<w; x+=2){
+          const i=(y*w+x)*4; prevGrid[k0++] = 0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
+        }}
+      }
+      let best = -1, bx=0, by=0, k = 0;
       for(let y=0; y<h; y+=2){
         for(let x=0; x<w; x+=2){
           const i = (y*w+x)*4;
           const l = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
-          if(l > best){ best = l; bx = x; by = y; }
+          const diff = Math.abs(l - prevGrid[k]);
+          flickerGrid[k] = flickerGrid[k]*0.8 + diff*0.2;
+          prevGrid[k] = l;
+          if(flickerGrid[k] > best){ best = flickerGrid[k]; bx = x; by = y; }
+          k++;
         }
       }
-      lum = best; px = bx/w; py = by/h;
+      const target = {x:bx/w, y:by/h};
+      if(!lockPoint) lockPoint = target;
+      else{
+        lockPoint = {
+          x: lockPoint.x + (target.x - lockPoint.x) * LOCK_SMOOTH,
+          y: lockPoint.y + (target.y - lockPoint.y) * LOCK_SMOOTH
+        };
+      }
     } else {
-      const p = manualPoint || {x:0.5, y:0.5};
-      const cx = Math.max(2, Math.min(w-3, Math.round(p.x*w)));
-      const cy = Math.max(2, Math.min(h-3, Math.round(p.y*h)));
-      const box = actx.getImageData(cx-2, cy-2, 5, 5).data;
-      let sum = 0, n = box.length/4;
-      for(let i=0;i<box.length;i+=4){ sum += 0.299*box[i] + 0.587*box[i+1] + 0.114*box[i+2]; }
-      lum = sum/n; px = p.x; py = p.y;
+      lockPoint = manualPoint || {x:0.5, y:0.5};
     }
+
+    // Luminance mesurée par moyenne sur une petite zone (5×5) au point
+    // suivi — plus stable que la valeur d'un seul pixel, en auto comme
+    // en manuel.
+    px = lockPoint.x; py = lockPoint.y;
+    const cx = Math.max(2, Math.min(w-3, Math.round(px*w)));
+    const cy = Math.max(2, Math.min(h-3, Math.round(py*h)));
+    const box = actx.getImageData(cx-2, cy-2, 5, 5).data;
+    let sum = 0, n = box.length/4;
+    for(let i=0;i<box.length;i+=4){ sum += 0.299*box[i] + 0.587*box[i+1] + 0.114*box[i+2]; }
+    const rawLum = sum/n;
+
+    // Lissage exponentiel : tue le bruit capteur image par image, qui
+    // provoquait sinon des franchissements de seuil parasites (et donc
+    // des points fantômes ou des lettres coupées au mauvais endroit).
+    smoothLum = (smoothLum === null) ? rawLum : (smoothLum*(1-LUM_SMOOTH) + rawLum*LUM_SMOOTH);
+    const lum = smoothLum;
 
     drawReticle(px, py);
     statLum.textContent = Math.round(lum);
 
-    const now = performance.now();
     if(now - lastReset > 1600){
       minLum = Math.min(minLum + 6, lum);
       maxLum = Math.max(maxLum - 6, lum);
@@ -748,17 +861,32 @@ function loop(){
     const sens = sensSlider.value/100;
     const threshold = minLum + (maxLum - minLum) * sens;
     const range = maxLum - minLum;
-    const isOn = range > 12 ? (lum > threshold) : false;
+    const rawIsOn = range > 8 ? (lum > threshold) : false;
 
-    if(lastChangeTime === null){ lastChangeTime = now; state = isOn; }
+    if(lastChangeTime === null){ lastChangeTime = now; state = rawIsOn; }
 
-    if(isOn !== state){
+    // Confirmation sur CONFIRM_FRAMES images consécutives avant de valider
+    // un changement d'état, plutôt qu'au premier franchissement de seuil.
+    // Le délai est le même à la montée et à la descente : il s'annule
+    // exactement dans le calcul de durée ci-dessous, sans biaiser la
+    // classification point/tiret — il élimine seulement les allers-retours
+    // d'une seule image (le vrai bruit) qui, avant, se traduisaient en
+    // point fantôme filtré par un seuil de durée fixe (25ms) trop brutal :
+    // celui-ci avalait aussi de VRAIS points courts en cadence rapide.
+    if(rawIsOn !== state){
+      if(pendingState === rawIsOn){ pendingFrames++; } else { pendingState = rawIsOn; pendingFrames = 1; }
+    } else {
+      pendingState = null; pendingFrames = 0;
+    }
+
+    if(pendingState !== null && pendingFrames >= CONFIRM_FRAMES){
+      const isOn = pendingState;
       const dur = now - lastChangeTime;
       const unit = fixedUnitCheck.checked ? parseInt(fixedUnitSlider.value,10) : unitEstimate;
 
       if(state === true){
         // was ON -> classify dot/dash
-        if(dur > 25){
+        if(dur >= MIN_PULSE_MS){
           if(dur <= unit*1.8){
             letterBuffer += '.';
             if(!fixedUnitCheck.checked){ unitEstimate = unitEstimate*0.7 + dur*0.3; }
@@ -777,11 +905,12 @@ function loop(){
       state = isOn;
       lastChangeTime = now;
       lastActivity = now;
+      pendingState = null; pendingFrames = 0;
       recvOrb.classList.toggle('on', isOn);
     }
 
     // auto-flush a pending letter after prolonged silence
-    if(!isOn && letterBuffer && (now - lastChangeTime > unitEstimate*6)){
+    if(!state && letterBuffer && (now - lastChangeTime > unitEstimate*6)){
       finalizeLetter();
     }
 
