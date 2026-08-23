@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Morse Cosmos</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1c1640">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Morse Cosmos">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap');
+
+:root{
+  --void:#1c1640;
+  --void-2:#150f30;
+  --nebula:#3a2a6d;
+  --nebula-2:#4a3384;
+  --aurora:#7fe0d2;
+  --stardust:#f3c98b;
+  --bloom:#e6a8d7;
+  --mist:#ece6fb;
+  --haze:#b6a9d6;
+  --card:rgba(255,255,255,0.055);
+  --card-border:rgba(236,230,251,0.14);
+  --radius:22px;
+}
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+
+html,body{
+  margin:0; padding:0; min-height:100%;
+  font-family:'Nunito', sans-serif;
+  color:var(--mist);
+  background:
+    radial-gradient(ellipse at 20% -10%, rgba(230,168,215,0.16), transparent 55%),
+    radial-gradient(ellipse at 90% 10%, rgba(127,224,210,0.14), transparent 50%),
+    linear-gradient(160deg, var(--void) 0%, var(--nebula) 55%, var(--void-2) 100%);
+  overflow-x:hidden;
+}
+
+#stars{position:fixed; inset:0; z-index:0; pointer-events:none;}
+
+.wrap{
+  position:relative; z-index:1;
+  max-width:520px; margin:0 auto;
+  padding:env(safe-area-inset-top,0) 18px calc(env(safe-area-inset-bottom,0) + 28px);
+}
+
+header{
+  text-align:center; padding:30px 6px 18px;
+}
+header .glyph{font-size:26px; filter:drop-shadow(0 0 10px rgba(243,201,139,0.65));}
+h1{
+  font-family:'Quicksand', sans-serif; font-weight:700;
+  font-size:26px; letter-spacing:0.06em; margin:6px 0 4px;
+  background:linear-gradient(90deg, var(--stardust), var(--bloom) 60%, var(--aurora));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+header p{margin:0; font-size:13.5px; color:var(--haze); font-style:italic;}
+
+.tabs{
+  display:flex; gap:6px; padding:5px;
+  background:rgba(0,0,0,0.18); border:1px solid var(--card-border);
+  border-radius:999px; margin:18px 0 16px;
+}
+.tab{
+  flex:1; border:none; padding:12px 8px; border-radius:999px;
+  font-family:'Quicksand', sans-serif; font-weight:600; font-size:14.5px;
+  background:transparent; color:var(--haze); cursor:pointer;
+  transition:all .25s ease;
+}
+.tab.active{
+  background:linear-gradient(135deg, rgba(243,201,139,0.9), rgba(230,168,215,0.85));
+  color:#241539; box-shadow:0 4px 18px rgba(230,168,215,0.35);
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  padding:20px 18px 22px;
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  box-shadow:0 10px 40px rgba(10,4,30,0.35);
+  margin-bottom:16px;
+}
+.panel{display:none;}
+.panel.active{display:block; animation:fadein .35s ease;}
+@keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+label{
+  display:block; font-family:'Quicksand', sans-serif; font-weight:600;
+  font-size:13px; letter-spacing:0.03em; color:var(--aurora); margin:14px 0 7px;
+}
+label:first-of-type{margin-top:0;}
+
+textarea, input[type=text]{
+  width:100%; resize:none; border-radius:14px; border:1px solid var(--card-border);
+  background:rgba(0,0,0,0.2); color:var(--mist); font-family:'Nunito', sans-serif;
+  font-size:15.5px; padding:12px 14px; outline:none;
+}
+textarea:focus, input[type=text]:focus{border-color:var(--bloom);}
+
+.row{display:flex; align-items:center; gap:10px;}
+.row.between{justify-content:space-between;}
+
+button{font-family:'Quicksand', sans-serif; cursor:pointer;}
+
+.icon-btn{
+  border:1px solid var(--card-border); background:rgba(255,255,255,0.06);
+  color:var(--mist); border-radius:12px; padding:9px 13px; font-size:13.5px;
+  font-weight:600; display:inline-flex; align-items:center; gap:6px;
+  transition:transform .15s ease, background .2s ease;
+}
+.icon-btn:active{transform:scale(0.95);}
+.icon-btn:hover{background:rgba(255,255,255,0.11);}
+
+.morse-out{
+  min-height:52px; margin-top:10px; padding:12px 10px;
+  background:rgba(0,0,0,0.22); border-radius:14px; border:1px solid var(--card-border);
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px 4px;
+  font-size:0;
+}
+.tok{display:inline-block; vertical-align:middle; transition:filter .1s, transform .1s;}
+.tok.dot{
+  width:9px; height:9px; border-radius:50%;
+  background:radial-gradient(circle, var(--stardust), #b5854a);
+  box-shadow:0 0 8px rgba(243,201,139,0.8);
+}
+.tok.dash{
+  width:26px; height:9px; border-radius:6px;
+  background:linear-gradient(90deg, var(--bloom), #c47fb5);
+  box-shadow:0 0 8px rgba(230,168,215,0.7);
+}
+.tok.gap-letter{width:12px;}
+.tok.gap-word{width:22px; position:relative;}
+.tok.gap-word::after{content:'✦'; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-size:9px; color:var(--haze);}
+.tok.lit{filter:brightness(1.9); transform:scale(1.25);}
+.morse-out .empty{font-size:13px; font-family:'Nunito',sans-serif; color:var(--haze); font-style:italic;}
+
+.orb-zone{display:flex; justify-content:center; align-items:center; padding:22px 0 14px;}
+.orb{
+  width:92px; height:92px; border-radius:50%; position:relative;
+  background:radial-gradient(circle at 35% 32%, #fff7e6, var(--stardust) 45%, #7d5a2c 100%);
+  box-shadow:0 0 20px 4px rgba(243,201,139,0.35);
+  transition:box-shadow .12s ease, filter .12s ease;
+  filter:brightness(0.55) saturate(0.7);
+}
+.orb::before{
+  content:''; position:absolute; inset:-14px; border-radius:50%;
+  border:1px solid rgba(243,201,139,0.35);
+  animation:ring 3.2s linear infinite;
+}
+.orb.on{
+  filter:brightness(1.35) saturate(1.15);
+  box-shadow:0 0 46px 14px rgba(243,201,139,0.85), 0 0 90px 26px rgba(230,168,215,0.35);
+}
+@keyframes ring{
+  0%{transform:scale(0.9); opacity:0.55;}
+  70%{transform:scale(1.35); opacity:0;}
+  100%{transform:scale(1.35); opacity:0;}
+}
+
+.slider-line{margin-top:6px;}
+input[type=range]{
+  width:100%; accent-color:var(--bloom); height:22px; background:transparent;
+}
+.hint{font-size:12px; color:var(--haze); margin-top:4px;}
+.value-pill{
+  font-family:'Quicksand', sans-serif; font-weight:600; font-size:12.5px;
+  color:var(--void); background:var(--aurora); border-radius:999px; padding:2px 10px;
+}
+
+.btn-primary{
+  border:none; border-radius:14px; padding:13px 16px;
+  background:linear-gradient(120deg, var(--stardust), var(--bloom));
+  color:#241539; font-weight:700; font-size:15px; letter-spacing:0.02em;
+  box-shadow:0 8px 22px rgba(230,168,215,0.3);
+  width:100%; margin-top:16px;
+}
+.btn-primary:active{transform:translateY(1px);}
+.btn-primary.stop{background:linear-gradient(120deg, #e88a8a, var(--bloom));}
+.btn-primary:disabled{opacity:0.45;}
+
+.btn-secondary{
+  border:1px solid var(--card-border); border-radius:14px; padding:12px 14px;
+  background:rgba(255,255,255,0.05); color:var(--mist); font-weight:600; font-size:14px;
+  width:100%; margin-top:10px;
+}
+
+.note{
+  margin-top:12px; font-size:12.5px; color:var(--haze); line-height:1.5;
+  background:rgba(0,0,0,0.16); border-radius:12px; padding:10px 12px;
+  border:1px solid var(--card-border);
+}
+.note b{color:var(--aurora);}
+
+.segmented{
+  display:flex; gap:6px; margin-top:6px;
+  background:rgba(0,0,0,0.2); border-radius:12px; padding:4px; border:1px solid var(--card-border);
+}
+.segmented button{
+  flex:1; border:none; background:transparent; color:var(--haze);
+  font-weight:600; font-size:13px; padding:9px 4px; border-radius:9px;
+}
+.segmented button.active{background:rgba(127,224,210,0.22); color:var(--aurora);}
+
+.video-wrap{
+  position:relative; width:100%; aspect-ratio:4/3; border-radius:16px; overflow:hidden;
+  border:1px solid var(--card-border); background:#0b0720; margin-top:8px;
+}
+.video-wrap video{width:100%; height:100%; object-fit:cover; display:block;}
+.video-wrap canvas.overlay{position:absolute; inset:0; width:100%; height:100%; pointer-events:none;}
+.video-wrap .placeholder{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:var(--haze); font-size:13px; text-align:center; padding:20px;
+}
+
+.decoded-box{
+  min-height:70px; background:rgba(0,0,0,0.22); border-radius:14px;
+  border:1px solid var(--card-border); padding:12px 14px; margin-top:8px;
+  font-size:16px; line-height:1.5; word-break:break-word;
+}
+.decoded-box.empty{color:var(--haze); font-style:italic; font-size:13.5px;}
+
+.stat-row{display:flex; gap:10px; margin-top:10px;}
+.stat{
+  flex:1; background:rgba(0,0,0,0.18); border-radius:12px; padding:8px 10px;
+  border:1px solid var(--card-border); text-align:center;
+}
+.stat .n{font-family:'Quicksand',sans-serif; font-weight:700; font-size:15px; color:var(--stardust);}
+.stat .l{font-size:10.5px; color:var(--haze); letter-spacing:0.03em;}
+
+footer{text-align:center; color:var(--haze); font-size:11.5px; margin-top:6px; opacity:0.8;}
+
+@media (prefers-reduced-motion:reduce){
+  .orb::before{animation:none;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<div class="wrap">
+  <header>
+    <div class="glyph">✧</div>
+    <h1>MORSE COSMOS</h1>
+    <p>des mots faits de lumière</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="emit">Émettre</button>
+    <button class="tab" data-tab="receive">Recevoir</button>
+  </div>
+
+  <!-- ===================== EMETTRE ===================== -->
+  <section class="panel active" id="panel-emit">
+    <div class="card">
+      <label for="msgInput">Message à diffuser</label>
+      <div class="row" style="align-items:flex-start;">
+        <textarea id="msgInput" rows="3" placeholder="La lune est reine…"></textarea>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <button class="icon-btn" id="pasteBtn">📋 Coller</button>
+        <button class="icon-btn" id="clearEmitBtn">✕ Effacer</button>
+      </div>
+
+      <label>Traduction en morse</label>
+      <div class="morse-out" id="morseVisual"><span class="empty">votre message apparaîtra ici, étoile par étoile</span></div>
+      <div class="row" style="margin-top:8px;">
+        <button class="icon-btn" id="copyMorseBtn">✦ Copier le morse</button>
+      </div>
+
+      <div class="orb-zone"><div class="orb" id="emitOrb"></div></div>
+
+      <label>Vitesse du signal — <span class="value-pill" id="unitLabel">140 ms</span></label>
+      <div class="slider-line">
+        <input type="range" id="unitSlider" min="60" max="320" value="140" step="10">
+      </div>
+      <div class="hint">Durée d'une unité (un point). Un trait = 3 unités.</div>
+
+      <label>Source lumineuse</label>
+      <div class="segmented" id="sourceSeg">
+        <button data-src="torch" class="active">Flash de l'appareil</button>
+        <button data-src="screen">Écran (secours)</button>
+      </div>
+      <div class="hint" id="torchHint">Le flash sera activé à la demande d'accès caméra.</div>
+
+      <button class="btn-primary" id="playBtn">✦ Diffuser via flash</button>
+
+      <div class="note"><b>Note</b> — le flash matériel n'est pas accessible sur tous les navigateurs (Safari iOS, par exemple). L'écran peut alors servir de source lumineuse de secours, à pointer face à une autre caméra.</div>
+    </div>
+  </section>
+
+  <!-- ===================== RECEVOIR ===================== -->
+  <section class="panel" id="panel-receive">
+    <div class="card">
+      <label>Caméra</label>
+      <div class="video-wrap" id="videoWrap">
+        <video id="video" playsinline muted></video>
+        <canvas class="overlay" id="overlay"></canvas>
+        <div class="placeholder" id="camPlaceholder">La caméra apparaîtra ici une fois démarrée</div>
+      </div>
+      <button class="btn-primary" id="camBtn">✦ Démarrer la caméra</button>
+
+      <label>Mode de détection de la source</label>
+      <div class="segmented" id="modeSeg">
+        <button data-mode="auto" class="active">Automatique</button>
+        <button data-mode="manual">Manuel (toucher)</button>
+      </div>
+      <div class="hint" id="modeHint">Le point le plus lumineux de l'image est suivi automatiquement.</div>
+
+      <label>Sensibilité — <span class="value-pill" id="sensLabel">0.50</span></label>
+      <div class="slider-line"><input type="range" id="sensSlider" min="20" max="80" value="50" step="1"></div>
+
+      <div class="row" style="margin-top:6px;">
+        <label style="margin:0; flex:1;">
+          <span class="row"><input type="checkbox" id="fixedUnitCheck" style="margin-right:6px;">Vitesse fixe</span>
+        </label>
+      </div>
+      <div class="slider-line" id="fixedUnitWrap" style="display:none;">
+        <input type="range" id="fixedUnitSlider" min="60" max="320" value="140" step="10">
+        <div class="hint" id="fixedUnitLabel">140 ms par unité</div>
+      </div>
+
+      <div class="orb-zone"><div class="orb" id="recvOrb"></div></div>
+
+      <div class="stat-row">
+        <div class="stat"><div class="n" id="statUnit">–</div><div class="l">UNITÉ (MS)</div></div>
+        <div class="stat"><div class="n" id="statLum">–</div><div class="l">LUMINOSITÉ</div></div>
+      </div>
+
+      <label>Flux morse détecté</label>
+      <div class="morse-out" id="morseLive"><span class="empty">en attente de signal…</span></div>
+
+      <label>Message décodé</label>
+      <div class="decoded-box empty" id="decodedText">le texte reconstruit apparaîtra ici</div>
+      <div class="row" style="margin-top:8px;">
+        <button class="icon-btn" id="copyDecodedBtn">✦ Copier le texte</button>
+        <button class="icon-btn" id="clearDecodedBtn">✕ Réinitialiser</button>
+      </div>
+
+      <div class="note"><b>Conseil</b> — visez une source lumineuse nette (flash d'un autre téléphone, LED) sur fond sombre, à faible distance, et gardez l'appareil stable pour un décodage plus fiable.</div>
+    </div>
+  </section>
+
+  <footer>fait de silence, de lumière et de quelques millisecondes ✦</footer>
+</div>
+
+<script>
+/* ---------------------------------------------------------- */
+/* Starfield background                                        */
+/* ---------------------------------------------------------- */
+(function(){
+  const c = document.getElementById('stars');
+  const ctx = c.getContext('2d');
+  let stars = [];
+  function resize(){
+    c.width = innerWidth; c.height = innerHeight;
+    const n = Math.floor((innerWidth*innerHeight)/9000);
+    stars = Array.from({length:n}, ()=>({
+      x:Math.random()*c.width, y:Math.random()*c.height,
+      r:Math.random()*1.4+0.3,
+      hue:[ 'rgba(243,201,139,', 'rgba(230,168,215,', 'rgba(127,224,210,', 'rgba(236,230,251,' ][Math.floor(Math.random()*4)],
+      phase:Math.random()*Math.PI*2, speed:0.008+Math.random()*0.014
+    }));
+  }
+  function tick(t){
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s=>{
+      const a = 0.35 + 0.5*Math.abs(Math.sin(s.phase + t*s.speed*0.001));
+      ctx.beginPath();
+      ctx.fillStyle = s.hue + a.toFixed(2) + ')';
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fill();
+    });
+    requestAnimationFrame(tick);
+  }
+  resize(); addEventListener('resize', resize);
+  requestAnimationFrame(tick);
+})();
+
+/* ---------------------------------------------------------- */
+/* Morse dictionary                                             */
+/* ---------------------------------------------------------- */
+const MORSE_MAP = {
+  A:'.-', B:'-...', C:'-.-.', D:'-..', E:'.', F:'..-.', G:'--.', H:'....',
+  I:'..', J:'.---', K:'-.-', L:'.-..', M:'--', N:'-.', O:'---', P:'.--.',
+  Q:'--.-', R:'.-.', S:'...', T:'-', U:'..-', V:'...-', W:'.--', X:'-..-',
+  Y:'-.--', Z:'--..',
+  '0':'-----','1':'.----','2':'..---','3':'...--','4':'....-',
+  '5':'.....','6':'-....','7':'--...','8':'---..','9':'----.',
+  '.':'.-.-.-', ',':'--..--', '?':'..--..', "'":'.----.', '!':'-.-.--',
+  '/':'-..-.', '(':'-.--.', ')':'-.--.-', '&':'.-...', ':':'---...',
+  ';':'-.-.-.', '=':'-...-', '+':'.-.-.', '-':'-....-', '_':'..--.-',
+  '"':'.-..-.', '$':'...-..-', '@':'.--.-.'
+};
+const REVERSE_MAP = Object.fromEntries(Object.entries(MORSE_MAP).map(([k,v])=>[v,k]));
+
+function textToMorse(text){
+  const norm = text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+  const words = norm.trim().split(/\s+/).filter(Boolean);
+  return words.map(w => [...w].map(ch => MORSE_MAP[ch]).filter(Boolean).join(' ')).join(' / ');
+}
+
+function renderMorseVisual(container, morseStr, litIndex){
+  container.innerHTML = '';
+  if(!morseStr){ container.innerHTML = '<span class="empty">votre message apparaîtra ici, étoile par étoile</span>'; return; }
+  let idx = 0;
+  const words = morseStr.split(' / ');
+  words.forEach((word, wi)=>{
+    const letters = word.split(' ').filter(Boolean);
+    letters.forEach((letter, li)=>{
+      [...letter].forEach(sym=>{
+        const span = document.createElement('span');
+        span.className = 'tok ' + (sym==='.' ? 'dot' : 'dash');
+        if(idx === litIndex) span.classList.add('lit');
+        container.appendChild(span);
+        idx++;
+      });
+      if(li < letters.length-1){
+        const g = document.createElement('span'); g.className='tok gap-letter'; container.appendChild(g);
+      }
+    });
+    if(wi < words.length-1){
+      const g = document.createElement('span'); g.className='tok gap-word'; container.appendChild(g);
+    }
+  });
+}
+
+/* ---------------------------------------------------------- */
+/* Tabs                                                          */
+/* ---------------------------------------------------------- */
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ---------------------------------------------------------- */
+/* EMETTRE                                                       */
+/* ---------------------------------------------------------- */
+const msgInput = document.getElementById('msgInput');
+const morseVisual = document.getElementById('morseVisual');
+const unitSlider = document.getElementById('unitSlider');
+const unitLabel = document.getElementById('unitLabel');
+const emitOrb = document.getElementById('emitOrb');
+const playBtn = document.getElementById('playBtn');
+const sourceSeg = document.getElementById('sourceSeg');
+const torchHint = document.getElementById('torchHint');
+
+let emitSource = 'torch';
+let currentMorse = '';
+
+function refreshMorsePreview(){
+  currentMorse = textToMorse(msgInput.value);
+  renderMorseVisual(morseVisual, currentMorse, -1);
+}
+msgInput.addEventListener('input', refreshMorsePreview);
+
+document.getElementById('pasteBtn').addEventListener('click', async ()=>{
+  try{
+    const t = await navigator.clipboard.readText();
+    msgInput.value = t; refreshMorsePreview();
+  }catch(e){ alert("Impossible de lire le presse-papiers ici. Collez le texte manuellement dans le champ."); }
+});
+document.getElementById('clearEmitBtn').addEventListener('click', ()=>{
+  msgInput.value=''; refreshMorsePreview();
+});
+document.getElementById('copyMorseBtn').addEventListener('click', ()=>{
+  if(!currentMorse) return;
+  navigator.clipboard.writeText(currentMorse).catch(()=>{});
+});
+
+unitSlider.addEventListener('input', ()=>{ unitLabel.textContent = unitSlider.value + ' ms'; });
+
+sourceSeg.querySelectorAll('button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    sourceSeg.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    emitSource = b.dataset.src;
+    torchHint.textContent = emitSource==='torch'
+      ? "Le flash sera activé à la demande d'accès caméra."
+      : "L'écran clignotera en plein blanc — présentez-le à l'autre caméra.";
+  });
+});
+
+let emitStream = null, emitTrack = null, torchOK = false;
+let screenFlash = null;
+
+function ensureScreenFlashEl(){
+  if(screenFlash) return screenFlash;
+  screenFlash = document.createElement('div');
+  screenFlash.style.cssText = 'position:fixed; inset:0; background:#fff; z-index:9999; opacity:0; pointer-events:none; transition:opacity .04s linear;';
+  document.body.appendChild(screenFlash);
+  return screenFlash;
+}
+
+async function ensureTorch(){
+  if(emitStream) return torchOK;
+  try{
+    emitStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+    emitTrack = emitStream.getVideoTracks()[0];
+    const caps = emitTrack.getCapabilities ? emitTrack.getCapabilities() : {};
+    torchOK = !!caps.torch;
+  }catch(e){ torchOK = false; }
+  return torchOK;
+}
+
+function setLight(on){
+  emitOrb.classList.toggle('on', on);
+  if(emitSource === 'torch' && emitTrack && torchOK){
+    emitTrack.applyConstraints({advanced:[{torch:on}]}).catch(()=>{});
+  } else {
+    const el = ensureScreenFlashEl();
+    el.style.opacity = on ? '1' : '0';
+  }
+}
+
+function buildSchedule(morseStr, unit){
+  const events = [];
+  const words = morseStr.split(' / ');
+  words.forEach((word, wi)=>{
+    const letters = word.split(' ').filter(Boolean);
+    letters.forEach((letter, li)=>{
+      [...letter].forEach((sym, si)=>{
+        events.push({on:true, dur: sym==='.' ? unit : unit*3});
+        if(si < letter.length-1) events.push({on:false, dur:unit});
+      });
+      if(li < letters.length-1) events.push({on:false, dur:unit*3});
+    });
+    if(wi < words.length-1) events.push({on:false, dur:unit*7});
+  });
+  return events;
+}
+
+let playing = false, playTimer = null;
+playBtn.addEventListener('click', async ()=>{
+  if(playing){ stopPlayback(); return; }
+  if(!currentMorse){ refreshMorsePreview(); if(!currentMorse) return; }
+
+  if(emitSource==='torch'){
+    playBtn.textContent = '✦ préparation…';
+    const ok = await ensureTorch();
+    if(!ok){
+      alert("Le flash n'est pas accessible sur cet appareil/navigateur. Bascule automatique vers l'écran comme source.");
+      sourceSeg.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+      sourceSeg.querySelector('[data-src=screen]').classList.add('active');
+      emitSource = 'screen';
+    }
+  }
+
+  const unit = parseInt(unitSlider.value,10);
+  const events = buildSchedule(currentMorse, unit);
+  let i = 0;
+  playing = true;
+  playBtn.textContent = '■ Arrêter la diffusion';
+  playBtn.classList.add('stop');
+
+  function step(){
+    if(!playing || i >= events.length){
+      setLight(false); playing=false;
+      playBtn.textContent = '✦ Diffuser via flash'; playBtn.classList.remove('stop');
+      return;
+    }
+    const ev = events[i++];
+    setLight(ev.on);
+    playTimer = setTimeout(step, ev.dur);
+  }
+  step();
+});
+
+function stopPlayback(){
+  playing = false; clearTimeout(playTimer);
+  setLight(false);
+  playBtn.textContent = '✦ Diffuser via flash'; playBtn.classList.remove('stop');
+}
+
+/* ---------------------------------------------------------- */
+/* RECEVOIR                                                       */
+/* ---------------------------------------------------------- */
+const video = document.getElementById('video');
+const overlay = document.getElementById('overlay');
+const camPlaceholder = document.getElementById('camPlaceholder');
+const camBtn = document.getElementById('camBtn');
+const modeSeg = document.getElementById('modeSeg');
+const modeHint = document.getElementById('modeHint');
+const sensSlider = document.getElementById('sensSlider');
+const sensLabel = document.getElementById('sensLabel');
+const fixedUnitCheck = document.getElementById('fixedUnitCheck');
+const fixedUnitWrap = document.getElementById('fixedUnitWrap');
+const fixedUnitSlider = document.getElementById('fixedUnitSlider');
+const fixedUnitLabel = document.getElementById('fixedUnitLabel');
+const recvOrb = document.getElementById('recvOrb');
+const statUnit = document.getElementById('statUnit');
+const statLum = document.getElementById('statLum');
+const morseLive = document.getElementById('morseLive');
+const decodedText = document.getElementById('decodedText');
+
+let recvStream = null;
+let analysisCanvas = document.createElement('canvas');
+analysisCanvas.width = 160; analysisCanvas.height = 120;
+let actx = analysisCanvas.getContext('2d', {willReadFrequently:true});
+
+let detMode = 'auto';
+let manualPoint = null; // {x,y} normalized 0..1
+let rafId = null;
+
+modeSeg.querySelectorAll('button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    modeSeg.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    detMode = b.dataset.mode;
+    modeHint.textContent = detMode==='auto'
+      ? "Le point le plus lumineux de l'image est suivi automatiquement."
+      : "Touchez la vidéo pour désigner précisément la source à suivre.";
+  });
+});
+
+document.getElementById('videoWrap').addEventListener('click', (e)=>{
+  if(detMode !== 'manual') return;
+  const rect = video.getBoundingClientRect();
+  manualPoint = { x:(e.clientX-rect.left)/rect.width, y:(e.clientY-rect.top)/rect.height };
+});
+
+sensSlider.addEventListener('input', ()=>{ sensLabel.textContent = (sensSlider.value/100).toFixed(2); });
+fixedUnitCheck.addEventListener('change', ()=>{ fixedUnitWrap.style.display = fixedUnitCheck.checked ? 'block' : 'none'; });
+fixedUnitSlider.addEventListener('input', ()=>{ fixedUnitLabel.textContent = fixedUnitSlider.value + ' ms par unité'; });
+
+camBtn.addEventListener('click', async ()=>{
+  if(recvStream){ stopCamera(); return; }
+  try{
+    recvStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false});
+    video.srcObject = recvStream;
+    await video.play();
+    camPlaceholder.style.display = 'none';
+    camBtn.textContent = '■ Arrêter la caméra';
+    resetDecoder();
+    rafId = requestAnimationFrame(loop);
+  }catch(e){
+    alert("Impossible d'accéder à la caméra. Vérifiez les autorisations du navigateur.");
+  }
+});
+
+function stopCamera(){
+  if(recvStream){ recvStream.getTracks().forEach(t=>t.stop()); recvStream = null; }
+  cancelAnimationFrame(rafId);
+  camPlaceholder.style.display = 'flex';
+  camBtn.textContent = '✦ Démarrer la caméra';
+  recvOrb.classList.remove('on');
+}
+
+/* --- decoder state --- */
+let minLum = 255, maxLum = 0, lastReset = performance.now();
+let state = false, lastChangeTime = null;
+let unitEstimate = 140;
+let letterBuffer = '';
+let liveMorse = '';
+let outputText = '';
+
+function resetDecoder(){
+  minLum=255; maxLum=0; lastReset=performance.now();
+  state=false; lastChangeTime=null;
+  letterBuffer=''; liveMorse=''; 
+  morseLive.innerHTML = '<span class="empty">en attente de signal…</span>';
+}
+
+document.getElementById('clearDecodedBtn').addEventListener('click', ()=>{
+  outputText=''; letterBuffer=''; liveMorse='';
+  decodedText.textContent = 'le texte reconstruit apparaîtra ici';
+  decodedText.classList.add('empty');
+  morseLive.innerHTML = '<span class="empty">en attente de signal…</span>';
+});
+document.getElementById('copyDecodedBtn').addEventListener('click', ()=>{
+  if(!outputText) return;
+  navigator.clipboard.writeText(outputText).catch(()=>{});
+});
+
+function finalizeLetter(){
+  if(letterBuffer){
+    const ch = REVERSE_MAP[letterBuffer] || '?';
+    outputText += ch;
+    letterBuffer = '';
+    liveMorse += (liveMorse ? ' ' : '') ; // letter gap marker handled visually already
+    updateDecodedDisplay();
+  }
+}
+function finalizeWord(){
+  finalizeLetter();
+  outputText += ' ';
+  updateDecodedDisplay();
+}
+function updateDecodedDisplay(){
+  if(outputText.trim()){
+    decodedText.textContent = outputText;
+    decodedText.classList.remove('empty');
+  }
+}
+
+let lastActivity = performance.now();
+
+function loop(){
+  if(video.readyState >= 2){
+    actx.drawImage(video, 0, 0, analysisCanvas.width, analysisCanvas.height);
+    const w = analysisCanvas.width, h = analysisCanvas.height;
+    let px, py, lum;
+
+    if(detMode === 'auto'){
+      const data = actx.getImageData(0,0,w,h).data;
+      let best = -1, bx=0, by=0;
+      for(let y=0; y<h; y+=2){
+        for(let x=0; x<w; x+=2){
+          const i = (y*w+x)*4;
+          const l = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+          if(l > best){ best = l; bx = x; by = y; }
+        }
+      }
+      lum = best; px = bx/w; py = by/h;
+    } else {
+      const p = manualPoint || {x:0.5, y:0.5};
+      const cx = Math.max(2, Math.min(w-3, Math.round(p.x*w)));
+      const cy = Math.max(2, Math.min(h-3, Math.round(p.y*h)));
+      const box = actx.getImageData(cx-2, cy-2, 5, 5).data;
+      let sum = 0, n = box.length/4;
+      for(let i=0;i<box.length;i+=4){ sum += 0.299*box[i] + 0.587*box[i+1] + 0.114*box[i+2]; }
+      lum = sum/n; px = p.x; py = p.y;
+    }
+
+    drawReticle(px, py);
+    statLum.textContent = Math.round(lum);
+
+    const now = performance.now();
+    if(now - lastReset > 1600){
+      minLum = Math.min(minLum + 6, lum);
+      maxLum = Math.max(maxLum - 6, lum);
+      lastReset = now;
+    }
+    minLum = Math.min(minLum, lum);
+    maxLum = Math.max(maxLum, lum);
+    const sens = sensSlider.value/100;
+    const threshold = minLum + (maxLum - minLum) * sens;
+    const range = maxLum - minLum;
+    const isOn = range > 12 ? (lum > threshold) : false;
+
+    if(lastChangeTime === null){ lastChangeTime = now; state = isOn; }
+
+    if(isOn !== state){
+      const dur = now - lastChangeTime;
+      const unit = fixedUnitCheck.checked ? parseInt(fixedUnitSlider.value,10) : unitEstimate;
+
+      if(state === true){
+        // was ON -> classify dot/dash
+        if(dur > 25){
+          if(dur <= unit*1.8){
+            letterBuffer += '.';
+            if(!fixedUnitCheck.checked){ unitEstimate = unitEstimate*0.7 + dur*0.3; }
+          } else {
+            letterBuffer += '-';
+          }
+          liveMorse += (letterBuffer.slice(-1));
+          renderMorseVisual(morseLive, liveMorse.split('').join(' ').replace(/ (?= )/g,''), -1);
+        }
+      } else {
+        // was OFF -> classify gap
+        if(dur <= unit*1.8){ /* intra-letter gap, nothing to do */ }
+        else if(dur <= unit*5.5){ finalizeLetter(); }
+        else { finalizeWord(); }
+      }
+      state = isOn;
+      lastChangeTime = now;
+      lastActivity = now;
+      recvOrb.classList.toggle('on', isOn);
+    }
+
+    // auto-flush a pending letter after prolonged silence
+    if(!isOn && letterBuffer && (now - lastChangeTime > unitEstimate*6)){
+      finalizeLetter();
+    }
+
+    statUnit.textContent = Math.round(fixedUnitCheck.checked ? fixedUnitSlider.value : unitEstimate);
+  }
+  rafId = requestAnimationFrame(loop);
+}
+
+function drawReticle(px, py){
+  const rect = video.getBoundingClientRect();
+  overlay.width = rect.width; overlay.height = rect.height;
+  const octx = overlay.getContext('2d');
+  octx.clearRect(0,0,overlay.width, overlay.height);
+  const x = px*overlay.width, y = py*overlay.height;
+  octx.strokeStyle = 'rgba(127,224,210,0.9)';
+  octx.lineWidth = 2;
+  octx.beginPath(); octx.arc(x,y,16,0,Math.PI*2); octx.stroke();
+  octx.beginPath(); octx.moveTo(x-22,y); octx.lineTo(x-10,y); octx.moveTo(x+10,y); octx.lineTo(x+22,y);
+  octx.moveTo(x,y-22); octx.lineTo(x,y-10); octx.moveTo(x,y+10); octx.lineTo(x,y+22);
+  octx.stroke();
+}
+
+refreshMorsePreview();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

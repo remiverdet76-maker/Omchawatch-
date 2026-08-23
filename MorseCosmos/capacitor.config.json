@@ -1,0 +1,8 @@
+{
+	"appId": "org.watcha.morsecosmos",
+	"appName": "Morse Cosmos",
+	"webDir": "www",
+	"android": {
+		"allowMixedContent": false
+	}
+}
