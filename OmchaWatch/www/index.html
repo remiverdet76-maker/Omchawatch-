@@ -297,6 +297,31 @@ input[type=color]{
 .arch-mark{display:inline-block;font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:9px;margin:0 4px 4px 0;
   background:rgba(232,74,111,.18);color:#e8a0d0;}
 
+/* ── OmchaT'aime — trois lectures 360/396/432 ── */
+.ota-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+.ota-card{padding:9px 6px 10px;border-radius:11px;background:rgba(24,12,50,.42);
+  border:1px solid rgba(255,255,255,.05);text-align:center;}
+.ota-ring{width:64px;height:64px;border-radius:50%;margin:0 auto 6px;position:relative;
+  display:flex;align-items:center;justify-content:center;}
+.ota-ring-hole{width:47px;height:47px;border-radius:50%;background:#160c2e;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ota-ring-phase{font-family:'Cinzel',serif;font-size:.86rem;color:var(--text);line-height:1;}
+.ota-ring-of12{font-size:.52rem;color:var(--textD,#907040);margin-top:1px;}
+.ota-theme-num{font-family:'Cinzel',serif;font-weight:700;font-size:.92rem;}
+.ota-theme-tag{font-size:.56rem;color:var(--textD,#907040);text-transform:uppercase;letter-spacing:.06em;margin-top:1px;}
+.ota-energy{font-weight:700;font-size:.72rem;margin-top:5px;color:var(--text);}
+.ota-energy-kw{font-size:.62rem;color:var(--textS);margin-top:1px;line-height:1.3;}
+.ota-sub{font-size:.58rem;color:var(--textD,#907040);margin-top:5px;line-height:1.5;}
+.ota-shortcut{
+  position:fixed;left:50%;bottom:44px;transform:translateX(-50%);height:30px;
+  padding:0 13px;border-radius:15px;border:1px solid rgba(232,74,111,.32);
+  background:rgba(100,30,80,.22);color:#e8a0d0;font-family:'Cinzel',serif;
+  font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:200;transition:all .25s;
+}
+.ota-shortcut:hover,.ota-shortcut:active{background:rgba(232,74,111,.30);color:#f5c8e0;}
+
 /* ── SIMULATION (verrou densité) ── */
 #ms-lock.on{background:rgba(240,192,60,.18);color:var(--gold);border:1px solid rgba(240,192,60,.38);text-shadow:0 0 12px rgba(240,192,60,.5);}
 
@@ -336,11 +361,16 @@ input[type=color]{
 <button id="fs-btn" onclick="toggleFullscreen()" title="Plein écran">⤢</button>
 
 <!-- #166 : Mode Retour OmcVibe — n'a de sens que si OmchaWatch est ouvert
-     EN OVERLAY depuis OmcVibe (cf. omcVibeRetour() ci-dessous). Dans ce
+     EN OVERLAY depuis OmcVibe (cf. omcVibeRetour() plus bas). Dans ce
      paquet autonome, il n'y a jamais d'OmcVibe à côté : le bouton est
      masqué au chargement (cf. script juste avant </body>) plutôt que de
      laisser un lien mort vers un index.html qui n'existe pas ici. -->
 <button id="retour-btn" onclick="omcVibeRetour()" title="Mode Retour OmcVibe — anime doucement la zone 288-432Hz">Retour</button>
+
+<!-- Raccourci discret vers OmchaT'aime (trois lectures 360/396/432) —
+     centré en bas, même hauteur que #retour-btn, pour rester repérable
+     d'un seul geste sans encombrer le cadran. -->
+<button id="ota-shortcut" class="ota-shortcut" onclick="togglePanel();setTab('arch');" title="OmchaT'aime — trois lectures 360/396/432">✦ OmchaT'aime</button>
 
 <!-- PANNEAU -->
 <div id="panel">
@@ -355,7 +385,7 @@ input[type=color]{
     <button class="mtab"    id="mt-simu"    onclick="setTab('simu')">SIMU</button>
     <button class="mtab"    id="mt-soleil"  onclick="setTab('soleil')">SOLEIL</button>
     <button class="mtab"    id="mt-journal" onclick="setTab('journal')">JOURNAL</button>
-    <button class="mtab"    id="mt-arch"    onclick="setTab('arch')">ARCHÉTYPES</button>
+    <button class="mtab"    id="mt-arch"    onclick="setTab('arch')">OMCHAT'AIME</button>
   </div>
 
   <!-- CONTENU -->
@@ -718,6 +748,11 @@ input[type=color]{
         </div>
       </div>
       <div class="opt-section">
+        <div class="opt-h">OmchaT'aime — trois lectures du thème</div>
+        <p class="small" style="margin-bottom:6px">Un même J0, trois angles : 360 (corps/matière), 396 (neutre/équilibre), 432 (conscience/intuition). Aperçu rapide, pas une astrologie exacte.</p>
+        <div class="ota-row" id="ota-row"><!-- 3 cartes injectées par JS --></div>
+      </div>
+      <div class="opt-section">
         <div class="opt-h">Lecture fractale à 3 niveaux</div>
         <p class="small" style="margin-bottom:6px">Les 4 mêmes mouvements pivotés par 396 (expansion douce · expansion charmante · contraction douce · contraction charmante) se répètent à chaque échelle du cycle.</p>
         <div class="arch-readout" id="a-lvl-cycle-box" style="margin-bottom:7px">
@@ -969,6 +1004,16 @@ function drawRainbowRing(radius, lw, flow){
 // mécanisme, pas la vraie oscillation du temps.
 const TAU=Math.PI*2, R_EXP=12/11, R_CNT=11/12, T_BRE=6;
 const hsl=(h,s,l,a=1)=>`hsla(${h|0},${s}%,${l}%,${a})`;
+// Conversion HSL→hex (s,l en %) — nécessaire pour la comète de densité
+// (draw3DSphere attend un hex, pas une chaîne hsla()).
+function hueToHex(h,s,l){
+  s/=100;l/=100;
+  const k=n=>(n+h/30)%12;
+  const a=s*Math.min(l,1-l);
+  const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+  const toHex=v=>Math.round(v*255).toString(16).padStart(2,'0');
+  return '#'+toHex(f(0))+toHex(f(8))+toHex(f(4));
+}
 function rgba(hex,a){
   const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
   return `rgba(${r},${g},${b},${a*DESIGN.intensity})`;
@@ -999,12 +1044,24 @@ function draw3DSphere(x,y,r,hex,alpha){
 }
 
 // ─── FOND ────────────────────────────────────────────
+// #Fond perso : le bug signalé ("l'image importée ne s'affiche jamais")
+// venait d'ici, pas du mécanisme d'upload lui-même (déjà correct, cf.
+// onBgImageFile/#cosmic-bg) — ce canvas COUVRE TOUT L'ÉCRAN et repeignait
+// un lavis opaque par-dessus à CHAQUE frame, masquant en permanence le
+// calque #cosmic-bg (z-index:-1) où l'image importée est pourtant bien
+// posée. Tant qu'un fond personnalisé est actif, on efface juste le
+// canvas (transparent) au lieu de le peindre, pour laisser l'image
+// traverser — le lavis violet par défaut ne revient que sans image perso.
 let _stars=null;
 function drawBg(t){
-  const bg=X.createRadialGradient(cx,cy,0,cx,cy,R*2);
-  bg.addColorStop(0,'rgba(24,12,60,.65)');
-  bg.addColorStop(1,'rgba(4,6,20,.85)');
-  X.fillStyle=bg; X.fillRect(0,0,CW,CH);
+  if(BG_STATE.image){
+    X.clearRect(0,0,CW,CH);
+  } else {
+    const bg=X.createRadialGradient(cx,cy,0,cx,cy,R*2);
+    bg.addColorStop(0,'rgba(24,12,60,.65)');
+    bg.addColorStop(1,'rgba(4,6,20,.85)');
+    X.fillStyle=bg; X.fillRect(0,0,CW,CH);
+  }
   if(OPTS.stars){
     if(!_stars){_stars=[];for(let i=0;i<150;i++)_stars.push([Math.random()*CW,Math.random()*CH,Math.random()*.5+.06,Math.random()*1.1+.2]);}
     for(const[fx,fy,sa,sr] of _stars){
@@ -1128,40 +1185,51 @@ function drawReadingArcs(r, cfg, t){
   if(OPTS.nodes) drawRainbowRing(R*.50, 1.8*DESIGN.bubbleScale, -flow*.7);
 }
 
-// ─── 36 NŒUDS ────────────────────────────────────────
+// ─── COMÈTE DE DENSITÉ ────────────────────────────────
+// Remplace les 36 marqueurs fixes (un cercle par position, tous
+// affichés en permanence — dense et un peu criard à l'usage) par UNE
+// seule comète qui parcourt l'orbite : plus discret (un seul repère
+// plutôt que 36) et plus réaliste (vraie petite sphère 3D ombrée,
+// cf. draw3DSphere, avec une traînée qui s'estompe derrière elle,
+// comme une comète, plutôt qu'un point plat). La position/l'avance sont
+// calculées exactement comme avant (activeFrac) — seul le rendu change.
 function draw36Nodes(readings,t,cfg){
   if(!OPTS.nodes)return;
-  const OR=R*.50,bR0=R*.035*DESIGN.bubbleScale;
-  // Mode 432 : les bulles cyclent dans l'heure (souffle)
-  // Mode 15552 : les bulles représentent les 36 phases du jour
+  const OR=R*.50,bR0=R*.052*DESIGN.bubbleScale;
+  // Mode 432 : la comète cycle dans l'heure (souffle)
+  // Mode 15552 : la comète représente les 36 phases du jour
   const activeFrac = DESIGN.deepMode
     ? (readings.phase-1+readings.fPhase)/36
     : (readings.souffle-1+readings.fSouffle)/36;
-  for(let i=0;i<36;i++){
-    const a=(i/36)*TAU-Math.PI/2;
-    const bx=cx+Math.cos(a)*OR,by=cy+Math.sin(a)*OR;
-    const df=Math.min(Math.abs(activeFrac-i/36),1-Math.abs(activeFrac-i/36));
-    const act=Math.max(0,1-df*36/2.5);
-    const ph=(i/36)*TAU;
-    const bw=.5+.5*Math.sin(t*TAU/T_BRE+ph);
-    const amp=R_CNT+(R_EXP-R_CNT)*(bw*.6+act*.4);
-    const br=bR0*amp;
-    const hue=(i/36)*300+20,al=(.28+.72*act)*DESIGN.intensity;
-    if(act>.05&&DESIGN.haloScale>0){
-      const gg=X.createRadialGradient(bx,by,0,bx,by,br*5*DESIGN.haloScale);
-      gg.addColorStop(0,hsl(hue,70,60,.4*act*DESIGN.haloScale));gg.addColorStop(1,hsl(hue,70,60,0));
-      X.beginPath();X.arc(bx,by,br*5*DESIGN.haloScale,0,TAU);X.fillStyle=gg;X.fill();
-    }
-    const sg=X.createRadialGradient(bx-br*.3,by-br*.3,br*.05,bx,by,br);
-    sg.addColorStop(0,hsl(hue,50,90,al));sg.addColorStop(.4,hsl(hue,65,45+25*act,al*.9));sg.addColorStop(1,hsl(hue,65,16,al*.6));
-    X.beginPath();X.arc(bx,by,br,0,TAU);X.fillStyle=sg;X.fill();
-    X.beginPath();X.arc(bx,by,br,0,TAU);X.strokeStyle=hsl(hue,65,55,al*.6);X.lineWidth=.7;X.stroke();
-    if(OPTS.nodeNums){
-      const fs=Math.max(5,Math.round(br*.80*DESIGN.nodeFontScale));
-      X.font=`${act>.55?'600 ':'300 '}${fs}px 'Cinzel',serif`;
-      X.fillStyle=hsl(hue,10,96,(.40+.60*act)*DESIGN.intensity);
-      X.textAlign='center';X.textBaseline='middle';X.fillText(i+1,bx,by);
-    }
+  const a=activeFrac*TAU-Math.PI/2;
+  const hue=activeFrac*300+20;
+  const hex=hueToHex(hue,62,56);
+  const intens=DESIGN.intensity;
+  // Orbite : simple trait de contexte, à peine visible.
+  X.beginPath();X.arc(cx,cy,OR,0,TAU);X.strokeStyle=hsl(hue,35,50,.05*intens);X.lineWidth=1;X.stroke();
+  // Traînée : quelques points qui s'estompent derrière la comète.
+  const tailSweep=.05*TAU;
+  for(let k=9;k>=1;k--){
+    const f=k/9;
+    const ta=a-tailSweep*f;
+    const tx=cx+Math.cos(ta)*OR,ty=cy+Math.sin(ta)*OR;
+    X.beginPath();X.arc(tx,ty,Math.max(.5,bR0*(1-f*.7)*.5),0,TAU);
+    X.fillStyle=hsl(hue,55,60,(1-f)*.45*intens);X.fill();
+  }
+  const bx=cx+Math.cos(a)*OR,by=cy+Math.sin(a)*OR;
+  if(DESIGN.haloScale>0){
+    const gg=X.createRadialGradient(bx,by,0,bx,by,bR0*5.5*DESIGN.haloScale);
+    gg.addColorStop(0,hsl(hue,70,60,.45*DESIGN.haloScale*intens));gg.addColorStop(1,hsl(hue,70,60,0));
+    X.beginPath();X.arc(bx,by,bR0*5.5*DESIGN.haloScale,0,TAU);X.fillStyle=gg;X.fill();
+  }
+  draw3DSphere(bx,by,bR0,hex,1);
+  if(OPTS.nodeNums){
+    const posNum=Math.max(1,Math.min(36,Math.ceil(activeFrac*36)||36));
+    const fs=Math.max(8,Math.round(bR0*1.15*DESIGN.nodeFontScale));
+    X.font=`600 ${fs}px 'Cinzel',serif`;
+    X.fillStyle=hsl(hue,15,95,.92*intens);
+    X.textAlign='center';X.textBaseline='middle';
+    X.fillText(posNum,bx,by-bR0*2.1);
   }
 }
 
@@ -1734,11 +1802,107 @@ function generateArchAnalysis(comp){
   return{header:header,quick:quick,deep:deep};
 }
 let J0_ARCH=null, lastArchComp=null, archAnalysisTab='quick';
+// ─── OmchaT'aime — trois lectures 360/396/432 ──────────────────────────
+// Même J0 que l'Archétype ci-dessus, relu sous 3 angles différents :
+//  • 360 — thème externe : corps, saisons, émotions, ego, mental, matière.
+//    12 phases de 30 jours (360 = 12×30).
+//  • 396 — thème neutre : équilibre, point d'observation, guide en cas de
+//    dérive. 12 phases de 33 jours (396 = 12×33).
+//  • 432 — thème expansif : psyché, conscience, intuition, imagination.
+//    12 phases de 36 jours (432 = 12×36) — même découpage que le cycle
+//    432 déjà utilisé plus haut (dayPhaseIdx/dayPos36).
+// Simple aperçu synthétique (pas une lecture astrologique exacte, cf.
+// demande initiale) : les 12 mots-clés de chaque thème colorent la même
+// mécanique de phases sous un angle différent (corps / neutre /
+// conscience), pour une lecture rapide plutôt qu'un calcul savant.
+const OTA_THEMES=[
+  {n:360,tag:'Externe · corps',color:'#e0954a',phases:[
+    {name:'Semence',kw:'instinct, préparation'},
+    {name:'Réveil',kw:'sensation, les sens s\'ouvrent'},
+    {name:'Ancrage',kw:'sécurité, besoin concret'},
+    {name:'Élan',kw:'action, le corps bouge'},
+    {name:'Cœur',kw:'émotion, affects, relation'},
+    {name:'Éclat',kw:'ego visible, rayonnement'},
+    {name:'Balance',kw:'ajustement, recentrage'},
+    {name:'Retrait',kw:'repos, ralentissement'},
+    {name:'Nettoyage',kw:'digestion, tri physique'},
+    {name:'Bilan',kw:'mental, compréhension concrète'},
+    {name:'Seuil',kw:'mue, changement de rythme'},
+    {name:'Clôture',kw:'le corps referme le cycle'}
+  ]},
+  {n:396,tag:'Neutre · équilibre',color:'#60A8F8',phases:[
+    {name:'Silence',kw:'écoute, avant tout jugement'},
+    {name:'Attention',kw:'présence, observer sans réagir'},
+    {name:'Mesure',kw:'justesse, ni trop ni trop peu'},
+    {name:'Ajustement',kw:'petit correctif, cap tenu'},
+    {name:'Miroir',kw:'observation de soi neutre'},
+    {name:'Clarté',kw:'ce qui est vrai, sans filtre'},
+    {name:'Centre',kw:'point de neutralité, guide'},
+    {name:'Recul',kw:'discernement, prendre de la hauteur'},
+    {name:'Tri',kw:'garder / laisser, sans drame'},
+    {name:'Repère',kw:'se recaler sur l\'essentiel'},
+    {name:'Bascule',kw:'seuil de validation, vérifier'},
+    {name:'Intégration',kw:'stabiliser ce qui a été vu'}
+  ]},
+  {n:432,tag:'Expansif · conscience',color:'#A060F0',phases:[
+    {name:'Germe',kw:'impulsion, émergence intérieure'},
+    {name:'Éveil',kw:'ouverture, prise de conscience'},
+    {name:'Enracinement',kw:'stabilité subtile, ancrage'},
+    {name:'Activation',kw:'élan, mise en mouvement'},
+    {name:'Ouverture',kw:'réceptivité, intuition'},
+    {name:'Rayonnement',kw:'expression, imagination diffusée'},
+    {name:'Équilibre',kw:'harmonisation, centre'},
+    {name:'Détachement',kw:'lâcher-prise, vision élargie'},
+    {name:'Purification',kw:'clarté, tri intérieur'},
+    {name:'Vision',kw:'perspective, compréhension globale'},
+    {name:'Transcendance',kw:'dépassement, changement de plan'},
+    {name:'Unité',kw:'fusion, intégration finale'}
+  ]}
+];
+function otaCompute(j0,ref,themeN){
+  const daysSince=archDaysBetween(j0,ref);
+  const phaseLen=themeN/12;
+  const cycleIndex=Math.floor(daysSince/themeN)+1;
+  const dayInCycle=((daysSince%themeN)+themeN)%themeN+1;
+  const phaseIdx=Math.min(12,Math.floor((dayInCycle-1)/phaseLen)+1);
+  const dayInPhase=Math.floor((dayInCycle-1)%phaseLen)+1;
+  const daysLeftPhase=Math.max(0,Math.round(phaseLen-dayInPhase));
+  const daysLeftCycle=themeN-dayInCycle;
+  return{daysSince,phaseLen,cycleIndex,dayInCycle,phaseIdx,dayInPhase,daysLeftPhase,daysLeftCycle};
+}
+function otaRenderEmpty(){
+  const row=document.getElementById('ota-row'); if(!row)return;
+  row.innerHTML=OTA_THEMES.map(th=>
+    '<div class="ota-card"><div class="ota-ring" style="background:conic-gradient('+th.color+'40 0%, rgba(255,255,255,.06) 0)">'+
+    '<div class="ota-ring-hole"><div class="ota-ring-phase">—</div></div></div>'+
+    '<div class="ota-theme-num" style="color:'+th.color+'">'+th.n+'</div>'+
+    '<div class="ota-theme-tag">'+th.tag+'</div>'+
+    '<div class="ota-energy">—</div><div class="ota-sub">Renseigne ton J0 ci-dessus</div></div>'
+  ).join('');
+}
+function otaRender(j0,ref){
+  const row=document.getElementById('ota-row'); if(!row)return;
+  if(!j0){otaRenderEmpty();return;}
+  row.innerHTML=OTA_THEMES.map(th=>{
+    const c=otaCompute(j0,ref,th.n);
+    const ph=th.phases[c.phaseIdx-1];
+    const pct=Math.round((c.dayInPhase/c.phaseLen)*100);
+    return '<div class="ota-card">'+
+      '<div class="ota-ring" style="background:conic-gradient('+th.color+' '+pct+'%, rgba(255,255,255,.08) 0)">'+
+      '<div class="ota-ring-hole"><div class="ota-ring-phase">'+c.phaseIdx+'</div><div class="ota-ring-of12">/ 12</div></div></div>'+
+      '<div class="ota-theme-num" style="color:'+th.color+'">'+th.n+'</div>'+
+      '<div class="ota-theme-tag">'+th.tag+'</div>'+
+      '<div class="ota-energy">'+ph.name+'</div><div class="ota-energy-kw">'+ph.kw+'</div>'+
+      '<div class="ota-sub">Jour '+c.dayInCycle+'/'+th.n+' · cycle '+c.cycleIndex+'<br>Phase : reste '+c.daysLeftPhase+'j · cycle : reste '+c.daysLeftCycle+'j</div>'+
+      '</div>';
+  }).join('');
+}
 function loadArch(){
   try{
     const s=localStorage.getItem('chawatch-j0');
     if(s){J0_ARCH=new Date(s); const el=document.getElementById('arch-j0'); if(el)el.value=s.slice(0,10); archApplyJ0(true);}
-  }catch(e){}
+    else{otaRenderEmpty();}
+  }catch(e){otaRenderEmpty();}
   buildArchGrid(); buildArchTable36();
 }
 function archCalcJ0(){
@@ -1755,6 +1919,7 @@ function archApplyJ0(silent){
   J0_ARCH=j0;
   if(!silent){try{localStorage.setItem('chawatch-j0',j0.toISOString());}catch(e){}}
   const comp=computeFromJ0(j0,nowOrSim()); lastArchComp=comp;
+  otaRender(j0,nowOrSim());
   const setTxt=(id,v)=>{const el=document.getElementById(id); if(el)el.textContent=v;};
   setTxt('a-j0',archFmtDate(j0)); setTxt('a-days',comp.daysSince); setTxt('a-cycle',comp.cycle108);
   setTxt('a-day',comp.dayInCycle+' / 432');
