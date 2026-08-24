@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>
+/* OmCha396 — audio centralise : ce module reste muet quand il est embarque
+   (le binaural d'Omcha396 est la seule source). En page autonome : inchange. */
+(function(){
+  if (window.self === window.top) return;
+  try {
+    var P = window.AudioNode && AudioNode.prototype;
+    if (P && P.connect) {
+      var _c = P.connect;
+      P.connect = function(dest){
+        try {
+          if (dest && ((window.AudioDestinationNode && dest instanceof window.AudioDestinationNode) ||
+              (dest.constructor && dest.constructor.name === "AudioDestinationNode"))) {
+            return dest;
+          }
+        } catch(e){}
+        return _c.apply(this, arguments);
+      };
+    }
+  } catch(e){}
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UTC432 · Project</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#F0C060; --violet:#A060F0; --blue:#60A8F8; --cycle:#c45bbf; --ivoire:#EDE4C8;
+  --frame:rgba(6,9,28,0.88); --border:rgba(140,80,220,0.20);
+  --text:#E8C878; --textD:#907040; --textS:#C090D8;
+}
+html,body{
+  width:100%;height:100%;overflow:hidden;
+  font-family:'Nunito',sans-serif;color:var(--text);
+  background:
+    radial-gradient(ellipse at 70% 15%,rgba(90,10,60,.92) 0%,transparent 42%),
+    radial-gradient(ellipse at 18% 80%,rgba(20,5,80,.88) 0%,transparent 48%),
+    radial-gradient(ellipse at 50% 50%,rgba(15,8,56,.80) 0%,transparent 68%),
+    linear-gradient(145deg,#3A0845 0%,#18063C 28%,#070C36 55%,#040820 100%);
+  background-attachment:fixed;
+  display:flex;align-items:center;justify-content:center;
+}
+canvas{display:block;}
+
+/* ── BARRE BAS ── */
+#bar{
+  position:fixed;bottom:0;left:0;right:0;height:38px;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0 50px 0 14px;
+  background:rgba(6,9,28,.85);border-top:1px solid var(--border);
+  backdrop-filter:blur(14px);font-size:9px;letter-spacing:.2em;
+}
+/* Mode switcher */
+#mode-sw{display:flex;gap:2px;background:rgba(100,60,200,.12);border-radius:12px;padding:2px;border:1px solid rgba(140,80,220,.22);}
+.ms{padding:3px 9px;border-radius:10px;font-size:8px;letter-spacing:.18em;cursor:pointer;color:var(--textD);transition:all .22s;}
+.ms.on{background:rgba(240,192,60,.18);color:var(--gold);border:1px solid rgba(240,192,60,.38);text-shadow:0 0 12px rgba(240,192,60,.5);}
+#bar-left{color:var(--textD);}
+#bar-center{color:var(--gold);font:12px 'Cinzel',serif;letter-spacing:.12em;}
+#bar-right{display:flex;gap:10px;}
+.tag{padding:2px 8px;border-radius:8px;font-size:8px;letter-spacing:.18em;border:1px solid;}
+.tag-exp{color:var(--gold);border-color:rgba(240,192,60,.35);background:rgba(240,192,60,.08);}
+.tag-neu{color:var(--violet);border-color:rgba(160,96,240,.35);background:rgba(160,96,240,.08);}
+.tag-cnt{color:var(--blue);border-color:rgba(96,168,248,.35);background:rgba(96,168,248,.08);}
+.tag-seas{color:var(--textS);border-color:rgba(192,144,216,.22);background:rgba(192,144,216,.05);}
+
+/* ── TITRE ── */
+#title{
+  position:fixed;top:12px;left:50%;transform:translateX(-50%);
+  font:300 9px/1 'Cinzel',serif;
+  letter-spacing:.65em;color:rgba(192,144,216,.30);
+  text-transform:uppercase;white-space:nowrap;pointer-events:none;
+}
+
+/* ── BOUTON MENU ── */
+#menu-btn{
+  position:fixed;bottom:5px;right:14px;width:30px;height:30px;
+  background:rgba(100,60,200,.22);border:1px solid rgba(160,96,240,.40);
+  border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:var(--textS);transition:all .25s;z-index:200;
+}
+#menu-btn:hover{background:rgba(140,80,240,.35);color:var(--gold);}
+
+/* ── BOUTON PLEIN ÉCRAN ── */
+#fs-btn{
+  position:fixed;bottom:5px;right:52px;width:30px;height:30px;
+  background:rgba(100,60,200,.22);border:1px solid rgba(160,96,240,.40);
+  border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:var(--textS);transition:all .25s;z-index:200;
+}
+#fs-btn:hover{background:rgba(140,80,240,.35);color:var(--gold);}
+
+/* ── #166 : BOUTON MODE RETOUR (OmcVibe) ── */
+/* #bar (mode-switch 432/15552/🔒) occupe déjà toute la largeur en bas
+   (position:fixed;bottom:0;height:38px) — posé au-dessus (bottom:44px),
+   pas à la même hauteur, pour ne jamais le chevaucher. */
+#retour-btn{
+  position:fixed;bottom:44px;left:14px;height:30px;padding:0 12px;
+  background:rgba(100,60,200,.22);border:1px solid rgba(160,96,240,.40);
+  border-radius:15px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--textS);transition:all .25s;z-index:200;
+}
+#retour-btn:hover,#retour-btn.on{background:rgba(140,80,240,.35);color:var(--gold);}
+
+/* ── PANNEAU MENU ── */
+#panel{
+  position:fixed;top:0;right:0;bottom:0;left:0;width:100%;
+  background:rgba(6,9,28,.97);
+  backdrop-filter:blur(22px);
+  transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+  z-index:300;display:flex;flex-direction:column;overflow:hidden;
+}
+#panel.open{transform:translateX(0);}
+
+/* ── TABS MENU ── */
+#mtabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--border);flex-shrink:0;}
+.mtab{
+  flex:1 1 25%;padding:9px 2px;font-size:7.3px;letter-spacing:.12em;
+  text-transform:uppercase;cursor:pointer;text-align:center;
+  border:none;background:transparent;color:var(--textD);
+  transition:all .2s;border-bottom:2px solid transparent;
+}
+.mtab:hover{color:var(--textS);}
+.mtab.on{color:var(--gold);border-bottom-color:var(--gold);}
+
+/* NOTICE tab — rouge 3D */
+#mt-notice{
+  background:linear-gradient(180deg,#B82020 0%,#781010 100%);
+  box-shadow:0 4px 0 #450808,0 5px 10px rgba(200,0,0,.28);
+  color:#FFE0E0!important;text-shadow:0 1px 2px rgba(0,0,0,.5);
+  border-radius:0;letter-spacing:.2em;
+  transform:translateY(0);transition:transform .1s,box-shadow .1s;
+}
+#mt-notice:active{transform:translateY(3px);box-shadow:0 1px 0 #450808;}
+#mt-notice.on{color:#FFE0E0!important;border-bottom-color:#FF6060;}
+
+/* ── CONTENU PANNEAU ── */
+#panel-content{flex:1;overflow-y:auto;padding:16px 14px;}
+#panel-content::-webkit-scrollbar{width:2px;}
+#panel-content::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--violet),var(--gold));border-radius:2px;}
+
+/* FERMER */
+#close-btn{
+  position:absolute;top:10px;right:12px;
+  background:none;border:none;color:var(--textD);font-size:16px;
+  cursor:pointer;line-height:1;transition:color .2s;
+}
+#close-btn:hover{color:var(--gold);}
+
+/* ── NOTICE CONTENT ── */
+.notice-section{margin-bottom:18px;}
+.notice-h{
+  font:600 9px/1 'Cinzel',serif;
+  letter-spacing:.4em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:8px;padding-bottom:4px;
+  border-bottom:1px solid rgba(240,192,60,.2);
+}
+.notice-row{
+  display:flex;gap:10px;padding:5px 0;
+  border-bottom:1px solid rgba(255,255,255,.04);
+  font-size:9px;line-height:1.5;
+}
+.notice-key{
+  color:var(--gold);min-width:60px;font-family:'Nunito',sans-serif;
+  font-size:8.5px;letter-spacing:.05em;
+}
+.notice-val{color:var(--textS);flex:1;}
+
+/* ── OPTIONS CONTENT ── */
+.opt-section{margin-bottom:16px;}
+.opt-h{font-size:8px;letter-spacing:.3em;color:var(--textD);text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.opt-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 2px;border-bottom:1px solid rgba(255,255,255,.04);
+  font-size:9.5px;color:var(--textS);cursor:pointer;
+}
+.opt-row.locked{color:var(--textD);cursor:default;}
+.opt-row .dot{
+  width:8px;height:8px;border-radius:50%;
+  margin-right:7px;flex-shrink:0;
+}
+/* Toggle switch */
+.sw{
+  width:34px;height:19px;border-radius:10px;position:relative;
+  background:rgba(80,50,160,.25);border:1px solid rgba(140,80,220,.3);
+  cursor:pointer;transition:all .22s;flex-shrink:0;
+  -webkit-appearance:none;appearance:none;
+}
+.sw:checked{background:linear-gradient(90deg,var(--violet),var(--gold));border-color:var(--gold);}
+.sw::after{content:'';width:13px;height:13px;background:#fff;border-radius:50%;
+  position:absolute;top:2px;left:2px;transition:left .22s;}
+.sw:checked::after{left:17px;}
+.sw:disabled{opacity:.35;cursor:not-allowed;}
+
+/* ── DESIGN CONTENT ── */
+.des-section{margin-bottom:16px;}
+.des-h{font-size:8px;letter-spacing:.3em;color:var(--textD);text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.des-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:9px;color:var(--textS);}
+.des-col{padding:6px 0;}
+.des-col .des-head{display:flex;justify-content:space-between;margin-bottom:5px;font-size:9px;color:var(--textS);}
+.des-col .des-val{color:var(--gold);font-size:9px;}
+input[type=range]{width:100%;accent-color:var(--violet);height:3px;cursor:pointer;}
+input[type=color]{
+  width:28px;height:22px;border-radius:4px;border:1px solid var(--border);
+  background:transparent;cursor:pointer;padding:0;
+}
+.ut18-badge{
+  font-size:8px;padding:2px 7px;border-radius:8px;letter-spacing:.15em;
+  border:1px solid rgba(160,96,240,.4);background:rgba(160,96,240,.1);color:var(--violet);
+}
+
+/* PULSE */
+#pulse-ring{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:0;height:0;border-radius:50%;pointer-events:none;opacity:0;
+  border:1px solid rgba(240,192,60,.55);
+}
+@keyframes ripple{0%{width:0;height:0;opacity:.55;margin:0}100%{width:140px;height:140px;opacity:0;margin:-70px}}
+
+/* ── FOND PERSONNALISÉ ── */
+/* #166 : mode retouche (glisser/zoomer pour recentrer) retiré — signalé
+   cassé, remplacé par le même mécanisme simple qu'OmcVibe (upload →
+   cover/center automatique, aucune interaction requise). */
+#cosmic-bg{
+  position:fixed;inset:0;z-index:-1;background-size:cover;background-position:50% 50%;background-repeat:no-repeat;
+  pointer-events:none;
+}
+
+/* ── PLANISPHÈRE ── */
+#geo-modal{
+  position:fixed;inset:0;z-index:500;background:rgba(4,6,20,.94);backdrop-filter:blur(10px);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+}
+#geo-modal.open{display:flex;}
+#geo-head{position:fixed;top:14px;left:0;right:0;padding:0 46px;text-align:center;font:10px 'Nunito',sans-serif;color:var(--gold);letter-spacing:.08em;z-index:2;}
+#geo-close{position:fixed;top:10px;right:14px;background:none;border:none;color:var(--textD);font-size:20px;cursor:pointer;z-index:3;}
+#geo-close:hover{color:var(--gold);}
+#geoCanvas{border-radius:14px;border:1px solid var(--border);touch-action:none;cursor:grab;}
+#geo-foot{position:fixed;bottom:18px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:10px;z-index:2;}
+#geo-coords{font:12px 'Cinzel',serif;color:var(--textS);letter-spacing:.1em;}
+#geo-valider{
+  padding:8px 26px;border-radius:20px;background:linear-gradient(90deg,var(--violet),var(--gold));
+  border:none;color:#140428;font:600 10px/1 'Nunito',sans-serif;letter-spacing:.15em;
+  cursor:pointer;text-transform:uppercase;
+}
+
+/* ── ARCHÉTYPES (cycle 432, ported/darkened from ChaThème432) ── */
+.arch-input{
+  width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border);
+  background:rgba(20,12,40,.55);color:var(--text);font-family:'Nunito',sans-serif;
+  font-size:.82rem;margin-bottom:8px;
+}
+.arch-input:focus{outline:none;border-color:var(--gold);}
+.arch-btn{
+  width:100%;padding:9px 10px;border-radius:9px;border:none;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.03em;
+  background:linear-gradient(100deg,var(--gold3,#b8882a),var(--gold),#f5d97a);color:#1a0e30;
+  margin-bottom:8px;
+}
+.arch-btn.ghost{background:rgba(140,80,220,.14);color:var(--textS);border:1px solid rgba(140,80,220,.30);}
+.arch-readout-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;}
+.arch-readout{padding:8px 10px;border-radius:9px;border-left:3px solid var(--cycle);background:rgba(24,12,50,.5);}
+.arch-readout-label{font-size:.62rem;color:var(--textD,#907040);text-transform:uppercase;letter-spacing:.06em;}
+.arch-readout-val{font-family:'Cinzel',serif;font-size:.92rem;color:var(--text);margin-top:2px;}
+.arch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
+.arch-card{padding:9px;border-radius:9px;border-top:2px solid var(--gold);background:rgba(24,12,50,.42);}
+.arch-card-num{font-family:'Cinzel',serif;font-size:1rem;font-weight:700;color:var(--gold);}
+.arch-card-name{font-weight:700;font-size:.76rem;margin-top:1px;}
+.arch-card-desc{font-size:.66rem;color:var(--textS);margin-top:3px;line-height:1.35;}
+.arch-tabs{display:flex;gap:6px;margin:10px 0 8px;}
+.arch-tab-btn{padding:5px 12px;border-radius:8px;border:1px solid rgba(212,168,67,.30);
+  background:rgba(212,168,67,.08);color:var(--textS);font-family:'Nunito',sans-serif;
+  font-size:.74rem;font-weight:700;cursor:pointer;}
+.arch-tab-btn.on{background:rgba(240,192,60,.20);color:var(--gold);border-color:var(--gold);}
+.arch-analysis{margin-top:8px;font-size:.80rem;color:var(--textS);line-height:1.6;}
+.arch-analysis li{list-style:none;padding:5px 0 5px 4px;border-bottom:1px solid rgba(255,255,255,.05);}
+.arch-dim{margin-top:10px;padding:9px 10px;border-radius:9px;background:rgba(24,12,50,.42);border-left:3px solid var(--violet);}
+.arch-dim-title{font-family:'Cinzel',serif;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--gold);margin-bottom:5px;}
+.arch-axis-table{width:100%;border-collapse:collapse;font-size:.70rem;margin-top:8px;}
+.arch-axis-table th{padding:6px 6px;text-align:left;font-family:'Cinzel',serif;font-size:.60rem;
+  text-transform:uppercase;color:var(--gold);background:rgba(212,168,67,.10);position:sticky;top:0;}
+.arch-axis-table td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.05);color:var(--textS);}
+.arch-axis-table tr.row-cycle td{background:rgba(155,89,182,.16);color:var(--text);font-weight:700;}
+.arch-axis-table tr.row-jour36 td{background:rgba(240,192,60,.16);color:var(--text);font-weight:700;}
+.arch-axis-table tr.row-both td{background:linear-gradient(90deg,rgba(155,89,182,.20),rgba(240,192,60,.20));color:var(--text);font-weight:700;}
+.arch-table-wrap{max-height:260px;overflow-y:auto;border-radius:9px;border:1px solid var(--border);}
+.arch-mark{display:inline-block;font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:9px;margin:0 4px 4px 0;
+  background:rgba(232,74,111,.18);color:#e8a0d0;}
+
+/* ── SIMULATION (verrou densité) ── */
+#ms-lock.on{background:rgba(240,192,60,.18);color:var(--gold);border:1px solid rgba(240,192,60,.38);text-shadow:0 0 12px rgba(240,192,60,.5);}
+
+/* ── CALENDRIER (soleil + journal Omc) ── */
+.cal-cell{aspect-ratio:1;border-radius:5px;background:rgba(140,80,220,.08);
+  display:flex;align-items:center;justify-content:center;font-size:.66rem;color:var(--textS);cursor:pointer;transition:all .15s;}
+.cal-cell.empty{background:transparent;cursor:default;}
+.cal-cell.today{border:1px solid var(--gold);color:var(--gold);}
+.cal-cell.sel{background:rgba(240,192,60,.30);color:var(--gold);font-weight:700;}
+.cal-nav-btn{width:auto;padding:6px 16px;margin-bottom:0;border-radius:9px;border:none;cursor:pointer;
+  background:rgba(140,80,220,.16);color:var(--textS);font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;}
+.j-cell{aspect-ratio:1;border-radius:4px;background:rgba(140,80,220,.10);border:1px solid rgba(140,80,220,.16);
+  display:flex;align-items:center;justify-content:center;font-size:.56rem;color:var(--textD);cursor:pointer;position:relative;}
+.j-cell.today{border-color:var(--gold);color:var(--gold);}
+.j-cell.has-note{background:rgba(240,192,60,.16);}
+.j-cell.has-note::after{content:'';position:absolute;top:2px;right:2px;width:4px;height:4px;border-radius:50%;background:var(--gold);}
+.j-cell.sel{outline:2px solid var(--violet);}
+</style>
+</head>
+<body>
+<div id="cosmic-bg"></div>
+<div id="title">UTC432 · PROJECT · 396</div>
+<canvas id="c"></canvas>
+
+<!-- BARRE BAS : uniquement le choix d'échelle de lecture -->
+<div id="bar">
+  <div id="mode-sw">
+    <div class="ms on" id="ms-432"    onclick="setReadMode('432')">432</div>
+    <div class="ms"    id="ms-15552"  onclick="setReadMode('15552')">15552</div>
+    <div class="ms"    id="ms-lock"   onclick="toggleSimLock()" title="Verrouiller / déverrouiller — simulation">🔒</div>
+  </div>
+</div>
+<div id="pulse-ring"></div>
+
+<!-- BOUTON MENU -->
+<button id="menu-btn" onclick="togglePanel()">≡</button>
+<button id="fs-btn" onclick="toggleFullscreen()" title="Plein écran">⤢</button>
+
+<!-- #166 : Mode Retour OmcVibe — n'a de sens que si OmchaWatch est ouvert
+     EN OVERLAY depuis OmcVibe (cf. omcVibeRetour() ci-dessous). Dans ce
+     paquet autonome, il n'y a jamais d'OmcVibe à côté : le bouton est
+     masqué au chargement (cf. script juste avant </body>) plutôt que de
+     laisser un lien mort vers un index.html qui n'existe pas ici. -->
+<button id="retour-btn" onclick="omcVibeRetour()" title="Mode Retour OmcVibe — anime doucement la zone 288-432Hz">Retour</button>
+
+<!-- PANNEAU -->
+<div id="panel">
+  <button id="close-btn" onclick="togglePanel()">✕</button>
+
+  <!-- TABS -->
+  <div id="mtabs">
+    <button class="mtab on" id="mt-notice"  onclick="setTab('notice')">NOTICE</button>
+    <button class="mtab"    id="mt-options" onclick="setTab('options')">OPTIONS</button>
+    <button class="mtab"    id="mt-design"  onclick="setTab('design')">DESIGN</button>
+    <button class="mtab"    id="mt-lieu"    onclick="setTab('lieu')">LIEU</button>
+    <button class="mtab"    id="mt-simu"    onclick="setTab('simu')">SIMU</button>
+    <button class="mtab"    id="mt-soleil"  onclick="setTab('soleil')">SOLEIL</button>
+    <button class="mtab"    id="mt-journal" onclick="setTab('journal')">JOURNAL</button>
+    <button class="mtab"    id="mt-arch"    onclick="setTab('arch')">ARCHÉTYPES</button>
+  </div>
+
+  <!-- CONTENU -->
+  <div id="panel-content">
+
+    <!-- ══ NOTICE ══ -->
+    <div id="tab-notice">
+      <div class="notice-section">
+        <div class="notice-h">L'idée en une phrase</div>
+        <div class="notice-row"><div class="notice-key">En bref</div><div class="notice-val">Une journée réelle est redécoupée en 432 parts — pas à vitesse constante : les 4 quarts (minuit→lever→zénith→coucher→minuit) font toujours 108 parts chacun, mais leur durée réelle varie avec la saison (heures inégales), pour que le lever soit toujours à 108 et le coucher toujours à 324. Le point qui tourne sur les anneaux te montre où tu en es, en continu.</div></div>
+      </div>
+      <div class="notice-section">
+        <div class="notice-h">Ce que tu vois</div>
+        <div class="notice-row"><div class="notice-key">Grand chiffre</div><div class="notice-val">Ta position dans le jour OmcV (0 à 432), calée sur 4 repères réels : 0 = minuit solaire, 108 = lever, 216 = midi solaire (pas midi civil — corrigé par l'équation du temps + ta longitude, réglable dans l'onglet LIEU), 324 = coucher, 432 = minuit suivant.</div></div>
+        <div class="notice-row"><div class="notice-key">Omc N</div><div class="notice-val">La grande division du jour (1 à 12, comme une heure). Omc 6 ≈ tu es à la moitié du jour solaire.</div></div>
+        <div class="notice-row"><div class="notice-key">cV N</div><div class="notice-val">La division dans l'Omc en cours (comme une minute). 36 cV = 1 Omc. Durée réelle variable — plus rapide ou plus lente selon le quart du jour et la saison, jamais figée à 100 sec (sauf à l'équinoxe).</div></div>
+        <div class="notice-row"><div class="notice-key">Solônde N</div><div class="notice-val">La plus petite division, dans le cV en cours (comme une seconde). 6 Solônde = 1 cV. Même logique que cV : durée réelle variable, pas figée à 17 sec.</div></div>
+        <div class="notice-row"><div class="notice-key">Sphère or</div><div class="notice-val">Centre fixe, toujours présent. C'est le point 396 — le centre de vie, ni expansion ni contraction.</div></div>
+      </div>
+      <div class="notice-section">
+        <div class="notice-h">Les anneaux</div>
+        <div class="notice-row"><div class="notice-key" style="color:var(--ivoire)">● Ivoire</div><div class="notice-val">Anneau OmcV — la jauge pleine du grand chiffre (0 à 432), sans graduation : elle se remplit à mesure que le jour avance. Fait un tour en 1 jour complet.</div></div>
+        <div class="notice-row"><div class="notice-key" style="color:var(--gold)">● Or</div><div class="notice-val">Anneau Omc — les 12 divisions de l'heure. Fait un tour en 1 jour. Chiffres = unités du cycle (36, 72 … 432).</div></div>
+        <div class="notice-row"><div class="notice-key" style="color:var(--violet)">● Violet</div><div class="notice-val">Anneau moyen — les cV. Fait un tour en 1 Omc (36 cV).</div></div>
+        <div class="notice-row"><div class="notice-key" style="color:var(--blue)">● Bleu</div><div class="notice-val">Anneau interne — les Solônde. Fait un tour en 1 cV (durée réelle variable, pas figée à 100 secondes).</div></div>
+        <div class="notice-row"><div class="notice-key" style="color:var(--cycle)">● Magenta (option)</div><div class="notice-val">Anneau "Cycle 432" — ta position dans le cycle biologique de 432 jours calculé depuis ton J0 (onglet Archétypes). Fait un tour en 432 jours, pas en 432 unités du jour.</div></div>
+        <div class="notice-row"><div class="notice-key">Traîne</div><div class="notice-val">La queue lumineuse = le passé récent du point. Plus elle est longue, plus le mouvement est lent.</div></div>
+      </div>
+      <div class="notice-section">
+        <div class="notice-h">Les 36 bulles</div>
+        <div class="notice-row"><div class="notice-key">1 à 36</div><div class="notice-val">Les 36 cV de l'Omc en cours. La bulle allumée = le cV actuel.</div></div>
+        <div class="notice-row"><div class="notice-key">Pulse</div><div class="notice-val">Quand une bulle s'allume, une onde s'étend = nouveau nœud d'énergie.</div></div>
+        <div class="notice-row"><div class="notice-key">Respiration</div><div class="notice-val">Chaque bulle grandit et rétrécit entre 11/12× et 12/11× — la vraie oscillation pivotée par 396 (pas le lien direct 360/432). Taille de base réglable dans l'onglet DESIGN.</div></div>
+      </div>
+      <div class="notice-section">
+        <div class="notice-h">Barre du bas</div>
+        <div class="notice-row"><div class="notice-key">432 / 15552</div><div class="notice-val">Deux façons de lire le même mouvement. <strong>432</strong> = échelle standard, le grand chiffre affiché — porté par l'anneau ivoire OmcV. <strong>15552</strong> = zoom profond (36 Omc × 432 cV, 1 cV ≈ 5,6 sec).</div></div>
+        <div class="notice-row"><div class="notice-key">🔒 / 🔓</div><div class="notice-val">Verrou de simulation (onglet SIMU) — déverrouille pour figer le temps et explorer n'importe quel instant du cycle (date + densité Omc) sans attendre qu'il arrive réellement.</div></div>
+      </div>
+      <div class="notice-section">
+        <div class="notice-h">Logique des chiffres</div>
+        <div class="notice-row"><div class="notice-key">432</div><div class="notice-val">Un jour OmcV complet. 12 Omc = 432 unités.</div></div>
+        <div class="notice-row"><div class="notice-key">216</div><div class="notice-val">Midi solaire = moitié du jour. La sphère à l'équilibre.</div></div>
+        <div class="notice-row"><div class="notice-key">396</div><div class="notice-val">Le centre. Ni expansion ni contraction. La Terre elle-même.</div></div>
+      </div>
+    </div>
+
+    <!-- ══ OPTIONS ══ -->
+    <div id="tab-options" style="display:none">
+      <div class="opt-section">
+        <div class="opt-h">Éléments visibles</div>
+        <label class="opt-row locked">
+          <span><span class="dot" style="background:var(--gold);display:inline-block"></span>Sphère centrale 396</span>
+          <input type="checkbox" class="sw" checked disabled>
+        </label>
+        <label class="opt-row">
+          <span><span class="dot" style="background:var(--ivoire);display:inline-block"></span>Anneau Ivoire — OmcV</span>
+          <input type="checkbox" class="sw" id="o-ringOmcV" checked onchange="OPTS.ringOmcV=this.checked">
+        </label>
+        <label class="opt-row">
+          <span><span class="dot" style="background:var(--gold);display:inline-block"></span>Anneau Or — Omc</span>
+          <input type="checkbox" class="sw" id="o-ringPhase" checked onchange="OPTS.ringPhase=this.checked">
+        </label>
+        <label class="opt-row">
+          <span><span class="dot" style="background:var(--violet);display:inline-block"></span>Anneau Violet — cV</span>
+          <input type="checkbox" class="sw" id="o-ringSouffle" checked onchange="OPTS.ringSouffle=this.checked">
+        </label>
+        <label class="opt-row">
+          <span><span class="dot" style="background:var(--blue);display:inline-block"></span>Anneau Bleu — Solônde</span>
+          <input type="checkbox" class="sw" id="o-ringInstant" checked onchange="OPTS.ringInstant=this.checked">
+        </label>
+        <label class="opt-row">
+          <span><span class="dot" style="background:var(--cycle);display:inline-block"></span>Anneau Cycle 432 (J0)</span>
+          <input type="checkbox" class="sw" id="o-ringCycle432" checked onchange="OPTS.ringCycle432=this.checked">
+        </label>
+        <label class="opt-row">
+          <span>Traînes des pointeurs</span>
+          <input type="checkbox" class="sw" id="o-trails" checked onchange="OPTS.trails=this.checked">
+        </label>
+        <label class="opt-row">
+          <span>Graduations + labels</span>
+          <input type="checkbox" class="sw" id="o-ticks" checked onchange="OPTS.ticks=this.checked">
+        </label>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">36 Nœuds</div>
+        <label class="opt-row">
+          <span>Afficher les 36 bulles</span>
+          <input type="checkbox" class="sw" id="o-nodes" checked onchange="OPTS.nodes=this.checked">
+        </label>
+        <label class="opt-row">
+          <span>Chiffres sur les bulles</span>
+          <input type="checkbox" class="sw" id="o-nodeNums" checked onchange="OPTS.nodeNums=this.checked">
+        </label>
+        <label class="opt-row">
+          <span>Pulse au changement</span>
+          <input type="checkbox" class="sw" id="o-pulse" checked onchange="OPTS.pulse=this.checked">
+        </label>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Centre</div>
+        <label class="opt-row">
+          <span>Densité OmcV (grand chiffre)</span>
+          <input type="checkbox" class="sw" id="o-densityNum" checked onchange="OPTS.densityNum=this.checked">
+        </label>
+        <label class="opt-row">
+          <span>Omc · cV · Solônde</span>
+          <input type="checkbox" class="sw" id="o-readings" checked onchange="OPTS.readings=this.checked">
+        </label>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Fond</div>
+        <label class="opt-row">
+          <span>Mandala cosmique</span>
+          <input type="checkbox" class="sw" id="o-mandala" checked onchange="OPTS.mandala=this.checked">
+        </label>
+        <label class="opt-row">
+          <span>Champ d'étoiles</span>
+          <input type="checkbox" class="sw" id="o-stars" checked onchange="OPTS.stars=this.checked">
+        </label>
+        <label class="opt-row">
+          <span>Barre du bas (432 / 15552 / verrou)</span>
+          <input type="checkbox" class="sw" id="o-infobar" checked onchange="OPTS.infoBar=this.checked;document.getElementById('bar').style.display=this.checked?'flex':'none'">
+        </label>
+      </div>
+      <div class="opt-section">
+        <!-- #166 : même mécanisme qu'OmcVibe (upload → cover/center
+             automatique) — l'ancien mode retouche (glisser/zoomer) était
+             cassé et retiré. -->
+        <div class="opt-h">Fond personnalisé</div>
+        <input type="file" id="bgFileInput" accept="image/*" style="display:none;" onchange="onBgImageFile(this.files[0])">
+        <div class="opt-row" onclick="document.getElementById('bgFileInput').click()"><span>🖼 Importer une image</span></div>
+        <div class="opt-row" onclick="clearBgImage()"><span>↺ Revenir au fond cosmique</span></div>
+      </div>
+    </div>
+
+    <!-- ══ DESIGN ══ -->
+    <div id="tab-design" style="display:none">
+      <div class="des-section">
+        <div class="des-h">Couleurs des flux</div>
+        <div class="des-row">
+          <span>● Omc (or)</span>
+          <input type="color" id="d-cPhase" value="#F0C060"
+            oninput="DESIGN.colorPhase=this.value;document.documentElement.style.setProperty('--gold',this.value)">
+        </div>
+        <div class="des-row">
+          <span>● cV (violet)</span>
+          <input type="color" id="d-cSouffle" value="#A060F0"
+            oninput="DESIGN.colorSouffle=this.value;document.documentElement.style.setProperty('--violet',this.value)">
+        </div>
+        <div class="des-row">
+          <span>● Solônde (bleu)</span>
+          <input type="color" id="d-cInstant" value="#60A8F8"
+            oninput="DESIGN.colorInstant=this.value;document.documentElement.style.setProperty('--blue',this.value)">
+        </div>
+      </div>
+      <div class="des-section">
+        <div class="des-h">Intensité</div>
+        <div class="des-col">
+          <div class="des-head"><span>Éclat général</span><span class="des-val" id="v-intensity">100%</span></div>
+          <input type="range" min="20" max="100" value="100"
+            oninput="DESIGN.intensity=this.value/100;document.getElementById('v-intensity').textContent=this.value+'%'">
+        </div>
+        <div class="des-col">
+          <div class="des-head"><span>Halo des bulles</span><span class="des-val" id="v-halo">100%</span></div>
+          <input type="range" min="0" max="100" value="100"
+            oninput="DESIGN.haloScale=this.value/100;document.getElementById('v-halo').textContent=this.value+'%'">
+        </div>
+      </div>
+      <div class="des-section">
+        <div class="des-h">Anneaux & bulles</div>
+        <div class="des-col">
+          <div class="des-head"><span>Épaisseur anneau OmcV (ivoire)</span><span class="des-val" id="v-ringOmcV">140%</span></div>
+          <input type="range" min="50" max="400" value="140"
+            oninput="DESIGN.ringOmcVWidth=this.value/100;document.getElementById('v-ringOmcV').textContent=this.value+'%'">
+        </div>
+        <div class="des-col">
+          <div class="des-head"><span>Épaisseur anneau Omc (or)</span><span class="des-val" id="v-ringOmc">190%</span></div>
+          <input type="range" min="50" max="400" value="190"
+            oninput="DESIGN.ringOmcWidth=this.value/100;document.getElementById('v-ringOmc').textContent=this.value+'%'">
+        </div>
+        <div class="des-col">
+          <div class="des-head"><span>Épaisseur anneaux cV / Solônde</span><span class="des-val" id="v-ringOther">160%</span></div>
+          <input type="range" min="50" max="400" value="160"
+            oninput="DESIGN.ringWidth=this.value/100;document.getElementById('v-ringOther').textContent=this.value+'%'">
+        </div>
+        <div class="des-col">
+          <div class="des-head"><span>Taille des 36 bulles</span><span class="des-val" id="v-bubble">120%</span></div>
+          <input type="range" min="50" max="250" value="120"
+            oninput="DESIGN.bubbleScale=this.value/100;document.getElementById('v-bubble').textContent=this.value+'%'">
+        </div>
+      </div>
+      <div class="des-section">
+        <!-- #166 : comètes (points de lecture des anneaux) — taille, opacité,
+             mode rotation lente (étincelles décoratives en orbite). -->
+        <div class="des-h">Comètes (points de lecture)</div>
+        <div class="des-col">
+          <div class="des-head"><span>Taille</span><span class="des-val" id="v-cometScale">100%</span></div>
+          <input type="range" min="50" max="200" value="100"
+            oninput="DESIGN.cometScale=this.value/100;document.getElementById('v-cometScale').textContent=this.value+'%'">
+        </div>
+        <div class="des-col">
+          <div class="des-head"><span>Opacité</span><span class="des-val" id="v-cometOpacity">100%</span></div>
+          <input type="range" min="30" max="160" value="100"
+            oninput="DESIGN.cometOpacity=this.value/100;document.getElementById('v-cometOpacity').textContent=this.value+'%'">
+        </div>
+        <label class="opt-row" style="margin-top:4px;">
+          <span>✦ Rotation lente (étincelles)</span>
+          <input type="checkbox" class="sw" id="d-cometSpin" onchange="DESIGN.cometSpin=this.checked">
+        </label>
+      </div>
+      <div class="des-section">
+        <div class="des-h">Typographie</div>
+        <div class="des-col">
+          <div class="des-head"><span>Chiffres des bulles</span><span class="des-val" id="v-nodeFont">100%</span></div>
+          <input type="range" min="40" max="200" value="100"
+            oninput="DESIGN.nodeFontScale=this.value/100;document.getElementById('v-nodeFont').textContent=this.value+'%'">
+        </div>
+        <div class="des-col">
+          <div class="des-head"><span>Densité centrale</span><span class="des-val" id="v-centerFont">100%</span></div>
+          <input type="range" min="40" max="200" value="100"
+            oninput="DESIGN.centerFontScale=this.value/100;document.getElementById('v-centerFont').textContent=this.value+'%'">
+        </div>
+      </div>
+      <div class="des-section">
+        <div class="des-h">Mode de lecture</div>
+        <p class="small">Choix déplacé dans la barre du bas : 432 (standard) · 15552 (zoom profond, 1 cV ≈ 5,6 sec) · 🔒 verrou de simulation (onglet SIMU) pour figer et explorer un instant précis.</p>
+      </div>
+    </div>
+
+    <!-- ══ LIEU ══ -->
+    <div id="tab-lieu" style="display:none">
+      <div class="opt-section">
+        <div class="opt-h">Position</div>
+        <div class="opt-row" style="cursor:default;flex-direction:column;align-items:flex-start;gap:4px;">
+          <span id="geo-current" style="color:var(--gold)">—</span>
+          <span style="font-size:8px;color:var(--textD)">Sert au midi solaire réel (équation du temps + longitude) — aucune donnée envoyée nulle part, tout reste sur le téléphone.</span>
+        </div>
+        <div class="opt-row" onclick="openGeoModal()"><span>🌐 Ouvrir le planisphère</span></div>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Saisie manuelle précise</div>
+        <div style="display:flex;gap:8px;margin-bottom:4px">
+          <div style="flex:1">
+            <label style="font-size:.68rem;color:var(--textD);display:block;margin-bottom:3px">Latitude (°)</label>
+            <input type="number" id="in-lat-num" class="arch-input" style="margin-bottom:0" min="-90" max="90" step="0.0001" onchange="setLocationManual(this.value,null)">
+          </div>
+          <div style="flex:1">
+            <label style="font-size:.68rem;color:var(--textD);display:block;margin-bottom:3px">Longitude (°)</label>
+            <input type="number" id="in-lon-num" class="arch-input" style="margin-bottom:0" min="-180" max="180" step="0.0001" onchange="setLocationManual(null,this.value)">
+          </div>
+        </div>
+        <p class="small">Chiffres après la virgule utiles si tu connais tes coordonnées précises (GPS, carte…).</p>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Saisie au curseur (rapide)</div>
+        <div class="des-col">
+          <div class="des-head"><span>Latitude</span><span class="des-val" id="v-lat">48.85°</span></div>
+          <input type="range" min="-90" max="90" step="0.1" value="48.85" id="in-lat" oninput="setLocationManual(this.value,null)">
+        </div>
+        <div class="des-col">
+          <div class="des-head"><span>Longitude</span><span class="des-val" id="v-lon">2.35°</span></div>
+          <input type="range" min="-180" max="180" step="0.1" value="2.35" id="in-lon" oninput="setLocationManual(null,this.value)">
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SIMU — verrou de simulation : figer/avancer/reculer la densité (Omc) ══ -->
+    <div id="tab-simu" style="display:none">
+      <div class="opt-section">
+        <div class="opt-h">Verrou de simulation</div>
+        <div class="opt-row" onclick="toggleSimLock()">
+          <span id="sim-lock-label">🔒 Verrouillé — temps réel</span>
+        </div>
+        <p class="small">Déverrouille pour figer le temps et explorer n'importe quel instant du cycle (ex. simuler le jour où la densité atteint 430) sans attendre que ça arrive réellement.</p>
+      </div>
+      <div class="opt-section" id="simu-controls" style="display:none">
+        <div class="opt-h">Jour simulé</div>
+        <input type="date" id="sim-date" class="arch-input" onchange="simSetDate(this.value)">
+        <div class="opt-h" style="margin-top:12px">Densité (Omc) — 0 à 432</div>
+        <div class="des-col">
+          <div class="des-head"><span>Densité manuelle</span><span class="des-val" id="v-sim-density">0.0</span></div>
+          <input type="range" min="0" max="432" step="0.5" value="0" id="sim-density-slider" oninput="simSetDensity(this.value)">
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="arch-btn ghost" style="flex:1;margin-bottom:0" onclick="simStepDensity(-9)">−9</button>
+          <button class="arch-btn ghost" style="flex:1;margin-bottom:0" onclick="simStepDensity(-1)">−1</button>
+          <button class="arch-btn ghost" style="flex:1;margin-bottom:0" onclick="simStepDensity(1)">+1</button>
+          <button class="arch-btn ghost" style="flex:1;margin-bottom:0" onclick="simStepDensity(9)">+9</button>
+        </div>
+        <button class="arch-btn" style="margin-top:12px" onclick="simResetToNow()">↺ Revenir à maintenant</button>
+      </div>
+    </div>
+
+    <!-- ══ SOLEIL — lever/zénith/coucher calculés + calendrier repère ══ -->
+    <div id="tab-soleil" style="display:none">
+      <div class="opt-section">
+        <div class="opt-h">Lever · Zénith · Coucher — pour un jour donné</div>
+        <p class="small" style="margin-bottom:6px">Calculé pour la position choisie dans l'onglet LIEU. Dates traitées en UTC pur, aucune correction de fuseau horaire. Lever/Coucher affichent toujours 108.0/324.0 — c'est normal : le cadran cale désormais le lever et le coucher à ces valeurs fixes toute l'année (heures inégales). C'est la <strong>Durée du jour</strong> ci-dessous qui varie avec la saison, pas leur position sur le cadran.</p>
+        <input type="date" id="sun-date" class="arch-input" onchange="sunRecompute()">
+        <div class="arch-readout-grid">
+          <div class="arch-readout"><div class="arch-readout-label">Lever (Omc)</div><div class="arch-readout-val" id="sun-lever">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Zénith (Omc)</div><div class="arch-readout-val" id="sun-zenith">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Coucher (Omc)</div><div class="arch-readout-val" id="sun-coucher">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Durée du jour</div><div class="arch-readout-val" id="sun-daylen">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Jour de l'année</div><div class="arch-readout-val" id="sun-doy">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Position (360 Omc · année solaire)</div><div class="arch-readout-val" id="sun-pos360">—</div></div>
+        </div>
+        <button class="arch-btn ghost" style="margin-top:8px" onclick="sunSendToSim()">→ Envoyer ce jour dans l'onglet SIMU</button>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Calendrier — sélecteur rapide de jour</div>
+        <p class="small" style="margin-bottom:6px">Repère uniquement, sans correction de décalage horaire — tape un jour pour voir sa durée de jour / lever solaire ci-dessus.</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <button class="cal-nav-btn" onclick="calMonthStep(-1)">‹</button>
+          <span id="cal-label" style="font:600 .82rem 'Cinzel',serif;color:var(--gold)">—</span>
+          <button class="cal-nav-btn" onclick="calMonthStep(1)">›</button>
+        </div>
+        <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;"></div>
+      </div>
+    </div>
+
+    <!-- ══ JOURNAL — calendrier Omc (360/432) pour observations libres ══ -->
+    <div id="tab-journal" style="display:none">
+      <div class="opt-section">
+        <div class="opt-h">Calendrier Omc</div>
+        <div class="arch-tabs">
+          <button class="arch-tab-btn on" id="jtb-360" onclick="journalSetBase(360)">360</button>
+          <button class="arch-tab-btn" id="jtb-432" onclick="journalSetBase(432)">432</button>
+        </div>
+        <p class="small">Jour Omc courant : <span id="j-today">—</span>. Tape un jour pour noter une observation libre (cycle organique, ressenti, valeur...).</p>
+        <div class="arch-table-wrap" style="max-height:340px">
+          <div id="journal-grid" style="display:grid;grid-template-columns:repeat(12,1fr);gap:3px;padding:8px;"></div>
+        </div>
+      </div>
+      <div class="opt-section" id="journal-editor" style="display:none">
+        <div class="opt-h">Observation — jour <span id="j-sel-day">—</span></div>
+        <textarea id="j-note-text" class="arch-input" style="min-height:80px;resize:vertical"></textarea>
+        <button class="arch-btn" onclick="journalSaveNote()">Enregistrer</button>
+        <button class="arch-btn ghost" onclick="journalDeleteNote()">Supprimer la note</button>
+      </div>
+    </div>
+
+    <!-- ══ ARCHÉTYPES — lecture fractale à 3 niveaux (cycle 432, J0) ══ -->
+    <div id="tab-arch" style="display:none">
+      <div class="opt-section">
+        <div class="opt-h">Ton J0 (naissance − 288 jours)</div>
+        <p class="small" style="margin-bottom:6px">Anime aussi l'anneau optionnel "Cycle 432" sur l'horloge. Rien n'est envoyé nulle part.</p>
+        <label style="font-size:.72rem;color:var(--textD);display:block;margin-bottom:3px">Date de naissance</label>
+        <input type="date" id="arch-birth" class="arch-input">
+        <button class="arch-btn" onclick="archCalcJ0()">Calculer J0 (−288 jours)</button>
+        <label style="font-size:.72rem;color:var(--textD);display:block;margin-bottom:3px">Ou saisir J0 libre</label>
+        <input type="date" id="arch-j0" class="arch-input">
+        <button class="arch-btn ghost" onclick="archApplyJ0()">Appliquer ce J0</button>
+        <div class="arch-readout-grid">
+          <div class="arch-readout"><div class="arch-readout-label">J0</div><div class="arch-readout-val" id="a-j0">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Jours depuis J0</div><div class="arch-readout-val" id="a-days">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Cycle (1-108)</div><div class="arch-readout-val" id="a-cycle">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Jour dans cycle</div><div class="arch-readout-val" id="a-day">—</div></div>
+        </div>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Lecture fractale à 3 niveaux</div>
+        <p class="small" style="margin-bottom:6px">Les 4 mêmes mouvements pivotés par 396 (expansion douce · expansion charmante · contraction douce · contraction charmante) se répètent à chaque échelle du cycle.</p>
+        <div class="arch-readout" id="a-lvl-cycle-box" style="margin-bottom:7px">
+          <div class="arch-readout-label">① Cycle/36 — position du cycle-108 dans son groupe de 36</div>
+          <div class="arch-readout-val" id="a-lvl-cycle">—</div>
+        </div>
+        <div class="arch-readout" id="a-lvl-jour432-box" style="margin-bottom:7px">
+          <div class="arch-readout-label">② Jour/432 — position dans le cycle de 432 jours (quarté 108/216/324)</div>
+          <div class="arch-readout-val" id="a-lvl-jour432">—</div>
+        </div>
+        <div class="arch-readout" id="a-lvl-jour36-box">
+          <div class="arch-readout-label">③ Jour/36 — position dans la sous-phase de 36 jours en cours</div>
+          <div class="arch-readout-val" id="a-lvl-jour36">—</div>
+        </div>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Analyse</div>
+        <div class="arch-tabs">
+          <button class="arch-tab-btn on" id="atb-quick" onclick="archSetAnalysisTab('quick')">Rapide</button>
+          <button class="arch-tab-btn" id="atb-deep" onclick="archSetAnalysisTab('deep')">Détaillée</button>
+        </div>
+        <div id="a-analysis-quick"><p class="small">Saisis une date de naissance ou un J0 pour obtenir l'analyse.</p></div>
+        <div id="a-analysis-deep" style="display:none"></div>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Les 4 mouvements</div>
+        <p class="small" style="margin-bottom:6px">Les badges indiquent quel(s) niveau (Cycle/36, Jour/432, Jour/36) est actuellement sur ce mouvement.</p>
+        <div class="arch-grid" id="a-arch-grid"></div>
+      </div>
+      <div class="opt-section">
+        <div class="opt-h">Tableau — 36 positions (4 mouvements × 9)</div>
+        <p class="small">Grille commune aux niveaux Cycle/36 et Jour/36. Violet = Cycle/36, doré = Jour/36.</p>
+        <div class="arch-table-wrap">
+          <table class="arch-axis-table">
+            <thead><tr><th>#</th><th>Mouvement</th><th>Ratio</th></tr></thead>
+            <tbody id="a-table36-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panel-content -->
+</div><!-- /panel -->
+
+<!-- PLANISPHÈRE -->
+<div id="geo-modal">
+  <button id="geo-close" onclick="closeGeoModal()">✕</button>
+  <div id="geo-head">Glisse pour te déplacer · pince/molette pour zoomer · tape pour poser le repère</div>
+  <canvas id="geoCanvas"></canvas>
+  <div id="geo-foot">
+    <div id="geo-coords">— </div>
+    <button id="geo-valider" onclick="validateGeoModal()">Valider cette position</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ─── OPTS & DESIGN ───────────────────────────────────
+const OPTS = {
+  ringOmcV:true, ringPhase:true, ringSouffle:true, ringInstant:true, ringCycle432:true,
+  trails:true, ticks:true,
+  nodes:true, nodeNums:true, pulse:true,
+  densityNum:true, readings:true,
+  mandala:true, stars:true, infoBar:true,
+};
+const DESIGN = {
+  colorPhase:'#F0C060', colorSouffle:'#A060F0', colorInstant:'#60A8F8',
+  colorOmcV:'#EDE4C8',
+  intensity:1, haloScale:1, nodeFontScale:1, centerFontScale:1,
+  ringOmcWidth:1.9, ringWidth:1.6, ringOmcVWidth:1.4, bubbleScale:1.2,
+  deepMode:false,
+  // #166 : comètes (points de lecture des anneaux) — taille/opacité
+  // réglables, + mode rotation lente (étincelles décoratives en orbite).
+  cometScale:1, cometOpacity:1, cometSpin:false,
+};
+
+// ─── CANVAS ──────────────────────────────────────────
+const CV=document.getElementById('c'), X=CV.getContext('2d');
+let CW,CH,R,cx,cy,dpr=1;
+const t0=performance.now();
+let lastSouffle=-1;
+
+function resize(){
+  dpr=window.devicePixelRatio||1;
+  CW=window.innerWidth-(isPanelOpen?290:0);
+  CH=window.innerHeight-38;
+  CV.style.width=CW+'px'; CV.style.height=CH+'px';
+  CV.width=Math.round(CW*dpr); CV.height=Math.round(CH*dpr);
+  cx=CW/2; cy=CH/2;
+  R=Math.min(CW,CH)*.44;
+  _stars=null; // reset stars on resize
+}
+window.addEventListener('resize',resize);
+
+// ─── PANEL ───────────────────────────────────────────
+let isPanelOpen=false;
+function togglePanel(){
+  isPanelOpen=!isPanelOpen;
+  document.getElementById('panel').classList.toggle('open',isPanelOpen);
+  setTimeout(resize,360);
+}
+function setTab(name){
+  ['notice','options','design','lieu','simu','soleil','journal','arch'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===name?'block':'none';
+    document.getElementById('mt-'+t).classList.toggle('on',t===name);
+  });
+}
+
+// #166 : Mode Retour — bouton dédié de l'horloge, cf. index.html
+// (RETOUR_MODE/activateRetourMode) pour le détail du LFO doux par paire +
+// LFO détune Hz (>288Hz) que ce mode active dans OmcVibe.
+function omcVibeRetour(){
+  if (window.self !== window.top && typeof parent._omcVibeRetourFromWatch === 'function') {
+    // Cas normal : horloge ouverte en overlay depuis OmcVibe (cf.
+    // chaWatchOpen dans index.html) — le binaural tourne déjà en dessous,
+    // même mécanisme que parent._closeModuleOverlay() déjà utilisé ailleurs.
+    parent._omcVibeRetourFromWatch();
+  } else {
+    // Paquet autonome (aucun OmcVibe présent ici, cf. commentaire sur
+    // #retour-btn) : rien à faire — bouton déjà masqué, ce cas ne
+    // devrait jamais être atteint par un vrai clic.
+  }
+}
+
+// ─── ÉQUATION DU TEMPS ───────────────────────────────
+// Écart réel entre midi solaire et midi moyen (excentricité orbitale +
+// inclinaison de l'axe) — ne dépend QUE du jour de l'année, jamais de la
+// position : aucun GPS nécessaire pour cette partie-là.
+function eqOfTime(date){
+  const doy=Math.floor((date-new Date(date.getFullYear(),0,0))/86400000);
+  const B=(360/365*(doy-81))*Math.PI/180;
+  return 9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
+}
+
+// ─── UT36 / UT18 ─────────────────────────────────────
+// #ChaWatch-design : ancienne version câblée sur Paris (fuseau français
+// figé + longitude 2.35° en dur). Remplacé par un calcul générique :
+// heure UTC réelle (toujours correcte, quel que soit le fuseau du
+// téléphone) + longitude choisie sur le planisphère × 4 min/° + équation
+// du temps = midi solaire réel n'importe où sur Terre.
+//
+// Densité NON linéaire : la journée est 4 quarts de 108 unités calés sur
+// les 4 événements solaires réels (minuit=0, lever=108, zénith=216,
+// coucher=324, minuit suivant=432) — toute l'année, quel que soit le
+// lieu. La durée réelle de chaque quart varie avec la saison (heures
+// inégales), pas sa taille en densité : Omc/cV/Solônde, dérivés par
+// simple découpage fractionnaire de cette densité, héritent
+// automatiquement de cette respiration saisonnière. À l'équinoxe
+// (jour=nuit=12h) les 4 quarts font 360 min chacun et ce calcul se
+// réduit exactement à l'ancien mapping linéaire — hors équinoxe il en
+// diverge, c'est le point.
+function frac01(v,lo,hi){const s=hi-lo;return s>1e-6?(v-lo)/s:0;}
+function calcDensity(now){
+  const eot=eqOfTime(now);
+  const m=now.getUTCHours()*60+now.getUTCMinutes()+now.getUTCSeconds()/60;
+  const sm=(((m+LOCATION.lon*4+eot)%1440)+1440)%1440; // minute solaire vraie, 720=midi
+  const sun=computeSunTimes(now,LOCATION.lat);
+  if(sun.polar) return (sm/1440*432+432)%432; // jour/nuit permanents : pas de lever/coucher à caler
+  const half=sun.dayLenH*30, riseMin=720-half, setMin=720+half;
+  if(sm<riseMin) return frac01(sm,0,riseMin)*108;
+  if(sm<720)     return 108+frac01(sm,riseMin,720)*108;
+  if(sm<setMin)  return 216+frac01(sm,720,setMin)*108;
+  return 324+frac01(sm,setMin,1440)*108;
+}
+
+// ─── CONFIG MODE ─────────────────────────────────────
+function getModeConfig(){
+  if(DESIGN.deepMode) return {
+    daily:15552, phases:36, souffles:432, instants:36,
+    label:'OmcV·15552',
+    ringPN:36,  ringPL:i=>i>0&&i%9===0?i+'':null,
+    ringSN:432, ringSL:i=>i>0&&i%108===0?i+'':null,
+    ringIN:36,  ringIL:i=>i>0&&i%9===0?i+'':null,
+    ringPmaj:9, ringSmax:36, ringImaj:9,
+  };
+  return {
+    daily:432,  phases:12,  souffles:36,  instants:6,
+    label:'OmcV·432',
+    ringPN:12,  ringPL:i=>i===0?'432':(i*36)+'',
+    ringSN:36,  ringSL:i=>i>0&&i%6===0?i+'':null,
+    ringIN:6,   ringIL:i=>i>0?i+'':null,
+    ringPmaj:1, ringSmax:6,  ringImaj:1,
+  };
+}
+
+// ─── TROIS LECTURES ──────────────────────────────────
+function getReadings(ut432, cfg){
+  const fDay = ut432/432;                          // fraction du jour 0-1
+  const density = fDay * cfg.daily;               // densité dans l'échelle du mode
+  const phF = fDay * cfg.phases;
+  const phase = Math.min(cfg.phases, Math.floor(phF)+1);
+  const fPhase = phF%1;
+  const sfF = fPhase * cfg.souffles;
+  const souffle = Math.min(cfg.souffles, Math.floor(sfF)+1);
+  const fSouffle = sfF%1;
+  const inF = fSouffle * cfg.instants;
+  const instant = Math.min(cfg.instants, Math.floor(inF)+1);
+  const fInstant = inF%1;
+  return {density, phase, souffle, instant, fPhase, fSouffle, fInstant, fDay};
+}
+
+// ─── SAISON ──────────────────────────────────────────
+function getSeason(date){
+  const doy=Math.floor((date-new Date(date.getFullYear(),0,0))/86400000);
+  const yr=((doy-79)+365)%365/365;
+  let season,density;
+  if(yr<.25){season='Printemps · 396×360';density=396*360;}
+  else if(yr<.5){season='Été · 432×360';density=432*360;}
+  else if(yr<.75){season='Automne · 396×360';density=396*360;}
+  else{season='Hiver · 360×432';density=360*432;}
+  const exp=yr<.5?yr*2:(1-yr)*2;
+  const mode=exp>.62?'exp':exp<.38?'cnt':'neu';
+  return {season,density,mode};
+}
+
+// ─── MODE SWITCHER — 432 / 15552 (barre du bas) ──────────
+function setReadMode(mode){
+  DESIGN.deepMode = mode==='15552';
+  lastSouffle=-1;
+  ['ms-432','ms-15552'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('on', id==='ms-'+mode);
+  });
+}
+
+// ─── ARC ARC-EN-CIEL ─────────────────────────────────
+// #ChaWatch-design : scintillement animé (onde lente qui parcourt le
+// flux) — même nombre d'appels de dessin qu'avant, pour ne pas revenir
+// sur le travail de réduction CPU (pas de second passage superposé).
+function drawRainbowRing(radius, lw, flow){
+  const steps=180;
+  flow=flow||0;
+  for(let i=0;i<steps;i++){
+    const a0=(i/steps)*TAU-Math.PI/2;
+    const a1=((i+1)/steps)*TAU-Math.PI/2+.025;
+    const wave=.5+.5*Math.sin((i/steps)*TAU*2.4-flow);
+    X.beginPath(); X.arc(cx,cy,radius,a0,a1);
+    X.strokeStyle=`hsla(${(i/steps)*360},88%,${58+wave*10}%,${.20+wave*.14})`;
+    X.lineWidth=lw; X.stroke();
+  }
+}
+
+// ─── HELPERS ─────────────────────────────────────────
+// R_EXP/R_CNT = amplitude de la respiration continue des 36 bulles.
+// Pivotées par 396 : 12/11 (expansion
+// 396⇒432) et 11/12 (contraction 432⇒396), réciproques exactes l'une de
+// l'autre — pas 432/360 (=6/5) et 360/432 (=5/6), qui sont le lien direct
+// 360↔432 sans passer par 396 : de simples "portails" de validation du
+// mécanisme, pas la vraie oscillation du temps.
+const TAU=Math.PI*2, R_EXP=12/11, R_CNT=11/12, T_BRE=6;
+const hsl=(h,s,l,a=1)=>`hsla(${h|0},${s}%,${l}%,${a})`;
+function rgba(hex,a){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a*DESIGN.intensity})`;
+}
+// mélange hex vers blanc (amt>0) ou noir (amt<0), amt dans [-1,1]
+function shade(hex,amt){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  const t=amt<0?0:255,p=Math.abs(amt);
+  return `rgb(${Math.round(r+(t-r)*p)},${Math.round(g+(t-g)*p)},${Math.round(b+(t-b)*p)})`;
+}
+// petite sphère 3D ombrée (comète) : gradient à source de lumière
+// décalée + reflet spéculaire net + lueur de bord — remplace les
+// cercles plats pour un rendu organique.
+function draw3DSphere(x,y,r,hex,alpha){
+  alpha=(alpha===undefined?1:alpha)*DESIGN.intensity;
+  const lx=x-r*.34,ly=y-r*.34;
+  const g=X.createRadialGradient(lx,ly,r*.04,x,y,r);
+  g.addColorStop(0,shade(hex,.72));g.addColorStop(.32,shade(hex,.24));
+  g.addColorStop(.68,hex);g.addColorStop(1,shade(hex,-.6));
+  X.save();X.globalAlpha=alpha;
+  X.beginPath();X.arc(x,y,r,0,TAU);X.fillStyle=g;X.fill();
+  const hg=X.createRadialGradient(lx,ly,0,lx,ly,r*.5);
+  hg.addColorStop(0,'rgba(255,255,255,.92)');hg.addColorStop(1,'rgba(255,255,255,0)');
+  X.beginPath();X.arc(lx,ly,r*.5,0,TAU);X.fillStyle=hg;X.fill();
+  X.beginPath();X.arc(x,y,r*.92,0,TAU);
+  X.strokeStyle=shade(hex,.4);X.globalAlpha=alpha*.4;X.lineWidth=Math.max(.5,r*.14);X.stroke();
+  X.restore();
+}
+
+// ─── FOND ────────────────────────────────────────────
+let _stars=null;
+function drawBg(t){
+  const bg=X.createRadialGradient(cx,cy,0,cx,cy,R*2);
+  bg.addColorStop(0,'rgba(24,12,60,.65)');
+  bg.addColorStop(1,'rgba(4,6,20,.85)');
+  X.fillStyle=bg; X.fillRect(0,0,CW,CH);
+  if(OPTS.stars){
+    if(!_stars){_stars=[];for(let i=0;i<150;i++)_stars.push([Math.random()*CW,Math.random()*CH,Math.random()*.5+.06,Math.random()*1.1+.2]);}
+    for(const[fx,fy,sa,sr] of _stars){
+      X.beginPath();X.arc(fx,fy,sr,0,TAU);
+      X.fillStyle=`rgba(220,210,255,${sa*.5*DESIGN.intensity})`;X.fill();
+    }
+  }
+  if(OPTS.mandala){
+    const bsc=1+.010*Math.sin(t*TAU/T_BRE);
+    X.save();X.translate(cx,cy);X.scale(bsc,bsc);
+    const al=.055*DESIGN.intensity;
+    const c1=`rgba(160,96,240,${al})`,c2=`rgba(240,192,96,${al*.6})`;
+    X.save();X.rotate(t*.00012*TAU);
+    const r1=R*.48;
+    X.beginPath();X.arc(0,0,r1,0,TAU);X.strokeStyle=c1;X.lineWidth=.5;X.stroke();
+    for(let i=0;i<6;i++){const a=i*Math.PI/3;X.beginPath();X.arc(Math.cos(a)*r1,Math.sin(a)*r1,r1,0,TAU);X.strokeStyle=c1;X.lineWidth=.45;X.stroke();}
+    X.restore();
+    X.save();X.rotate(-t*.00007*TAU);
+    const r2=R*.72;
+    for(let i=0;i<12;i++){const a=i*Math.PI/6;X.beginPath();X.arc(Math.cos(a)*r2,Math.sin(a)*r2,r2*.33,0,TAU);X.strokeStyle=c2;X.lineWidth=.4;X.stroke();}
+    X.restore();
+    for(let i=0;i<12;i++){const a=i*Math.PI/6;X.beginPath();X.moveTo(0,0);X.lineTo(Math.cos(a)*R*1.05,Math.sin(a)*R*1.05);X.strokeStyle=`rgba(140,80,220,${.04*DESIGN.intensity})`;X.lineWidth=.3;X.stroke();}
+    X.restore();
+  }
+}
+
+// ─── ARCS DE LECTURE ─────────────────────────────────
+// #166 : taille (DESIGN.cometScale) et opacité (DESIGN.cometOpacity) des
+// comètes réglables — multiplient les tailles/alphas d'origine sans rien
+// changer d'autre. Mode rotation lente (DESIGN.cometSpin) : petite
+// constellation d'étincelles en orbite décorative autour du noyau,
+// vitesse propre à chaque anneau (dérivée de son rayon, jamais
+// synchronisée) — purement visuel, la position de LECTURE réelle (px,py,
+// dérivée de l'angle réel) n'est elle jamais touchée.
+function drawArc(radius,col,angle,sweep,lw,t){
+  if(OPTS.trails){
+    const a0=angle-sweep;
+    const tx0=cx+Math.cos(a0)*radius,ty0=cy+Math.sin(a0)*radius;
+    const px=cx+Math.cos(angle)*radius,py=cy+Math.sin(angle)*radius;
+    const gq=X.createLinearGradient(tx0,ty0,px,py);
+    gq.addColorStop(0,rgba(col,0));gq.addColorStop(.5,rgba(col,.18));gq.addColorStop(1,rgba(col,.75));
+    X.beginPath();X.arc(cx,cy,radius,a0,angle);X.strokeStyle=gq;X.lineWidth=lw;X.lineCap='round';X.stroke();
+  }
+  const px=cx+Math.cos(angle)*radius,py=cy+Math.sin(angle)*radius;
+  const cSc=DESIGN.cometScale||1, cOp=DESIGN.cometOpacity!=null?DESIGN.cometOpacity:1;
+  // #ChaWatch-design : comète = vraie petite sphère 3D ombrée (halo
+  // atmosphérique ×6.5 + noyau ×1.3 en relief), plus organique qu'un
+  // simple disque plat.
+  const haloR=lw*6.5*cSc, coreR=lw*1.3*cSc;
+  const gg=X.createRadialGradient(px,py,0,px,py,haloR);
+  gg.addColorStop(0,rgba(col,.85*cOp));gg.addColorStop(.4,rgba(col,.32*cOp));gg.addColorStop(1,rgba(col,0));
+  X.beginPath();X.arc(px,py,haloR,0,TAU);X.fillStyle=gg;X.fill();
+  draw3DSphere(px,py,coreR,col,cOp);
+  if(DESIGN.cometSpin&&t!=null){
+    // t en secondes (cf. loop() : t=(performance.now()-t0)/1000) — période
+    // d'environ 60 à 100s selon le rayon de l'anneau (jamais synchronisé).
+    const spinT=t*(.010+radius*.00002);
+    for(let i=0;i<4;i++){
+      const a=spinT*TAU+i*(TAU/4);
+      const sx=px+Math.cos(a)*coreR*2.2, sy=py+Math.sin(a)*coreR*2.2;
+      X.beginPath();X.arc(sx,sy,Math.max(.6,coreR*.16),0,TAU);
+      X.fillStyle=rgba(col,.7*cOp);X.fill();
+    }
+  }
+  const tx=cx+Math.cos(angle)*(radius+R*.034),ty=cy+Math.sin(angle)*(radius+R*.034);
+  X.beginPath();X.moveTo(px,py);X.lineTo(tx,ty);X.strokeStyle=col;X.lineWidth=2.2;X.lineCap='round';X.stroke();
+}
+
+function drawTicks(radius,n,col,majEvery,labelFn,fs,wMul){
+  if(!OPTS.ticks)return;
+  wMul=wMul||1;
+  X.beginPath();X.arc(cx,cy,radius,0,TAU);X.strokeStyle=rgba(col,.10);X.lineWidth=.8*wMul;X.stroke();
+  for(let i=0;i<n;i++){
+    const a=(i/n)*TAU-Math.PI/2, maj=i%majEvery===0;
+    const tL=(maj?R*.028:R*.014)*wMul;
+    X.beginPath();X.moveTo(cx+Math.cos(a)*radius,cy+Math.sin(a)*radius);
+    X.lineTo(cx+Math.cos(a)*(radius+tL),cy+Math.sin(a)*(radius+tL));
+    X.strokeStyle=rgba(col,maj?.60:.18);X.lineWidth=(maj?1.4:.45)*wMul;X.stroke();
+    if(maj&&labelFn&&OPTS.ticks){
+      const lbl=labelFn(i);
+      if(lbl){const lr=radius+tL+fs+3;X.font=`300 ${fs}px 'Cinzel',serif`;X.fillStyle=rgba(col,.65);X.textAlign='center';X.textBaseline='middle';X.fillText(lbl,cx+Math.cos(a)*lr,cy+Math.sin(a)*lr);}
+    }
+  }
+}
+
+function drawReadingArcs(r, cfg, t){
+  const{fPhase,fSouffle,fDay}=r;
+  const fS=Math.max(8,R*.028|0),fM=Math.max(7,R*.022|0),fI=Math.max(6,R*.018|0);
+  const flow=(t||0)*.6;
+  // #ChaWatch-design : anneaux repoussés vers le bord (plus larges,
+  // mieux séparés) et bandes arc-en-ciel/comètes épaissies pour rester
+  // lisibles à distance. Rayons resserrés vers le centre pour laisser
+  // la bande extérieure (.90-1.0) libre pour l'anneau OmcV.
+  if(OPTS.ringOmcV){
+    // Anneau OmcV : la lecture continue 0-432 (le "grand chiffre"), en
+    // vrai anneau — une jauge de progression du jour, sans graduations,
+    // pour rester visuellement distincte des 3 anneaux à comète.
+    const rV=R*.97, w=DESIGN.ringOmcVWidth;
+    X.beginPath();X.arc(cx,cy,rV,0,TAU);X.strokeStyle=rgba(DESIGN.colorOmcV,.12);X.lineWidth=1.2*w;X.stroke();
+    drawArc(rV,DESIGN.colorOmcV, fDay*TAU-Math.PI/2, Math.min(fDay*TAU*.985,TAU*.99), 4.2*w, t);
+  }
+  if(OPTS.ringPhase){
+    const rH=R*.85, w=DESIGN.ringOmcWidth;
+    drawRainbowRing(rH, 7*w, flow);
+    drawTicks(rH,cfg.ringPN,DESIGN.colorPhase,cfg.ringPmaj,cfg.ringPL,fS,w);
+    drawArc(rH,DESIGN.colorPhase, fDay*TAU-Math.PI/2, Math.PI/3, 7*w, t);
+  }
+  if(OPTS.ringSouffle){
+    const rS=R*.72, w=DESIGN.ringWidth;
+    drawRainbowRing(rS, 5*w, -flow*1.3);
+    drawTicks(rS,cfg.ringSN,DESIGN.colorSouffle,cfg.ringSmax,cfg.ringSL,fM,w);
+    drawArc(rS,DESIGN.colorSouffle, fPhase*TAU-Math.PI/2, Math.PI/6.5, 4.5*w, t);
+  }
+  if(OPTS.ringInstant){
+    const rI=R*.60, w=DESIGN.ringWidth;
+    drawRainbowRing(rI, 3.5*w, flow*1.8);
+    drawTicks(rI,cfg.ringIN,DESIGN.colorInstant,cfg.ringImaj,cfg.ringIL,fI,w);
+    drawArc(rI,DESIGN.colorInstant, fSouffle*TAU-Math.PI/2, Math.PI/20, 3.2*w, t);
+  }
+  // Arc arc-en-ciel sur l'orbite des 36 nœuds
+  if(OPTS.nodes) drawRainbowRing(R*.50, 1.8*DESIGN.bubbleScale, -flow*.7);
+}
+
+// ─── 36 NŒUDS ────────────────────────────────────────
+function draw36Nodes(readings,t,cfg){
+  if(!OPTS.nodes)return;
+  const OR=R*.50,bR0=R*.035*DESIGN.bubbleScale;
+  // Mode 432 : les bulles cyclent dans l'heure (souffle)
+  // Mode 15552 : les bulles représentent les 36 phases du jour
+  const activeFrac = DESIGN.deepMode
+    ? (readings.phase-1+readings.fPhase)/36
+    : (readings.souffle-1+readings.fSouffle)/36;
+  for(let i=0;i<36;i++){
+    const a=(i/36)*TAU-Math.PI/2;
+    const bx=cx+Math.cos(a)*OR,by=cy+Math.sin(a)*OR;
+    const df=Math.min(Math.abs(activeFrac-i/36),1-Math.abs(activeFrac-i/36));
+    const act=Math.max(0,1-df*36/2.5);
+    const ph=(i/36)*TAU;
+    const bw=.5+.5*Math.sin(t*TAU/T_BRE+ph);
+    const amp=R_CNT+(R_EXP-R_CNT)*(bw*.6+act*.4);
+    const br=bR0*amp;
+    const hue=(i/36)*300+20,al=(.28+.72*act)*DESIGN.intensity;
+    if(act>.05&&DESIGN.haloScale>0){
+      const gg=X.createRadialGradient(bx,by,0,bx,by,br*5*DESIGN.haloScale);
+      gg.addColorStop(0,hsl(hue,70,60,.4*act*DESIGN.haloScale));gg.addColorStop(1,hsl(hue,70,60,0));
+      X.beginPath();X.arc(bx,by,br*5*DESIGN.haloScale,0,TAU);X.fillStyle=gg;X.fill();
+    }
+    const sg=X.createRadialGradient(bx-br*.3,by-br*.3,br*.05,bx,by,br);
+    sg.addColorStop(0,hsl(hue,50,90,al));sg.addColorStop(.4,hsl(hue,65,45+25*act,al*.9));sg.addColorStop(1,hsl(hue,65,16,al*.6));
+    X.beginPath();X.arc(bx,by,br,0,TAU);X.fillStyle=sg;X.fill();
+    X.beginPath();X.arc(bx,by,br,0,TAU);X.strokeStyle=hsl(hue,65,55,al*.6);X.lineWidth=.7;X.stroke();
+    if(OPTS.nodeNums){
+      const fs=Math.max(5,Math.round(br*.80*DESIGN.nodeFontScale));
+      X.font=`${act>.55?'600 ':'300 '}${fs}px 'Cinzel',serif`;
+      X.fillStyle=hsl(hue,10,96,(.40+.60*act)*DESIGN.intensity);
+      X.textAlign='center';X.textBaseline='middle';X.fillText(i+1,bx,by);
+    }
+  }
+}
+
+// ─── SPHÈRE CENTRALE ─────────────────────────────────
+function drawCenter(ut36,readings,t,cfg){
+  const{phase,souffle,instant,density}=readings;
+  const modeLabel = SIM.active ? cfg.label+' · SIMULÉ' : cfg.label;
+  const r=R*.195, rb=r*(1+.07*Math.sin(t*TAU/T_BRE));
+  const h1=X.createRadialGradient(cx,cy,0,cx,cy,rb*4.5);
+  h1.addColorStop(0,rgba(DESIGN.colorPhase,.20));h1.addColorStop(.5,rgba(DESIGN.colorPhase,.06));h1.addColorStop(1,rgba(DESIGN.colorPhase,0));
+  X.beginPath();X.arc(cx,cy,rb*4.5,0,TAU);X.fillStyle=h1;X.fill();
+  const sg=X.createRadialGradient(cx-rb*.32,cy-rb*.32,rb*.06,cx,cy,rb);
+  sg.addColorStop(0,'rgba(255,248,215,.97)');sg.addColorStop(.32,'rgba(240,192,80,.90)');sg.addColorStop(.72,'rgba(160,90,8,.78)');sg.addColorStop(1,'rgba(40,15,0,.68)');
+  X.beginPath();X.arc(cx,cy,rb,0,TAU);X.fillStyle=sg;X.fill();
+  // reflet spéculaire net (verre/métal poli) + lueur de bord chaude —
+  // pour une vraie sphère 3D, pas un simple dégradé plat.
+  const hlx=cx-rb*.36,hly=cy-rb*.40;
+  const hg=X.createRadialGradient(hlx,hly,0,hlx,hly,rb*.34);
+  hg.addColorStop(0,'rgba(255,255,255,.85)');hg.addColorStop(.55,'rgba(255,250,225,.22)');hg.addColorStop(1,'rgba(255,250,225,0)');
+  X.save();X.beginPath();X.ellipse(hlx,hly,rb*.34,rb*.22,-.5,0,TAU);X.fillStyle=hg;X.fill();X.restore();
+  X.beginPath();X.arc(cx,cy,rb*.94,0,TAU);X.strokeStyle='rgba(255,222,150,.30)';X.lineWidth=rb*.09;X.stroke();
+  X.beginPath();X.arc(cx,cy,rb,0,TAU);X.strokeStyle=rgba(DESIGN.colorPhase,.45);X.lineWidth=1;X.stroke();
+  for(let i=0;i<3;i++){
+    const a=t*.17+i*Math.PI/3;
+    X.save();X.translate(cx,cy);X.rotate(a);
+    X.beginPath();X.ellipse(0,0,rb,rb*.27,0,0,TAU);
+    X.strokeStyle=`rgba(255,255,255,.10)`;X.lineWidth=.6;X.stroke();X.restore();
+  }
+  X.font=`7px 'Nunito',sans-serif`;X.fillStyle=rgba(DESIGN.colorPhase,.40);X.textAlign='center';X.textBaseline='top';X.fillText('396',cx,cy+rb+3);
+  if(OPTS.densityNum){
+    const fsMain=Math.max(22,R*.13*DESIGN.centerFontScale|0);
+    X.font=`300 ${fsMain}px 'Cinzel',serif`;
+    X.fillStyle=rgba(DESIGN.colorPhase,1);X.textBaseline='middle';
+    const densityStr = DESIGN.deepMode
+      ? Math.round(density).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'\u202F')
+      : density.toFixed(1);
+    X.fillText(densityStr,cx,cy+rb+fsMain*.88);
+    X.font=`8px 'Nunito',sans-serif`;X.fillStyle=rgba(DESIGN.colorPhase,.42);X.textBaseline='top';
+    X.fillText(modeLabel,cx,cy+rb+fsMain*1.72+2);
+  }
+  if(OPTS.readings){
+    const fsR=Math.max(9,R*.030*DESIGN.centerFontScale|0);
+    const y2=cy+rb+(OPTS.densityNum?R*.13*DESIGN.centerFontScale*2.3:6)+16;
+    X.font=`300 ${fsR}px 'Cinzel',serif`;
+    X.fillStyle=rgba(DESIGN.colorPhase,.78);X.textAlign='right';
+    X.fillText(`Omc ${phase}`,cx-4,y2);
+    X.fillStyle='rgba(255,255,255,.18)';X.textAlign='center';X.fillText('·',cx,y2);
+    X.fillStyle=rgba(DESIGN.colorSouffle,.78);X.textAlign='left';
+    X.fillText(`cV ${souffle}`,cx+4,y2);
+    X.font=`300 ${Math.max(8,R*.024*DESIGN.centerFontScale|0)}px 'Cinzel',serif`;
+    X.fillStyle=rgba(DESIGN.colorInstant,.62);X.textAlign='center';
+    X.fillText(`Solônde ${instant} / ${cfg.instants}`,cx,y2+fsR+5);
+  }
+}
+
+// ─── PULSE ───────────────────────────────────────────
+function triggerPulse(){
+  if(!OPTS.pulse)return;
+  const el=document.getElementById('pulse-ring');
+  el.style.animation='none'; void el.offsetWidth;
+  el.style.animation='ripple .6s ease-out forwards';
+}
+
+// ─── BOUCLE ──────────────────────────────────────────
+function loop(){
+  const t=(performance.now()-t0)/1000;
+  const fd=nowOrSim();
+  const ut36=calcDensity(fd);
+  const cfg=getModeConfig();
+  const r=getReadings(ut36,cfg);
+  X.setTransform(dpr,0,0,dpr,0,0);
+  X.clearRect(0,0,CW,CH);
+  drawBg(t);
+  drawReadingArcs(r,cfg,t);
+  draw36Nodes(r,t,cfg);
+  drawCenter(ut36,r,t,cfg);
+  if(OPTS.ringCycle432 && J0_ARCH) drawCycle432Ring(fd);
+  if(r.souffle!==lastSouffle&&lastSouffle!==-1)triggerPulse();
+  lastSouffle=r.souffle;
+  requestAnimationFrame(loop);
+}
+
+// ─── LOCALISATION (facultative, tout reste sur l'appareil) ──────────
+// Remplace le "2.35° Paris" en dur : sert uniquement à la correction de
+// longitude du midi solaire (calcDensity). Rien n'est envoyé nulle part,
+// aucune géolocalisation automatique — l'utilisateur pointe lui-même sur
+// le planisphère, ou saisit des degrés à la main.
+const CITIES=[
+  {n:'Paris',lat:48.85,lon:2.35},{n:'Londres',lat:51.5,lon:-0.13},
+  {n:'New York',lat:40.71,lon:-74.0},{n:'Los Angeles',lat:34.05,lon:-118.24},
+  {n:'Mexico',lat:19.43,lon:-99.13},{n:'São Paulo',lat:-23.55,lon:-46.63},
+  {n:'Buenos Aires',lat:-34.6,lon:-58.38},{n:'Reykjavik',lat:64.15,lon:-21.94},
+  {n:'Dakar',lat:14.72,lon:-17.47},{n:'Lagos',lat:6.52,lon:3.38},
+  {n:'Le Caire',lat:30.04,lon:31.24},{n:'Moscou',lat:55.75,lon:37.62},
+  {n:'Dubaï',lat:25.2,lon:55.27},{n:'New Delhi',lat:28.61,lon:77.21},
+  {n:'Bangkok',lat:13.75,lon:100.5},{n:'Pékin',lat:39.9,lon:116.4},
+  {n:'Tokyo',lat:35.68,lon:139.69},{n:'Sydney',lat:-33.87,lon:151.21},
+  {n:'Auckland',lat:-36.85,lon:174.76},{n:'Le Cap',lat:-33.92,lon:18.42},
+  {n:'Honolulu',lat:21.31,lon:-157.86},
+];
+let LOCATION={lat:48.85,lon:2.35,name:''};
+function loadLocation(){
+  try{const s=localStorage.getItem('chawatch-location');if(s)Object.assign(LOCATION,JSON.parse(s));}catch(e){}
+  updateGeoLabels();
+}
+function saveLocation(){try{localStorage.setItem('chawatch-location',JSON.stringify(LOCATION));}catch(e){}}
+function updateGeoLabels(){
+  const cur=document.getElementById('geo-current');
+  if(cur)cur.textContent=(LOCATION.name?LOCATION.name+' · ':'')+LOCATION.lat.toFixed(2)+'°, '+LOCATION.lon.toFixed(2)+'°';
+  const vl=document.getElementById('v-lat'),vo=document.getElementById('v-lon');
+  if(vl)vl.textContent=LOCATION.lat.toFixed(2)+'°';
+  if(vo)vo.textContent=LOCATION.lon.toFixed(2)+'°';
+  const il=document.getElementById('in-lat'),io=document.getElementById('in-lon');
+  if(il)il.value=LOCATION.lat; if(io)io.value=LOCATION.lon;
+  const iln=document.getElementById('in-lat-num'),ion=document.getElementById('in-lon-num');
+  if(iln&&document.activeElement!==iln)iln.value=LOCATION.lat;
+  if(ion&&document.activeElement!==ion)ion.value=LOCATION.lon;
+}
+function setLocationManual(lat,lon){
+  if(lat!=null){const v=parseFloat(lat); if(!isNaN(v))LOCATION.lat=Math.max(-90,Math.min(90,v));}
+  if(lon!=null){const v=parseFloat(lon); if(!isNaN(v))LOCATION.lon=Math.max(-180,Math.min(180,v));}
+  LOCATION.name='';
+  saveLocation();updateGeoLabels();
+  if(typeof sunRecompute==='function')sunRecompute();
+}
+
+// ─── PLANISPHÈRE (grille équirectangulaire, pas de tracé côtier —
+// aucune donnée cartographique embarquée, juste latitude/longitude +
+// villes repères) ─────────────────────────────────────────────────
+const geoCV=document.getElementById('geoCanvas'), geoX=geoCV.getContext('2d');
+let GEO={w:0,h:0,zoom:2,cx:2.35,cy:48.85,pick:{lat:48.85,lon:2.35,name:''}};
+function geoResize(){
+  GEO.w=Math.min(window.innerWidth*.92,760);
+  GEO.h=Math.min(window.innerHeight*.58,420);
+  geoCV.style.width=GEO.w+'px'; geoCV.style.height=GEO.h+'px';
+  const dp=window.devicePixelRatio||1;
+  geoCV.width=Math.round(GEO.w*dp); geoCV.height=Math.round(GEO.h*dp);
+  geoX.setTransform(dp,0,0,dp,0,0);
+}
+function openGeoModal(){
+  GEO.pick={lat:LOCATION.lat,lon:LOCATION.lon,name:LOCATION.name};
+  GEO.cx=LOCATION.lon; GEO.cy=LOCATION.lat; GEO.zoom=2;
+  document.getElementById('geo-modal').classList.add('open');
+  geoResize(); geoDraw(); updateGeoCoordsLive();
+}
+function closeGeoModal(){document.getElementById('geo-modal').classList.remove('open');}
+function validateGeoModal(){
+  LOCATION.lat=GEO.pick.lat; LOCATION.lon=GEO.pick.lon; LOCATION.name=GEO.pick.name||'';
+  saveLocation(); updateGeoLabels(); closeGeoModal();
+}
+function updateGeoCoordsLive(){
+  const el=document.getElementById('geo-coords');
+  if(el)el.textContent=(GEO.pick.name?GEO.pick.name+' · ':'')+GEO.pick.lat.toFixed(2)+'°, '+GEO.pick.lon.toFixed(2)+'°';
+}
+function geoDraw(){
+  const half=180/GEO.zoom, halfLat=90/GEO.zoom;
+  const lon2x=lo=>GEO.w/2+(lo-GEO.cx)/half*(GEO.w/2);
+  const lat2y=la=>GEO.h/2-(la-GEO.cy)/halfLat*(GEO.h/2);
+  geoX.clearRect(0,0,GEO.w,GEO.h);
+  const bg=geoX.createLinearGradient(0,0,0,GEO.h);
+  bg.addColorStop(0,'rgba(24,12,60,.92)');bg.addColorStop(1,'rgba(6,9,28,.96)');
+  geoX.fillStyle=bg;geoX.fillRect(0,0,GEO.w,GEO.h);
+  for(let lo=-180;lo<=180;lo+=30){
+    const x=lon2x(lo); if(x<-10||x>GEO.w+10)continue;
+    geoX.strokeStyle=lo===0?'rgba(240,192,96,.4)':'rgba(140,80,220,.18)';
+    geoX.lineWidth=1;geoX.beginPath();geoX.moveTo(x,0);geoX.lineTo(x,GEO.h);geoX.stroke();
+  }
+  for(let la=-90;la<=90;la+=15){
+    const y=lat2y(la); if(y<-10||y>GEO.h+10)continue;
+    geoX.strokeStyle=la===0?'rgba(240,192,96,.4)':'rgba(140,80,220,.18)';
+    geoX.lineWidth=1;geoX.beginPath();geoX.moveTo(0,y);geoX.lineTo(GEO.w,y);geoX.stroke();
+  }
+  CITIES.forEach(c=>{
+    const x=lon2x(c.lon), y=lat2y(c.lat);
+    if(x<-20||x>GEO.w+20||y<-20||y>GEO.h+20)return;
+    geoX.beginPath();geoX.arc(x,y,3,0,Math.PI*2);geoX.fillStyle='rgba(240,192,96,.75)';geoX.fill();
+    geoX.font='9px "Nunito",sans-serif';geoX.fillStyle='rgba(200,180,230,.7)';
+    geoX.textAlign='left';geoX.textBaseline='middle';geoX.fillText(c.n,x+6,y);
+  });
+  const px=lon2x(GEO.pick.lon), py=lat2y(GEO.pick.lat);
+  const gg=geoX.createRadialGradient(px,py,0,px,py,16);
+  gg.addColorStop(0,'rgba(160,96,240,.55)');gg.addColorStop(1,'rgba(160,96,240,0)');
+  geoX.beginPath();geoX.arc(px,py,16,0,Math.PI*2);geoX.fillStyle=gg;geoX.fill();
+  geoX.beginPath();geoX.arc(px,py,5,0,Math.PI*2);geoX.fillStyle='#F0C060';geoX.fill();
+  geoX.beginPath();geoX.arc(px,py,5,0,Math.PI*2);geoX.strokeStyle='#fff';geoX.lineWidth=1.2;geoX.stroke();
+}
+let _geoDrag=null;
+geoCV.addEventListener('pointerdown',e=>{
+  _geoDrag={x:e.clientX,y:e.clientY,moved:false,startCx:GEO.cx,startCy:GEO.cy};
+  try{geoCV.setPointerCapture(e.pointerId);}catch(err){}
+});
+geoCV.addEventListener('pointermove',e=>{
+  if(!_geoDrag)return;
+  const dx=e.clientX-_geoDrag.x, dy=e.clientY-_geoDrag.y;
+  if(Math.abs(dx)>3||Math.abs(dy)>3)_geoDrag.moved=true;
+  if(_geoDrag.moved){
+    const half=180/GEO.zoom, halfLat=90/GEO.zoom;
+    GEO.cx=Math.max(-180,Math.min(180,_geoDrag.startCx-dx/(GEO.w/2)*half));
+    GEO.cy=Math.max(-90,Math.min(90,_geoDrag.startCy+dy/(GEO.h/2)*halfLat));
+    geoDraw();
+  }
+});
+geoCV.addEventListener('pointerup',e=>{
+  if(_geoDrag&&!_geoDrag.moved){
+    const rect=geoCV.getBoundingClientRect();
+    const px=e.clientX-rect.left, py=e.clientY-rect.top;
+    const half=180/GEO.zoom, halfLat=90/GEO.zoom;
+    let lon=Math.max(-180,Math.min(180,GEO.cx+(px-GEO.w/2)/(GEO.w/2)*half));
+    let lat=Math.max(-90,Math.min(90,GEO.cy-(py-GEO.h/2)/(GEO.h/2)*halfLat));
+    let name='';
+    for(const c of CITIES){
+      const cx2=GEO.w/2+(c.lon-GEO.cx)/half*(GEO.w/2), cy2=GEO.h/2-(c.lat-GEO.cy)/halfLat*(GEO.h/2);
+      if(Math.hypot(cx2-px,cy2-py)<14){lon=c.lon;lat=c.lat;name=c.n;break;}
+    }
+    GEO.pick={lat,lon,name};
+    geoDraw();updateGeoCoordsLive();
+  }
+  _geoDrag=null;
+});
+geoCV.addEventListener('wheel',e=>{
+  e.preventDefault();
+  GEO.zoom=Math.max(1,Math.min(8,GEO.zoom*(e.deltaY<0?1.15:0.87)));
+  geoDraw();
+},{passive:false});
+window.addEventListener('resize',()=>{if(document.getElementById('geo-modal').classList.contains('open')){geoResize();geoDraw();}});
+
+// ─── FOND PERSONNALISÉ ────────────────────────────────────────────
+// #166 : même mécanisme qu'OmcVibe (cf. index.html setCustomBackground/
+// _loadBackground) — upload → background-size:cover + position:center,
+// sans réglage interactif. L'ancien mode "retouche" (glisser pour
+// centrer, molette pour zoomer, un état BG_RETOUCHE bloquant tout le
+// panneau tant qu'on ne retombait pas dessus) était signalé cassé ;
+// plutôt que de le déboguer, on adopte l'approche simple et déjà
+// éprouvée d'OmcVibe — aucune interaction requise, aucun risque de
+// rester "coincé" dans un mode.
+let BG_STATE={image:null};
+function loadBgState(){
+  try{const img=localStorage.getItem('chawatch-bg-image');if(img)BG_STATE.image=img;}catch(e){}
+  applyBgState();
+}
+function applyBgState(){
+  const el=document.getElementById('cosmic-bg');
+  el.style.backgroundImage=BG_STATE.image?`url(${BG_STATE.image})`:'none';
+}
+function onBgImageFile(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    BG_STATE.image=e.target.result;
+    try{
+      localStorage.removeItem('chawatch-bg-image');
+      if(BG_STATE.image.length<3800000)localStorage.setItem('chawatch-bg-image',BG_STATE.image);
+    }catch(err){}
+    applyBgState();
+  };
+  reader.readAsDataURL(file);
+}
+function clearBgImage(){
+  BG_STATE={image:null};
+  try{localStorage.removeItem('chawatch-bg-image');localStorage.removeItem('chawatch-bg-state');}catch(e){}
+  applyBgState();
+}
+
+// ─── SIMULATION — verrou densité (avance/recule le temps sans attendre) ──
+// Remplace l'ancien mode "Civil" (UT18), jugé inutile : déverrouillé, on
+// peut figer l'horloge sur n'importe quel jour + n'importe quelle densité
+// (Omc, 0-432) pour observer le cycle à ce point précis, sans device réel
+// derrière — aucune donnée envoyée nulle part, tout reste en mémoire/local.
+let SIM={active:false,date:null};
+function nowOrSim(){return (SIM.active&&SIM.date)?SIM.date:new Date();}
+function toggleSimLock(){
+  SIM.active=!SIM.active;
+  if(SIM.active&&!SIM.date)SIM.date=new Date();
+  syncSimUI();
+  if(J0_ARCH)archApplyJ0(true);
+}
+function syncSimUI(){
+  const lockBtn=document.getElementById('ms-lock');
+  if(lockBtn){lockBtn.textContent=SIM.active?'🔓':'🔒';lockBtn.classList.toggle('on',SIM.active);}
+  const ctrls=document.getElementById('simu-controls');
+  if(ctrls)ctrls.style.display=SIM.active?'block':'none';
+  const lbl=document.getElementById('sim-lock-label');
+  if(lbl)lbl.textContent=SIM.active?'🔓 Déverrouillé — simulation figée':'🔒 Verrouillé — temps réel';
+  const d=SIM.active&&SIM.date?SIM.date:new Date();
+  const di=document.getElementById('sim-date'); if(di)di.value=d.toISOString().slice(0,10);
+  const dens=calcDensity(d);
+  const sl=document.getElementById('sim-density-slider'); if(sl)sl.value=dens;
+  const v=document.getElementById('v-sim-density'); if(v)v.textContent=dens.toFixed(1);
+}
+function simSetDate(v){
+  if(!SIM.active)return;
+  const d=archParseDate(v); if(!d)return;
+  const cur=SIM.date||new Date();
+  d.setUTCHours(cur.getUTCHours(),cur.getUTCMinutes(),cur.getUTCSeconds(),0);
+  SIM.date=d;
+  syncSimUI();
+  if(J0_ARCH)archApplyJ0(true);
+}
+function simSetDensity(v){
+  if(!SIM.active)return;
+  const target=Math.max(0,Math.min(432,parseFloat(v)));
+  const cur=SIM.date||new Date();
+  const eot=eqOfTime(cur);
+  // Inverse de calcDensity : retrouve la minute solaire correspondant à
+  // la densité cible sous le mapping non-linéaire à 4 quarts.
+  const sun=computeSunTimes(cur,LOCATION.lat);
+  let sm;
+  if(sun.polar){
+    sm=target/432*1440;
+  }else{
+    const half=sun.dayLenH*30, riseMin=720-half, setMin=720+half;
+    if(target<108)      sm=riseMin*(target/108);
+    else if(target<216) sm=riseMin+(target-108)/108*(720-riseMin);
+    else if(target<324) sm=720+(target-216)/108*(setMin-720);
+    else                 sm=setMin+(target-324)/108*(1440-setMin);
+  }
+  let m=sm-LOCATION.lon*4-eot;
+  m=((m%1440)+1440)%1440;
+  const whole=Math.floor(m),sec=Math.round((m-whole)*60);
+  const next=new Date(Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth(),cur.getUTCDate(),0,0,0));
+  next.setUTCMinutes(whole,sec);
+  SIM.date=next;
+  const vEl=document.getElementById('v-sim-density'); if(vEl)vEl.textContent=target.toFixed(1);
+  const sl=document.getElementById('sim-density-slider'); if(sl)sl.value=target;
+}
+function simStepDensity(delta){
+  if(!SIM.active)return;
+  const cur=calcDensity(SIM.date||new Date());
+  const next=((cur+delta)%432+432)%432;
+  simSetDensity(next);
+}
+function simResetToNow(){
+  SIM.date=new Date();
+  syncSimUI();
+  if(J0_ARCH)archApplyJ0(true);
+}
+
+// ─── ASTRONOMIE SOLAIRE (approximation, cohérente avec eqOfTime) ────────
+// Modèle de déclinaison simplifié (même esprit/précision que l'équation
+// du temps déjà utilisée pour le midi solaire) : suffisant pour situer
+// un lever/coucher à quelques minutes près, sans dépendance externe.
+function dayOfYearUTC(date){
+  return Math.floor((Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate())
+    -Date.UTC(date.getUTCFullYear(),0,1))/86400000)+1;
+}
+function daysInYearUTC(y){return ((y%4===0&&y%100!==0)||y%400===0)?366:365;}
+function solarDeclinationDeg(doy){return 23.44*Math.sin(2*Math.PI/365*(doy-81));}
+// Lever/coucher sont symétriques autour du zénith solaire (toujours 216,
+// par construction de calcDensity) : pas besoin de ré-appliquer
+// longitude/équation du temps ici, elles s'annulent dans la différence.
+function computeSunTimes(date,lat){
+  const doy=dayOfYearUTC(date);
+  const declR=solarDeclinationDeg(doy)*Math.PI/180, latR=lat*Math.PI/180;
+  const cosH0=-Math.tan(latR)*Math.tan(declR);
+  let dayLenH,polar=null;
+  if(cosH0<=-1){dayLenH=24;polar='soleil de minuit';}
+  else if(cosH0>=1){dayLenH=0;polar='nuit polaire';}
+  else{
+    const H0deg=Math.acos(cosH0)*180/Math.PI;
+    dayLenH=H0deg/7.5;
+  }
+  const diy=daysInYearUTC(date.getUTCFullYear());
+  return{
+    doy,dayLenH,polar,
+    leverOmc:108,  // fixe par construction — calcDensity cale toujours le lever ici
+    zenithOmc:216,
+    coucherOmc:324, // fixe par construction, idem le coucher
+    pos360:doy/diy*360,
+  };
+}
+
+// ─── SOLEIL — lever/zénith/coucher + calendrier repère (sans DST) ────────
+let _sunSelDate=null;
+function sunRecompute(){
+  const el=document.getElementById('sun-date'); if(!el)return;
+  const d=archParseDate(el.value)||nowOrSim();
+  _sunSelDate=d;
+  const st=computeSunTimes(d,LOCATION.lat);
+  const setTxt=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;};
+  setTxt('sun-lever', st.polar?'—':st.leverOmc.toFixed(1));
+  setTxt('sun-zenith', st.zenithOmc.toFixed(1));
+  setTxt('sun-coucher', st.polar?'—':st.coucherOmc.toFixed(1));
+  setTxt('sun-daylen', st.polar?st.polar:st.dayLenH.toFixed(2)+' h');
+  setTxt('sun-doy', st.doy+' / '+daysInYearUTC(d.getUTCFullYear()));
+  setTxt('sun-pos360', st.pos360.toFixed(1)+' / 360');
+  if(typeof calBuildGrid==='function')calBuildGrid();
+}
+function sunSendToSim(){
+  if(!_sunSelDate)return;
+  if(!SIM.active)toggleSimLock();
+  SIM.date=new Date(_sunSelDate.getTime());
+  syncSimUI();
+  if(J0_ARCH)archApplyJ0(true);
+  setTab('simu');
+}
+let CAL_VIEW={y:(new Date()).getUTCFullYear(),m:(new Date()).getUTCMonth()};
+const MONTH_NAMES=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+function calMonthStep(delta){
+  CAL_VIEW.m+=delta;
+  if(CAL_VIEW.m<0){CAL_VIEW.m=11;CAL_VIEW.y--;}
+  if(CAL_VIEW.m>11){CAL_VIEW.m=0;CAL_VIEW.y++;}
+  calBuildGrid();
+}
+function calBuildGrid(){
+  const grid=document.getElementById('cal-grid'); if(!grid)return;
+  grid.innerHTML='';
+  const lbl=document.getElementById('cal-label'); if(lbl)lbl.textContent=MONTH_NAMES[CAL_VIEW.m]+' '+CAL_VIEW.y;
+  const first=new Date(Date.UTC(CAL_VIEW.y,CAL_VIEW.m,1));
+  const startDow=(first.getUTCDay()+6)%7; // lundi=0, sans notion de fuseau
+  const daysInM=new Date(Date.UTC(CAL_VIEW.y,CAL_VIEW.m+1,0)).getUTCDate();
+  const now=nowOrSim();
+  const isTodayMonth=now.getUTCFullYear()===CAL_VIEW.y&&now.getUTCMonth()===CAL_VIEW.m;
+  const sel=_sunSelDate;
+  for(let i=0;i<startDow;i++){const c=document.createElement('div');c.className='cal-cell empty';grid.appendChild(c);}
+  for(let d=1;d<=daysInM;d++){
+    const c=document.createElement('div');
+    const isSel=sel&&sel.getUTCFullYear()===CAL_VIEW.y&&sel.getUTCMonth()===CAL_VIEW.m&&sel.getUTCDate()===d;
+    c.className='cal-cell'+(isTodayMonth&&now.getUTCDate()===d?' today':'')+(isSel?' sel':'');
+    c.textContent=d;
+    c.onclick=()=>calPickDay(CAL_VIEW.y,CAL_VIEW.m,d);
+    grid.appendChild(c);
+  }
+}
+function calPickDay(y,m,d){
+  _sunSelDate=new Date(Date.UTC(y,m,d));
+  const el=document.getElementById('sun-date'); if(el)el.value=_sunSelDate.toISOString().slice(0,10);
+  sunRecompute();
+}
+
+// ─── JOURNAL — calendrier Omc (360/432) pour observations libres ────────
+let JOURNAL={base:360,selDay:null};
+function journalKey(base){return 'chawatch-journal-'+base;}
+function journalLoad(base){
+  try{const s=localStorage.getItem(journalKey(base)); return s?JSON.parse(s):{};}catch(e){return{};}
+}
+function journalSaveAll(base,data){try{localStorage.setItem(journalKey(base),JSON.stringify(data));}catch(e){}}
+function journalTodayIndex(base){
+  const now=nowOrSim();
+  const doy=dayOfYearUTC(now), diy=daysInYearUTC(now.getUTCFullYear());
+  return Math.max(1,Math.min(base,Math.round(doy/diy*base)));
+}
+function journalSetBase(base){
+  JOURNAL.base=base; JOURNAL.selDay=null;
+  const b360=document.getElementById('jtb-360'),b432=document.getElementById('jtb-432');
+  if(b360)b360.classList.toggle('on',base===360);
+  if(b432)b432.classList.toggle('on',base===432);
+  const ed=document.getElementById('journal-editor'); if(ed)ed.style.display='none';
+  journalBuildGrid();
+}
+function journalBuildGrid(){
+  const grid=document.getElementById('journal-grid'); if(!grid)return;
+  grid.innerHTML='';
+  const data=journalLoad(JOURNAL.base);
+  const todayIdx=journalTodayIndex(JOURNAL.base);
+  const jt=document.getElementById('j-today'); if(jt)jt.textContent=todayIdx+' / '+JOURNAL.base;
+  for(let d=1;d<=JOURNAL.base;d++){
+    const cell=document.createElement('div');
+    cell.className='j-cell'+(d===todayIdx?' today':'')+(data[d]?' has-note':'');
+    cell.textContent=d;
+    cell.onclick=()=>journalOpenDay(d);
+    grid.appendChild(cell);
+  }
+}
+function journalOpenDay(d){
+  JOURNAL.selDay=d;
+  const grid=document.getElementById('journal-grid');
+  if(grid)Array.from(grid.children).forEach((c,i)=>c.classList.toggle('sel',i+1===d));
+  const sd=document.getElementById('j-sel-day'); if(sd)sd.textContent=d+' / '+JOURNAL.base;
+  const data=journalLoad(JOURNAL.base);
+  const ta=document.getElementById('j-note-text'); if(ta)ta.value=data[d]||'';
+  const ed=document.getElementById('journal-editor'); if(ed)ed.style.display='block';
+}
+function journalSaveNote(){
+  if(!JOURNAL.selDay)return;
+  const data=journalLoad(JOURNAL.base);
+  const ta=document.getElementById('j-note-text');
+  const txt=ta?ta.value.trim():'';
+  if(txt)data[JOURNAL.selDay]=txt; else delete data[JOURNAL.selDay];
+  journalSaveAll(JOURNAL.base,data);
+  journalBuildGrid(); journalOpenDay(JOURNAL.selDay);
+}
+function journalDeleteNote(){
+  if(!JOURNAL.selDay)return;
+  const data=journalLoad(JOURNAL.base);
+  delete data[JOURNAL.selDay];
+  journalSaveAll(JOURNAL.base,data);
+  const ta=document.getElementById('j-note-text'); if(ta)ta.value='';
+  journalBuildGrid(); journalOpenDay(JOURNAL.selDay);
+}
+
+// ─── ARCHÉTYPES — lecture fractale à 3 niveaux (cycle 432, J0) ──────────
+// Les 4 mêmes mouvements pivotés par 396 (11/10 expansion douce, 12/11
+// expansion charmante, 11/12 contraction douce, 10/11 contraction
+// charmante — cf. R_EXP/R_CNT du moteur de respiration plus haut) se
+// répètent à 3 échelles imbriquées :
+//  ① Cycle/36 — position du cycle-108 courant dans son groupe de 36 (108=3×36)
+//  ② Jour/432 — position dans le cycle de 432 jours, quarté à 108/216/324,
+//     miroir exact de la boucle 360-396-432-396-360 pivotée par 396
+//  ③ Jour/36 — position dans la sous-phase de 36 jours en cours (432=12×36)
+// 396 est le pivot central : 12/11 et 11/12 relient exactement 396↔432,
+// 11/10 et 10/11 relient exactement 396↔360. Boucle fermée sans détour :
+// 360 -11/10-> 396 -12/11-> 432 -11/12-> 396 -10/11-> 360. Les ratios 6/5
+// et 5/6 (432/360 direct, sans passer par 396) restent des "portails" de
+// validation du mécanisme, pas des étapes de cette lecture du temps —
+// cf. R_EXP/R_CNT du moteur de respiration plus haut, qui utilisent
+// désormais 12/11 et 11/12 pour la même raison.
+var MOVEMENTS=[
+  {key:'11/10',name:'Expansion douce',color:'#f5c842',
+    desc:'360 ⇒ 396 — ouverture depuis la base, l\'énergie s\'éveille et cherche le centre.',
+    corps:'Le corps s\'éveille, la cadence s\'accélère doucement.',
+    invitation:'Choisir une direction sans se disperser.'},
+  {key:'12/11',name:'Expansion charmante',color:'#e84a6f',
+    desc:'396 ⇒ 432 — poussée depuis le centre vers le maximum d\'amplitude.',
+    corps:'Le corps est en pleine amplitude, l\'énergie rayonne au dehors.',
+    invitation:'Agir, communiquer, en gardant un fil vers le centre.'},
+  {key:'11/12',name:'Contraction douce',color:'#3ab8a0',
+    desc:'432 ⇒ 396 — retour depuis le maximum vers le centre, consolidation.',
+    corps:'Le corps ralentit, cherche à se poser et à digérer.',
+    invitation:'Trier, ajuster, laisser décanter ce qui a été vécu.'},
+  {key:'10/11',name:'Contraction charmante',color:'#7b58d4',
+    desc:'396 ⇒ 360 — du centre vers la base, densité et profondeur.',
+    corps:'Le corps est au repos le plus dense, tourné vers l\'intérieur.',
+    invitation:'Se taire, intégrer, préparer sans agir.'}
+];
+function archParseDate(v){if(!v)return null;var d=new Date(v+'T00:00:00');return isNaN(d)?null:d;}
+function archFmtDate(d){if(!d)return'—';return d.toISOString().slice(0,10);}
+function archAddDays(d,n){var x=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));x.setUTCDate(x.getUTCDate()+n);return x;}
+function archDaysBetween(a,b){return Math.floor((Date.UTC(b.getUTCFullYear(),b.getUTCMonth(),b.getUTCDate())-Date.UTC(a.getUTCFullYear(),a.getUTCMonth(),a.getUTCDate()))/86400000);}
+function movementFor(pos,total){
+  var q=total/4, idx=Math.min(3,Math.floor((pos-1)/q));
+  return {mv:MOVEMENTS[idx],mvIdx:idx,pos:((pos-1)%q)+1,size:q};
+}
+function computeFromJ0(j0,ref){
+  ref=ref||new Date();
+  var daysSince=archDaysBetween(j0,ref);
+  var cycleIndex=Math.floor(daysSince/432)+1;
+  var dayInCycle=(daysSince%432)+1;
+  var cycle108=((cycleIndex-1)%108)+1;
+  var group36=Math.floor((cycle108-1)/36)+1;
+  var cyclePos36=((cycle108-1)%36)+1;
+  var dayPhaseIdx=Math.floor((dayInCycle-1)/36)+1;
+  var dayPos36=((dayInCycle-1)%36)+1;
+  return{
+    daysSince:daysSince,cycleIndex:cycleIndex,dayInCycle:dayInCycle,cycle108:cycle108,
+    group36:group36,cyclePos36:cyclePos36,dayPhaseIdx:dayPhaseIdx,dayPos36:dayPos36,
+    lvlCycle:movementFor(cyclePos36,36),
+    lvlJour432:movementFor(dayInCycle,432),
+    lvlJour36:movementFor(dayPos36,36)
+  };
+}
+function generateArchAnalysis(comp){
+  var lc=comp.lvlCycle, lj=comp.lvlJour432, ld=comp.lvlJour36;
+  var header='J0 · Jour '+comp.daysSince+' · Cycle '+comp.cycle108+'/108 · Jour '+comp.dayInCycle+'/432';
+  var quick=[
+    '① Cycle/36 — groupe '+comp.group36+'/3, position '+lc.pos+'/9 sur '+lc.mv.name+' ('+lc.mv.key+') : '+lc.mv.desc,
+    '② Jour/432 — '+lj.mv.name+' ('+lj.mv.key+'), jour '+lj.pos+'/108 de ce quart : '+lj.mv.desc,
+    '③ Jour/36 — sous-phase '+comp.dayPhaseIdx+'/12, '+ld.mv.name+' ('+ld.mv.key+'), jour '+ld.pos+'/9 : '+ld.mv.desc
+  ];
+  var deep=[
+    {titre:'① Cycle/36 — '+lc.mv.name+' ('+lc.mv.key+')',phrases:[
+      'Le cycle 108 en cours ('+comp.cycle108+'/108) occupe la position '+comp.cyclePos36+'/36 dans son groupe (groupe '+comp.group36+'/3).',
+      lc.mv.desc, lc.mv.corps, 'À l\'échelle des cycles : '+lc.mv.invitation]},
+    {titre:'② Jour/432 — '+lj.mv.name+' ('+lj.mv.key+')',phrases:[
+      'Jour '+comp.dayInCycle+'/432, soit le jour '+lj.pos+'/108 du quart '+lj.mv.name+'.',
+      lj.mv.desc, lj.mv.corps, 'À l\'échelle du cycle : '+lj.mv.invitation]},
+    {titre:'③ Jour/36 — '+ld.mv.name+' ('+ld.mv.key+')',phrases:[
+      'Sous-phase '+comp.dayPhaseIdx+'/12 (jours '+((comp.dayPhaseIdx-1)*36+1)+'-'+(comp.dayPhaseIdx*36)+' du cycle), jour '+ld.pos+'/9 sur '+ld.mv.name+'.',
+      ld.mv.desc, ld.mv.corps, 'À l\'échelle de la sous-phase : '+ld.mv.invitation]}
+  ];
+  return{header:header,quick:quick,deep:deep};
+}
+let J0_ARCH=null, lastArchComp=null, archAnalysisTab='quick';
+function loadArch(){
+  try{
+    const s=localStorage.getItem('chawatch-j0');
+    if(s){J0_ARCH=new Date(s); const el=document.getElementById('arch-j0'); if(el)el.value=s.slice(0,10); archApplyJ0(true);}
+  }catch(e){}
+  buildArchGrid(); buildArchTable36();
+}
+function archCalcJ0(){
+  const b=archParseDate(document.getElementById('arch-birth').value);
+  if(!b){alert('Saisis une date de naissance valide.');return;}
+  const j0=archAddDays(b,-288);
+  document.getElementById('arch-j0').value=j0.toISOString().slice(0,10);
+  J0_ARCH=j0; try{localStorage.setItem('chawatch-j0',j0.toISOString());}catch(e){}
+  archApplyJ0();
+}
+function archApplyJ0(silent){
+  const j0=silent?J0_ARCH:archParseDate(document.getElementById('arch-j0').value);
+  if(!j0){if(!silent)alert('Saisis un J0 valide.');return;}
+  J0_ARCH=j0;
+  if(!silent){try{localStorage.setItem('chawatch-j0',j0.toISOString());}catch(e){}}
+  const comp=computeFromJ0(j0,nowOrSim()); lastArchComp=comp;
+  const setTxt=(id,v)=>{const el=document.getElementById(id); if(el)el.textContent=v;};
+  setTxt('a-j0',archFmtDate(j0)); setTxt('a-days',comp.daysSince); setTxt('a-cycle',comp.cycle108);
+  setTxt('a-day',comp.dayInCycle+' / 432');
+  setTxt('a-lvl-cycle',comp.lvlCycle.mv.name+' ('+comp.lvlCycle.mv.key+') · '+comp.lvlCycle.pos+'/9');
+  setTxt('a-lvl-jour432',comp.lvlJour432.mv.name+' ('+comp.lvlJour432.mv.key+') · '+comp.lvlJour432.pos+'/108');
+  setTxt('a-lvl-jour36',comp.lvlJour36.mv.name+' ('+comp.lvlJour36.mv.key+') · '+comp.lvlJour36.pos+'/9');
+  const bc=document.getElementById('a-lvl-cycle-box'); if(bc)bc.style.borderLeftColor=comp.lvlCycle.mv.color;
+  const bj=document.getElementById('a-lvl-jour432-box'); if(bj)bj.style.borderLeftColor=comp.lvlJour432.mv.color;
+  const bd=document.getElementById('a-lvl-jour36-box'); if(bd)bd.style.borderLeftColor=comp.lvlJour36.mv.color;
+  const analysis=generateArchAnalysis(comp);
+  document.getElementById('a-analysis-quick').innerHTML='<p class="small" style="color:var(--text);font-weight:700;margin-bottom:6px">'+analysis.header+'</p><ul class="arch-analysis">'+analysis.quick.map(s=>'<li>'+s+'</li>').join('')+'</ul>';
+  document.getElementById('a-analysis-deep').innerHTML='<p class="small" style="color:var(--text);font-weight:700;margin-bottom:6px">'+analysis.header+'</p>'+analysis.deep.map(dim=>'<div class="arch-dim"><div class="arch-dim-title">'+dim.titre+'</div><ul class="arch-analysis">'+dim.phrases.map(p=>'<li>'+p+'</li>').join('')+'</ul></div>').join('');
+  buildArchGrid(comp);
+  buildArchTable36(comp.cyclePos36,comp.dayPos36);
+}
+function archSetAnalysisTab(t){
+  archAnalysisTab=t;
+  document.getElementById('atb-quick').classList.toggle('on',t==='quick');
+  document.getElementById('atb-deep').classList.toggle('on',t==='deep');
+  document.getElementById('a-analysis-quick').style.display=t==='quick'?'block':'none';
+  document.getElementById('a-analysis-deep').style.display=t==='deep'?'block':'none';
+}
+function buildArchGrid(comp){
+  const g=document.getElementById('a-arch-grid'); if(!g)return; g.innerHTML='';
+  MOVEMENTS.forEach((mv,i)=>{
+    const marks=[];
+    if(comp){
+      if(comp.lvlCycle.mvIdx===i)marks.push('<span class="arch-mark" style="background:rgba(155,89,182,.20);color:var(--violet)">Cycle/36</span>');
+      if(comp.lvlJour432.mvIdx===i)marks.push('<span class="arch-mark">Jour/432</span>');
+      if(comp.lvlJour36.mvIdx===i)marks.push('<span class="arch-mark" style="background:rgba(240,192,60,.20);color:var(--gold)">Jour/36</span>');
+    }
+    const el=document.createElement('div'); el.className='arch-card'; el.style.borderTopColor=mv.color;
+    el.innerHTML='<div class="arch-card-num" style="color:'+mv.color+'">'+mv.key+'</div><div class="arch-card-name">'+mv.name+'</div><div class="arch-card-desc">'+mv.desc+'</div>'+(marks.length?'<div style="margin-top:5px">'+marks.join('')+'</div>':'');
+    g.appendChild(el);
+  });
+}
+function buildArchTable36(activeCyclePos,activeJourPos){
+  activeCyclePos=activeCyclePos||0; activeJourPos=activeJourPos||0;
+  const tbody=document.getElementById('a-table36-body'); if(!tbody)return; tbody.innerHTML='';
+  for(let p=1;p<=36;p++){
+    const mv=MOVEMENTS[Math.floor((p-1)/9)];
+    const tr=document.createElement('tr');
+    const isC=p===activeCyclePos, isJ=p===activeJourPos;
+    if(isC&&isJ)tr.classList.add('row-both'); else if(isC)tr.classList.add('row-cycle'); else if(isJ)tr.classList.add('row-jour36');
+    tr.innerHTML='<td>'+p+'</td><td style="color:'+mv.color+'">'+mv.name+'</td><td>'+mv.key+'</td>';
+    tbody.appendChild(tr);
+  }
+}
+function drawCycle432Ring(now){
+  const comp=computeFromJ0(J0_ARCH,now);
+  const mv=comp.lvlJour432.mv;
+  const rD=R*1.05;
+  const frac=(comp.dayInCycle-1)/432;
+  X.beginPath();X.arc(cx,cy,rD,0,TAU);X.strokeStyle='rgba(196,91,191,.14)';X.lineWidth=2;X.stroke();
+  const ang=frac*TAU-Math.PI/2;
+  const px=cx+Math.cos(ang)*rD, py=cy+Math.sin(ang)*rD;
+  const gg=X.createRadialGradient(px,py,0,px,py,10);
+  gg.addColorStop(0,mv.color+'CC'); gg.addColorStop(1,mv.color+'00');
+  X.beginPath();X.arc(px,py,10,0,TAU);X.fillStyle=gg;X.fill();
+  draw3DSphere(px,py,3,mv.color,1);
+  X.font=`8px 'Nunito',sans-serif`;X.fillStyle='rgba(232,160,208,.55)';X.textAlign='center';X.textBaseline='top';
+  X.fillText('Cycle 432 · '+mv.name+' · j'+comp.dayInCycle,cx,cy+rD+8);
+}
+
+// ─── PLEIN ÉCRAN / IMMERSIF — même comportement que le module OmcVibe ──
+function toggleFullscreen(){
+  if(document.fullscreenElement||document.webkitFullscreenElement){
+    (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+    try{screen.orientation.unlock();}catch(e){}
+  }else{
+    const el=document.documentElement;
+    (el.requestFullscreen||el.webkitRequestFullscreen).call(el);
+  }
+}
+document.addEventListener('fullscreenchange',()=>{
+  const btn=document.getElementById('fs-btn');
+  if(btn)btn.textContent=document.fullscreenElement?'✕':'⤢';
+});
+// La Fullscreen API exige un vrai geste utilisateur — on tente quand même
+// tout de suite (best-effort, peut réussir hors contexte navigateur strict),
+// ET on arme un déclenchement de secours sur le tout premier appui de la
+// session, qui satisfait la contrainte de geste dans tous les cas.
+function _autoRequestFullscreen(){
+  if(document.fullscreenElement||document.webkitFullscreenElement)return;
+  const el=document.documentElement;
+  try{
+    const p=(el.requestFullscreen||el.webkitRequestFullscreen).call(el);
+    if(p&&p.catch)p.catch(()=>{});
+  }catch(e){}
+}
+_autoRequestFullscreen();
+document.addEventListener('pointerdown',_autoRequestFullscreen,{once:true,capture:true});
+
+loadLocation();
+loadBgState();
+loadArch();
+syncSimUI();
+(function(){const el=document.getElementById('sun-date'); if(el)el.value=new Date().toISOString().slice(0,10);})();
+sunRecompute();
+calBuildGrid();
+journalSetBase(360);
+resize(); loop();
+
+// Paquet OmchaWatch autonome : pas d'OmcVibe à côté pour "Mode Retour"
+// (cf. commentaires sur #retour-btn / omcVibeRetour() plus haut) — masqué
+// plutôt que laissé comme un lien mort.
+(function(){ const b=document.getElementById('retour-btn'); if(b) b.style.display='none'; })();
+</script>
+</body>
+</html>

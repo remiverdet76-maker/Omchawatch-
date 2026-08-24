@@ -1,0 +1,61 @@
+name: Build OmchaWatch APK
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - 'OmchaWatch/www/**'
+      - 'OmchaWatch/android/**'
+      - 'OmchaWatch/package.json'
+      - 'OmchaWatch/package-lock.json'
+      - 'OmchaWatch/capacitor.config.json'
+      - '.github/workflows/build-omchawatch-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: OmchaWatch/package-lock.json
+
+      - name: Install dependencies
+        working-directory: OmchaWatch
+        run: npm ci
+
+      - name: Install stable debug keystore
+        # Même keystore de debug fixe que les autres builds (cf. commentaire
+        # dans build-apk.yml) : signature stable d'un run à l'autre.
+        run: |
+          mkdir -p ~/.android
+          cp .github/ci-debug.keystore ~/.android/debug.keystore
+
+      - name: Sync Capacitor Android project
+        working-directory: OmchaWatch
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: OmchaWatch/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmchaWatch-debug-apk
+          path: OmchaWatch/android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30
