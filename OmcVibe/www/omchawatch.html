@@ -1903,7 +1903,17 @@ function loadArch(){
   try{
     const s=localStorage.getItem('chawatch-j0');
     if(s){J0_ARCH=new Date(s); const el=document.getElementById('arch-j0'); if(el)el.value=s.slice(0,10); archApplyJ0(true);}
-    else{otaRenderEmpty();}
+    else{
+      // Défaut personnel demandé : J0 = 28/08/1996, pré-rempli seulement
+      // au tout premier lancement (aucun J0 déjà choisi/sauvegardé) — dès
+      // qu'un J0 existe en storage, la branche ci-dessus prend toujours
+      // le pas, ce défaut ne revient jamais écraser un choix ultérieur.
+      const d0=new Date('1996-08-28T00:00:00Z');
+      J0_ARCH=d0;
+      const el=document.getElementById('arch-j0'); if(el)el.value='1996-08-28';
+      try{localStorage.setItem('chawatch-j0',d0.toISOString());}catch(e){}
+      archApplyJ0(true);
+    }
   }catch(e){otaRenderEmpty();}
   buildArchGrid(); buildArchTable36();
 }
