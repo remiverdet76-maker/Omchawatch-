@@ -337,6 +337,15 @@ input[type=color]{
 .ota-mvt-hint{font-size:.56rem;color:var(--textS);margin-top:2px;line-height:1.35;font-style:italic;}
 .oct-mvt{font-size:.54rem;font-weight:700;margin-top:1px;}
 /* ── Synchronicité — nœuds énergétiques ── */
+.sync-search{padding:10px 10px 12px;border-radius:11px;background:rgba(24,12,50,.30);
+  border:1px solid rgba(255,255,255,.06);margin-bottom:12px;}
+.sync-search-title{font-family:'Cinzel',serif;font-size:.72rem;color:var(--gold);
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.sync-search-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+.sync-search-field label{display:block;font-size:.58rem;color:var(--textD,#907040);
+  text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+.sync-search-result-row{padding:8px 10px;border-radius:9px;background:rgba(24,12,50,.42);
+  margin-top:8px;border-left:3px solid transparent;}
 .sync-legend{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px;}
 .sync-tag{font-size:.60rem;font-weight:700;padding:2px 8px;border-radius:9px;}
 .sync-t3 {background:rgba(240,192,60,.20);color:var(--gold);}
@@ -835,6 +844,31 @@ input[type=color]{
           durées. Expérimental — repère à vérifier par toi-même, à
           l'usage, sur ce que tu vis à ces dates.
         </p>
+        <div class="sync-search">
+          <div class="sync-search-title">🔍 Recherche précise dans le cycle</div>
+          <p class="small" style="margin-bottom:6px">
+            Cherche un point exact des 3 thèmes à partir d'un numéro de
+            cycle (ex. « cycle 32 ») — laisse Énergie/Mouvement vides pour
+            le tout premier jour du cycle, ou précise-les pour viser un
+            jour exact à l'intérieur.
+          </p>
+          <div class="sync-search-row">
+            <div class="sync-search-field">
+              <label for="ss-cycle">Cycle N°</label>
+              <input type="number" id="ss-cycle" class="arch-input" min="1" step="1" placeholder="ex. 32" style="margin-bottom:0">
+            </div>
+            <div class="sync-search-field">
+              <label for="ss-energie">Énergie (1-12)</label>
+              <input type="number" id="ss-energie" class="arch-input" min="1" max="12" step="1" placeholder="déf. 1" style="margin-bottom:0">
+            </div>
+            <div class="sync-search-field">
+              <label for="ss-mvt">Mouvement (1-4)</label>
+              <input type="number" id="ss-mvt" class="arch-input" min="1" max="4" step="1" placeholder="déf. 1" style="margin-bottom:0">
+            </div>
+          </div>
+          <button class="arch-btn" style="margin-top:8px" onclick="searchCycle()">Chercher</button>
+          <div id="ss-result"></div>
+        </div>
         <div class="sync-legend">
           <span class="sync-tag sync-t3">360+396+432</span>
           <span class="sync-tag sync-t2b">396+432</span>
@@ -2141,6 +2175,55 @@ function renderSyncTab(){
       '</div>';
   });
   if(!todayInserted) html+='<div class="sync-today">— aujourd\'hui —</div>';
+  el.innerHTML=html;
+}
+
+// ─── Recherche précise dans le cycle ────────────────────
+// Jour (en jours-depuis-J0) du DÉBUT d'un cycle/énergie/mouvement donné,
+// même logique de bornes que mouvementFor (Math.floor(phaseLen*k/4)) —
+// jamais de calcul approximatif, cohérent avec le reste de l'app.
+function cycleStartDs(themeN,cycleIdx,energieIdx,mvtIdx){
+  const phaseLen=themeN/12; // 30/33/36, toujours entier
+  const cycleStart=(cycleIdx-1)*themeN;
+  if(!energieIdx) return cycleStart;
+  const energieStart=cycleStart+(energieIdx-1)*phaseLen;
+  if(!mvtIdx) return energieStart;
+  const b=[0,1,2,3,4].map(k=>Math.floor(phaseLen*k/4));
+  return energieStart+b[mvtIdx-1];
+}
+function searchCycle(){
+  const el=document.getElementById('ss-result'); if(!el)return;
+  if(!J0_ARCH){el.innerHTML='<div class="sync-empty">Renseigne ton J0 dans l\'onglet OmchaT\'aime.</div>';return;}
+  const cyc=parseInt(document.getElementById('ss-cycle').value,10);
+  if(!cyc||cyc<1){el.innerHTML='<div class="sync-empty">Indique un numéro de cycle valide (≥ 1).</div>';return;}
+  const egRaw=document.getElementById('ss-energie').value;
+  const mvRaw=document.getElementById('ss-mvt').value;
+  const eg=egRaw?parseInt(egRaw,10):0;
+  const mv=mvRaw?parseInt(mvRaw,10):0;
+  if(eg&&(eg<1||eg>12)){el.innerHTML='<div class="sync-empty">Énergie entre 1 et 12.</div>';return;}
+  if(mv&&(mv<1||mv>4)){el.innerHTML='<div class="sync-empty">Mouvement entre 1 et 4.</div>';return;}
+  if(mv&&!eg){el.innerHTML='<div class="sync-empty">Précise aussi l\'énergie pour viser un mouvement.</div>';return;}
+  const now=nowOrSim(), dsToday=archDaysBetween(J0_ARCH,now);
+  let html='';
+  [360,396,432].forEach(N=>{
+    const th=OTA_THEMES.find(t=>t.n===N);
+    const ds=cycleStartDs(N,cyc,eg,mv);
+    const date=archAddDays(J0_ARCH,ds);
+    const delta=ds-dsToday;
+    const when=delta===0?'aujourd\'hui':(delta>0?'dans '+delta+'j':'il y a '+(-delta)+'j');
+    const dateStr=date.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric',timeZone:'UTC'});
+    const egIdx=eg||1, ph=th.phases[egIdx-1];
+    const cross=[360,396,432].filter(x=>x!==N).map(x=>{
+      const c=otaCompute(J0_ARCH,date,x), xth=OTA_THEMES.find(t=>t.n===x), xph=xth.phases[c.phaseIdx-1];
+      return x+' : '+xph.name+' ('+c.phaseIdx+'/12), cycle '+c.cycleIndex;
+    }).join(' · ');
+    const label='Cycle '+cyc+(eg?' · Énergie '+eg+'/12 ('+ph.name+')':'')+(mv?' · Mouvement '+mv+'/4 ('+MOVEMENTS[mv-1].key+')':'');
+    html+='<div class="sync-search-result-row" style="border-left-color:'+th.color+'">'+
+      '<span class="sync-tag" style="background:'+th.color+'33;color:'+th.color+'">'+N+'</span>'+
+      '<div class="sync-date">'+dateStr+'<span class="sync-when">'+when+'</span></div>'+
+      '<div class="sync-detail">'+label+'<br>'+cross+'</div>'+
+      '</div>';
+  });
   el.innerHTML=html;
 }
 let _octInterval=null;
