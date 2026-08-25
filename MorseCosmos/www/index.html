@@ -697,6 +697,35 @@ function stopCamera(){
 // simplement les points/tirets trop courts au lieu de les rejeter
 // proprement) — corrigées ci-dessous plutôt qu'un simple réglage de
 // sensibilité, qui ne pouvait pas compenser une position instable.
+//
+// 4e cause identifiée depuis (signalée : un flot de "T" — tiret seul —
+// noyant des fragments par ailleurs cohérents) : unitEstimate ne se
+// recalait QUE sur les impulsions classées point, jamais sur celles
+// classées tiret. Si l'estimation de départ (140ms) était trop basse
+// par rapport à la vitesse réelle de l'émetteur, les tout premiers
+// points, plus longs que prévu, étaient classés tiret — et comme un
+// tiret ne corrige jamais l'estimation, elle restait bloquée en
+// permanence, condamnant TOUS les points suivants au même sort : un
+// cercle vicieux qui transforme le message entier en succession de
+// tirets isolés ("T"). Corrigé en recalant unitEstimate sur le MINIMUM
+// de toutes les impulsions ON valides depuis le dernier resetDecoder()
+// (point OU tiret, sans distinction) : un point étant par définition le
+// plus court symbole émis, ce minimum finit forcément par tomber sur sa
+// vraie durée dès le premier point réellement envoyé, et ne s'écarte
+// plus jamais de cette valeur ensuite (un tiret, toujours ≥ 1 unité, ne
+// peut jamais le faire redescendre à tort). Une fenêtre glissante plus
+// étroite a été essayée puis écartée : sur une rafale de plusieurs
+// tirets d'affilée (ex. "OOO"), elle "oubliait" le dernier point observé
+// et remisclassait les tirets suivants en points — vérifié par
+// simulation intégrant fidèlement le code réel (SOS AIDE, TEST OK,
+// message long, rafales de tirets) : la seule limite restante est le
+// tout début d'une session, avant le premier VRAI point envoyé (rien à
+// comparer avant lui) — au pire les toutes premières lettres si elles
+// ne contiennent que des tirets (ex. "MOMO..."), jamais plus loin :
+// dès le premier point reçu, tout le reste du message se décode
+// normalement, sans plus aucune propagation en cascade. C'est déjà la
+// limite du réglage par défaut d'avant (140ms non vérifié), pas une
+// régression introduite ici.
 const LOCK_SMOOTH   = 0.35; // lissage de la position suivie (mode auto) — 0=fige, 1=colle à l'image brute
 const LUM_SMOOTH     = 0.55; // lissage exponentiel de la luminosité mesurée
 const CONFIRM_FRAMES = 2;    // images consécutives requises avant de valider un changement d'état (délai symétrique, sans biais sur les durées mesurées)
@@ -707,6 +736,7 @@ let smoothLum = null;
 let state = false, lastChangeTime = null;
 let pendingState = null, pendingFrames = 0;
 let unitEstimate = 140;
+let minPulseSeen = Infinity; // minimum de toutes les durées ON valides depuis le dernier resetDecoder(), cf. note ci-dessus
 let letterBuffer = '';
 let liveMorse = '';
 let outputText = '';
@@ -719,6 +749,7 @@ function resetDecoder(){
   smoothLum=null;
   state=false; lastChangeTime=null;
   pendingState=null; pendingFrames=0;
+  unitEstimate=140; minPulseSeen=Infinity; // recalibrage complet à chaque nouvelle session caméra
   letterBuffer=''; liveMorse='';
   lockPoint=null; frameTimestamps=[];
   prevGrid=null; flickerGrid=null;
@@ -887,9 +918,18 @@ function loop(){
       if(state === true){
         // was ON -> classify dot/dash
         if(dur >= MIN_PULSE_MS){
-          if(dur <= unit*1.8){
+          // Recalage AVANT classification (cf. note "4e cause" plus haut) :
+          // cette impulsion, point ou tiret, met à jour le minimum et sert
+          // immédiatement à se classer elle-même — contrairement à
+          // l'ancienne logique qui ne se corrigeait qu'après coup, et
+          // seulement sur les points.
+          if(!fixedUnitCheck.checked){
+            minPulseSeen = Math.min(minPulseSeen, dur);
+            unitEstimate = minPulseSeen;
+          }
+          const symUnit = fixedUnitCheck.checked ? parseInt(fixedUnitSlider.value,10) : unitEstimate;
+          if(dur <= symUnit*1.8){
             letterBuffer += '.';
-            if(!fixedUnitCheck.checked){ unitEstimate = unitEstimate*0.7 + dur*0.3; }
           } else {
             letterBuffer += '-';
           }
