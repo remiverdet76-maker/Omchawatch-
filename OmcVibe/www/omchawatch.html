@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>UTC432 · Project</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;500;600;700&family=Comfortaa:wght@500;700&display=swap" rel="stylesheet">
 
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -57,6 +57,22 @@ canvas{display:block;}
   background:rgba(6,9,28,.85);border-top:1px solid var(--border);
   backdrop-filter:blur(14px);font-size:9px;letter-spacing:.2em;
 }
+/* #calandroge : tableau OmchaT'aime directement sur l'horloge — juste
+   au-dessus de la barre de bas, toujours visible, sans ouvrir le
+   panneau. Les 3 grandes cartes du panneau restent pour le détail. */
+#ota-clock-table{
+  position:fixed;left:0;right:0;bottom:38px;z-index:30;
+  display:flex;justify-content:center;gap:5px;
+  padding:5px 8px;pointer-events:none;
+}
+.oct-cell{
+  flex:1;max-width:150px;padding:4px 6px;border-radius:8px;
+  background:rgba(10,6,24,.62);border:1px solid rgba(255,255,255,.06);
+  text-align:center;
+}
+.oct-num{font-family:'Cinzel',serif;font-weight:700;font-size:.70rem;}
+.oct-name{font-size:.58rem;font-weight:700;margin-top:1px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.oct-sub{font-size:.48rem;color:var(--textD,#907040);margin-top:1px;line-height:1.25;}
 /* Mode switcher */
 #mode-sw{display:flex;gap:2px;background:rgba(100,60,200,.12);border-radius:12px;padding:2px;border:1px solid rgba(140,80,220,.22);}
 .ms{padding:3px 9px;border-radius:10px;font-size:8px;letter-spacing:.18em;cursor:pointer;color:var(--textD);transition:all .22s;}
@@ -103,7 +119,7 @@ canvas{display:block;}
    (position:fixed;bottom:0;height:38px) — posé au-dessus (bottom:44px),
    pas à la même hauteur, pour ne jamais le chevaucher. */
 #retour-btn{
-  position:fixed;bottom:44px;left:14px;height:30px;padding:0 12px;
+  position:fixed;bottom:100px;left:14px;height:30px;padding:0 12px;
   background:rgba(100,60,200,.22);border:1px solid rgba(160,96,240,.40);
   border-radius:15px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
@@ -313,7 +329,7 @@ input[type=color]{
 .ota-energy-kw{font-size:.62rem;color:var(--textS);margin-top:1px;line-height:1.3;}
 .ota-sub{font-size:.58rem;color:var(--textD,#907040);margin-top:5px;line-height:1.5;}
 .ota-shortcut{
-  position:fixed;left:50%;bottom:44px;transform:translateX(-50%);height:30px;
+  position:fixed;left:50%;bottom:100px;transform:translateX(-50%);height:30px;
   padding:0 13px;border-radius:15px;border:1px solid rgba(232,74,111,.32);
   background:rgba(100,30,80,.22);color:#e8a0d0;font-family:'Cinzel',serif;
   font-size:9px;letter-spacing:.14em;text-transform:uppercase;
@@ -345,6 +361,10 @@ input[type=color]{
 <div id="cosmic-bg"></div>
 <div id="title">UTC432 · PROJECT · 396</div>
 <canvas id="c"></canvas>
+
+<!-- Tableau OmchaT'aime — aperçu 360/396/432 toujours visible, sans
+     ouvrir le panneau (cf. otaRenderClockTable()). -->
+<div id="ota-clock-table"></div>
 
 <!-- BARRE BAS : uniquement le choix d'échelle de lecture -->
 <div id="bar">
@@ -438,49 +458,33 @@ input[type=color]{
     <!-- ══ OPTIONS ══ -->
     <div id="tab-options" style="display:none">
       <div class="opt-section">
-        <div class="opt-h">Éléments visibles</div>
+        <!-- #calandroge : remplace l'ancien quintette OmcV/Omc/cV/Solônde/
+             Cycle432 par les 3 anneaux 360/396/432 (mêmes thèmes qu'
+             OmchaT'aime) — cf. drawTripleRings(). -->
+        <div class="opt-h">Anneaux — trois thèmes</div>
         <label class="opt-row locked">
-          <span><span class="dot" style="background:var(--gold);display:inline-block"></span>Sphère centrale 396</span>
+          <span><span class="dot" style="background:var(--gold);display:inline-block"></span>Sphère centrale — densité du jour</span>
           <input type="checkbox" class="sw" checked disabled>
         </label>
         <label class="opt-row">
-          <span><span class="dot" style="background:var(--ivoire);display:inline-block"></span>Anneau Ivoire — OmcV</span>
-          <input type="checkbox" class="sw" id="o-ringOmcV" checked onchange="OPTS.ringOmcV=this.checked">
+          <span><span class="dot" style="background:#e0954a;display:inline-block"></span>Anneau 360 — externe/corps</span>
+          <input type="checkbox" class="sw" id="o-ring360" checked onchange="OPTS.ring360=this.checked">
         </label>
         <label class="opt-row">
-          <span><span class="dot" style="background:var(--gold);display:inline-block"></span>Anneau Or — Omc</span>
-          <input type="checkbox" class="sw" id="o-ringPhase" checked onchange="OPTS.ringPhase=this.checked">
+          <span><span class="dot" style="background:var(--violet);display:inline-block"></span>Anneau 432 — expansif/conscience</span>
+          <input type="checkbox" class="sw" id="o-ring432" checked onchange="OPTS.ring432=this.checked">
         </label>
         <label class="opt-row">
-          <span><span class="dot" style="background:var(--violet);display:inline-block"></span>Anneau Violet — cV</span>
-          <input type="checkbox" class="sw" id="o-ringSouffle" checked onchange="OPTS.ringSouffle=this.checked">
-        </label>
-        <label class="opt-row">
-          <span><span class="dot" style="background:var(--blue);display:inline-block"></span>Anneau Bleu — Solônde</span>
-          <input type="checkbox" class="sw" id="o-ringInstant" checked onchange="OPTS.ringInstant=this.checked">
-        </label>
-        <label class="opt-row">
-          <span><span class="dot" style="background:var(--cycle);display:inline-block"></span>Anneau Cycle 432 (J0)</span>
-          <input type="checkbox" class="sw" id="o-ringCycle432" checked onchange="OPTS.ringCycle432=this.checked">
+          <span><span class="dot" style="background:var(--blue);display:inline-block"></span>Anneau 396 — neutre/équilibre</span>
+          <input type="checkbox" class="sw" id="o-ring396" checked onchange="OPTS.ring396=this.checked">
         </label>
         <label class="opt-row">
           <span>Traînes des pointeurs</span>
           <input type="checkbox" class="sw" id="o-trails" checked onchange="OPTS.trails=this.checked">
         </label>
         <label class="opt-row">
-          <span>Graduations + labels</span>
+          <span>Graduations</span>
           <input type="checkbox" class="sw" id="o-ticks" checked onchange="OPTS.ticks=this.checked">
-        </label>
-      </div>
-      <div class="opt-section">
-        <div class="opt-h">36 Nœuds</div>
-        <label class="opt-row">
-          <span>Afficher les 36 bulles</span>
-          <input type="checkbox" class="sw" id="o-nodes" checked onchange="OPTS.nodes=this.checked">
-        </label>
-        <label class="opt-row">
-          <span>Chiffres sur les bulles</span>
-          <input type="checkbox" class="sw" id="o-nodeNums" checked onchange="OPTS.nodeNums=this.checked">
         </label>
         <label class="opt-row">
           <span>Pulse au changement</span>
@@ -490,12 +494,8 @@ input[type=color]{
       <div class="opt-section">
         <div class="opt-h">Centre</div>
         <label class="opt-row">
-          <span>Densité OmcV (grand chiffre)</span>
+          <span>Densité du jour (grand chiffre)</span>
           <input type="checkbox" class="sw" id="o-densityNum" checked onchange="OPTS.densityNum=this.checked">
-        </label>
-        <label class="opt-row">
-          <span>Omc · cV · Solônde</span>
-          <input type="checkbox" class="sw" id="o-readings" checked onchange="OPTS.readings=this.checked">
         </label>
       </div>
       <div class="opt-section">
@@ -814,10 +814,13 @@ input[type=color]{
 'use strict';
 // ─── OPTS & DESIGN ───────────────────────────────────
 const OPTS = {
-  ringOmcV:true, ringPhase:true, ringSouffle:true, ringInstant:true, ringCycle432:true,
-  trails:true, ticks:true,
-  nodes:true, nodeNums:true, pulse:true,
-  densityNum:true, readings:true,
+  // #calandroge : remplace l'ancien quintette OmcV/Omc/cV/Solônde/Cycle432
+  // par les 3 anneaux 360/396/432 (mêmes thèmes qu'OmchaT'aime) — cf.
+  // drawTripleRings(). ringOmcV/ringPhase/ringSouffle/ringInstant/nodes/
+  // ringCycle432/readings retirés : plus rien ne les affiche.
+  ring360:true, ring396:true, ring432:true,
+  trails:true, ticks:true, pulse:true,
+  densityNum:true,
   mandala:true, stars:true, infoBar:true,
 };
 const DESIGN = {
@@ -1236,10 +1239,24 @@ function draw36Nodes(readings,t,cfg){
 }
 
 // ─── SPHÈRE CENTRALE ─────────────────────────────────
+// #calandroge : sphère centrale simplifiée à l'essentiel — seul le
+// chiffre de densité du jour reste ("le ventre"), agrandi ×1.5, ET
+// désormais DANS la sphère (pas dessous). Plus de label "396" ni de
+// ligne Omc/cV/Solônde (retirés, cf. demande). Police alignée sur
+// OmcVibe (.vp-freq : Comfortaa 700, ivoire, ombre sombre pour la
+// lisibilité) plutôt que Cinzel. Halo respirant ajouté par-dessus le
+// glow doré déjà existant, mêmes courbes que .flux-aura du dock OmcVibe
+// (échelle .86↔1.14, opacité .55↔1, ~2.4s de période).
 function drawCenter(ut36,readings,t,cfg){
-  const{phase,souffle,instant,density}=readings;
-  const modeLabel = SIM.active ? cfg.label+' · SIMULÉ' : cfg.label;
-  const r=R*.195, rb=r*(1+.07*Math.sin(t*TAU/T_BRE));
+  const{density}=readings;
+  const r=R*.195*1.5, rb=r*(1+.07*Math.sin(t*TAU/T_BRE));
+  const breathe=(Math.sin(t*TAU/2.4)+1)/2;
+  const auraR=rb*2.7*(.86+.28*breathe), auraOp=.55+.45*breathe;
+  const ah=X.createRadialGradient(cx,cy,0,cx,cy,auraR);
+  ah.addColorStop(0,`rgba(255,255,255,${.34*auraOp})`);
+  ah.addColorStop(.42,`rgba(255,246,220,${.15*auraOp})`);
+  ah.addColorStop(1,'rgba(255,246,220,0)');
+  X.beginPath();X.arc(cx,cy,auraR,0,TAU);X.fillStyle=ah;X.fill();
   const h1=X.createRadialGradient(cx,cy,0,cx,cy,rb*4.5);
   h1.addColorStop(0,rgba(DESIGN.colorPhase,.20));h1.addColorStop(.5,rgba(DESIGN.colorPhase,.06));h1.addColorStop(1,rgba(DESIGN.colorPhase,0));
   X.beginPath();X.arc(cx,cy,rb*4.5,0,TAU);X.fillStyle=h1;X.fill();
@@ -1260,31 +1277,50 @@ function drawCenter(ut36,readings,t,cfg){
     X.beginPath();X.ellipse(0,0,rb,rb*.27,0,0,TAU);
     X.strokeStyle=`rgba(255,255,255,.10)`;X.lineWidth=.6;X.stroke();X.restore();
   }
-  X.font=`7px 'Nunito',sans-serif`;X.fillStyle=rgba(DESIGN.colorPhase,.40);X.textAlign='center';X.textBaseline='top';X.fillText('396',cx,cy+rb+3);
   if(OPTS.densityNum){
-    const fsMain=Math.max(22,R*.13*DESIGN.centerFontScale|0);
-    X.font=`300 ${fsMain}px 'Cinzel',serif`;
-    X.fillStyle=rgba(DESIGN.colorPhase,1);X.textBaseline='middle';
+    const fsMain=Math.max(26,R*.13*DESIGN.centerFontScale*1.5|0);
     const densityStr = DESIGN.deepMode
       ? Math.round(density).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'\u202F')
       : density.toFixed(1);
-    X.fillText(densityStr,cx,cy+rb+fsMain*.88);
-    X.font=`8px 'Nunito',sans-serif`;X.fillStyle=rgba(DESIGN.colorPhase,.42);X.textBaseline='top';
-    X.fillText(modeLabel,cx,cy+rb+fsMain*1.72+2);
+    X.save();
+    X.font=`700 ${fsMain}px 'Comfortaa',sans-serif`;
+    X.textAlign='center';X.textBaseline='middle';
+    X.shadowColor='rgba(0,0,0,.80)';X.shadowBlur=Math.max(6,fsMain*.18);X.shadowOffsetY=fsMain*.05;
+    X.fillStyle='#f5eedc';
+    X.fillText(densityStr,cx,cy);
+    X.restore();
   }
-  if(OPTS.readings){
-    const fsR=Math.max(9,R*.030*DESIGN.centerFontScale|0);
-    const y2=cy+rb+(OPTS.densityNum?R*.13*DESIGN.centerFontScale*2.3:6)+16;
-    X.font=`300 ${fsR}px 'Cinzel',serif`;
-    X.fillStyle=rgba(DESIGN.colorPhase,.78);X.textAlign='right';
-    X.fillText(`Omc ${phase}`,cx-4,y2);
-    X.fillStyle='rgba(255,255,255,.18)';X.textAlign='center';X.fillText('·',cx,y2);
-    X.fillStyle=rgba(DESIGN.colorSouffle,.78);X.textAlign='left';
-    X.fillText(`cV ${souffle}`,cx+4,y2);
-    X.font=`300 ${Math.max(8,R*.024*DESIGN.centerFontScale|0)}px 'Cinzel',serif`;
-    X.fillStyle=rgba(DESIGN.colorInstant,.62);X.textAlign='center';
-    X.fillText(`Solônde ${instant} / ${cfg.instants}`,cx,y2+fsR+5);
-  }
+}
+
+// ─── TROIS ANNEAUX 360/396/432 (calandroge) ─────────────────────────
+// Remplace l'ancien quintette OmcV/Omc/cV/Solônde/Cycle432 (fonctions
+// drawReadingArcs/draw36Nodes/drawCycle432Ring conservées mais plus
+// appelées, cf. loop()) : trois anneaux calés sur le MÊME J0 que
+// OmchaT'aime plus haut, un par thème (360 externe/corps, 396 neutre/
+// équilibre, 432 expansif/conscience) — même moteur de calcul
+// (otaCompute), pour ne jamais afficher un chiffre différent entre
+// l'horloge et le tableau du bas. 12 graduations par anneau (les 12
+// phases/énergies du thème), 4 d'entre elles accentuées (les quarts) —
+// drawTicks/drawArc réutilisées telles quelles (mêmes comètes, même
+// esthétique déjà en place). Anneau 1 (360, extérieur) → Anneau 2 (432,
+// milieu) → Anneau 3 (396, intérieur), dans l'ordre demandé.
+const OTA_RINGS=[
+  {get theme(){return OTA_THEMES[0];}, r:.95, on:()=>OPTS.ring360},
+  {get theme(){return OTA_THEMES[2];}, r:.80, on:()=>OPTS.ring432},
+  {get theme(){return OTA_THEMES[1];}, r:.65, on:()=>OPTS.ring396},
+];
+function drawTripleRings(t){
+  if(!J0_ARCH)return;
+  const now=nowOrSim();
+  OTA_RINGS.forEach(cfgR=>{
+    if(!cfgR.on())return;
+    const th=cfgR.theme, radius=R*cfgR.r;
+    const c=otaCompute(J0_ARCH,now,th.n);
+    const frac=(c.dayInCycle-1)/th.n;
+    const angle=frac*TAU-Math.PI/2;
+    drawTicks(radius,12,th.color,3,null,10,1.3);
+    drawArc(radius,th.color,angle,Math.min(frac*TAU*.985,TAU*.99),4.5,t);
+  });
 }
 
 // ─── PULSE ───────────────────────────────────────────
@@ -1305,10 +1341,8 @@ function loop(){
   X.setTransform(dpr,0,0,dpr,0,0);
   X.clearRect(0,0,CW,CH);
   drawBg(t);
-  drawReadingArcs(r,cfg,t);
-  draw36Nodes(r,t,cfg);
+  drawTripleRings(t);
   drawCenter(ut36,r,t,cfg);
-  if(OPTS.ringCycle432 && J0_ARCH) drawCycle432Ring(fd);
   if(r.souffle!==lastSouffle&&lastSouffle!==-1)triggerPulse();
   lastSouffle=r.souffle;
   requestAnimationFrame(loop);
@@ -1899,6 +1933,24 @@ function otaRender(j0,ref){
       '</div>';
   }).join('');
 }
+// Version compacte directement sur l'horloge (pas besoin d'ouvrir le
+// panneau) — mêmes données que otaRender ci-dessus (une seule source de
+// vérité, otaCompute), juste reformatées en 3 petites cellules.
+function otaRenderClockTable(){
+  const el=document.getElementById('ota-clock-table'); if(!el)return;
+  if(!J0_ARCH){el.innerHTML='';return;}
+  const now=nowOrSim();
+  el.innerHTML=OTA_THEMES.map(th=>{
+    const c=otaCompute(J0_ARCH,now,th.n);
+    const ph=th.phases[c.phaseIdx-1];
+    return '<div class="oct-cell" style="border-color:'+th.color+'44">'+
+      '<div class="oct-num" style="color:'+th.color+'">'+th.n+'</div>'+
+      '<div class="oct-name">'+ph.name+' · '+c.phaseIdx+'/12</div>'+
+      '<div class="oct-sub">reste '+c.daysLeftPhase+'j phase · '+c.daysLeftCycle+'j cycle</div>'+
+      '</div>';
+  }).join('');
+}
+let _octInterval=null;
 function loadArch(){
   try{
     const s=localStorage.getItem('chawatch-j0');
@@ -1916,6 +1968,12 @@ function loadArch(){
     }
   }catch(e){otaRenderEmpty();}
   buildArchGrid(); buildArchTable36();
+  otaRenderClockTable();
+  // Rafraîchit le tableau de l'horloge (jours restants) sans avoir besoin
+  // d'ouvrir le panneau — 30s suffit largement (ça ne bouge qu'une fois
+  // par jour), pas la peine de le recalculer à 60 im/s comme le canvas.
+  if(_octInterval) clearInterval(_octInterval);
+  _octInterval=setInterval(otaRenderClockTable, 30000);
 }
 function archCalcJ0(){
   const b=archParseDate(document.getElementById('arch-birth').value);
@@ -1932,6 +1990,7 @@ function archApplyJ0(silent){
   if(!silent){try{localStorage.setItem('chawatch-j0',j0.toISOString());}catch(e){}}
   const comp=computeFromJ0(j0,nowOrSim()); lastArchComp=comp;
   otaRender(j0,nowOrSim());
+  otaRenderClockTable();
   const setTxt=(id,v)=>{const el=document.getElementById(id); if(el)el.textContent=v;};
   setTxt('a-j0',archFmtDate(j0)); setTxt('a-days',comp.daysSince); setTxt('a-cycle',comp.cycle108);
   setTxt('a-day',comp.dayInCycle+' / 432');
