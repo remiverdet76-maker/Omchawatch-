@@ -336,6 +336,23 @@ input[type=color]{
 .ota-mvt-ratio{font-size:.56rem;color:var(--textD,#907040);margin-left:5px;}
 .ota-mvt-hint{font-size:.56rem;color:var(--textS);margin-top:2px;line-height:1.35;font-style:italic;}
 .oct-mvt{font-size:.54rem;font-weight:700;margin-top:1px;}
+/* ── Synchronicité — nœuds énergétiques ── */
+.sync-legend{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px;}
+.sync-tag{font-size:.60rem;font-weight:700;padding:2px 8px;border-radius:9px;}
+.sync-t3 {background:rgba(240,192,60,.20);color:var(--gold);}
+.sync-t2b{background:rgba(160,96,240,.20);color:var(--violet);}
+.sync-t2a{background:rgba(224,149,74,.20);color:#e0954a;}
+.sync-t2c{background:rgba(96,168,248,.20);color:var(--blue);}
+.sync-today{margin:12px 0;padding:5px 0;text-align:center;font-size:.62rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--textD,#907040);border-top:1px dashed rgba(255,255,255,.14);
+  border-bottom:1px dashed rgba(255,255,255,.14);}
+.sync-row{padding:8px 10px;border-radius:9px;background:rgba(24,12,50,.42);margin-bottom:6px;
+  border-left:3px solid transparent;}
+.sync-row.past{opacity:.55;}
+.sync-date{font-family:'Cinzel',serif;font-weight:700;font-size:.82rem;color:var(--text);}
+.sync-when{font-size:.60rem;color:var(--textD,#907040);margin-left:6px;}
+.sync-detail{font-size:.64rem;color:var(--textS);margin-top:3px;line-height:1.5;}
+.sync-empty{font-size:.72rem;color:var(--textD,#907040);text-align:center;padding:14px 0;}
 .ota-shortcut{
   position:fixed;left:50%;bottom:100px;transform:translateX(-50%);height:30px;
   padding:0 13px;border-radius:15px;border:1px solid rgba(232,74,111,.32);
@@ -416,6 +433,7 @@ input[type=color]{
     <button class="mtab"    id="mt-soleil"  onclick="setTab('soleil')">SOLEIL</button>
     <button class="mtab"    id="mt-journal" onclick="setTab('journal')">JOURNAL</button>
     <button class="mtab"    id="mt-arch"    onclick="setTab('arch')">OMCHAT'AIME</button>
+    <button class="mtab"    id="mt-sync"    onclick="setTab('sync')">SYNCHRONICITÉ</button>
   </div>
 
   <!-- CONTENU -->
@@ -804,6 +822,29 @@ input[type=color]{
       </div>
     </div>
 
+    <!-- ══ SYNCHRONICITÉ — nœuds énergétiques 360/396/432 ══ -->
+    <div id="tab-sync" style="display:none">
+      <div class="opt-section">
+        <div class="opt-h">Nœuds énergétiques — 360 / 396 / 432</div>
+        <p class="small" style="margin-bottom:6px">
+          Un nœud = le jour où au moins 2 des 3 thèmes démarrent une
+          énergie EXACTEMENT le même jour (jours depuis J0 uniquement,
+          rien d'autre) — pas une coïncidence de date, une vraie
+          coïncidence arithmétique : 360/12=30j, 396/12=33j, 432/12=36j
+          par énergie, et un nœud tombe sur un multiple commun de ces
+          durées. Expérimental — repère à vérifier par toi-même, à
+          l'usage, sur ce que tu vis à ces dates.
+        </p>
+        <div class="sync-legend">
+          <span class="sync-tag sync-t3">360+396+432</span>
+          <span class="sync-tag sync-t2b">396+432</span>
+          <span class="sync-tag sync-t2a">360+432</span>
+          <span class="sync-tag sync-t2c">360+396</span>
+        </div>
+        <div id="sync-list"></div>
+      </div>
+    </div>
+
   </div><!-- /panel-content -->
 </div><!-- /panel -->
 
@@ -868,10 +909,11 @@ function togglePanel(){
   setTimeout(resize,360);
 }
 function setTab(name){
-  ['notice','options','design','lieu','simu','soleil','journal','arch'].forEach(t=>{
+  ['notice','options','design','lieu','simu','soleil','journal','arch','sync'].forEach(t=>{
     document.getElementById('tab-'+t).style.display=t===name?'block':'none';
     document.getElementById('mt-'+t).classList.toggle('on',t===name);
   });
+  if(name==='sync' && typeof renderSyncTab==='function') renderSyncTab();
 }
 
 // #166 : Mode Retour — bouton dédié de l'horloge, cf. index.html
@@ -1998,6 +2040,108 @@ function otaRenderClockTable(){
       '<div class="oct-sub">reste '+c.daysLeftPhase+'j phase · '+c.daysLeftCycle+'j cycle</div>'+
       '</div>';
   }).join('');
+}
+// ─── SYNCHRONICITÉ — nœuds énergétiques 360/396/432 ────────────────────
+// Demande explicite : "analyse UNIQUEMENT avec les jours depuis J0" — pas
+// de calendrier civil, pas d'astro, juste de l'arithmétique exacte sur
+// daysSince. Un THÈME démarre une nouvelle énergie tous les phaseLen
+// jours (30/33/36, cf. OTA_THEMES) — de façon continue depuis J0, pas
+// remis à zéro à chaque cycle (12 énergies × phaseLen = themeN pile, donc
+// "tous les phaseLen jours" et "tous les themeN/12 jours" sont la même
+// suite). Un NŒUD = un daysSince qui est un multiple commun d'au moins
+// 2 de ces 3 durées — donc un jour où 2 (ou 3) thèmes démarrent une
+// énergie EXACTEMENT le même jour. Ce sont des PPCM (plus petit commun
+// multiple) exacts, pas des arrondis :
+//   360∧396∧432 (triple) : PPCM(30,33,36) = 1980 jours (~5 ans 5 mois)
+//   396∧432              : PPCM(33,36)    =  396 jours (~1 an 1 mois)
+//   360∧432              : PPCM(30,36)    =  180 jours (~6 mois)
+//   360∧396              : PPCM(30,33)    =  330 jours (~11 mois)
+// Exemple vérifié (155j avant le 25/08/2026, donc le 23/03/2026,
+// daysSince=10800) : 10800 = 60×180 → nœud 360∧432, ET 10800 est ALSO un
+// multiple de 360 (×30) et de 432 (×25) → les DEUX cycles complets
+// redémarrent ce jour-là, pas seulement leur énergie (marqueur "⟳" sur
+// la ligne). C'est ce cas précis, plus rare (PPCM(360,432)=2160j), que
+// l'utilisateur a repéré manuellement.
+function _gcd(a,b){return b?_gcd(b,a%b):a;}
+function _lcm(a,b){return a/_gcd(a,b)*b;}
+const SYNC_PHASE_LEN={360:30,396:33,432:36};
+const SYNC_PERIODS={
+  triple:_lcm(_lcm(SYNC_PHASE_LEN[360],SYNC_PHASE_LEN[396]),SYNC_PHASE_LEN[432]), // 1980
+  p396_432:_lcm(SYNC_PHASE_LEN[396],SYNC_PHASE_LEN[432]),                        // 396
+  p360_432:_lcm(SYNC_PHASE_LEN[360],SYNC_PHASE_LEN[432]),                        // 180
+  p360_396:_lcm(SYNC_PHASE_LEN[360],SYNC_PHASE_LEN[396]),                        // 330
+};
+function findSyncNodes(j0,ref){
+  const dsToday=archDaysBetween(j0,ref);
+  const pastWindow=730, futureWindow=1825; // 2 ans passés, 5 ans à venir (nœuds pairs)
+  const tripleFuture=8*365, tripleMinCount=3, triplePastMinCount=2; // le nœud triple est rare, fenêtre élargie + garanti
+  const candidates=new Set();
+  const addRange=(period,maxDs)=>{
+    for(let k=1;k*period<=maxDs;k++) candidates.add(k*period);
+  };
+  addRange(SYNC_PERIODS.p396_432, dsToday+futureWindow);
+  addRange(SYNC_PERIODS.p360_432, dsToday+futureWindow);
+  addRange(SYNC_PERIODS.p360_396, dsToday+futureWindow);
+  addRange(SYNC_PERIODS.triple, dsToday+tripleFuture);
+  const all=[...candidates].sort((a,b)=>a-b);
+  const nodes=all.map(ds=>{
+    const t360=ds%SYNC_PHASE_LEN[360]===0, t396=ds%SYNC_PHASE_LEN[396]===0, t432=ds%SYNC_PHASE_LEN[432]===0;
+    let type=null;
+    if(t360&&t396&&t432) type='triple';
+    else if(t396&&t432) type='396_432';
+    else if(t360&&t432) type='360_432';
+    else if(t360&&t396) type='360_396';
+    if(!type) return null; // garde-fou (ne devrait jamais arriver)
+    const cyc360=ds%360===0, cyc396=ds%396===0, cyc432=ds%432===0; // cycle COMPLET (pas juste l'énergie)
+    const date=archAddDays(j0,ds);
+    const info={};
+    [360,396,432].forEach(N=>{ info[N]=otaCompute(j0,date,N); });
+    return{ds,date,type,cyc360,cyc396,cyc432,info,deltaDays:ds-dsToday};
+  }).filter(Boolean);
+  // Fenêtre d'affichage : tous les nœuds "paire" dans [-pastWindow,+futureWindow],
+  // + garantie de voir le nœud triple même hors fenêtre (passé le plus récent +
+  // prochains), puisqu'il peut tomber hors des 2-5 ans par défaut.
+  const paired=nodes.filter(n=>n.type!=='triple' && n.deltaDays>=-pastWindow && n.deltaDays<=futureWindow);
+  const triples=nodes.filter(n=>n.type==='triple');
+  const triplesPast=triples.filter(n=>n.deltaDays<0).slice(-triplePastMinCount);
+  const triplesFuture=triples.filter(n=>n.deltaDays>=0).slice(0,tripleMinCount);
+  const merged=[...paired,...triplesPast,...triplesFuture]
+    .sort((a,b)=>a.ds-b.ds)
+    .filter((n,i,arr)=>i===0||arr[i-1].ds!==n.ds); // dédoublonne si un triple tombait aussi dans la fenêtre "paire"
+  return{dsToday,nodes:merged};
+}
+const SYNC_LABEL={
+  triple:{cls:'sync-t3',txt:'360+396+432'},
+  '396_432':{cls:'sync-t2b',txt:'396+432'},
+  '360_432':{cls:'sync-t2a',txt:'360+432'},
+  '360_396':{cls:'sync-t2c',txt:'360+396'},
+};
+function renderSyncTab(){
+  const el=document.getElementById('sync-list'); if(!el)return;
+  if(!J0_ARCH){el.innerHTML='<div class="sync-empty">Renseigne ton J0 dans l\'onglet OmchaT\'aime.</div>';return;}
+  const now=nowOrSim();
+  const{dsToday,nodes}=findSyncNodes(J0_ARCH,now);
+  if(!nodes.length){el.innerHTML='<div class="sync-empty">Aucun nœud dans la fenêtre affichée.</div>';return;}
+  let html='', todayInserted=false;
+  nodes.forEach(n=>{
+    if(!todayInserted && n.deltaDays>=0){ html+='<div class="sync-today">— aujourd\'hui —</div>'; todayInserted=true; }
+    const lbl=SYNC_LABEL[n.type];
+    const when=n.deltaDays===0?'aujourd\'hui':(n.deltaDays>0?'dans '+n.deltaDays+'j':'il y a '+(-n.deltaDays)+'j');
+    const cycMarks=[n.cyc360&&'⟳360',n.cyc396&&'⟳396',n.cyc432&&'⟳432'].filter(Boolean).join(' ');
+    const dateStr=n.date.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric',timeZone:'UTC'});
+    const themeDetail=[360,396,432].map(N=>{
+      const c=n.info[N], th=OTA_THEMES.find(t=>t.n===N), ph=th.phases[c.phaseIdx-1];
+      return N+' : '+ph.name+' ('+c.phaseIdx+'/12), cycle '+c.cycleIndex;
+    }).join(' · ');
+    html+='<div class="sync-row'+(n.deltaDays<0?' past':'')+'" style="border-left-color:'+
+      (n.type==='triple'?'#f0c03c':n.type==='396_432'?'#A060F0':n.type==='360_432'?'#e0954a':'#60A8F8')+'">'+
+      '<span class="sync-tag '+lbl.cls+'">'+lbl.txt+'</span>'+(cycMarks?' <span class="sync-tag" style="background:rgba(255,255,255,.10);color:var(--text)">'+cycMarks+' complet</span>':'')+
+      '<div class="sync-date">'+dateStr+'<span class="sync-when">'+when+'</span></div>'+
+      '<div class="sync-detail">'+themeDetail+'</div>'+
+      '</div>';
+  });
+  if(!todayInserted) html+='<div class="sync-today">— aujourd\'hui —</div>';
+  el.innerHTML=html;
 }
 let _octInterval=null;
 function loadArch(){
