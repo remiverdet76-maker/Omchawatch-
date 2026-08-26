@@ -916,6 +916,17 @@ body.vis-lite .fx-fader-knob.fx-fader-active{ box-shadow:0 0 10px rgba(255,225,1
 .rand-advanced > summary::before{content:'▸ ';}
 .rand-advanced[open] > summary::before{content:'▾ ';}
 .rand-advanced-body{padding:.55rem .65rem;background:rgba(99,230,255,.05);border:1px solid rgba(99,230,255,.14);border-radius:10px;}
+/* #183 : sous-catégories à l'intérieur de "Réglages aléatoires avancés" —
+   même style que les en-têtes PLAGE FRÉQUENCE/RATIO/CARACTÈRE au-dessus,
+   pour rester cohérent visuellement dans tout l'onglet. */
+.rand-cat{font-size:.6rem;color:rgba(99,230,255,.65);letter-spacing:.1em;font-style:italic;
+  text-transform:uppercase;margin:.5rem 0 .3rem;font-weight:bold;}
+.rand-cat:first-child{margin-top:0;}
+/* #183 : le label grandit pour absorber l'espace libre — le badge "?"
+   reste collé juste après le texte au lieu d'être centré par le
+   space-between de .sw-row quand il y a désormais 3 enfants (label,
+   badge, switch) au lieu de 2. Neutre sur les .sw-row à 2 enfants. */
+.sw-row .fx-label{flex:1;}
 .random-table{display:flex;flex-direction:column;gap:.3rem;}
 .rand-row{display:flex;flex-direction:column;gap:.35rem;padding:.5rem .6rem;border-radius:8px;}
 .rand-row-top{display:grid;grid-template-columns:26px 8px 1fr 1fr 1fr auto auto;gap:.1rem .35rem;align-items:center;}
@@ -1245,8 +1256,16 @@ body.vis-lite .dcell-flux.flowing{ animation:none; }
   position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);
   font-size:.58rem;letter-spacing:.2em;font-weight:700;
   color:rgba(255,228,165,.88);text-shadow:0 0 8px rgba(255,200,100,.5);
-  white-space:nowrap;pointer-events:none;
+  white-space:nowrap;
+  /* #183 : rendu tapable — bouton mute/démute dédié et sans ambiguïté,
+     distinct du geste tap/appui-long sur la sphère #dcFlux (qui, lui,
+     déclenche un NOUVEAU tirage sur un tap trop court). Ici : un seul
+     geste, un seul effet, jamais de tirage accidentel. Zone de tap
+     élargie par le padding malgré le texte minuscule. */
+  cursor:pointer;padding:6px 10px;margin:-6px -10px;border-radius:10px;
+  transition:background .15s;
 }
+.flux-state:active{background:rgba(255,200,100,.16);}
 /* #145 : Flux Off — les sphères oscillateurs restent "atteintes" (toujours
    là, toujours réactives) mais passent en blanc neutre, sans couleur ni
    éclat : silence visuel qui suit le silence sonore réel (masterGain +
@@ -1543,6 +1562,32 @@ body.flux-muted .vp-i{
   transform:translateX(18px);background:#D29DFF;
   box-shadow:0 0 8px rgba(200,100,255,.6);
 }
+
+/* #183 : mini-notice "?" — un petit badge à côté de chaque paramètre du
+   menu Effets audio + Aléatoire, qui ouvre une bulle d'explication courte
+   au tap (pas juste au survol : aucun hover fiable sur mobile/tactile,
+   l'usage principal de cette app). Composant unique et réutilisable,
+   plutôt qu'un title="" par-ci par-là (déjà utilisé ailleurs pour des
+   indices courts, mais invisible/inutilisable au doigt). */
+.info-q{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:16px;height:16px;min-width:16px;border-radius:50%;
+  background:rgba(200,160,255,.14);border:1px solid rgba(200,160,255,.4);
+  color:#D29DFF;font-size:.62rem;font-weight:bold;font-style:normal;
+  line-height:1;cursor:pointer;flex-shrink:0;padding:0;margin-left:.3em;
+  font-family:var(--font-body,'IM Fell English'),serif;
+}
+.info-q:active{background:rgba(200,160,255,.3);}
+.info-note{
+  position:fixed;z-index:9999;max-width:min(78vw,280px);
+  background:rgba(20,10,35,.97);border:1px solid rgba(200,160,255,.4);
+  border-radius:10px;padding:.6rem .75rem;
+  font-size:.72rem;line-height:1.45;color:rgba(230,215,255,.92);
+  font-family:var(--font-body,'IM Fell English'),serif;font-style:italic;
+  box-shadow:0 6px 22px rgba(0,0,0,.5);
+  animation:infoNoteIn .15s ease-out;
+}
+@keyframes infoNoteIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
 
 /* Presets sessions */
 .fx-presets-list{display:flex;flex-direction:column;gap:.35rem;}
@@ -2257,10 +2302,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 <div id="dcFluxFloat">
   <div class="flux-rainbow-halo" id="fluxRainbow" aria-hidden="true"><div class="flux-rainbow-halo-spin"></div></div>
   <div class="flux-aura" id="fluxAura" aria-hidden="true"></div>
-  <button class="dcell-flux canva-button" id="dcFlux" title="Tap : nouveau jeu aléatoire · Appui long : Flux on/off">
+  <button class="dcell-flux canva-button" id="dcFlux" title="Tap : nouveau jeu aléatoire · Appui long : Flux on/off (ou utilise ON/OFF juste en dessous pour muter sans risque de relancer)">
     <img class="flux-yy" id="flux-icon" src="img/random-game-logo.jpg" alt="" aria-hidden="true">
   </button>
-  <span class="flux-state" id="flux-state-side">OFF</span>
+  <!-- #183 : bouton dédié son on/off — un tap ici NE relance JAMAIS de
+       nouveau jeu (contrairement à l'appui long trop court sur la sphère
+       ci-dessus) : on peut couper le son, retoucher le jeu tranquillement,
+       puis le rallumer, sans jamais perdre le tirage en cours. -->
+  <span class="flux-state" id="flux-state-side" onclick="event.stopPropagation();fbfToggle();" title="Son on/off — ne relance jamais un nouveau jeu">OFF</span>
 </div>
 
 
@@ -2840,7 +2889,7 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
        au même tirage, ou séparément). Le reste des réglages est toujours
        actif et rangé dans "Réglages aléatoires avancés" en fin de panneau. -->
   <div style="margin:.6rem 0 .3rem;padding:.55rem .65rem;background:rgba(99,230,255,.05);border:1px solid rgba(99,230,255,.14);border-radius:10px;">
-    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin-bottom:.4rem;">PLAGE FRÉQUENCE — toujours active, répartition continue</div>
+    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin-bottom:.4rem;">PLAGE FRÉQUENCE — toujours active, répartition continue<button type="button" class="info-q" data-info="Bornes entre lesquelles le tirage aléatoire choisit les fréquences des oscillateurs — toujours actif, quel que soit le ratio ou le caractère choisis ci-dessous." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
     <div class="sl-row">
       <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Min <span id="rv-fmin" style="color:#63E6FF">54</span> Hz</label>
       <input type="range" id="sl-fmin" min="54" max="474" value="54" style="flex:1;color:#63E6FF;" oninput="setRandFreqMin(this.value)">
@@ -2854,7 +2903,7 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
          jamais un aigu simple tout seul. -->
     <div style="font-size:.66rem;color:rgba(200,170,255,.4);font-style:italic;margin:.15rem 0 .3rem;">Plafond absolu 475 Hz — au-delà de 325 Hz, adouci automatiquement (LPF + Sinus Duo)</div>
 
-    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.5rem 0 .3rem;">RATIO</div>
+    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.5rem 0 .3rem;">RATIO<button type="button" class="info-q" data-info="Comment les fréquences des oscillateurs se répartissent par rapport à la racine — hétérogène (varié), homogène (régulier), ou harmonique (croissant/décroissant). Le bouton on/off à droite coupe l'application au tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
     <div class="rand-mode-row">
       <select id="rand-ratio-select" class="rand-select" onchange="setRandRatioMode(this.value)">
         <option value="heterogene">Ratio hétérogène</option>
@@ -2866,7 +2915,7 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
     </div>
     <div id="ratio-off-hint" style="display:none;font-size:.62rem;color:rgba(200,170,255,.5);font-style:italic;margin:.2rem 0 .1rem;">Désactivé : les ratios ne bougent plus au tirage — touche le ratio ou ×n de chaque ligne du tableau pour les régler à la main.</div>
 
-    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.5rem 0 .3rem;">CARACTÈRE DU BATTEMENT</div>
+    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.5rem 0 .3rem;">CARACTÈRE DU BATTEMENT<button type="button" class="info-q" data-info="Ambiance générale du battement binaural (Δ) tiré au sort : apaisé, équilibré, ou immersif. Le bouton on/off à droite coupe l'application au tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
     <div class="rand-mode-row">
       <select id="rand-character-select" class="rand-select" onchange="setDeltaCharacter(this.value)">
         <option value="apaise">☾ Apaisé</option>
@@ -2876,6 +2925,63 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
       <label class="fx-toggle" title="Le caractère du battement s'applique au tirage"><input type="checkbox" id="ck-character-on" checked onchange="setCharacterOn(this.checked)"><span class="fx-tog-track"></span></label>
     </div>
   </div>
+
+  <!-- #183 : remonté juste après plage/ratio/caractère (au lieu d'être
+       tout en bas de l'onglet) et ouvert par défaut (attribut "open") —
+       ces réglages avancés pilotent l'essentiel du CARACTÈRE réel d'un
+       tirage, ils méritaient d'être vus sans avoir à chercher/déplier.
+       Repliable comme avant pour qui préfère un écran plus court. -->
+  <details class="rand-advanced" open>
+    <summary>Réglages aléatoires avancés</summary>
+    <div class="rand-advanced-body">
+      <div class="rand-cat">VARIÉTÉ DU TIRAGE</div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Δ varié par paire </span><button type="button" class="info-q" data-info="Chaque paire tire son propre battement (Δ) au lieu d'un battement identique partout — plus de nuance d'un oscillateur à l'autre." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-delta-variety" checked onchange="setDeltaVariety(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Polarité variée par paire </span><button type="button" class="info-q" data-info="L'oreille qui reçoit le Δ (au-dessus ou en dessous de la fréquence porteuse) change d'une paire à l'autre, pour un champ stéréo moins symétrique." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-polarity-variety" checked onchange="setPolarityVariety(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Timbre aléatoire </span><button type="button" class="info-q" data-info="La forme d'onde (Sinus, Sinus×2, Triangle…) de la paire mise en avant change à chaque tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-timbre" checked onchange="setRandTimbre(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Profondeur 3D </span><button type="button" class="info-q" data-info="Varie la position/l'espacement des sphères à l'écran — purement visuel, aucun effet sur le son." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-depth" checked onchange="setRandDepth(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Détune Sinus Duo aléatoire </span><button type="button" class="info-q" data-info="Quand une paire utilise le timbre Sinus Duo, l'écart en cents entre ses deux voix est lui aussi tiré au sort." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-dualsine" onchange="setRandDualSine(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Battement rapproché (1–7.2 Hz) </span><button type="button" class="info-q" data-info="Autorise, en plus du Δ habituel, un battement très resserré (bande Delta/Thêta) sur certaines paires pour plus de contraste." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-closebeat" checked onchange="setCloseBeatPair(this.checked)"></div>
+
+      <div class="fxq-sep"></div>
+      <div class="rand-cat">RESPIRATION &amp; ÉVOLUTION ORGANIQUE</div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Respiration par paire (aléatoire) </span><button type="button" class="info-q" data-info="Chaque paire respire (volume qui ondule doucement) à son propre rythme, indépendamment des autres." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-breath" checked onchange="setRandBreath(this.checked)"></div>
+      <div class="sl-row">
+        <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Profondeur <span id="sv-breath-depth" style="color:#63E6FF">12%</span><button type="button" class="info-q" data-info="Amplitude maximale de la respiration par paire ci-dessus — plus haut, l'ondulation de volume est plus marquée." onclick="event.stopPropagation();showInfoNote(this)">?</button></label>
+        <input type="range" min="0.01" max="0.3" step="0.01" value="0.12" style="flex:1;color:#63E6FF;" oninput="setPairBreathDepthMax(this.value)">
+      </div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Ancre respiratoire périodique </span><button type="button" class="info-q" data-info="Toutes les paires se resynchronisent brièvement sur un même souffle de temps en temps, pour éviter une dérive totalement chaotique." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-breath-anchor" checked onchange="setBreathAnchor(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Évolution harmonique douce </span><button type="button" class="info-q" data-info="Le jeu évolue tout seul, très lentement, vers d'autres harmonies au fil de la session — sans nouveau tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-organic-evo" checked onchange="setOrganicEvolution(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Main invisible (mute/octaves organiques) </span><button type="button" class="info-q" data-info="De temps à autre, une paire se coupe puis revient, parfois une octave plus haut ou plus bas — comme jouée par une présence discrète." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-invisible-hand" checked onchange="setInvisibleHand(this.checked)"></div>
+
+      <div class="fxq-sep"></div>
+      <div class="rand-cat">TRAITEMENT AUDIO</div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Pré-mastering (filtres LPF/HPF/BPF) </span><button type="button" class="info-q" data-info="Filtres automatiques appliqués selon la fréquence tirée, pour éviter les aigus stridents ou les graves boueux." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-premaster" checked onchange="setPreMasterFilter(this.checked)"></div>
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0;"><span class="fx-label">FX aléatoire </span><button type="button" class="info-q" data-info="Les effets (delay, ping-pong, espace…) sont eux aussi retouchés à chaque tirage, pas seulement les oscillateurs." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-fx" checked onchange="setRandUseFX(this.checked)"></div>
+
+      <div class="fxq-sep"></div>
+      <div class="rand-cat">NOUVEAUX MODES</div>
+      <!-- #149 : chaque paire "s'allume" à un instant différent après un
+           tirage (chorégraphie de gain, jamais la fréquence/le ratio déjà
+           posés par le tirage normal) — off par défaut, effet marqué. -->
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Feu d'artifice binaural (ignition étalée) </span><button type="button" class="info-q" data-info="Au lieu que toutes les paires démarrent ensemble, chacune s'allume à un instant différent après le tirage — mêmes fréquences, entrée échelonnée." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-fireworks" onchange="setFireworksIgnition(this.checked)"></div>
+      <!-- #150 : pulsation très lente (20-60s) en plus de la respiration
+           organique existante — off par défaut, se cumule à la respiration. -->
+      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Signature bol tibétain (pulsation lente) </span><button type="button" class="info-q" data-info="Ajoute une pulsation de volume très lente (20 à 60s), en plus de la respiration organique déjà active." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-bowlpulse" onchange="setBowlPulse(this.checked)"></div>
+      <!-- #151 : progression volontaire sur la durée — resserre doucement Δ
+           (plus stimulant → plus apaisant) sur 10/20/30 min, indépendant du
+           tirage aléatoire (touche uniquement les paires non verrouillées). -->
+      <div class="sl-row" style="align-items:center;gap:.4rem;">
+        <label style="font-size:.7rem;color:rgba(200,170,255,.7);flex-shrink:0;">Arc de session</label>
+        <button type="button" class="info-q" data-info="Resserre doucement le battement (Δ) sur toute la durée choisie — plus stimulant au début, plus apaisant à la fin. Ne touche pas les oscillateurs verrouillés." onclick="event.stopPropagation();showInfoNote(this)">?</button>
+        <select id="session-arc-duration" style="flex:0 0 auto;background:rgba(20,10,40,.6);color:#F0E0FF;border:1px solid rgba(200,170,255,.35);border-radius:6px;font-size:.72rem;padding:.25rem .3rem;">
+          <option value="10">10 min</option>
+          <option value="20" selected>20 min</option>
+          <option value="30">30 min</option>
+        </select>
+        <button id="btn-session-arc" class="btn-magic-rand" style="width:auto;flex:1;padding:.4rem .5rem;font-size:.66rem;letter-spacing:.08em;" onclick="toggleSessionArc(parseInt(document.getElementById('session-arc-duration').value,10))">Arc de session : OFF</button>
+      </div>
+    </div>
+  </details>
 
   <div class="rand-steps-grid canva-container" style="margin-top:.5rem" data-html-import-id="html-import-527" data-template-id="div-511">
     <button class="fbf-step canva-button" onclick="masterStep(108)" data-html-import-id="html-import-528" data-template-id="button-512">+108</button>
@@ -2894,54 +3000,6 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
        reste le même id, juste un autre parent DOM ; buildRandomTable()/
        patchRandomTable() n'ont pas besoin de changer. -->
   <div style="font-size:.68rem;color:rgba(200,170,255,.45);font-style:italic;margin:.4rem 0;">Le détail des 7 oscillateurs (fréquence, ratio, volume…) est maintenant dans <b style="color:#86FFC0;">✦ Effet Audio</b>.</div>
-
-  <!-- Réglages aléatoires avancés — tous actifs par défaut (l'essentiel du
-       jeu se joue déjà avec le bouton + plage/ratio/caractère ci-dessus) ;
-       rangés ici pour ne pas encombrer l'écran principal, dans l'esprit
-       méditatif de l'app. -->
-  <details class="rand-advanced">
-    <summary>Réglages aléatoires avancés</summary>
-    <div class="rand-advanced-body">
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Δ varié par paire </span><input type="checkbox" class="sw" id="ck-delta-variety" checked onchange="setDeltaVariety(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Polarité variée par paire </span><input type="checkbox" class="sw" id="ck-polarity-variety" checked onchange="setPolarityVariety(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Timbre aléatoire </span><input type="checkbox" class="sw" id="ck-rand-timbre" checked onchange="setRandTimbre(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Profondeur 3D </span><input type="checkbox" class="sw" id="ck-rand-depth" checked onchange="setRandDepth(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Respiration par paire (aléatoire) </span><input type="checkbox" class="sw" id="ck-rand-breath" checked onchange="setRandBreath(this.checked)"></div>
-      <div class="sl-row">
-        <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Profondeur <span id="sv-breath-depth" style="color:#63E6FF">12%</span></label>
-        <input type="range" min="0.01" max="0.3" step="0.01" value="0.12" style="flex:1;color:#63E6FF;" oninput="setPairBreathDepthMax(this.value)">
-      </div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Ancre respiratoire périodique </span><input type="checkbox" class="sw" id="ck-breath-anchor" checked onchange="setBreathAnchor(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Évolution harmonique douce </span><input type="checkbox" class="sw" id="ck-organic-evo" checked onchange="setOrganicEvolution(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Main invisible (mute/octaves organiques) </span><input type="checkbox" class="sw" id="ck-invisible-hand" checked onchange="setInvisibleHand(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Battement rapproché (1–7.2 Hz) </span><input type="checkbox" class="sw" id="ck-rand-closebeat" checked onchange="setCloseBeatPair(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Détune Sinus Duo aléatoire </span><input type="checkbox" class="sw" id="ck-rand-dualsine" onchange="setRandDualSine(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Pré-mastering (filtres LPF/HPF/BPF) </span><input type="checkbox" class="sw" id="ck-rand-premaster" checked onchange="setPreMasterFilter(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0;"><span class="fx-label">FX aléatoire </span><input type="checkbox" class="sw" id="ck-rand-fx" checked onchange="setRandUseFX(this.checked)"></div>
-
-      <div class="fxq-sep"></div>
-      <div class="pct" style="font-size:.6rem;opacity:.65;margin:.25rem 0 .3rem;">Nouveaux modes</div>
-      <!-- #149 : chaque paire "s'allume" à un instant différent après un
-           tirage (chorégraphie de gain, jamais la fréquence/le ratio déjà
-           posés par le tirage normal) — off par défaut, effet marqué. -->
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Feu d'artifice binaural (ignition étalée) </span><input type="checkbox" class="sw" id="ck-fireworks" onchange="setFireworksIgnition(this.checked)"></div>
-      <!-- #150 : pulsation très lente (20-60s) en plus de la respiration
-           organique existante — off par défaut, se cumule à la respiration. -->
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Signature bol tibétain (pulsation lente) </span><input type="checkbox" class="sw" id="ck-bowlpulse" onchange="setBowlPulse(this.checked)"></div>
-      <!-- #151 : progression volontaire sur la durée — resserre doucement Δ
-           (plus stimulant → plus apaisant) sur 10/20/30 min, indépendant du
-           tirage aléatoire (touche uniquement les paires non verrouillées). -->
-      <div class="sl-row" style="align-items:center;gap:.4rem;">
-        <label style="font-size:.7rem;color:rgba(200,170,255,.7);flex-shrink:0;">Arc de session</label>
-        <select id="session-arc-duration" style="flex:0 0 auto;background:rgba(20,10,40,.6);color:#F0E0FF;border:1px solid rgba(200,170,255,.35);border-radius:6px;font-size:.72rem;padding:.25rem .3rem;">
-          <option value="10">10 min</option>
-          <option value="20" selected>20 min</option>
-          <option value="30">30 min</option>
-        </select>
-        <button id="btn-session-arc" class="btn-magic-rand" style="width:auto;flex:1;padding:.4rem .5rem;font-size:.66rem;letter-spacing:.08em;" onclick="toggleSessionArc(parseInt(document.getElementById('session-arc-duration').value,10))">Arc de session : OFF</button>
-      </div>
-    </div>
-  </details>
 </div>
 
 <!-- Panel : Presets — banques illimitées, renommables (droite) -->
@@ -3202,7 +3260,18 @@ const RATIO_OPTS = [
 // (toujours en bande "Delta" au sens neuro, cf. waveState()) : le battement
 // reste fin et stable, la variété vient désormais du detune Sinus Duo
 // appliqué à chaque oscillateur (cf. #10/#33, sine2Engine côté timbre).
-const DELTA_MIN = 0.8, DELTA_MAX = 1.2;
+//
+// #183 : réouvert à la demande explicite — plage binaurale RÉGLABLE À LA
+// MAIN (Δ global ET par oscillateur, cf. setDelta/setGlobalDelta) rendue
+// jusqu'à 72 Hz (au-delà même de l'ancienne plage 0,1-36 Hz), pas de 0,5.
+// DELTA_MIN/DELTA_MAX servent désormais de bornes pour la saisie manuelle
+// UNIQUEMENT — le tirage Aléatoire, lui, continue de piocher dans sa
+// propre plage étroite RANDOM_DELTA_MIN/MAX (0,8-1,2 Hz, caractère
+// inchangé) : élargir ce qu'on peut régler à la main ne change rien à ce
+// que le jeu aléatoire tire tout seul.
+const DELTA_MIN = 0.5, DELTA_MAX = 72;
+const DELTA_STEP = 0.5;
+const RANDOM_DELTA_MIN = 0.8, RANDOM_DELTA_MAX = 1.2;
 const DELTA_DEFAULT = 1.0;
 
 // #44 : volume UI 0-1 <-> volume interne (gain réel appliqué au node) —
@@ -3634,8 +3703,11 @@ let metaAngle = 0, masterRAF = null;
 let _waveBuf = null;
 let _spectroidBuf = null;
 const OSC_WAVES  = {}; // id → clé de OSC_ENGINES
-// #54 : onde par défaut = double sinusoïdale (Sin×2) sur tous les oscillateurs
-PAIRS.forEach(p => { OSC_WAVES[p.pingala.id] = 'sine2'; OSC_WAVES[p.ida.id] = 'sine2'; });
+// #182 : onde par défaut = Sinus pur (simple, 1 voix) sur tous les
+// oscillateurs — remplace l'ancien défaut Sin×2 (#54). Sin×2 reste
+// disponible via le menu par paire/le bouton de cycle, et continue de
+// pouvoir être tiré au sort en mode Aléatoire (WAVE_POOL).
+PAIRS.forEach(p => { OSC_WAVES[p.pingala.id] = 'sine'; OSC_WAVES[p.ida.id] = 'sine'; });
 const OSC_FILTER = {}; // id → {cutoff:Hz, res:Q}
 const OSC_ENV    = {}; // id → {a:attack s, r:release s}
 
@@ -5701,34 +5773,47 @@ function setSubDroneVol(v) {
   saveState();
 }
 
-// ── #181b : mode "Egocha Sage" ──────────────────────────────────────
-// Porteur d'ancrage fixe 432Hz (+ couche optionnelle 360Hz, -6dB) modulé
-// par un pouls (LFO d'amplitude, sinus pur) qui RALENTIT par paliers de
-// 90s selon le ratio de contraction 5/6 (0.15→0.125→0.1042→0.0868Hz)
-// tandis que sa profondeur MONTE sur la même cadence (40%→50%→60%→70%,
-// couplée au même palier — le prompt d'origine demandait "recalculée
-// toutes les 90s" pour les deux à la fois, interprété ici comme une
-// progression conjointe plutôt que deux horloges indépendantes non
-// spécifiées). Couche ADDITIVE, jamais branchée sur masterFreq/PAIRS —
-// 432Hz est ICI un repère fixe voulu, pas la fréquence maître courante
-// qui vagabonde au jeu aléatoire — n'interfère avec rien tant qu'elle
-// n'est pas explicitement activée (même connexion additive dans
-// masterGain que le sub-drone ci-dessus, cf. #16). 396Hz volontairement
-// exclu (facteur premier 11, élément "ouvert" — hors sujet ici).
-const EGOCHA_SAGE_STATE = { on: false, layer360: false };
+// ── #181b/#182 : mode "Egocha Sage" ─────────────────────────────────
+// #182 : demande explicite de retirer toute fréquence fixe (l'ancien
+// porteur d'ancrage 432Hz + la couche optionnelle 360Hz, -6dB) — on ne
+// garde QUE le pouls, c'est-à-dire le battement rythmique lui-même.
+// Remplacé le porteur tonal par une texture de souffle NEUTRE (bruit
+// blanc filtré passe-haut+passe-bas, sans hauteur perceptible — ni
+// 432Hz, ni 360Hz, ni aucune autre note) afin que le pouls reste
+// audible sans réintroduire de fréquence "de repère". Le mécanisme du
+// pouls lui-même est inchangé : LFO d'amplitude, sinus pur, qui
+// RALENTIT par paliers de 90s selon le ratio de contraction 5/6
+// (0.15→0.125→0.1042→0.0868Hz) tandis que sa profondeur MONTE sur la
+// même cadence (40%→50%→60%→70%, couplée au même palier). Couche
+// ADDITIVE, jamais branchée sur masterFreq/PAIRS, n'interfère avec
+// rien tant qu'elle n'est pas explicitement activée (même connexion
+// additive dans masterGain que le sub-drone ci-dessus, cf. #16).
+const EGOCHA_SAGE_STATE = { on: false };
 const EGOCHA_PULSE_STEPS = [0.15, 0.125, 0.1042, 0.0868]; // paliers ratio 5/6
 const EGOCHA_DEPTH_STEPS = [0.40, 0.50, 0.60, 0.70];       // montée progressive, même cadence
 const EGOCHA_STEP_MS  = 90000;
 const EGOCHA_FADE_IN  = 20, EGOCHA_FADE_OUT = 15; // secondes
-const EGOCHA_LVL_432  = 0.22, EGOCHA_LVL_360 = 0.22 * 0.501; // 0.501 ≈ -6dB
-let _egocha = null; // { osc432,gain432, osc360,gain360, lfo,lfoDepth,tremGain,envGain, stepTimer }
+const EGOCHA_LVL = 0.22; // niveau de la texture de souffle
+let _egocha = null; // { noiseSrc,noiseGain,noiseHpf,noiseLpf, lfo,lfoDepth,tremGain,envGain, stepTimer }
 
-function _egochaBuildLayer(freq, level) {
+// Bruit blanc en boucle (4s, assez long pour qu'aucun motif de
+// répétition ne s'entende), passé par un passe-haut + passe-bas doux :
+// une texture "souffle" chaude et neutre, jamais une note ni un
+// sifflement — c'est délibérément SANS hauteur, à l'inverse de l'ancien
+// porteur 432/360Hz que ce correctif retire.
+function _egochaBuildNoise(level) {
   const c = audioCtx();
-  const osc = c.createOscillator(); osc.type = 'sine'; osc.frequency.value = freq;
+  const len = c.sampleRate * 4;
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource(); src.buffer = buf; src.loop = true;
+  const hpf = c.createBiquadFilter(); hpf.type = 'highpass'; hpf.frequency.value = 120; hpf.Q.value = 0.707;
+  const lpf = c.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 900; lpf.Q.value = 0.707;
   const g = c.createGain(); g.gain.value = level;
-  osc.connect(g); osc.start();
-  return { osc, gain: g };
+  src.connect(hpf); hpf.connect(lpf); lpf.connect(g);
+  src.start();
+  return { src, hpf, lpf, gain: g };
 }
 // Tremolo doux : tremGain.gain = (1-profondeur/2) + (profondeur/2)·sin(2π f t)
 // — oscille toujours SOUS le niveau plein (jamais au-dessus), donc jamais
@@ -5763,16 +5848,14 @@ function _startEgochaSage() {
   _stopEgochaSage();
   const c = audioCtx(), t = aNow();
 
-  const l432 = _egochaBuildLayer(432, EGOCHA_LVL_432);
-  const l360 = EGOCHA_SAGE_STATE.layer360 ? _egochaBuildLayer(360, EGOCHA_LVL_360) : null;
+  const noise = _egochaBuildNoise(EGOCHA_LVL);
 
   const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = EGOCHA_PULSE_STEPS[0];
   const lfoDepth = c.createGain(); lfoDepth.gain.value = EGOCHA_DEPTH_STEPS[0] / 2;
   const tremGain = c.createGain(); tremGain.gain.value = 1 - EGOCHA_DEPTH_STEPS[0] / 2;
   lfo.connect(lfoDepth); lfoDepth.connect(tremGain.gain); lfo.start();
 
-  l432.gain.connect(tremGain);
-  if (l360) l360.gain.connect(tremGain);
+  noise.gain.connect(tremGain);
 
   const envGain = c.createGain();
   envGain.gain.setValueAtTime(0, t);
@@ -5780,8 +5863,7 @@ function _startEgochaSage() {
   tremGain.connect(envGain); envGain.connect(masterGain);
 
   _egocha = {
-    osc432: l432.osc, gain432: l432.gain,
-    osc360: l360 && l360.osc, gain360: l360 && l360.gain,
+    noiseSrc: noise.src, noiseGain: noise.gain, noiseHpf: noise.hpf, noiseLpf: noise.lpf,
     lfo, lfoDepth, tremGain, envGain, stepTimer: null
   };
   _egochaScheduleSteps();
@@ -5799,8 +5881,8 @@ function _stopEgochaSage() {
   _egocha = null;
   setTimeout(() => {
     try {
-      e.osc432.stop(); e.osc432.disconnect(); e.gain432.disconnect();
-      if (e.osc360) { e.osc360.stop(); e.osc360.disconnect(); e.gain360.disconnect(); }
+      e.noiseSrc.stop(); e.noiseSrc.disconnect();
+      e.noiseHpf.disconnect(); e.noiseLpf.disconnect(); e.noiseGain.disconnect();
       e.lfo.stop(); e.lfo.disconnect(); e.lfoDepth.disconnect();
       e.tremGain.disconnect(); e.envGain.disconnect();
     } catch(err) {}
@@ -5809,29 +5891,7 @@ function _stopEgochaSage() {
 function setEgochaSage(v) {
   EGOCHA_SAGE_STATE.on = !!v;
   const ck = document.getElementById('ck-egocha-sage'); if (ck) ck.checked = EGOCHA_SAGE_STATE.on;
-  const sub = document.getElementById('egocha-360-row'); if (sub) sub.style.display = EGOCHA_SAGE_STATE.on ? '' : 'none';
   if (flowing) { if (EGOCHA_SAGE_STATE.on) _startEgochaSage(); else _stopEgochaSage(); }
-  saveState();
-}
-function setEgocha360(v) {
-  EGOCHA_SAGE_STATE.layer360 = !!v;
-  const ck = document.getElementById('ck-egocha-360'); if (ck) ck.checked = EGOCHA_SAGE_STATE.layer360;
-  // Bascule à chaud sans redémarrer toute la couche (ne casse pas un
-  // fade-in/pouls déjà en cours si l'utilisateur change d'avis en session).
-  if (_egocha) {
-    if (EGOCHA_SAGE_STATE.layer360 && !_egocha.osc360) {
-      const l360 = _egochaBuildLayer(360, 0);
-      l360.gain.gain.setValueAtTime(0, aNow());
-      l360.gain.gain.linearRampToValueAtTime(EGOCHA_LVL_360, aNow() + 1.5);
-      l360.gain.connect(_egocha.tremGain);
-      _egocha.osc360 = l360.osc; _egocha.gain360 = l360.gain;
-    } else if (!EGOCHA_SAGE_STATE.layer360 && _egocha.osc360) {
-      const osc = _egocha.osc360, g = _egocha.gain360;
-      _egocha.osc360 = null; _egocha.gain360 = null;
-      try { g.gain.setTargetAtTime(0, aNow(), 0.4); } catch(e) {}
-      setTimeout(() => { try { osc.stop(); osc.disconnect(); g.disconnect(); } catch(e) {} }, 900);
-    }
-  }
   saveState();
 }
 
@@ -6986,14 +7046,21 @@ function setRatio(i, ri) {
   saveState();
 }
 function setDelta(i, raw) {
-  // #35 : Δ verrouillé en bande Delta profonde (0.8-1.2 Hz) — cf. DELTA_MIN/MAX
-  const d = Math.round(Math.max(DELTA_MIN, Math.min(DELTA_MAX, parseFloat(raw))) * 100) / 100;
+  // #183 : plage manuelle réouverte jusqu'à 72Hz (cf. DELTA_MIN/MAX) —
+  // arrondi à 0,1 Hz pour la saisie clavier libre, le pas de 0,5 exact
+  // vient des boutons ± (deltaStepPair) juste à côté.
+  const d = Math.round(Math.max(DELTA_MIN, Math.min(DELTA_MAX, parseFloat(raw))) * 10) / 10;
   if (isNaN(d)) return;
   PAIRS[i].ida.delta = d;
   updatePairUI(i);
   refreshBinauralPan(); // #1 : ré-écarte Pingala/Ida si Δ dépasse ~2 Hz (anti-tremolo)
   if (flowing) swapIDebounced(i);
   saveState();
+}
+// #183 : pas fixe de 0,5 Hz par oscillateur, pour les flèches ← / → du
+// menu rapide (mêmes bornes DELTA_MIN/MAX que setDelta ci-dessus).
+function deltaStepPair(i, delta) {
+  setDelta(i, Math.max(DELTA_MIN, Math.min(DELTA_MAX, PAIRS[i].ida.delta + delta)));
 }
 function togglePolarity(i) {
   PAIRS[i].ida.polarity *= -1;
@@ -7140,10 +7207,23 @@ function setMasterFreq(f) {
 // panneau Effet Audio → Réglages avancés (master-input/masterStep).
 
 function deltaStep(delta) {
-  setGlobalDelta(Math.round(Math.max(DELTA_MIN, Math.min(DELTA_MAX, globalDelta + delta)) * 100) / 100);
+  setGlobalDelta(Math.round(Math.max(DELTA_MIN, Math.min(DELTA_MAX, globalDelta + delta)) * 10) / 10);
+}
+// #183 : flèches ← / → du clavier = pas de 0,5 Hz sur le champ Δ (au lieu
+// du déplacement de curseur par défaut d'un <input type=number>) — même
+// geste que les boutons ± juste à côté, pour qui préfère le clavier.
+// pairIdx===null → champ Δ global (deltaStep), sinon Δ de l'oscillateur pairIdx (deltaStepPair).
+function deltaArrowKey(e, pairIdx) {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  e.preventDefault();
+  const delta = e.key === 'ArrowLeft' ? -DELTA_STEP : DELTA_STEP;
+  if (pairIdx === null) deltaStep(delta); else deltaStepPair(pairIdx, delta);
 }
 function setGlobalDelta(raw) {
-  const d = Math.round(Math.max(DELTA_MIN, Math.min(DELTA_MAX, parseFloat(raw))) * 100) / 100;
+  // #183 : arrondi à 0,1 Hz pour la saisie clavier libre (précision
+  // suffisante sur une plage montée à 72Hz) — le pas de 0,5 exact vient
+  // des boutons ± ci-dessus (deltaStep), pas d'un arrondi forcé ici.
+  const d = Math.round(Math.max(DELTA_MIN, Math.min(DELTA_MAX, parseFloat(raw))) * 10) / 10;
   if (isNaN(d)) return;
   globalDelta = d;
   PAIRS.forEach((pair, i) => {
@@ -8504,6 +8584,42 @@ function drawSpectroidBar() {
 }
 const drawSpectroid = drawSpectroidBar;
 
+// ── #183 : mini-notice "?" — badge + bulle d'explication réutilisables ──
+// iq(text) renvoie le badge HTML (utilisable dans les template strings
+// JS ci-dessous) ; le markup statique (onglet Aléatoire) écrit le même
+// motif directement dans le HTML. Un seul showInfoNote gère l'ouverture/
+// fermeture (toggle sur le même badge, fermeture au tap ailleurs ou
+// Escape, jamais plus d'une bulle ouverte à la fois).
+// Texte porté par data-info (attribut HTML, pas un argument JS) : évite
+// tout souci d'échappement d'apostrophes dans les textes en français.
+function iq(text) {
+  return `<button type="button" class="info-q" data-info="${text.replace(/"/g, '&quot;')}" onclick="event.stopPropagation();showInfoNote(this)">?</button>`;
+}
+let _infoNoteEl = null;
+function _closeInfoNote() {
+  if (_infoNoteEl) { _infoNoteEl.remove(); _infoNoteEl = null; }
+}
+function showInfoNote(btn) {
+  const wasOpen = _infoNoteEl && _infoNoteEl.dataset.forBtn === btn.dataset.iqid;
+  _closeInfoNote();
+  if (wasOpen) return; // re-tap sur le même badge = referme seulement
+  if (!btn.dataset.iqid) btn.dataset.iqid = 'iq' + Math.random().toString(36).slice(2);
+  const note = document.createElement('div');
+  note.className = 'info-note';
+  note.dataset.forBtn = btn.dataset.iqid;
+  note.textContent = btn.dataset.info || '';
+  document.body.appendChild(note);
+  const r = btn.getBoundingClientRect();
+  const nw = note.offsetWidth, nh = note.offsetHeight;
+  let left = Math.min(Math.max(8, r.left - nw / 2 + r.width / 2), window.innerWidth - nw - 8);
+  let top = r.top - nh - 8;
+  if (top < 8) top = r.bottom + 8; // pas de place au-dessus → bascule en dessous
+  note.style.left = left + 'px'; note.style.top = top + 'px';
+  _infoNoteEl = note;
+}
+document.addEventListener('click', () => _closeInfoNote());
+document.addEventListener('keydown', e => { if (e.code === 'Escape') _closeInfoNote(); });
+
 // ── FX panel HTML — 9 améliorations ──────────────────────────────
 function buildMasterFXHTML() {
   return `<div class="fx-panel fx-compact">
@@ -8526,6 +8642,7 @@ function buildMasterFXHTML() {
     <div class="fx-block fx-quick">
       <div class="fxq-row">
         <span class="fxq-lbl">Gain</span>
+        ${iq("Volume général de tout le mix, avant les effets — le réinitialiser (↺) remet 70%.")}
         <input type="range" id="mvol-slider" class="fx-slider" min="0" max="1" step="0.01" value="0.70" oninput="setMasterVol(this.value)">
         <span class="fx-val-disp" id="mvol-val">70%</span>
         <button class="btn-reset sm" onclick="resetAll()" title="Réinitialiser">↺</button>
@@ -8534,14 +8651,14 @@ function buildMasterFXHTML() {
 
     <!-- 2e : EQ Graphique 6 bandes -->
     <div class="fx-block">
-      <div class="fx-title">EQ Graphique 6 bandes <span style="font-size:.66rem;font-weight:400;color:rgba(200,180,255,.5);">· glisser verticalement</span></div>
+      <div class="fx-title">EQ Graphique 6 bandes <span style="font-size:.66rem;font-weight:400;color:rgba(200,180,255,.5);">· glisser verticalement</span>${iq("Égaliseur à 6 bandes de fréquences — glisse verticalement sur une barre pour creuser ou renforcer cette plage.")}</div>
       <canvas id="eq2d-canvas" style="width:100%;height:100px;display:block;border-radius:8px;cursor:ns-resize;touch-action:none;"></canvas>
       <button class="btn-reset sm" style="margin-top:.3rem;" onclick="resetEQ()" title="Réinitialiser l'EQ (0 dB partout)">↺ Réinitialiser l'EQ</button>
     </div>
 
     <!-- 3e : tableau des 7 oscillateurs (déménagé depuis Options Aléatoire) -->
     <div class="fx-block">
-      <div class="fx-title">Oscillateurs (7)</div>
+      <div class="fx-title">Oscillateurs (7)${iq("Détail de chacun des 7 oscillateurs actifs : fréquence exacte, ratio, ×n, mute individuel, volume — et le Δ binaural propre à chacun via son menu ☰.")}</div>
       <div id="random-table" class="random-table"></div>
     </div>
 
@@ -8553,9 +8670,11 @@ function buildMasterFXHTML() {
     <details class="fx-acc">
       <summary>Réglages avancés</summary>
       <div class="fx-block fx-quick fx-acc-body">
+        <div class="rand-cat">DYNAMIQUE &amp; RESPIRATION</div>
         <!-- Réglages avancés du Gain : fondu d'entrée/sortie + respiration organique -->
         <div class="fx-row"><div class="fx-control-group" style="flex:1">
           <span class="fx-label">Fondu</span>
+          ${iq("Durée du fondu d'entrée/sortie quand tu démarres (Rayonner) ou arrêtes (Dissoudre) le flux.")}
           <input type="range" class="fx-slider" id="fadeDur" min="0.5" max="15" step="0.5" value="2" oninput="setFadeDur(this.value)">
           <span class="fx-val-disp" id="sv-fade">2.0s</span>
         </div></div>
@@ -8564,27 +8683,26 @@ function buildMasterFXHTML() {
              interne, active par défaut, mais sans aucun contrôle visible ; elle
              prend maintenant cette place, plus douce et agréable. -->
         <div class="fx-row" style="justify-content:space-between;align-items:center;">
-          <span class="fx-label">Respiration organique</span>
+          <span class="fx-label">Respiration organique${iq("Le volume ondule doucement tout seul, comme une respiration — rythme et profondeur juste en dessous.")}</span>
           <label class="fx-toggle"><input type="checkbox" id="gbreath-on" checked onchange="breathToggle(this.checked)"><span class="fx-tog-track"></span></label>
         </div>
         <div class="fx-row">
           <div class="fx-control-group"><span class="fx-label">Rythme</span>
+            ${iq("Vitesse de la respiration organique, en cycles par minute.")}
             <input type="range" class="fx-slider" id="gbreath-rate" min="0.02" max="0.5" step="0.01" value="0.11" oninput="breathSet('rate',this.value)">
             <span class="fx-val-disp" id="sv-gbreath-rate">6.6 /min</span></div>
           <div class="fx-control-group"><span class="fx-label">Profond.</span>
+            ${iq("Amplitude de l'ondulation de volume de la respiration organique.")}
             <input type="range" class="fx-slider" id="gbreath-depth" min="0.01" max="0.5" step="0.01" value="0.18" oninput="breathSet('depth',this.value)">
             <span class="fx-val-disp" id="sv-gbreath-depth">0.18</span></div>
         </div>
-        <!-- #3 : Détune Sinus Duo (moteur "sine2") — écart -72..+72 ¢ entre les 2 voix -->
-        <div class="fxq-row"><span class="fxq-lbl">Sinus Duo</span>
-          <input type="range" class="fx-slider" id="dualsine-detune" min="-72" max="72" step="1" value="0" oninput="setDualSineDetune(this.value)">
-          <span class="fx-val-disp" id="sv-dualsine">±0 ¢</span></div>
         <!-- Dérive lente du battement (Δ) — session vivante, jamais un saut de bande -->
         <div class="fx-row" style="justify-content:space-between;align-items:center;">
-          <span class="fx-label">Dérive lente du Δ (session vivante)</span>
+          <span class="fx-label">Dérive lente du Δ (session vivante)${iq("Le battement binaural (Δ) ondule légèrement tout seul au fil de la session, pour éviter un son figé.")}</span>
           <label class="fx-toggle"><input type="checkbox" id="ck-delta-drift" checked onchange="setDeltaDrift(this.checked)"><span class="fx-tog-track"></span></label>
         </div>
         <div class="fxq-row"><span class="fxq-lbl">Amplitude</span>
+          ${iq("Amplitude de cette dérive lente du battement.")}
           <input type="range" class="fx-slider" min="0.05" max="1" step="0.05" value="0.3" oninput="setDeltaDriftAmount(this.value)">
           <span class="fx-val-disp" id="sv-delta-drift">±0.30 Hz</span></div>
         <!-- #166 : Mode Retour — LFO doux (par paire) + LFO détune Hz sur
@@ -8592,66 +8710,84 @@ function buildMasterFXHTML() {
              en 2s) rendue douce/évolutive/aérienne plutôt que statique.
              Accessible aussi directement depuis l'horloge OmchaWatch. -->
         <div class="fx-row" style="justify-content:space-between;align-items:center;">
-          <span class="fx-label">Mode Retour (zone 288-432Hz animée)</span>
+          <span class="fx-label">Mode Retour (zone 288-432Hz animée)${iq("Anime doucement la zone 288-432Hz par paire — pensé pour un retour en douceur en fin de session.")}</span>
           <label class="fx-toggle"><input type="checkbox" id="ck-retour-mode" onchange="toggleRetourMode(this.checked)"><span class="fx-tog-track"></span></label>
         </div>
+
         <div class="fxq-sep"></div>
+        <div class="rand-cat">TIMBRE</div>
+        <!-- #3 : Détune Sinus Duo (moteur "sine2") — écart -72..+72 ¢ entre les 2 voix -->
+        <div class="fxq-row"><span class="fxq-lbl">Sinus Duo</span>
+          ${iq("Écart en cents entre les deux voix d'un oscillateur en timbre Sinus Duo — 0 = voix confondues, plus large = battement interne audible.")}
+          <input type="range" class="fx-slider" id="dualsine-detune" min="-72" max="72" step="1" value="0" oninput="setDualSineDetune(this.value)">
+          <span class="fx-val-disp" id="sv-dualsine">±0 ¢</span></div>
+
+        <div class="fxq-sep"></div>
+        <div class="rand-cat">FRÉQUENCE &amp; BINAURAL</div>
         <!-- Fréquence maître -->
         <div class="fxq-row">
           <span class="fxq-lbl">Maître</span>
+          ${iq("Fréquence de la sphère centrale (la racine) — les autres oscillateurs se positionnent par rapport à elle.")}
           <button class="fxq-step" onclick="masterStep(-1)">−</button>
           <input type="number" id="master-input" class="fxq-num" min="54" max="475" value="252" step="1" oninput="onMasterInput(this.value)" onchange="onMasterChange(this.value)">
           <button class="fxq-step" onclick="masterStep(1)">+</button>
           <span class="fxq-unit">Hz</span>
         </div>
-        <!-- #35 : Battement binaural verrouillé en bande Delta profonde, ±0,02 -->
+        <!-- #183 : plage réouverte 0,5-72Hz (pas 0,5) — cf. DELTA_MIN/MAX -->
         <div class="fxq-row">
           <span class="fxq-lbl">Binaural</span>
-          <button class="fxq-step" onclick="deltaStep(-0.02)">−</button>
-          <input type="number" id="global-delta-input" class="fxq-num" min="0.8" max="1.2" step="0.02" value="1.0" oninput="setGlobalDelta(this.value)" onchange="setGlobalDelta(this.value)">
-          <button class="fxq-step" onclick="deltaStep(0.02)">+</button>
+          ${iq("Écart de fréquence entre les deux oreilles, pour toutes les paires à la fois (0,5 à 72Hz, pas de 0,5). Chaque oscillateur a aussi son propre écart réglable via son menu ☰ dans le tableau ci-dessus.")}
+          <button class="fxq-step" onclick="deltaStep(-0.5)" title="−0.5 Hz">−</button>
+          <input type="number" id="global-delta-input" class="fxq-num" min="0.5" max="72" step="0.5" value="1.0" oninput="setGlobalDelta(this.value)" onchange="setGlobalDelta(this.value)" onkeydown="deltaArrowKey(event,null)">
+          <button class="fxq-step" onclick="deltaStep(0.5)" title="+0.5 Hz">+</button>
           <span class="fxq-wave" id="global-ws">Delta</span>
         </div>
         <!-- #1 : écart stéréo Pingala/Ida appliqué au Δ courant (anti-tremolo) -->
         <div class="fxq-row" style="font-size:.62rem;color:rgba(200,170,255,.45);font-style:italic;justify-content:flex-end;">
           <span>Séparation anti-tremolo&nbsp;: <span id="sv-binaural-sep" style="color:#63E6FF;">32%</span></span>
         </div>
+
+        <div class="fxq-sep"></div>
+        <div class="rand-cat">CASQUE &amp; COMPRESSION</div>
         <!-- #5 : Pingala 100% gauche / Ida 100% droite pour toutes les paires -->
         <div class="fx-row" style="justify-content:space-between;align-items:center;">
-          <span class="fx-label">Mode casque strict (zéro crosstalk)</span>
+          <span class="fx-label">Mode casque strict (zéro crosstalk)${iq("Chaque oreille entend exclusivement son propre oscillateur (Pingala à gauche, Ida à droite), sans fuite vers l'autre canal — pensé pour un casque, pas des enceintes.")}</span>
           <label class="fx-toggle"><input type="checkbox" id="ck-strict-headphone" checked onchange="setStrictHeadphone(this.checked)"><span class="fx-tog-track"></span></label>
         </div>
         <!-- #11 : compression douce anti-pompage par paire (bus dédié) -->
         <div class="fx-row" style="justify-content:space-between;align-items:center;">
-          <span class="fx-label">Anti-pompage par paire (doux)</span>
+          <span class="fx-label">Anti-pompage par paire (doux)${iq("Compression douce dédiée à chaque paire, pour éviter un effet de pompage quand plusieurs oscillateurs se chevauchent.")}</span>
           <label class="fx-toggle"><input type="checkbox" id="ck-pair-comp" checked onchange="setPairCompression(this.checked)"><span class="fx-tog-track"></span></label>
         </div>
+
+        <div class="fxq-sep"></div>
+        <div class="rand-cat">COUCHES ADDITIVES</div>
         <!-- #16 : sub-drone d'ancrage — pad grave fixe (racine ÷ 2), non touché par le random -->
         <div class="fx-row" style="justify-content:space-between;align-items:center;">
-          <span class="fx-label">Sub-drone d'ancrage (racine ÷ 2)</span>
+          <span class="fx-label">Sub-drone d'ancrage (racine ÷ 2)${iq("Pad grave fixe, une octave sous la racine — un ancrage discret, jamais touché par le tirage aléatoire.")}</span>
           <label class="fx-toggle"><input type="checkbox" id="ck-subdrone" checked onchange="setSubDrone(this.checked)"><span class="fx-tog-track"></span></label>
         </div>
         <div class="fxq-row"><span class="fxq-lbl">Volume sub</span>
+          ${iq("Volume du sub-drone d'ancrage ci-dessus.")}
           <input type="range" class="fx-slider" min="0" max="0.25" step="0.01" value="0.05" oninput="setSubDroneVol(this.value)">
           <span class="fx-val-disp" id="sv-subdrone-vol">5%</span></div>
-        <!-- #181b : mode "Egocha Sage" — porteur 432Hz fixe + pouls qui
-             ralentit et s'approfondit par paliers de 90s. Couche additive
-             indépendante de la matrice, off par défaut (même esprit que
-             les autres modes spéciaux ci-dessus : rien d'actif tant qu'on
-             ne le demande pas explicitement). -->
+        <!-- #181b/#182 : mode "Egocha Sage" — plus aucune fréquence fixe
+             (l'ancrage 432Hz + couche 360Hz ont été retirés à la demande) :
+             ne reste que le POULS lui-même, un souffle neutre filtré (sans
+             hauteur perceptible) qui ralentit et s'approfondit par paliers
+             de 90s. Couche additive indépendante de la matrice, off par
+             défaut (même esprit que les autres modes spéciaux ci-dessus :
+             rien d'actif tant qu'on ne le demande pas explicitement). -->
         <div class="fx-row" style="justify-content:space-between;align-items:center;">
-          <span class="fx-label">Egocha Sage (432Hz + pouls)</span>
+          <span class="fx-label">Egocha Sage (souffle + pouls rythmique)${iq("Souffle neutre, sans hauteur perceptible, modulé par un pouls qui ralentit et s'approfondit par paliers de 90 secondes — une présence rythmique discrète, en plus du reste.")}</span>
           <label class="fx-toggle"><input type="checkbox" id="ck-egocha-sage" onchange="setEgochaSage(this.checked)"><span class="fx-tog-track"></span></label>
-        </div>
-        <div class="fx-row" id="egocha-360-row" style="justify-content:space-between;align-items:center;padding-left:1rem;display:none;">
-          <span class="fx-label" style="font-size:.68rem;opacity:.75;">+ couche 360Hz (-6dB)</span>
-          <label class="fx-toggle"><input type="checkbox" id="ck-egocha-360" onchange="setEgocha360(this.checked)"><span class="fx-tog-track"></span></label>
         </div>
       </div>
     </details>
 
     <div class="fx-block fx-quick">
       <div class="fxq-row"><span class="fxq-lbl">Effet</span>
+        ${iq("Intensité générale des effets ci-dessous (Delay, Ping-Pong, Espace) — un seul curseur pour tout doser d'un coup.")}
         <input type="range" class="fx-slider" id="fxIntensity" min="0" max="1" step="0.02" value="0.3" oninput="setFXIntensity(this.value)">
         <span class="fx-val-disp" id="sv-fxint">30%</span></div>
     </div>
@@ -8659,31 +8795,45 @@ function buildMasterFXHTML() {
     <details class="fx-acc">
       <summary>Delay, Ping-Pong, Espace</summary>
       <div class="fx-block fx-quick fx-acc-body">
-        <div class="fxq-row"><span class="fxq-lbl">Delay</span>
+        <div class="rand-cat">DELAY</div>
+        <div class="fxq-row"><span class="fxq-lbl">Volume</span>
+          ${iq("Volume de l'écho (delay) mélangé au son sec.")}
           <input type="range" class="fx-slider" id="delayWet" min="0" max="1" step="0.02" value="0" oninput="updateFX('delayWet',this.value)">
           <span class="fx-val-disp" id="delayWet-val">0%</span></div>
         <!-- Réglages avancés du Delay : temps / feedback -->
         <div class="fx-row">
           <div class="fx-control-group"><span class="fx-label">Temps</span>
+            ${iq("Durée entre chaque répétition de l'écho.")}
             <input type="range" class="fx-slider" id="delayTime" min="0.04" max="1.5" step="0.01" value="0.3" oninput="updateFX('delayTime',this.value)">
             <span class="fx-val-disp" id="delayTime-val">0.30s</span></div>
           <div class="fx-control-group"><span class="fx-label">Feedback</span>
+            ${iq("Combien chaque répétition ré-injecte dans la suivante — plus haut, l'écho dure plus longtemps.")}
             <input type="range" class="fx-slider" id="delayFeedback" min="0" max="0.85" step="0.01" value="0.3" oninput="updateFX('delayFeedback',this.value)">
             <span class="fx-val-disp" id="delayFeedback-val">30%</span></div>
         </div>
-        <div class="fxq-row"><span class="fxq-lbl">Ping-Pong</span>
+
+        <div class="fxq-sep"></div>
+        <div class="rand-cat">PING-PONG</div>
+        <div class="fxq-row"><span class="fxq-lbl">Volume</span>
+          ${iq("Volume de l'écho ping-pong, qui rebondit de gauche à droite.")}
           <input type="range" class="fx-slider" id="ppWetSlider" min="0" max="1" step="0.02" value="0" oninput="setPingPongWet(this.value);document.getElementById('ppWet-val').textContent=Math.round(this.value*100)+'%'">
           <span class="fx-val-disp" id="ppWet-val">0%</span></div>
         <!-- Réglages avancés du Ping-Pong : temps / feedback -->
         <div class="fx-row">
           <div class="fx-control-group"><span class="fx-label">Temps</span>
+            ${iq("Durée entre chaque rebond gauche/droite.")}
             <input type="range" class="fx-slider" id="ppTime" min="0.04" max="1.5" step="0.01" value="0.25" oninput="setPingPongTime(this.value);document.getElementById('ppTime-val').textContent=parseFloat(this.value).toFixed(2)+'s'">
             <span class="fx-val-disp" id="ppTime-val">0.25s</span></div>
           <div class="fx-control-group"><span class="fx-label">Feedback</span>
+            ${iq("Combien chaque rebond ré-injecte dans le suivant.")}
             <input type="range" class="fx-slider" id="ppFb" min="0" max="0.85" step="0.01" value="0.35" oninput="setPingPongFb(this.value);document.getElementById('ppFb-val').textContent=Math.round(this.value*100)+'%'">
             <span class="fx-val-disp" id="ppFb-val">35%</span></div>
         </div>
+
+        <div class="fxq-sep"></div>
+        <div class="rand-cat">ESPACE</div>
         <div class="fxq-row"><span class="fxq-lbl">Espace</span>
+          ${iq("Élargissement stéréo — répartit davantage les oscillateurs entre gauche et droite.")}
           <input type="range" class="fx-slider" id="randSpread" min="0" max="1" step="0.02" value="0.6" oninput="setRandSpread(this.value)">
           <span class="fx-val-disp" id="sv-spread">60%</span></div>
       </div>
@@ -8999,13 +9149,17 @@ function buildPairHTML(pair, i) {
         </div>
         <div class="bctrl">
           <div class="bctrl-row">
-            <span class="bctrl-label">Δ Binaural</span>
+            <span class="bctrl-label">Δ Binaural${iq("Écart de fréquence entre les deux oreilles pour CET oscillateur uniquement (0,5 à 72Hz, pas de 0,5) — indépendant du Δ global.")}</span>
             <span class="wave-state" id="bws-${i}" style="color:${ws.c}">${ws.s}</span>
           </div>
+          <!-- #183 : plage réouverte 0,5-72Hz — flèches ± pas de 0,5 Hz
+               (deltaStepPair) ou saisie clavier libre (setDelta). -->
           <div class="param-row">
             <span class="param-label">Δ =</span>
-            <input type="number" class="param-input" id="bd-${i}" min="0.8" max="1.2" step="0.02" value="${pair.ida.delta}" oninput="setDelta(${i},this.value)">
-            <span class="param-hint">Hz (0.8 → 1.2)</span>
+            <button class="fxq-step" onclick="deltaStepPair(${i},-0.5)" title="−0.5 Hz">−</button>
+            <input type="number" class="param-input" id="bd-${i}" min="0.5" max="72" step="0.5" value="${pair.ida.delta}" oninput="setDelta(${i},this.value)" onkeydown="deltaArrowKey(event,${i})">
+            <button class="fxq-step" onclick="deltaStepPair(${i},0.5)" title="+0.5 Hz">+</button>
+            <span class="param-hint">Hz (0.5 → 72)</span>
           </div>
         </div>
       </div>
@@ -9394,7 +9548,8 @@ function loadState() {
     }
     if (s.egochaSage && typeof s.egochaSage==='object') { // #181b
       if (typeof s.egochaSage.on==='boolean') EGOCHA_SAGE_STATE.on = s.egochaSage.on;
-      if (typeof s.egochaSage.layer360==='boolean') EGOCHA_SAGE_STATE.layer360 = s.egochaSage.layer360;
+      // layer360 (ancienne couche 360Hz) volontairement ignoré si présent
+      // dans un état sauvegardé plus ancien — retiré en #182.
     }
     if (typeof s.deltaCharacter==='string' && DELTA_CHARACTER[s.deltaCharacter]) DELTA_CHARACTER_MODE = s.deltaCharacter;
     if (typeof s.breathAnchor==='boolean') BREATH_ANCHOR_STATE.on = s.breathAnchor;
@@ -9449,8 +9604,6 @@ function _syncRandOptsUI() {
   const sdv = document.getElementById('sv-subdrone-vol'); if (sdv) sdv.textContent = Math.round(SUBDRONE_STATE.vol * 100) + '%';
   const sdSlider = document.querySelector('input[oninput="setSubDroneVol(this.value)"]'); if (sdSlider) sdSlider.value = SUBDRONE_STATE.vol;
   setCk('ck-egocha-sage', EGOCHA_SAGE_STATE.on); // #181b
-  setCk('ck-egocha-360', EGOCHA_SAGE_STATE.layer360);
-  const egRow = document.getElementById('egocha-360-row'); if (egRow) egRow.style.display = EGOCHA_SAGE_STATE.on ? '' : 'none';
   // Ratio (dropdown + case on/off) et Caractère du battement (dropdown +
   // case on/off) — indépendants l'un de l'autre, chacun persistant.
   const ratioSel = document.getElementById('rand-ratio-select'); if (ratioSel) ratioSel.value = RAND_OPTS.ratioMode;
@@ -9546,8 +9699,9 @@ function globalHarmonicRandom() {
   harmonicRandomInit();
   PAIRS.forEach((pair, i) => {
     pair.pingala.ri = Math.floor(Math.random() * RATIO_OPTS.length);
-    // #35 : Δ resserré 0.8-1.2 Hz (cf. DELTA_MIN/DELTA_MAX)
-    pair.ida.delta = Math.round((DELTA_MIN + Math.random() * (DELTA_MAX - DELTA_MIN)) * 100) / 100;
+    // #35 : Δ resserré 0.8-1.2 Hz — reste sur RANDOM_DELTA_MIN/MAX même
+    // depuis que DELTA_MIN/MAX (saisie manuelle) sont montés à 72Hz (#183).
+    pair.ida.delta = Math.round((RANDOM_DELTA_MIN + Math.random() * (RANDOM_DELTA_MAX - RANDOM_DELTA_MIN)) * 100) / 100;
   });
   updateDisplay();
   if (flowing) PAIRS.forEach((_,i) => { tuneOsc(PAIRS[i].pingala.id,calcPFreq(i)); tuneOsc(PAIRS[i].ida.id,calcIFreq(i)); });
@@ -11072,6 +11226,12 @@ document.addEventListener('keydown', e => {
   if (e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
   if (e.code==='Space')  { e.preventDefault(); fbfToggle(); }
   if (e.code==='Escape') { closeOscModal(); closePanel(); }
+  // #183 : raccourci clavier pour saisir la fréquence maître au clavier
+  // directement, sans avoir à taper précisément sur le chiffre affiché
+  // dans la sphère (openFreqEdit ouvre le même champ que le tap sur
+  // #ms-freq). "F" comme "Fréquence" — libre, aucun autre raccourci
+  // n'utilise cette touche.
+  if (e.code==='KeyF')   { e.preventDefault(); openFreqEdit(); }
 });
 
 // Message parent (Omcha396) → arrêt propre du flux + accusé de réception
