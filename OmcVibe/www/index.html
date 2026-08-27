@@ -5710,9 +5710,17 @@ window.addEventListener('resize', () => { if (document.body.classList.contains('
 // plus 2 en attente de retour simultanément), jamais le maître (toujours
 // l'ancre), et au moins 3 paires satellites restent audibles en
 // permanence — jamais de vide, jamais de chaos.
-const INVISIBLE_HAND_STATE = { on: true, minGap: 15, maxGap: 40, holdMin: 8, holdMax: 18, octaveChance: 0.45 };
+const INVISIBLE_HAND_STATE = { on: true, minGap: 15, maxGap: 40, holdMin: 8, holdMax: 18, octaveChance: 0.45, birthGapMin: 1.6, birthGapMax: 3.4 };
+// #187 : rythme plus doux quand le Mode Sonothérapie (#184) est actif —
+// coupures plus rares, absences plus courtes, sauts d'octave plus rares,
+// "naissance" solo plus longue avant la Trinité (cf. _ihReturn) : la Main
+// Invisible reste "jamais oppressante" même dans un mode pensé pour l'être.
+const IH_SONO_PROFILE = { minGap: 26, maxGap: 55, holdMin: 6, holdMax: 12, octaveChance: 0.2, birthGapMin: 2.5, birthGapMax: 5 };
+function _ihProfile() { return RAND_OPTS.sonoModeOn ? IH_SONO_PROFILE : INVISIBLE_HAND_STATE; }
+
 let _ihPickTimer = null;
-const _ihHeldBy = {}; // { [pairIdx]: returnTimeoutId } — paires actuellement coupées PAR la main
+const _ihHeldBy = {};      // { [pairIdx]: returnTimeoutId } — paires actuellement coupées PAR la main
+const _ihBirthTimers = {}; // { [pairIdx]: timeoutId } — paires en cours de renaissance progressive (#187)
 
 function _armInvisibleHand() {
   clearTimeout(_ihPickTimer); _ihPickTimer = null;
@@ -5721,14 +5729,16 @@ function _armInvisibleHand() {
 }
 function _ihScheduleNextPick() {
   clearTimeout(_ihPickTimer);
-  const s = INVISIBLE_HAND_STATE;
+  const s = _ihProfile();
   _ihPickTimer = setTimeout(_ihPickTick, (s.minGap + Math.random() * (s.maxGap - s.minGap)) * 1000);
 }
 // Coupe une paire manipulée manuellement (sphère tapée, solo…) pendant
-// qu'elle était tenue par la main : le contrôle explicite gagne toujours,
-// la main n'insiste jamais contre un geste de l'utilisateur.
+// qu'elle était tenue par la main OU en cours de renaissance (#187) : le
+// contrôle explicite gagne toujours, la main n'insiste jamais contre un
+// geste de l'utilisateur.
 function _ihRelease(i) {
   if (i in _ihHeldBy) { clearTimeout(_ihHeldBy[i]); delete _ihHeldBy[i]; }
+  if (i in _ihBirthTimers) { clearTimeout(_ihBirthTimers[i]); delete _ihBirthTimers[i]; }
 }
 function _ihPickTick() {
   if (!INVISIBLE_HAND_STATE.on || !flowing) return;
@@ -5736,11 +5746,17 @@ function _ihPickTick() {
   if (Object.keys(_ihHeldBy).length >= 2) return; // jamais plus de 2 paires coupées à la fois
   let audibleCount = 0;
   const eligible = [];
+  // #187 : en Mode Sonothérapie, les 2 harmoniques du triplet en cours
+  // (SONO_LAST_HARM_IDX) sont hors-jeu pour la main — seuls les 2
+  // oscillateurs d'accompagnement peuvent respirer, le triplet reste
+  // garanti audible en permanence (cohérence avec le jeu en cours).
+  const protectedIdx = RAND_OPTS.sonoModeOn ? SONO_LAST_HARM_IDX : [];
   for (let i = 0; i < 6; i++) {
     const p = PAIRS[i];
     const isAudible = !(mutedOscs[p.pingala.id] && mutedOscs[p.ida.id]);
     if (isAudible) audibleCount++;
-    if (isAudible && !(i in _ihHeldBy) && !(typeof isLocked === 'function' && isLocked(i))) eligible.push(i);
+    if (isAudible && !(i in _ihHeldBy) && !(i in _ihBirthTimers) && !protectedIdx.includes(i)
+        && !(typeof isLocked === 'function' && isLocked(i))) eligible.push(i);
   }
   if (audibleCount < 4 || !eligible.length) return; // toujours ≥3 audibles après la coupure
   _ihMute(eligible[Math.floor(Math.random() * eligible.length)]);
@@ -5753,16 +5769,23 @@ function _ihMute(i) {
   if (np) safeRamp(np.g.gain, 0, 1.2);
   if (ni) safeRamp(ni.g.gain, 0, 1.2);
   updatePairUI(i); updateOrbUI(i);
-  const s = INVISIBLE_HAND_STATE;
+  const s = _ihProfile();
   _ihHeldBy[i] = setTimeout(() => _ihReturn(i), (s.holdMin + Math.random() * (s.holdMax - s.holdMin)) * 1000);
 }
+// #187 : renaissance PROGRESSIVE plutôt qu'un retour "en bloc" — la paire
+// (pingala + ida) symbolise la dualité. Plutôt que de raviver les 2 voix au
+// même instant, UNE voix naît seule d'abord (résolution dans le silence,
+// elle respire un instant aux côtés du maître déjà présent), puis la
+// seconde la rejoint : leur réunion — maître, pingala, ida — referme le
+// cycle en Trinité. Qui "naît" en premier n'est jamais figé (50/50).
 function _ihReturn(i) {
   delete _ihHeldBy[i];
   if (!flowing) return; // le Flux s'est arrêté entre-temps : rien à ranimer
   const pair = PAIRS[i];
+  const prof = _ihProfile();
   // Le saut d'octave se fait ICI, paire encore muette — jamais de
   // glissando entendu, juste une redécouverte à une nouvelle hauteur.
-  if (Math.random() < INVISIBLE_HAND_STATE.octaveChance) {
+  if (Math.random() < prof.octaveChance) {
     const proposed = pair.pingala.n * (Math.random() < 0.5 ? 2 : 0.5);
     const rMin = Math.max(F_MIN, Math.min(RAND_OPTS.freqMin, 432));
     const rMax = Math.max(rMin + 1, Math.min(432, RAND_OPTS.freqMax));
@@ -5773,14 +5796,30 @@ function _ihReturn(i) {
       tuneOsc(pair.ida.id, calcIFreq(i));
     } // sinon : hors plage, on garde la hauteur telle quelle plutôt que de forcer
   }
-  const pid = pair.pingala.id, iid = pair.ida.id;
-  mutedOscs[pid] = false; mutedOscs[iid] = false;
-  const np = nodes[pid], ni = nodes[iid];
-  if (np) safeRamp(np.g.gain, pair.pingala.vol, 2.2);
-  if (ni) safeRamp(ni.g.gain, pair.ida.vol, 2.2);
-  updatePairUI(i); updateOrbUI(i); updateMasterState();
-  if (typeof patchRandomTable === 'function') patchRandomTable();
-  saveState();
+  // Phase 1 — Dualité : une seule voix se lève (l'autre reste muette).
+  const leadFirst = Math.random() < 0.5; // qui naît en premier — jamais figé
+  const firstId  = leadFirst ? pair.pingala.id : pair.ida.id;
+  const secondId = leadFirst ? pair.ida.id     : pair.pingala.id;
+  const firstVol  = leadFirst ? pair.pingala.vol : pair.ida.vol;
+  const secondVol = leadFirst ? pair.ida.vol     : pair.pingala.vol;
+  mutedOscs[firstId] = false;
+  const nFirst = nodes[firstId];
+  if (nFirst) safeRamp(nFirst.g.gain, firstVol, 2.4);
+  updatePairUI(i); updateOrbUI(i);
+
+  // Phase 2 — Trinité : après une respiration solo, la seconde voix
+  // rejoint la première — maître + pingala + ida réunis referment le cycle.
+  const birthGap = prof.birthGapMin + Math.random() * (prof.birthGapMax - prof.birthGapMin);
+  _ihBirthTimers[i] = setTimeout(() => {
+    delete _ihBirthTimers[i];
+    if (!flowing) return; // le Flux s'est arrêté entre-temps : rien à ranimer
+    mutedOscs[secondId] = false;
+    const nSecond = nodes[secondId];
+    if (nSecond) safeRamp(nSecond.g.gain, secondVol, 2.2);
+    updatePairUI(i); updateOrbUI(i); updateMasterState();
+    if (typeof patchRandomTable === 'function') patchRandomTable();
+    saveState();
+  }, birthGap * 1000);
 }
 function setInvisibleHand(v) {
   INVISIBLE_HAND_STATE.on = !!v;
@@ -5797,7 +5836,19 @@ function setInvisibleHand(v) {
       if (ni) safeRamp(ni.g.gain, pair.ida.vol, 1.5);
       updatePairUI(i); updateOrbUI(i);
     });
-    if (held.length) updateMasterState();
+    // #187 : idem pour une renaissance en cours — jamais une paire laissée
+    // à moitié née (une seule voix) si l'utilisateur coupe la main en route.
+    const birthing = Object.keys(_ihBirthTimers).map(Number);
+    birthing.forEach(i => { clearTimeout(_ihBirthTimers[i]); delete _ihBirthTimers[i]; });
+    birthing.forEach(i => {
+      const pair = PAIRS[i], pid = pair.pingala.id, iid = pair.ida.id;
+      mutedOscs[pid] = false; mutedOscs[iid] = false; // l'une des deux l'est peut-être déjà — idempotent
+      const np = nodes[pid], ni = nodes[iid];
+      if (np) safeRamp(np.g.gain, pair.pingala.vol, 1.5);
+      if (ni) safeRamp(ni.g.gain, pair.ida.vol, 1.5);
+      updatePairUI(i); updateOrbUI(i);
+    });
+    if (held.length || birthing.length) updateMasterState();
   }
   _armInvisibleHand();
   saveState();
@@ -6905,6 +6956,9 @@ const SONO_MODES = {
 };
 const SONO_STEP = 18;
 let SONO_MODE = 'contraction_douce';
+// #187 : indices (0-5) des 2 paires "harmoniques" du dernier tirage
+// Sonothérapie — lu par la Main Invisible pour les épargner (cf. plus bas).
+let SONO_LAST_HARM_IDX = [];
 function setSonoMode(mode) {
   if (!SONO_MODES[mode]) return;
   SONO_MODE = mode;
@@ -6957,6 +7011,10 @@ function _applySonoMode() {
   const harmIdx = shuffled.slice(0, 2);
   const accIdx  = shuffled.slice(2, 4);
   const restIdx = pool.filter(i => !harmIdx.includes(i) && !accIdx.includes(i));
+  // #187 : mémorise les 2 harmoniques du triplet — lus par la Main
+  // Invisible (cf. plus bas) pour ne JAMAIS les couper tant que ce mode
+  // est actif, seuls les 2 accompagnements restent "manipulables" par elle.
+  SONO_LAST_HARM_IDX = harmIdx.slice();
 
   const nonUnity = HARMONIC_RATIOS.filter(r => r !== 1);
   const harmRatios = _shuffle(nonUnity.slice()).slice(0, 2);
@@ -8195,6 +8253,15 @@ function triggerMagicAuto(opts) {
   // normal ci-dessus (il vient d'écraser ce que le tirage venait de poser),
   // uniquement si la case est cochée. Ne touche à rien si off.
   if (RAND_OPTS.sonoModeOn) _applySonoMode();
+  // #187 : réarme la Main Invisible sur CHAQUE nouveau jeu (tirage aléatoire,
+  // jeu depuis sample — sampleAutoGame() passe par ici — Sonothérapie
+  // ci-dessus) : son minuteur repart d'un plage minGap-maxGap fraîche au
+  // lieu de garder un compte à rebours périmé hérité d'avant ce tirage. Elle
+  // ne coupera donc jamais une paire dans les toutes premières secondes
+  // d'un jeu qu'on vient de découvrir — la "transition" qui manquait. Sans
+  // effet si le Flux n'est pas encore réellement démarré (cf. garde interne
+  // sur `flowing`) : startFlow() l'arme déjà lui-même une fois prêt.
+  if (typeof _armInvisibleHand === 'function') _armInvisibleHand();
   saveState();
 
   const btn = document.getElementById('btn-rand-dock');
