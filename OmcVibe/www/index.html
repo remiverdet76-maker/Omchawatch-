@@ -12271,15 +12271,34 @@ function sampleSetVol(v) {
 }
 
 /* ---------- 9.7 · JEU ALÉATOIRE DEPUIS LA FONDAMENTALE ---------- */
+// #186 : correction — un sample lu en mode streaming (gros fichier ou
+// format non décodable par l'appareil, cf. repli #12019 ; fréquent sur
+// mobile) donne un _sampleSrc = { _isStream:true, mediaSrc, … } SANS
+// propriété .buffer. L'ancien repli `detectFundamental(_sampleSrc.buffer)`
+// tombait donc sur `undefined`, échouait en silence (try/catch interne) et
+// _curSampleFund restait null pour toujours — le jeu ne se lançait JAMAIS
+// pour ce sample (le sample continuait de jouer normalement, moteur audio
+// séparé). Utilise désormais _detectFundamentalLive() sur mediaSrc, la
+// même détection déjà utilisée par samplePlay() pour ce cas — asynchrone
+// (~350ms), d'où le lancement du jeu dans son callback plutôt qu'en ligne.
 function sampleAutoGame() {
-  if (!_curSampleFund) {
-    if (_sampleSrc && _sampleSrc.buffer) _curSampleFund = foldToBand(detectFundamental(_sampleSrc.buffer));
+  const launch = () => {
+    if (!_curSampleFund) return;
+    setMasterFreq(_curSampleFund);
+    triggerMagicAuto({ keepMaster: true });
+    const fd = document.getElementById('sample-fund-disp');
+    if (fd) { fd.style.color = '#8CFFC8'; setTimeout(() => { if (fd) fd.style.color = ''; }, 500); }
+  };
+  if (_curSampleFund) { launch(); return; }
+  if (_sampleSrc && _sampleSrc._isStream && _sampleSrc.mediaSrc) {
+    _detectFundamentalLive(_sampleSrc.mediaSrc, (fund) => {
+      if (fund) _curSampleFund = fund;
+      launch();
+    });
+    return;
   }
-  if (!_curSampleFund) return;
-  setMasterFreq(_curSampleFund);
-  triggerMagicAuto({ keepMaster: true });
-  const fd = document.getElementById('sample-fund-disp');
-  if (fd) { fd.style.color = '#8CFFC8'; setTimeout(() => { if (fd) fd.style.color = ''; }, 500); }
+  if (_sampleSrc && _sampleSrc.buffer) _curSampleFund = foldToBand(detectFundamental(_sampleSrc.buffer));
+  launch();
 }
 function sampleRerollGame() { triggerMagicAuto(); }
 
