@@ -509,22 +509,25 @@ body{
 }
 #freq-input-master::-webkit-inner-spin-button,#freq-input-master::-webkit-outer-spin-button{-webkit-appearance:none;}
 
-/* #176/#178 : Arpégiateur retiré, remplacé par un tiroir latéral gauche à
-   2 faders HORIZONTAUX : Maître (fréquence réelle du moteur, 54-432) et
-   Détune global (2e référence 54-432 — l'écart avec le maître, recalculé
-   à chaque glisser, retune tous les canaux actifs).
-   #178 : refonte "vrai potentiomètre" (retour terrain : la V1 — simple
-   bille sur un trait fin — faisait "bâclé") — piste en RAINURE creuse
-   (ombre interne, comme un vrai channel de fader), 4 graduations
-   d'octave (54/108/216/432Hz, échelle désormais LOGARITHMIQUE — cf. JS
-   _fxFreqToT — donc parfaitement équidistantes), et un vrai bouton de
+/* #176/#178 : Arpégiateur retiré, remplacé par un tiroir latéral gauche.
+   #178 : refonte "vrai potentiomètre" — piste en RAINURE creuse (ombre
+   interne, comme un vrai channel de fader), et un vrai bouton de
    potentiomètre : plus gros, relief 3D marqué, avec une ENCOCHE
    indicatrice (comme un vrai knob) plutôt qu'une bille plate. Poignée
    du tiroir agrandie (32px→plus facile à attraper) + repère flèche
    dont le sens s'inverse à l'ouverture (affordance claire
    ouvrir/fermer) ; fermeture aussi possible en tapant n'importe où en
    dehors du tiroir (cf. JS _fxOutsideCloseCheck) — la poignée fine
-   n'est plus le SEUL moyen de refermer. */
+   n'est plus le SEUL moyen de refermer.
+   #185 : les 2 faders Maître/Détune retirés (demande explicite — plus
+   utiles ici, le maître se règle déjà ailleurs, cf. touche F/sphère/menu
+   Effet Audio) — le tiroir devient la vue rapide des 7 OSCILLATEURS,
+   étendu à 3/4 d'écran pour leur laisser la place. Chaque oscillateur :
+   un bloc couleur (sa teinte déjà utilisée partout ailleurs dans l'app),
+   repliable, qui ouvre 2 faders horizontaux (même piste/bouton que
+   ci-dessous, réutilisés tels quels) — Volume, puis Δ Binaural juste en
+   dessous — repliés par défaut pour que les 7 tiennent sans scroll
+   excessif (cf. buildOscDrawerHTML/patchOscDrawer, JS plus bas). */
 #fxDrawerHandle{
   position:fixed;left:0;top:50%;transform:translateY(-50%);
   width:32px;height:104px;border-radius:0 16px 16px 0;
@@ -539,22 +542,44 @@ body{
   content:'▸';font-size:16px;line-height:1;color:rgba(255,224,160,.85);
   text-shadow:0 0 6px rgba(255,200,100,.6);transition:transform .32s;
 }
-body.fx-drawer-open #fxDrawerHandle{ left:min(33vw,260px); }
+body.fx-drawer-open #fxDrawerHandle{ left:min(75vw,420px); }
 body.fx-drawer-open #fxDrawerHandle::before{ transform:rotate(180deg); }
 #fxDrawer{
-  position:fixed;left:0;top:0;bottom:154px;width:min(33vw,260px);
-  min-width:128px;
+  position:fixed;left:0;top:0;bottom:154px;width:min(75vw,420px);
+  min-width:220px;
   background:linear-gradient(160deg,rgba(18,12,28,.92),rgba(30,18,40,.88));
   border-right:1px solid rgba(255,214,120,.22);
   box-shadow:6px 0 26px rgba(0,0,0,.4);
   z-index:59;transform:translateX(-100%);
   transition:transform .32s cubic-bezier(.4,0,.2,1);
-  display:flex;flex-direction:column;align-items:stretch;justify-content:center;
-  gap:min(6vh,34px);
-  padding:0 16px;backdrop-filter:blur(6px);
+  display:flex;flex-direction:column;align-items:stretch;
+  gap:8px;overflow-y:auto;
+  padding:16px 14px;backdrop-filter:blur(6px);
 }
 body.fx-drawer-open #fxDrawer{ transform:translateX(0); }
-.fx-fader{ display:flex;flex-direction:column;align-items:center;gap:10px; }
+/* #185 : un bloc "couleur" par oscillateur — repliable, ouvre Volume +
+   Δ Binaural. La couleur reprend pair.color (même teinte que partout
+   ailleurs : tableau Effet Audio, sphères…) pour qu'un oscillateur se
+   reconnaisse d'un coup d'œil, quel que soit l'écran. */
+.osc-drawer-item{
+  border-radius:10px;border-left:4px solid var(--odi-color,#F0C060);
+  background:linear-gradient(90deg,var(--odi-color-a,rgba(240,192,96,.14)),transparent 60%);
+}
+.osc-drawer-item summary{
+  cursor:pointer;list-style:none;padding:9px 10px;
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.78rem;
+  color:var(--odi-color,#F0C060);font-weight:700;
+}
+.osc-drawer-item summary::-webkit-details-marker{display:none;}
+.osc-drawer-item summary::before{content:'▸';font-size:.7rem;opacity:.7;transition:transform .2s;}
+.osc-drawer-item[open] summary::before{transform:rotate(90deg);}
+.odi-dot{width:10px;height:10px;border-radius:50%;background:var(--odi-color,#F0C060);flex-shrink:0;
+  box-shadow:0 0 6px var(--odi-color,#F0C060);}
+.odi-muted{opacity:.45;}
+.odi-freq{margin-left:auto;font-size:.68rem;opacity:.75;font-weight:400;}
+.osc-drawer-body{padding:2px 10px 12px;display:flex;flex-direction:column;gap:6px;}
+.fx-fader{ display:flex;flex-direction:column;align-items:center;gap:6px; }
 .fx-fader-label{
   font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.62rem;
   letter-spacing:.1em;text-transform:uppercase;color:rgba(255,224,170,.65);
@@ -614,8 +639,15 @@ body.fx-drawer-open #fxDrawer{ transform:translateX(0); }
   box-shadow:0 2px 5px rgba(0,0,0,.55),0 0 20px rgba(255,225,120,1),0 0 36px rgba(255,205,80,.6),inset 0 1px 3px rgba(255,255,255,.85),inset 0 -2px 3px rgba(120,70,10,.45);
 }
 body.vis-lite .fx-fader-knob.fx-fader-active{ box-shadow:0 0 10px rgba(255,225,120,.8); } /* #23 : moins coûteux en mode léger */
-#fxDrawer .fx-fader:nth-child(2) .fx-fader-fill{
-  background:linear-gradient(90deg,rgba(90,255,210,.3),rgba(140,255,220,.85));
+/* #185 : le Δ Binaural (2e fader de chaque bloc) reprend systématiquement
+   la couleur de l'oscillateur (var(--odi-color)), posée par JS sur
+   .osc-drawer-item — le Volume (1er fader) garde le doré par défaut, pour
+   les distinguer d'un coup d'œil dans un bloc replié comme ouvert. */
+.osc-drawer-item .fx-fader:nth-child(2) .fx-fader-fill{
+  background:linear-gradient(90deg,color-mix(in srgb,var(--odi-color,#F0C060) 40%,transparent),var(--odi-color,#F0C060));
+}
+.osc-drawer-item .fx-fader:nth-child(2) .fx-fader-knob{
+  background:radial-gradient(circle at 32% 28%,#fff 0%,var(--odi-color,#F0C060) 55%,#000 130%);
 }
 
 /* #165 : menu rapide (Random ratio/Solo/Verrouiller) supprimé — l'appui
@@ -2387,46 +2419,20 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <span class="ms-state canva-text" id="ms-state" data-html-import-id="html-import-13" data-template-id="span-6" style="color: rgba(220, 180, 255, 0.7); font-weight: 700; font-style: italic; font-size: 14px;">BINAURAL</span>
     </div></div></div>
 
-<!-- #176 : Arpégiateur tactile retiré (demande explicite) — remplacé par
-     un tiroir latéral gauche (1/3 largeur d'écran, même conteneur/
-     poignée qu'avant) à 2 faders HORIZONTAUX :
-     - Maître : retune en direct la fréquence maître réelle du moteur
-       (setMasterFreq), 54-432Hz — tous les canaux suivent automatiquement
-       (calcPFreq/calcIFreq multiplient déjà par masterFreq).
-     - Détune global : une 2e référence 54-432Hz indépendante — l'ÉCART
-       avec le maître (recalculé à chaque glisser) est appliqué comme
-       décalage Hz direct à tous les canaux actifs (cf. _fxApplyDetune).
-       Écart nul par défaut (aucun effet tant qu'on n'y touche pas). -->
+<!-- #185 : tiroir latéral gauche — anciennement 2 faders Maître/Détune
+     (#176), retirés à la demande explicite (le maître se règle déjà
+     ailleurs : touche F, tap sur la sphère, menu Effet Audio). Devient la
+     vue rapide des 7 OSCILLATEURS, étendue à 3/4 d'écran : un bloc
+     couleur repliable par oscillateur (sa teinte pair.color), qui ouvre
+     2 faders horizontaux — Volume, puis Δ Binaural juste en dessous —
+     repliés par défaut pour que les 7 tiennent sans scroll excessif.
+     Contenu généré par buildOscDrawerHTML()/patchOscDrawer() (JS plus
+     bas), #oscDrawerList reste un simple conteneur ici. -->
 <div id="fxDrawerHandle" aria-hidden="true"
   onclick="_fxToggleDrawer()"
   ontouchend="event.preventDefault();_fxToggleDrawer()"></div>
 <div id="fxDrawer" aria-hidden="true">
-  <div class="fx-fader">
-    <span class="fx-fader-label">Maître</span>
-    <div class="fx-fader-track" id="fxFaderMasterTrack"
-      onmousedown="_fxStart(event,'master')" ontouchstart="_fxStart(event,'master')" ontouchmove="_fxMove(event,'master')" ontouchend="_fxEnd(event,'master')">
-      <div class="fx-fader-line"></div>
-      <div class="fx-fader-fill" id="fxFaderMasterFill"></div>
-      <span class="fx-tick" style="left:0%"></span>
-      <span class="fx-tick" style="left:33.333%"></span>
-      <span class="fx-tick" style="left:66.667%"></span>
-      <span class="fx-tick" style="left:100%"></span>
-      <div class="fx-fader-knob" id="fxFaderMasterBall"></div>
-    </div>
-  </div>
-  <div class="fx-fader">
-    <span class="fx-fader-label">Détune</span>
-    <div class="fx-fader-track" id="fxFaderDetuneTrack"
-      onmousedown="_fxStart(event,'detune')" ontouchstart="_fxStart(event,'detune')" ontouchmove="_fxMove(event,'detune')" ontouchend="_fxEnd(event,'detune')">
-      <div class="fx-fader-line"></div>
-      <div class="fx-fader-fill" id="fxFaderDetuneFill"></div>
-      <span class="fx-tick" style="left:0%"></span>
-      <span class="fx-tick" style="left:33.333%"></span>
-      <span class="fx-tick" style="left:66.667%"></span>
-      <span class="fx-tick" style="left:100%"></span>
-      <div class="fx-fader-knob" id="fxFaderDetuneBall"></div>
-    </div>
-  </div>
+  <div id="oscDrawerList"></div>
 </div>
 
 <!-- Dock bas : 5 cellules × 3 actions (tap / appui long / bouton extra) -->
@@ -2923,6 +2929,22 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
         <option value="immersif">✺ Immersif</option>
       </select>
       <label class="fx-toggle" title="Le caractère du battement s'applique au tirage"><input type="checkbox" id="ck-character-on" checked onchange="setCharacterOn(this.checked)"><span class="fx-tog-track"></span></label>
+    </div>
+
+    <!-- #184 : Mode Sonothérapie — 4 bandes de fréquence maître (pas de
+         18Hz), toujours jouées en triplet harmonique (maître + 2
+         harmoniques réels, mis en avant) + 2 accompagnements discrets
+         (5/7 oscillateurs actifs). Même case option que Caractère du
+         battement juste au-dessus. -->
+    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.5rem 0 .3rem;">MODE SONOTHÉRAPIE<button type="button" class="info-q" data-info="4 bandes de fréquence maître (pas de 18Hz), toujours jouées en triplet harmonique (maître + 2 harmoniques réels, mis en avant) + 2 oscillateurs d'accompagnement plus discrets — 5 des 7 oscillateurs actifs, jamais oppressant. Le bouton on/off à droite coupe l'application au tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
+    <div class="rand-mode-row">
+      <select id="rand-sono-select" class="rand-select" onchange="setSonoMode(this.value)">
+        <option value="contraction_charmante">◐ Contraction charmante (54-144Hz)</option>
+        <option value="contraction_douce" selected>◑ Contraction douce (144-252Hz)</option>
+        <option value="expansion_douce">◒ Expansion douce (252-324Hz)</option>
+        <option value="expansion_charmante">◓ Expansion charmante (324-432Hz)</option>
+      </select>
+      <label class="fx-toggle" title="Le mode Sonothérapie s'applique au tirage"><input type="checkbox" id="ck-sono-on" onchange="setSonoModeOn(this.checked)"><span class="fx-tog-track"></span></label>
     </div>
   </div>
 
@@ -5457,140 +5479,191 @@ function setOrganicEvolution(v) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   #176 : TIROIR 2 FADERS — remplace l'arpégiateur tactile (retiré).
+   #185 : TIROIR OSCILLATEURS — remplace le tiroir 2 faders Maître/Détune
+   (#176), lui-même remplaçant l'arpégiateur tactile d'origine.
    ══════════════════════════════════════════════════════════════════════
-   Même tiroir latéral gauche (#fxDrawer, 1/3 largeur d'écran, poignée
-   collée au bord, garde-fou dock hérité de #171/#173), mais 2 faders
-   HORIZONTAUX empilés au lieu d'un unique fader vertical + octave :
-   - "master" : retune EN DIRECT la vraie fréquence maître du moteur
-     (setMasterFreq) — pas une voix dédiée à part, les 6 canaux suivent
-     déjà automatiquement puisque calcPFreq/calcIFreq multiplient par
-     masterFreq. Glissando volontairement audible ici (contrôle direct
-     de l'utilisateur, rien à voir avec les transitions automatiques
-     du #84 qui elles doivent rester silencieuses).
-   - "detune" : une 2e référence 54-432Hz indépendante (FX_FADER_STATE.
-     detune). L'ÉCART avec masterFreq (recalculé à chaque glisser) est
-     appliqué comme décalage Hz direct à tous les canaux actifs non
-     coupés (_fxApplyDetune) — pas un paramètre persistant du moteur :
-     un tirage aléatoire ou un nouveau glisser du fader maître peut donc
-     "réinitialiser" l'effet tant qu'on ne rebouge pas le fader détune ;
-     c'est une action de retune ponctuelle rejouée à chaque interaction,
-     pas une formule ajoutée en dur dans calcPFreq/calcIFreq (risque de
-     régression trop élevé à ce stade pour toucher le cœur du moteur). */
-// #176 : `userSet` distingue "jamais touché par l'utilisateur" (resynchronisé
-// sur masterFreq à chaque appel de _fxUpdateVisibility, pour ne jamais
-// figer un écart non nul si masterFreq change entre le 1er sync et le
-// vrai démarrage du flux — ex. tirage aléatoire au chargement) de "valeur
-// restaurée d'une session précédente ou choisie par un glisser" (fixe).
-const FX_FADER_STATE = { detune: null, userSet: false }; // Hz absolu, écart nul par défaut tant que userSet=false
-let _fxDragTarget = null; // 'master' | 'detune' | null
-const FX_FADER_LO = 54, FX_FADER_HI = 432;
-
-// #178 : échelle LOGARITHMIQUE plutôt que linéaire — 54→432Hz, c'est
-// EXACTEMENT 3 octaves (54×2=108, ×2=216, ×2=432), donc les 4 graduations
-// demandées tombent pile à t=0/.333/.667/1 en log, parfaitement
-// espacées visuellement (cf. CSS .fx-fader-track .fx-tick) ET musicalement
-// justes (l'oreille perçoit la hauteur de façon logarithmique, pas
-// linéaire — un glisser linéaire aurait écrasé tout le bas du spectre
-// dans le premier tiers du fader).
-const FX_OCTAVE_HZ = [54, 108, 216, 432];
-function _fxFreqToT(f) {
-  const t = (Math.log(Math.max(FX_FADER_LO, Math.min(FX_FADER_HI, f))) - Math.log(FX_FADER_LO)) / (Math.log(FX_FADER_HI) - Math.log(FX_FADER_LO));
+   Même tiroir latéral gauche (#fxDrawer, poignée collée au bord,
+   garde-fou dock hérité de #171/#173), désormais étendu à 3/4 d'écran :
+   un bloc couleur repliable par oscillateur (7), chacun ouvrant 2 faders
+   HORIZONTAUX empilés — Volume puis Δ Binaural — réutilisant EXACTEMENT
+   le même mécanisme de piste/bouton que l'ancien tiroir (juste
+   généralisé à "quel paramètre, de quel oscillateur" au lieu de
+   "master"/"detune" en dur) :
+   - "volN" (N=0..6) : pilote pair.pingala.vol/ida.vol via setPairVol —
+     échelle LINÉAIRE 0-1 (même échelle que les autres curseurs volume
+     de l'app, cf. rt-vol-i/ivol-i).
+   - "deltaN" : pilote pair.ida.delta via setDelta — échelle
+     LOGARITHMIQUE 0,5-72Hz (même raisonnement que l'ancien fader Maître
+     en #178 : l'oreille perçoit la hauteur/le rythme d'un battement de
+     façon logarithmique, un fader linéaire écraserait toute la bande
+     Delta/Thêta — la plus utilisée — dans un minuscule premier segment). */
+const OSC_FADER_LO = { vol: 0, delta: DELTA_MIN };
+const OSC_FADER_HI = { vol: 1, delta: DELTA_MAX };
+let _oscFaderDragTarget = null; // 'volN' | 'deltaN' | null
+function _oscFaderParse(which) {
+  const m = /^(vol|delta)(\d)$/.exec(which || '');
+  return m ? { type: m[1], idx: +m[2] } : null;
+}
+function _oscFaderToT(type, v) {
+  const lo = OSC_FADER_LO[type], hi = OSC_FADER_HI[type];
+  if (type === 'vol') return Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+  const t = (Math.log(Math.max(lo, Math.min(hi, v))) - Math.log(lo)) / (Math.log(hi) - Math.log(lo));
   return Math.max(0, Math.min(1, t));
 }
-function _fxTToFreq(t) {
+function _oscFaderFromT(type, t) {
+  const lo = OSC_FADER_LO[type], hi = OSC_FADER_HI[type];
   const tt = Math.max(0, Math.min(1, t));
-  return Math.exp(Math.log(FX_FADER_LO) + tt * (Math.log(FX_FADER_HI) - Math.log(FX_FADER_LO)));
+  if (type === 'vol') return lo + tt * (hi - lo);
+  return Math.exp(Math.log(lo) + tt * (Math.log(hi) - Math.log(lo)));
 }
-function _fxClientXToT(clientX, track) {
+function _oscFaderClientXToT(clientX, track) {
   const rect = track.getBoundingClientRect();
   if (!rect.width) return 0.5;
   return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
 }
-function _fxTrackEl(which)  { return document.getElementById(which === 'master' ? 'fxFaderMasterTrack' : 'fxFaderDetuneTrack'); }
-function _fxBallEl(which)   { return document.getElementById(which === 'master' ? 'fxFaderMasterBall'  : 'fxFaderDetuneBall'); }
-function _fxFillEl(which)   { return document.getElementById(which === 'master' ? 'fxFaderMasterFill'  : 'fxFaderDetuneFill'); }
-function _fxUpdateBallPosition(which) {
-  const track = _fxTrackEl(which), ball = _fxBallEl(which), fill = _fxFillEl(which);
+function _oscFaderGet(type, idx) {
+  return type === 'vol' ? (PAIRS[idx].pingala.vol / VOL_UI_SCALE) : PAIRS[idx].ida.delta;
+}
+function _oscFaderApply(type, idx, v) {
+  if (type === 'vol') setPairVol(idx, v); else setDelta(idx, v);
+}
+function _oscFaderTrackEl(which) { return document.getElementById('fxFader' + which + 'Track'); }
+function _oscFaderBallEl(which)  { return document.getElementById('fxFader' + which + 'Ball'); }
+function _oscFaderFillEl(which)  { return document.getElementById('fxFader' + which + 'Fill'); }
+function _oscFaderUpdateBallPosition(which) {
+  const p = _oscFaderParse(which); if (!p) return;
+  const track = _oscFaderTrackEl(which), ball = _oscFaderBallEl(which), fill = _oscFaderFillEl(which);
   if (!track || !ball) return;
   const rect = track.getBoundingClientRect();
   if (!rect.width) return;
-  const f = which === 'master' ? masterFreq : (FX_FADER_STATE.detune ?? masterFreq);
-  const t = _fxFreqToT(f);
+  const t = _oscFaderToT(p.type, _oscFaderGet(p.type, p.idx));
   const margin = 12;
   const x = margin + t * (rect.width - margin * 2);
   ball.style.left = x + 'px';
   if (fill) fill.style.width = x + 'px'; // #178 : piste éclairée jusqu'au bouton, comme un vrai potentiomètre
 }
-// Écart courant (fader détune − maître) réappliqué à tous les canaux non
-// coupés — léger : juste des tuneOsc() ciblés, aucun nœud audio créé.
-function _fxApplyDetune() {
-  if (!flowing || FX_FADER_STATE.detune == null) return;
-  const offset = FX_FADER_STATE.detune - masterFreq;
-  PAIRS.forEach((pair, i) => {
-    if (!mutedOscs[pair.pingala.id]) tuneOsc(pair.pingala.id, calcPFreq(i) + offset, 0.05);
-    if (!mutedOscs[pair.ida.id])     tuneOsc(pair.ida.id,     calcIFreq(i) + offset, 0.05);
-  });
+// Rafraîchit les 14 faders (7 osc × Volume/Δ) — appelé à l'ouverture du
+// tiroir, au resize, et depuis patchOscDrawer() après toute reconstruction
+// du contenu (tirage aléatoire, édition ailleurs dans l'app…).
+function _oscFaderRefreshAll() {
+  PAIRS.forEach((_, i) => { _oscFaderUpdateBallPosition('vol' + i); _oscFaderUpdateBallPosition('delta' + i); });
 }
-function _fxSetFromClientX(clientX, which) {
-  const track = _fxTrackEl(which); if (!track) return;
-  const freq = _fxTToFreq(_fxClientXToT(clientX, track));
-  if (which === 'master') {
-    setMasterFreq(freq); // retune direct + persistance + UI, déjà tout géré
-    if (FX_FADER_STATE.detune != null) _fxApplyDetune(); // garde le même écart pendant qu'on bouge le maître
-  } else {
-    FX_FADER_STATE.detune = freq;
-    FX_FADER_STATE.userSet = true;
-    _fxApplyDetune();
-    saveState();
-  }
-  _fxUpdateBallPosition('master');
-  _fxUpdateBallPosition('detune');
+function _oscFaderSetFromClientX(clientX, which) {
+  const p = _oscFaderParse(which); if (!p) return;
+  const track = _oscFaderTrackEl(which); if (!track) return;
+  const v = _oscFaderFromT(p.type, _oscFaderClientXToT(clientX, track));
+  _oscFaderApply(p.type, p.idx, v);
+  _oscFaderUpdateBallPosition(which);
+  // setPairVol/setDelta rafraîchissent déjà leurs propres affichages
+  // (table Aléatoire, menu ☰…) mais pas le libellé fréquence du bloc
+  // tiroir lui-même (odi-freq) — mis à jour ici, léger (juste du texte).
+  const freqEl = document.getElementById('odi-freq' + p.idx);
+  if (freqEl) freqEl.textContent = fmtFreq(calcPFreq(p.idx));
 }
-function _fxStart(e, which) {
-  _fxDragTarget = which;
+function _oscFaderStart(e, which) {
+  _oscFaderDragTarget = which;
   const t = e.touches ? e.touches[0] : e;
-  _fxSetFromClientX(t.clientX, which);
-  _fxBallEl(which)?.classList.add('fx-fader-active');
+  _oscFaderSetFromClientX(t.clientX, which);
+  _oscFaderBallEl(which)?.classList.add('fx-fader-active');
   e.preventDefault();
 }
-// #173 (perf) : même leçon que l'ancien arpégiateur — coalesce les
-// mousemove/touchmove en UNE mise à jour par frame plutôt que d'envoyer
-// un ordre de retune au thread audio à chaque micro-mouvement du doigt.
-let _fxPendingX = null, _fxRafPending = false;
-function _fxMove(e, which) {
-  if (_fxDragTarget !== which) return;
+// #173 (perf) : même leçon que l'ancien arpégiateur/tiroir Maître-Détune —
+// coalesce les mousemove/touchmove en UNE mise à jour par frame plutôt
+// que d'envoyer un ordre de retune au thread audio à chaque micro-geste.
+let _oscFaderPendingX = null, _oscFaderRafPending = false;
+function _oscFaderMove(e, which) {
+  if (_oscFaderDragTarget !== which) return;
   const t = e.touches ? e.touches[0] : e;
-  _fxPendingX = t.clientX;
-  if (!_fxRafPending) {
-    _fxRafPending = true;
+  _oscFaderPendingX = t.clientX;
+  if (!_oscFaderRafPending) {
+    _oscFaderRafPending = true;
     requestAnimationFrame(() => {
-      _fxRafPending = false;
-      if (_fxDragTarget === which && _fxPendingX != null) _fxSetFromClientX(_fxPendingX, which);
+      _oscFaderRafPending = false;
+      if (_oscFaderDragTarget === which && _oscFaderPendingX != null) _oscFaderSetFromClientX(_oscFaderPendingX, which);
     });
   }
   e.preventDefault();
 }
-function _fxEnd(e, which) {
-  if (_fxDragTarget !== which) return;
-  _fxDragTarget = null;
-  _fxPendingX = null;
-  _fxBallEl(which)?.classList.remove('fx-fader-active');
+function _oscFaderEnd(e, which) {
+  if (_oscFaderDragTarget !== which) return;
+  _oscFaderDragTarget = null;
+  _oscFaderPendingX = null;
+  _oscFaderBallEl(which)?.classList.remove('fx-fader-active');
 }
-// Le drag peut sortir du fader en cours de route — écoute sur window,
-// pas seulement sur la piste, comme les autres poignées de glisser de
-// l'app (le mousemove/touchmove natif ne capture pas au delà de
-// l'élément d'origine pour la souris).
-window.addEventListener('mousemove', (e) => { if (_fxDragTarget) _fxMove(e, _fxDragTarget); });
-window.addEventListener('mouseup',   (e) => { if (_fxDragTarget) _fxEnd(e, _fxDragTarget); });
-window.addEventListener('touchend',    (e) => { if (_fxDragTarget) _fxEnd(e, _fxDragTarget); });
-window.addEventListener('touchcancel', (e) => { if (_fxDragTarget) _fxEnd(e, _fxDragTarget); });
+// Le drag peut sortir du fader en cours de route — écoute sur window, pas
+// seulement sur la piste (le mousemove/touchmove natif ne capture pas
+// au-delà de l'élément d'origine pour la souris).
+window.addEventListener('mousemove', (e) => { if (_oscFaderDragTarget) _oscFaderMove(e, _oscFaderDragTarget); });
+window.addEventListener('mouseup',   (e) => { if (_oscFaderDragTarget) _oscFaderEnd(e, _oscFaderDragTarget); });
+window.addEventListener('touchend',    (e) => { if (_oscFaderDragTarget) _oscFaderEnd(e, _oscFaderDragTarget); });
+window.addEventListener('touchcancel', (e) => { if (_oscFaderDragTarget) _oscFaderEnd(e, _oscFaderDragTarget); });
+
+// Génère les 7 blocs couleur repliables (un par oscillateur, teinte
+// pair.color reprise partout ailleurs dans l'app) affichés dans
+// #oscDrawerList. Chaque bloc : en-tête (pastille + nom + fréquence
+// courante), puis 2 faders repliés dans le <details> — Volume, puis
+// Δ Binaural juste en dessous, comme demandé. Piste/bouton = EXACTEMENT
+// le même markup que l'ancien fader Maître/Détune (#178), juste les id
+// suivant la clé composée 'vol{i}'/'delta{i}' lue par _oscFaderTrackEl etc.
+function buildOscDrawerHTML() {
+  return PAIRS.map((pair, i) => {
+    const pF = calcPFreq(i);
+    const muted = !!mutedOscs[pair.pingala.id] && !!mutedOscs[pair.ida.id];
+    const isMaster = i === MASTER_IDX;
+    return `<details class="osc-drawer-item" style="--odi-color:${pair.color};--odi-color-a:${pair.color}26;">
+      <summary>
+        <span class="odi-dot${muted?' odi-muted':''}"></span>
+        <span${muted?' class="odi-muted"':''}>${pair.label}${isMaster?' · maître':''}</span>
+        <span class="odi-freq" id="odi-freq${i}">${fmtFreq(pF)}</span>
+      </summary>
+      <div class="osc-drawer-body">
+        <div class="fx-fader">
+          <span class="fx-fader-label">Volume</span>
+          <div class="fx-fader-track" id="fxFadervol${i}Track"
+            onmousedown="_oscFaderStart(event,'vol${i}')" ontouchstart="_oscFaderStart(event,'vol${i}')"
+            ontouchmove="_oscFaderMove(event,'vol${i}')">
+            <div class="fx-fader-line"></div>
+            <div class="fx-fader-fill" id="fxFadervol${i}Fill"></div>
+            <div class="fx-fader-knob" id="fxFadervol${i}Ball"></div>
+          </div>
+        </div>
+        <div class="fx-fader">
+          <span class="fx-fader-label">Δ Binaural</span>
+          <div class="fx-fader-track" id="fxFaderdelta${i}Track"
+            onmousedown="_oscFaderStart(event,'delta${i}')" ontouchstart="_oscFaderStart(event,'delta${i}')"
+            ontouchmove="_oscFaderMove(event,'delta${i}')">
+            <div class="fx-fader-line"></div>
+            <span class="fx-tick" style="left:0%"></span>
+            <span class="fx-tick" style="left:50%"></span>
+            <span class="fx-tick" style="left:100%"></span>
+            <div class="fx-fader-fill" id="fxFaderdelta${i}Fill"></div>
+            <div class="fx-fader-knob" id="fxFaderdelta${i}Ball"></div>
+          </div>
+        </div>
+      </div>
+    </details>`;
+  }).join('');
+}
+// Reconstruit #oscDrawerList — appelé à l'ouverture du tiroir et depuis
+// patchRandomTable() (donc à chaque tirage aléatoire, mute, édition
+// manuelle…) pour rester synchronisé sans multiplier les points d'appel.
+// Les blocs dépliés par l'utilisateur sont préservés (même ordre que
+// PAIRS avant/après régénération) plutôt que tous repliés à chaque coup.
+function patchOscDrawer() {
+  const wrap = document.getElementById('oscDrawerList');
+  if (!wrap) return;
+  const wasOpen = Array.from(wrap.children).map(d => d.hasAttribute && d.hasAttribute('open'));
+  wrap.innerHTML = buildOscDrawerHTML();
+  Array.from(wrap.children).forEach((d, idx) => { if (wasOpen[idx]) d.setAttribute('open', ''); });
+  _oscFaderRefreshAll();
+}
 
 // Ouverture/fermeture du tiroir (poignée collée au bord gauche).
 function _fxToggleDrawer() {
   document.body.classList.toggle('fx-drawer-open');
   saveState();
-  requestAnimationFrame(() => { _fxUpdateBallPosition('master'); _fxUpdateBallPosition('detune'); });
+  if (document.body.classList.contains('fx-drawer-open') && typeof patchOscDrawer === 'function') patchOscDrawer();
+  requestAnimationFrame(_oscFaderRefreshAll);
 }
 // #178 : retour terrain — la poignée fine (32px) était le SEUL moyen de
 // refermer le tiroir, difficile à retrouver/retaper précisément une fois
@@ -5610,22 +5683,18 @@ function _fxOutsideCloseCheck(e) {
 }
 document.addEventListener('mousedown', _fxOutsideCloseCheck, true);
 document.addEventListener('touchstart', _fxOutsideCloseCheck, true);
-// Synchronise l'écart détune sur le maître tant que l'utilisateur ne l'a
-// jamais bougé lui-même (userSet=false) — jamais d'effet par défaut, même
-// si masterFreq change entre 2 appels (tirage aléatoire au chargement,
-// etc.) — + repositionne les billes (conteneur qui vient d'apparaître,
-// rotation d'écran…). Appelé par startFlow/toggleAdvanced/_loadAdvanced,
-// conservés par simple compatibilité de nommage même si le tiroir n'est
-// plus lié au mode d'affichage.
+// Repositionne les 14 billes (conteneur qui vient d'apparaître, rotation
+// d'écran…). Appelé par startFlow/toggleAdvanced/_loadAdvanced, nom
+// conservé par simple compatibilité même si le tiroir n'est plus lié au
+// mode d'affichage (#176/#185).
 function _fxUpdateVisibility() {
-  if (!FX_FADER_STATE.userSet) FX_FADER_STATE.detune = masterFreq;
   if (document.body.classList.contains('fx-drawer-open')) {
-    requestAnimationFrame(() => { _fxUpdateBallPosition('master'); _fxUpdateBallPosition('detune'); });
-  } else if (_fxDragTarget) {
-    _fxEnd({}, _fxDragTarget);
+    requestAnimationFrame(_oscFaderRefreshAll);
+  } else if (_oscFaderDragTarget) {
+    _oscFaderEnd({}, _oscFaderDragTarget);
   }
 }
-window.addEventListener('resize', () => { if (document.body.classList.contains('fx-drawer-open')) { _fxUpdateBallPosition('master'); _fxUpdateBallPosition('detune'); } });
+window.addEventListener('resize', () => { if (document.body.classList.contains('fx-drawer-open')) _oscFaderRefreshAll(); });
 
 // ── "Main invisible" : mute/démute organique + vrais sauts d'octave ────
 // Retour terrain 21/08 : le jeu aléatoire classique bouge trop de choses
@@ -6815,6 +6884,132 @@ function setCharacterOn(v) {
   saveState();
 }
 
+// ── #184 : Mode Sonothérapie ─────────────────────────────────────
+// 4 bandes de fréquence maître (pas de 18Hz), toujours jouées en TRIPLET
+// harmonique (maître + 2 harmoniques réels — HARMONIC_RATIOS, PAS les
+// ratios OmcV serrés utilisés par le reste du jeu qui sont pensés pour un
+// shimmer proche, pas une vraie consonance) mis en avant, + 2 oscillateurs
+// d'accompagnement plus discrets (5 des 7 actifs, 2 coupés). Appliqué en
+// POST-TRAITEMENT après le tirage normal (à la toute fin de
+// triggerMagicAuto, cf. plus bas) plutôt qu'entremêlé dans sa logique
+// déjà dense — plus sûr, plus simple à vérifier isolément, et le tirage
+// normal continue de fonctionner à l'identique quand ce mode est off.
+// Toujours doux/apaisant/stimulant, JAMAIS oppressant (demande explicite
+// de l'utilisateur) : mêmes plafonds isosonicVol que le reste du jeu, Δ
+// pris dans la bande "Apaisé" déjà validée, jamais de fréquence hors bande.
+const SONO_MODES = {
+  contraction_charmante: { label: 'Contraction charmante', lo: 54,  hi: 144 },
+  contraction_douce:     { label: 'Contraction douce',     lo: 144, hi: 252 },
+  expansion_douce:       { label: 'Expansion douce',       lo: 252, hi: 324 },
+  expansion_charmante:   { label: 'Expansion charmante',   lo: 324, hi: 432 },
+};
+const SONO_STEP = 18;
+let SONO_MODE = 'contraction_douce';
+function setSonoMode(mode) {
+  if (!SONO_MODES[mode]) return;
+  SONO_MODE = mode;
+  const sel = document.getElementById('rand-sono-select'); if (sel) sel.value = mode;
+  RAND_OPTS.sonoModeOn = true;
+  const ck = document.getElementById('ck-sono-on'); if (ck) ck.checked = true;
+  saveState();
+}
+function setSonoModeOn(v) {
+  RAND_OPTS.sonoModeOn = !!v;
+  const ck = document.getElementById('ck-sono-on'); if (ck) ck.checked = RAND_OPTS.sonoModeOn;
+  saveState();
+}
+// Fréquence tirée dans [lo,hi] puis calée sur la grille de pas 18Hz — pas
+// un simple arrondi (qui pourrait tomber hors bande aux extrémités).
+function _sonoSnapFreq(lo, hi) {
+  const steps = Math.round((hi - lo) / SONO_STEP);
+  const s = Math.floor(Math.random() * (steps + 1));
+  return lo + s * SONO_STEP;
+}
+// Cherche (ri,n) tel que RATIO_OPTS[ri].r × n ≈ ratio harmonique demandé —
+// RATIO_OPTS n'a pas d'entrée "1.0" exacte, on ancre donc sur ri=0
+// (11/10) et on résout n en conséquence. N_MAX=8 laisse largement la
+// place pour tout ratio harmonique ≤ 2 (octave).
+function _sonoRatioToRiN(ratio) {
+  const n = Math.max(0.1, Math.min(N_MAX, ratio / RATIO_OPTS[0].r));
+  return { ri: 0, n };
+}
+// Mute/démute FORCÉ (pas un toggle) — même mécanique bas niveau que
+// toggleMutePair, sans dépendre de l'état courant.
+function _sonoMuteForce(i, muted) {
+  const pair = PAIRS[i], pid = pair.pingala.id, iid = pair.ida.id;
+  mutedOscs[pid] = muted; mutedOscs[iid] = muted;
+  if (muted) { clearOscVolLFO(pid); clearOscVolLFO(iid); }
+  const np = nodes[pid], ni = nodes[iid];
+  if (np) safeRamp(np.g.gain, muted ? 0 : pair.pingala.vol, 0.6);
+  if (ni) safeRamp(ni.g.gain, muted ? 0 : pair.ida.vol, 0.6);
+}
+function _applySonoMode() {
+  const mode = SONO_MODES[SONO_MODE]; if (!mode) return;
+  const masterLocked = typeof isLocked === 'function' && isLocked(MASTER_IDX);
+  if (!masterLocked) setMasterFreq(_sonoSnapFreq(mode.lo, mode.hi));
+  const m = masterFreq;
+
+  // 2 harmoniques (triplet) + 2 accompagnements, tirés parmi les paires
+  // satellites non verrouillées ; le reste (2 des 6) reste coupé.
+  const pool = [];
+  for (let i = 0; i < 6; i++) if (!(typeof isLocked === 'function' && isLocked(i))) pool.push(i);
+  const shuffled = _shuffle(pool.slice());
+  const harmIdx = shuffled.slice(0, 2);
+  const accIdx  = shuffled.slice(2, 4);
+  const restIdx = pool.filter(i => !harmIdx.includes(i) && !accIdx.includes(i));
+
+  const nonUnity = HARMONIC_RATIOS.filter(r => r !== 1);
+  const harmRatios = _shuffle(nonUnity.slice()).slice(0, 2);
+  const gentleDelta = DELTA_CHARACTER.apaise.deltas[Math.floor(Math.random() * DELTA_CHARACTER.apaise.deltas.length)];
+
+  // Maître : cœur du triplet, présence pleine.
+  PAIRS[MASTER_IDX].pingala.ri = 0; PAIRS[MASTER_IDX].pingala.n = 1.0;
+  PAIRS[MASTER_IDX].ida.delta = gentleDelta; PAIRS[MASTER_IDX].ida.polarity = 1;
+  { const v = Math.min(0.4, isosonicVol(m, 0.12));
+    PAIRS[MASTER_IDX].pingala.vol = v; PAIRS[MASTER_IDX].ida.vol = v; }
+  _sonoMuteForce(MASTER_IDX, false);
+
+  // 2 harmoniques réels : même famille de présence que le maître (triplet
+  // mis en avant, "on doit l'entendre plus que les 2 autres fréquences").
+  harmIdx.forEach((idx, k) => {
+    const pair = PAIRS[idx];
+    const { ri, n } = _sonoRatioToRiN(harmRatios[k]);
+    pair.pingala.ri = ri; pair.pingala.n = n;
+    pair.ida.delta = gentleDelta; pair.ida.polarity = k === 0 ? 1 : -1;
+    const pf = Math.max(F_MIN, Math.min(F_MAX, m * harmRatios[k]));
+    const v = Math.min(0.4, isosonicVol(pf, 0.10));
+    pair.pingala.vol = v; pair.ida.vol = v;
+    _sonoMuteForce(idx, false);
+  });
+
+  // 2 accompagnements : ratios OmcV "shimmer" déjà existants, présence
+  // délibérément en retrait (-45%) pour que le triplet reste ce qu'on
+  // entend en premier.
+  accIdx.forEach((idx, k) => {
+    const pair = PAIRS[idx];
+    const ri = Math.floor(Math.random() * RATIO_OPTS.length);
+    pair.pingala.ri = ri; pair.pingala.n = 1.0;
+    pair.ida.delta = gentleDelta; pair.ida.polarity = k === 0 ? 1 : -1;
+    const pf = Math.max(F_MIN, Math.min(F_MAX, m * RATIO_OPTS[ri].r));
+    const v = Math.min(0.4, isosonicVol(pf, 0.10) * 0.55);
+    pair.pingala.vol = v; pair.ida.vol = v;
+    _sonoMuteForce(idx, false);
+  });
+
+  // "5 oscillateurs / 7" : le reste (2 satellites) reste coupé.
+  restIdx.forEach(idx => _sonoMuteForce(idx, true));
+
+  if (flowing) {
+    PAIRS.forEach((pair, idx) => {
+      tuneOsc(pair.pingala.id, calcPFreq(idx));
+      tuneOsc(pair.ida.id, calcIFreq(idx));
+    });
+  }
+  PAIRS.forEach((_, idx) => updatePairUI(idx));
+  patchRandomTable();
+  if (typeof patchOscDrawer === 'function') patchOscDrawer();
+}
+
 // ── Options mode aléatoire ────────────────────────────────────────
 // Ranger l'app (retour terrain) : tous les réglages ci-dessous étaient déjà
 // pensés pour être laissés actifs — ils le sont désormais par défaut, et
@@ -6836,7 +7031,8 @@ function setCharacterOn(v) {
 const RAND_OPTS={freqMin:F_MIN,freqMax:F_MAX,ratioMode:'heterogene',ratioOn:true,characterOn:true,useFX:true,spread:0.6,
   randomTimbre:true, randomDepth:true, breathRandom:true, deltaVariety:true, polarityVariety:true,
   randomDualSine:false, closeBeatPair:true, preMasterFilter:true,
-  fireworksIgnition:false}; // #149 : off par défaut (effet marqué, opt-in)
+  fireworksIgnition:false, // #149 : off par défaut (effet marqué, opt-in)
+  sonoModeOn:false}; // #184 : off par défaut — mode créatif à part entière, jamais imposé sans le demander
 
 // #6 : n'a d'effet que si le Caractère est activé — chaque paire pioche alors
 // son propre Δ (au lieu d'un battement commun) pour un jeu plus riche.
@@ -7995,6 +8191,10 @@ function triggerMagicAuto(opts) {
   if (!flowing) startFlow();
   buildVesicaPairs();
   patchRandomTable();
+  // #184 : Mode Sonothérapie — post-traitement, s'applique APRÈS le tirage
+  // normal ci-dessus (il vient d'écraser ce que le tirage venait de poser),
+  // uniquement si la case est cochée. Ne touche à rien si off.
+  if (RAND_OPTS.sonoModeOn) _applySonoMode();
   saveState();
 
   const btn = document.getElementById('btn-rand-dock');
@@ -8404,6 +8604,10 @@ function patchRandomTable() {
     const vol = document.getElementById('rt-vol-'+i);
     if (vol && document.activeElement !== vol) vol.value = (pair.pingala.vol / VOL_UI_SCALE).toFixed(2);
   });
+  // #185 : source unique — tout appelant de patchRandomTable() (tirage
+  // aléatoire, édition manuelle, mute…) rafraîchit du même coup le tiroir
+  // Oscillateurs, sans avoir à modifier chaque site d'appel individuellement.
+  if (typeof patchOscDrawer === 'function') patchOscDrawer();
 }
 // #91 : fréquence libre par oscillateur, SANS la marge de sécurité 36 Hz du
 // tirage aléatoire (celle-ci ne s'applique — comme déjà pour les éditeurs
@@ -9475,13 +9679,16 @@ function _doSave() {
       subDrone: { ...SUBDRONE_STATE },
       egochaSage: { ...EGOCHA_SAGE_STATE }, // #181b
       deltaCharacter: DELTA_CHARACTER_MODE,
+      sonoMode: SONO_MODE, // #184
       breathAnchor: BREATH_ANCHOR_STATE.on,
       invisibleHand: INVISIBLE_HAND_STATE.on,
       randOpts: { ...RAND_OPTS },
       fluxMuted: FLUX_MUTED,
       bowlPulse: BOWL_STATE.on, // #150 : fireworksIgnition est déjà couvert par randOpts (spread ci-dessus)
-      retourMode: RETOUR_MODE, // #166
-      fxDetune: FX_FADER_STATE.detune // #176
+      retourMode: RETOUR_MODE // #166
+      // #185 : fxDetune (ancien fader Détune du tiroir) retiré — le tiroir
+      // ne pilote plus de détune global, seulement Volume/Δ par oscillateur
+      // (déjà couvert par pairs[] ci-dessus).
     }));
   } catch(e) {}
 }
@@ -9552,6 +9759,7 @@ function loadState() {
       // dans un état sauvegardé plus ancien — retiré en #182.
     }
     if (typeof s.deltaCharacter==='string' && DELTA_CHARACTER[s.deltaCharacter]) DELTA_CHARACTER_MODE = s.deltaCharacter;
+    if (typeof s.sonoMode==='string' && SONO_MODES[s.sonoMode]) SONO_MODE = s.sonoMode; // #184
     if (typeof s.breathAnchor==='boolean') BREATH_ANCHOR_STATE.on = s.breathAnchor;
     if (typeof s.invisibleHand==='boolean') INVISIBLE_HAND_STATE.on = s.invisibleHand;
     if (s.randOpts && typeof s.randOpts==='object') Object.assign(RAND_OPTS, s.randOpts);
@@ -9562,17 +9770,9 @@ function loadState() {
     // ci-dessus), le LFO doux par paire est réattaché séparément dans
     // startFlow() une fois les nodes prêts (cf. commentaire #166 là-bas).
     if (typeof s.retourMode==='boolean') RETOUR_MODE = s.retourMode;
-    // #176 : référence du fader Détune restaurée (repos uniquement — le
-    // rendu visuel réel est fait par _fxUpdateVisibility, appelée depuis
-    // _loadAdvanced, une fois le DOM déjà mis en page ; si absente,
-    // _fxUpdateVisibility la synchronise sur masterFreq, écart nul).
-    // userSet=true : une valeur restaurée ne doit PAS être re-synchronisée
-    // sur le maître au prochain démarrage du flux (sinon un écart choisi
-    // par l'utilisateur puis rechargé serait silencieusement effacé).
-    if (typeof s.fxDetune==='number' && s.fxDetune>=F_MIN && s.fxDetune<=F_MAX) {
-      FX_FADER_STATE.detune = s.fxDetune;
-      FX_FADER_STATE.userSet = true;
-    }
+    // #185 : s.fxDetune (ancien fader Détune, #176) volontairement ignoré
+    // s'il subsiste dans un état sauvegardé plus ancien — FX_FADER_STATE
+    // n'existe plus, le tiroir n'a plus de détune global à restaurer.
   } catch(e) {}
 }
 
@@ -9611,6 +9811,8 @@ function _syncRandOptsUI() {
   const ratioHint = document.getElementById('ratio-off-hint'); if (ratioHint) ratioHint.style.display = RAND_OPTS.ratioOn ? 'none' : 'block';
   const charSel = document.getElementById('rand-character-select'); if (charSel) charSel.value = DELTA_CHARACTER_MODE;
   setCk('ck-character-on', RAND_OPTS.characterOn);
+  const sonoSel = document.getElementById('rand-sono-select'); if (sonoSel) sonoSel.value = SONO_MODE; // #184
+  setCk('ck-sono-on', RAND_OPTS.sonoModeOn);
   setCk('ck-breath-anchor', BREATH_ANCHOR_STATE.on);
   // STRICT_HEADPHONE_MODE n'est connu qu'après loadState() (appelé avant la
   // construction d'OSC_PAN au chargement du script) — le recalculer ici.
@@ -9658,7 +9860,7 @@ function exportState() {
     p:PAIRS.map(p=>({ri:p.pingala.ri,n:p.pingala.n,vp:p.pingala.vol,dt:p.ida.delta,po:p.ida.polarity,vi:p.ida.vol})),
     dualSine: DUALSINE_DETUNE, pairDualSine: { ...PAIR_DUALSINE },
     breathDepthMax: PAIR_BREATH_OPTS.depthMax, breathAnchor: BREATH_ANCHOR_STATE.on,
-    deltaDrift: { ...DELTA_DRIFT_STATE }, deltaCharacter: DELTA_CHARACTER_MODE,
+    deltaDrift: { ...DELTA_DRIFT_STATE }, deltaCharacter: DELTA_CHARACTER_MODE, sonoMode: SONO_MODE,
     strictHeadphone: STRICT_HEADPHONE_MODE, pairComp: PAIR_COMP_STATE.on,
     subDrone: { ...SUBDRONE_STATE },
     egochaSage: { ...EGOCHA_SAGE_STATE }, // #181b
