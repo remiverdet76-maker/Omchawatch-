@@ -443,6 +443,7 @@ input[type=color]{
     <button class="mtab"    id="mt-journal" onclick="setTab('journal')">JOURNAL</button>
     <button class="mtab"    id="mt-arch"    onclick="setTab('arch')">OMCHAT'AIME</button>
     <button class="mtab"    id="mt-sync"    onclick="setTab('sync')">SYNCHRONICITÉ</button>
+    <button class="mtab"    id="mt-cosmos"  onclick="setTab('cosmos')">COSMOS</button>
   </div>
 
   <!-- CONTENU -->
@@ -879,6 +880,60 @@ input[type=color]{
       </div>
     </div>
 
+    <!-- ══ COSMOS — éclipses / lunaisons / solstices, 1990-2035 (#188) ══
+         Mode INDÉPENDANT du reste de l'app, ajouté par curiosité — ses
+         cycles ne cherchent pas à recouper les cycles Omc (360/396/432)
+         utilisés partout ailleurs. -->
+    <div id="tab-cosmos" style="display:none">
+      <div class="opt-section">
+        <div class="opt-h">🌘 Cosmos — éclipses, lunaisons, solstices (1990 → 2035)</div>
+        <p class="small" style="margin-bottom:6px">
+          Mode indépendant, par curiosité — ses cycles ne cherchent pas à
+          recouper les cycles Omc du reste de l'app. Nouvelles/pleines
+          lunes et solstices/équinoxes sont <strong>calculés</strong>
+          (formules de Jean Meeus, précision : le bon jour, parfois à
+          quelques heures près). Éclipses et alignements viennent d'un
+          <strong>relevé compilé</strong> à partir de sources publiques
+          (NASA, IMCCE, Wikipédia) : il couvre les éclipses de Soleil
+          <em>centrales</em> (totale/annulaire/hybride) et les éclipses
+          <em>totales</em> de Lune, plus quelques alignements notables —
+          pas garanti exhaustif pour chaque éclipse partielle mineure.
+        </p>
+        <div class="arch-readout-grid">
+          <div class="arch-readout"><div class="arch-readout-label">Prochaine nouvelle lune</div><div class="arch-readout-val" id="cos-next-new">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Prochaine pleine lune</div><div class="arch-readout-val" id="cos-next-full">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Prochain solstice/équinoxe</div><div class="arch-readout-val" id="cos-next-season">—</div></div>
+          <div class="arch-readout"><div class="arch-readout-label">Prochaine éclipse (relevé)</div><div class="arch-readout-val" id="cos-next-eclipse">—</div></div>
+        </div>
+      </div>
+
+      <div class="opt-section">
+        <div class="opt-h">Lunaisons & saisons — année par année</div>
+        <p class="small" style="margin-bottom:6px">Nouvelles/pleines lunes, solstices/équinoxes, et tout événement du relevé ci-dessous tombant cette année-là.</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <button class="cal-nav-btn" onclick="cosYearStep(-1)">‹</button>
+          <span id="cos-year-label" style="font:600 .82rem 'Cinzel',serif;color:var(--gold)">—</span>
+          <button class="cal-nav-btn" onclick="cosYearStep(1)">›</button>
+        </div>
+        <div class="arch-table-wrap" style="max-height:340px">
+          <div id="cos-year-list"></div>
+        </div>
+      </div>
+
+      <div class="opt-section">
+        <div class="opt-h">Éclipses & alignements remarquables — 1990 → 2035</div>
+        <div class="arch-tabs">
+          <button class="arch-tab-btn on" id="ctb-all"   onclick="cosSetFilter('all')">Tout</button>
+          <button class="arch-tab-btn"    id="ctb-solar" onclick="cosSetFilter('solar')">☉ Soleil</button>
+          <button class="arch-tab-btn"    id="ctb-lunar" onclick="cosSetFilter('lunar')">☾ Lune</button>
+          <button class="arch-tab-btn"    id="ctb-align" onclick="cosSetFilter('align')">✦ Alignements</button>
+        </div>
+        <div class="arch-table-wrap" style="max-height:420px">
+          <div id="cos-event-list"></div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /panel-content -->
 </div><!-- /panel -->
 
@@ -943,11 +998,16 @@ function togglePanel(){
   setTimeout(resize,360);
 }
 function setTab(name){
-  ['notice','options','design','lieu','simu','soleil','journal','arch','sync'].forEach(t=>{
+  ['notice','options','design','lieu','simu','soleil','journal','arch','sync','cosmos'].forEach(t=>{
     document.getElementById('tab-'+t).style.display=t===name?'block':'none';
     document.getElementById('mt-'+t).classList.toggle('on',t===name);
   });
   if(name==='sync' && typeof renderSyncTab==='function') renderSyncTab();
+  // #188 : recalcule à l'ouverture — "maintenant" (ou SIM.date) a pu changer
+  // depuis le chargement de la page.
+  if(name==='cosmos' && typeof cosRefreshNextPanel==='function'){
+    cosRefreshNextPanel(); cosBuildYearList(); cosBuildEventTable();
+  }
 }
 
 // #166 : Mode Retour — bouton dédié de l'horloge, cf. index.html
@@ -1779,6 +1839,269 @@ function calPickDay(y,m,d){
   sunRecompute();
 }
 
+// ═══ COSMOS — éclipses / lunaisons / solstices, 1990-2035 (#188) ═══════
+// Mode INDÉPENDANT du reste de l'app, ajouté par curiosité — aucun lien
+// recherché avec les cycles Omc (360/396/432) utilisés ailleurs.
+//
+// Nouvelles/pleines lunes et solstices/équinoxes : CALCULÉS, via les
+// formules de Jean Meeus ("Astronomical Algorithms") — seuls les termes
+// périodiques dominants sont repris (pas la table complète à 60+ lignes),
+// donc précision typique de quelques minutes à quelques heures : largement
+// suffisant pour afficher le bon JOUR calendaire sur 1990-2035, mais ce
+// n'est pas un éphéméride de précision seconde.
+//
+// Éclipses & alignements : un RELEVÉ compilé à la main à partir de sources
+// publiques (NASA/GSFC, IMCCE, Wikipédia). Couvre les éclipses de Soleil
+// CENTRALES (totale/annulaire/hybride — pas les partielles mineures) et
+// les éclipses TOTALES de Lune, plus une poignée d'alignements notables
+// (transits de Vénus, grande conjonction Jupiter-Saturne...). Autocohérent
+// par construction : chaque éclipse de Soleil du relevé tombe exactement
+// sur une nouvelle lune calculée, chaque éclipse de Lune sur une pleine
+// lune calculée (vérifié par test dédié) — mais le relevé lui-même n'est
+// pas garanti exhaustif pour chaque éclipse partielle/pénombrale mineure.
+
+// ── Julian Day ↔ Date UTC (Meeus ch.7) ──────────────────────────────────
+function _cosJD(y,m,d,h){
+  if(m<=2){y--;m+=12;}
+  const A=Math.floor(y/100), B=2-A+Math.floor(A/4);
+  return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+(h||0)/24+B-1524.5;
+}
+function _cosJDToDate(jd){
+  const jd2=jd+0.5;
+  const Z=Math.floor(jd2), Fr=jd2-Z;
+  let A=Z;
+  if(Z>=2299161){const al=Math.floor((Z-1867216.25)/36524.25);A=Z+1+al-Math.floor(al/4);}
+  const B=A+1524, C=Math.floor((B-122.1)/365.25), D=Math.floor(365.25*C), E=Math.floor((B-D)/30.6001);
+  const day=B-D-Math.floor(30.6001*E)+Fr;
+  const month=E<14?E-1:E-13;
+  const year=month>2?C-4716:C-4715;
+  const dayInt=Math.floor(day);
+  const hFrac=(day-dayInt)*24;
+  const mn=Math.round((hFrac-Math.floor(hFrac))*60);
+  return new Date(Date.UTC(year,month-1,dayInt,Math.floor(hFrac),mn));
+}
+const _D2R=Math.PI/180;
+function _sind(x){return Math.sin(x*_D2R);}
+
+// ── Nouvelle/pleine lune (Meeus ch.49) ──────────────────────────────────
+// k = numéro de lunaison depuis la référence k=0 (nouvelle lune du
+// 6 janvier 2000) ; k entier = nouvelle lune, k+0.5 = pleine lune.
+function cosMoonPhaseJDE(k){
+  const T=k/1236.85, T2=T*T, T3=T2*T, T4=T3*T;
+  let JDE=2451550.09766+29.530588861*k+0.00015437*T2-0.00000015*T3+0.00000000073*T4;
+  const E =1-0.002516*T-0.0000074*T2;
+  const M =2.5534+29.10535670*k-0.0000014*T2-0.00000011*T3;         // anomalie moy. Soleil
+  const Mp=201.5643+385.81693528*k+0.0107582*T2+0.00001238*T3-0.000000058*T4; // anomalie moy. Lune
+  const F =160.7108+390.67050284*k-0.0016118*T2-0.00000227*T3+0.000000011*T4; // argument de latitude
+  const Om=124.7746-1.56375588*k+0.0020672*T2+0.00000215*T3;
+  // Termes correctifs dominants (mêmes pour Nouvelle et Pleine Lune) —
+  // table 49.A de Meeus, entrées principales seulement.
+  JDE += -0.40720*_sind(Mp) + 0.17241*E*_sind(M) + 0.01608*_sind(2*Mp)
+       + 0.01039*_sind(2*F) + 0.00739*E*_sind(Mp-M) - 0.00514*E*_sind(Mp+M)
+       + 0.00208*E*E*_sind(2*M) - 0.00111*_sind(Mp-2*F) - 0.00057*_sind(Mp+2*F)
+       + 0.00056*E*_sind(2*Mp+M) - 0.00042*_sind(3*Mp) + 0.00042*E*_sind(M+2*F)
+       + 0.00038*E*_sind(M-2*F) - 0.00024*E*_sind(2*Mp-M) - 0.00017*_sind(Om)
+       - 0.00007*_sind(Mp+2*M) + 0.00004*_sind(2*Mp-2*F) + 0.00004*_sind(3*M)
+       + 0.00003*_sind(Mp+M-2*F) + 0.00003*_sind(2*Mp+2*F) - 0.00003*_sind(Mp+M+2*F)
+       + 0.00003*_sind(Mp-M+2*F) - 0.00002*_sind(Mp-M-2*F) - 0.00002*_sind(3*Mp+M)
+       + 0.00002*_sind(4*Mp);
+  return JDE;
+}
+function cosKForDate(date){
+  const y=date.getUTCFullYear()+(dayOfYearUTC(date)-1)/daysInYearUTC(date.getUTCFullYear());
+  return (y-2000)*12.3685;
+}
+// Nouvelle ET pleine lune les plus proches APRÈS `date` (ou égales).
+function cosNearestMoonPhases(date){
+  const k0=Math.floor(cosKForDate(date));
+  const target=_cosJD(date.getUTCFullYear(),date.getUTCMonth()+1,date.getUTCDate(),0);
+  const candidates=[];
+  for(let k=k0-1;k<=k0+2;k++){
+    candidates.push({k,phase:'new',jde:cosMoonPhaseJDE(k)});
+    candidates.push({k,phase:'full',jde:cosMoonPhaseJDE(k+0.5)});
+  }
+  candidates.sort((a,b)=>a.jde-b.jde);
+  let nextNew=null,nextFull=null;
+  candidates.forEach(c=>{
+    if(c.jde>=target){
+      if(c.phase==='new'&&!nextNew)nextNew=c;
+      if(c.phase==='full'&&!nextFull)nextFull=c;
+    }
+  });
+  return {nextNew,nextFull};
+}
+
+// ── Solstices/équinoxes (Meeus ch.27) — termes périodiques dominants ────
+const COS_SEASON_NAMES=['Équinoxe de mars','Solstice de juin','Équinoxe de septembre','Solstice de décembre'];
+const _COS_SEASON_TERMS=[ // [A, B(deg), C(deg/siècle·T)] — 24 termes dominants
+  [485,324.96,1934.136],[203,337.23,32964.467],[199,342.08,20.186],
+  [182,27.85,445267.112],[156,73.14,45036.884],[136,171.52,22518.443],
+  [77,222.54,65928.934],[74,296.72,3034.906],[70,243.58,9037.513],
+  [58,119.81,33718.147],[52,297.17,150.678],[50,21.02,2281.226],
+  [45,247.54,29929.562],[44,325.15,31555.956],[29,60.93,4443.417],
+  [18,155.12,67555.328],[17,288.79,4562.452],[16,198.04,62894.029],
+  [14,199.76,31436.921],[12,95.39,14577.848],[12,287.11,31931.756],
+  [12,320.81,34777.259],[9,227.73,1222.114],[8,15.45,16859.074]
+];
+function cosSeasonJDE(year,season){
+  const Y=(year-2000)/1000, Y2=Y*Y, Y3=Y2*Y, Y4=Y3*Y;
+  let JDE0;
+  if(season===0) JDE0=2451623.80984+365242.37404*Y+0.05169*Y2-0.00411*Y3-0.00057*Y4;
+  else if(season===1) JDE0=2451716.56767+365241.62603*Y+0.00325*Y2+0.00888*Y3-0.00030*Y4;
+  else if(season===2) JDE0=2451810.21715+365242.01767*Y-0.11575*Y2+0.00337*Y3+0.00078*Y4;
+  else JDE0=2451900.05952+365242.74049*Y-0.06223*Y2-0.00823*Y3+0.00032*Y4;
+  const T=(JDE0-2451545.0)/36525;
+  const W=35999.373*T-2.47;
+  const dl=1+0.0334*_sind(W+90)+0.0007*_sind(2*W+90); // cos(x)=sin(x+90)
+  let S=0;
+  _COS_SEASON_TERMS.forEach(t=>{ S+=t[0]*_sind(t[1]+t[2]*T+90); }); // cos via sin(+90)
+  return JDE0+(0.00001*S)/dl;
+}
+function cosNextSeason(date){
+  const y=date.getUTCFullYear();
+  const target=_cosJD(y,date.getUTCMonth()+1,date.getUTCDate(),0);
+  for(let yy=y;yy<=y+1;yy++){
+    for(let s=0;s<4;s++){
+      const jde=cosSeasonJDE(yy,s);
+      if(jde>=target) return {jde,season:s,label:COS_SEASON_NAMES[s]};
+    }
+  }
+  return null;
+}
+
+// ── Relevé éclipses/alignements — voir note en tête de section ──────────
+// t:'solar' k:'T'(totale)/'A'(annulaire)/'H'(hybride) — t:'lunar' k:'T'
+// (totale) — t:'align' label libre.
+const COSMOS_EVENTS=[
+  {d:'1990-01-26',t:'solar',k:'A'},{d:'1990-02-09',t:'lunar',k:'T'},
+  {d:'1990-07-22',t:'solar',k:'T'},
+  {d:'1991-07-11',t:'solar',k:'T'},
+  {d:'1992-01-04',t:'solar',k:'A'},{d:'1992-06-30',t:'solar',k:'T'},
+  {d:'1992-12-09',t:'lunar',k:'T'},
+  {d:'1993-06-04',t:'lunar',k:'T'},{d:'1993-11-29',t:'lunar',k:'T'},
+  {d:'1994-05-10',t:'solar',k:'A'},{d:'1994-11-03',t:'solar',k:'T'},
+  {d:'1995-04-29',t:'solar',k:'A'},{d:'1995-10-24',t:'solar',k:'T'},
+  {d:'1996-04-04',t:'lunar',k:'T'},{d:'1996-09-27',t:'lunar',k:'T'},
+  {d:'1997-03-09',t:'solar',k:'T'},{d:'1997-09-16',t:'lunar',k:'T'},
+  {d:'1998-02-26',t:'solar',k:'T'},
+  {d:'1999-02-16',t:'solar',k:'A'},{d:'1999-08-11',t:'solar',k:'T'},
+  {d:'2000-01-21',t:'lunar',k:'T'},{d:'2000-05-28',t:'align',label:'Regroupement de plusieurs planètes (Mercure-Vénus-Mars-Jupiter-Saturne) près du Soleil'},
+  {d:'2000-07-16',t:'lunar',k:'T'},
+  {d:'2001-01-09',t:'lunar',k:'T'},{d:'2001-06-21',t:'solar',k:'T'},{d:'2001-12-14',t:'solar',k:'A'},
+  {d:'2002-06-10',t:'solar',k:'A'},{d:'2002-12-04',t:'solar',k:'T'},
+  {d:'2003-05-16',t:'lunar',k:'T'},{d:'2003-05-31',t:'solar',k:'A'},
+  {d:'2003-11-09',t:'lunar',k:'T'},{d:'2003-11-23',t:'solar',k:'T'},
+  {d:'2004-05-04',t:'lunar',k:'T'},{d:'2004-06-08',t:'align',label:'Transit de Vénus devant le Soleil'},
+  {d:'2004-10-28',t:'lunar',k:'T'},
+  {d:'2005-04-08',t:'solar',k:'H'},{d:'2005-10-03',t:'solar',k:'A'},
+  {d:'2006-03-29',t:'solar',k:'T'},{d:'2006-09-22',t:'solar',k:'A'},
+  {d:'2007-03-03',t:'lunar',k:'T'},{d:'2007-08-28',t:'lunar',k:'T'},
+  {d:'2008-02-21',t:'lunar',k:'T'},{d:'2008-08-01',t:'solar',k:'T'},
+  {d:'2009-01-26',t:'solar',k:'A'},{d:'2009-07-22',t:'solar',k:'T'},
+  {d:'2010-01-15',t:'solar',k:'A'},{d:'2010-07-11',t:'solar',k:'T'},{d:'2010-12-21',t:'lunar',k:'T'},
+  {d:'2011-06-15',t:'lunar',k:'T'},{d:'2011-12-10',t:'lunar',k:'T'},
+  {d:'2012-05-20',t:'solar',k:'A'},{d:'2012-06-05',t:'align',label:'Transit de Vénus devant le Soleil (le suivant sera en 2117)'},
+  {d:'2012-11-13',t:'solar',k:'T'},
+  {d:'2013-05-10',t:'solar',k:'A'},{d:'2013-11-03',t:'solar',k:'H'},
+  {d:'2014-04-15',t:'lunar',k:'T'},{d:'2014-04-29',t:'solar',k:'A'},{d:'2014-10-08',t:'lunar',k:'T'},
+  {d:'2015-03-20',t:'solar',k:'T'},{d:'2015-04-04',t:'lunar',k:'T'},{d:'2015-09-28',t:'lunar',k:'T'},
+  {d:'2016-03-09',t:'solar',k:'T'},{d:'2016-09-01',t:'solar',k:'A'},
+  {d:'2017-02-26',t:'solar',k:'A'},{d:'2017-08-21',t:'solar',k:'T'},
+  {d:'2018-01-31',t:'lunar',k:'T'},{d:'2018-07-27',t:'lunar',k:'T'},
+  {d:'2019-01-21',t:'lunar',k:'T'},
+  {d:'2020-06-21',t:'solar',k:'A'},{d:'2020-12-14',t:'solar',k:'T'},{d:'2020-12-21',t:'align',label:'Grande Conjonction Jupiter-Saturne — la plus proche depuis 1623'},
+  {d:'2021-05-26',t:'lunar',k:'T'},{d:'2021-06-10',t:'solar',k:'A'},{d:'2021-12-04',t:'solar',k:'T'},
+  {d:'2022-05-16',t:'lunar',k:'T'},{d:'2022-11-08',t:'lunar',k:'T'},
+  {d:'2023-04-20',t:'solar',k:'H'},{d:'2023-10-14',t:'solar',k:'A'},
+  {d:'2024-04-08',t:'solar',k:'T'},{d:'2024-10-02',t:'solar',k:'A'},
+  {d:'2025-03-14',t:'lunar',k:'T'},{d:'2025-09-07',t:'lunar',k:'T'},
+  {d:'2026-03-03',t:'lunar',k:'T'},{d:'2026-08-12',t:'solar',k:'T'},
+  {d:'2027-08-02',t:'solar',k:'T'},
+  {d:'2028-07-22',t:'solar',k:'T'},{d:'2028-12-31',t:'lunar',k:'T'},
+  {d:'2029-06-26',t:'lunar',k:'T'},{d:'2029-12-20',t:'lunar',k:'T'},
+  {d:'2030-06-01',t:'solar',k:'A'},{d:'2030-11-25',t:'solar',k:'T'},
+  {d:'2031-05-21',t:'solar',k:'A'},{d:'2031-11-14',t:'solar',k:'T'},
+  {d:'2032-05-09',t:'solar',k:'A'},
+  {d:'2033-03-30',t:'solar',k:'T'},
+  {d:'2034-03-20',t:'solar',k:'T'},
+  {d:'2035-09-02',t:'solar',k:'T'},
+];
+const COS_SOLAR_LABELS={T:'Éclipse totale de Soleil',A:'Éclipse annulaire de Soleil',H:'Éclipse hybride de Soleil'};
+function cosEventLabel(e){
+  if(e.t==='solar') return '☉ '+(COS_SOLAR_LABELS[e.k]||'Éclipse de Soleil');
+  if(e.t==='lunar') return '☾ Éclipse totale de Lune';
+  return '✦ '+(e.label||'Alignement remarquable');
+}
+function cosFmtDate(d){
+  const days=['dim','lun','mar','mer','jeu','ven','sam'];
+  const months=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+  return days[d.getUTCDay()]+' '+d.getUTCDate()+' '+months[d.getUTCMonth()]+' '+d.getUTCFullYear();
+}
+
+// ── Panneau "prochain événement" ────────────────────────────────────────
+function cosRefreshNextPanel(){
+  const now=nowOrSim();
+  const {nextNew,nextFull}=cosNearestMoonPhases(now);
+  const season=cosNextSeason(now);
+  const setTxt=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;};
+  setTxt('cos-next-new', nextNew?cosFmtDate(_cosJDToDate(nextNew.jde)):'—');
+  setTxt('cos-next-full', nextFull?cosFmtDate(_cosJDToDate(nextFull.jde)):'—');
+  setTxt('cos-next-season', season?cosFmtDate(_cosJDToDate(season.jde))+' — '+season.label:'—');
+  const nowKey=now.toISOString().slice(0,10);
+  const nextEv=COSMOS_EVENTS.filter(e=>e.d>=nowKey).sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0)[0];
+  setTxt('cos-next-eclipse', nextEv?cosFmtDate(new Date(nextEv.d+'T00:00:00Z'))+' — '+cosEventLabel(nextEv):'Hors couverture du relevé (1990–2035)');
+}
+
+// ── Lunaisons & saisons d'une année (navigable) ─────────────────────────
+let COS_YEAR=Math.max(1990,Math.min(2035,(new Date()).getUTCFullYear()));
+function cosYearStep(delta){
+  COS_YEAR=Math.max(1990,Math.min(2035,COS_YEAR+delta));
+  cosBuildYearList();
+}
+function cosBuildYearList(){
+  const lbl=document.getElementById('cos-year-label'); if(lbl)lbl.textContent=COS_YEAR;
+  const wrap=document.getElementById('cos-year-list'); if(!wrap)return;
+  const rows=[];
+  for(let s=0;s<4;s++){
+    rows.push({date:_cosJDToDate(cosSeasonJDE(COS_YEAR,s)),label:COS_SEASON_NAMES[s]});
+  }
+  // Parcourt une marge large de lunaisons autour de l'année (une année
+  // compte ~12,37 lunaisons) — filtré ensuite sur l'année affichée.
+  let k=Math.floor(cosKForDate(new Date(Date.UTC(COS_YEAR,0,1))))-1;
+  for(let i=0;i<15;i++,k++){
+    let d=_cosJDToDate(cosMoonPhaseJDE(k));
+    if(d.getUTCFullYear()===COS_YEAR) rows.push({date:d,label:'Nouvelle lune'});
+    d=_cosJDToDate(cosMoonPhaseJDE(k+0.5));
+    if(d.getUTCFullYear()===COS_YEAR) rows.push({date:d,label:'Pleine lune'});
+  }
+  COSMOS_EVENTS.filter(e=>e.d.slice(0,4)===String(COS_YEAR)).forEach(e=>{
+    rows.push({date:new Date(e.d+'T00:00:00Z'),label:cosEventLabel(e)});
+  });
+  rows.sort((a,b)=>a.date-b.date);
+  wrap.innerHTML=rows.map(r=>
+    '<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 8px;border-bottom:1px solid rgba(212,168,67,.12);font-size:.74rem;">'
+    +'<span style="color:var(--gold);white-space:nowrap">'+cosFmtDate(r.date)+'</span>'
+    +'<span style="text-align:right">'+r.label+'</span></div>'
+  ).join('');
+}
+
+// ── Relevé éclipses/alignements — table filtrable ───────────────────────
+let COS_FILTER='all';
+function cosSetFilter(f){
+  COS_FILTER=f;
+  ['all','solar','lunar','align'].forEach(x=>{const b=document.getElementById('ctb-'+x); if(b)b.classList.toggle('on',x===f);});
+  cosBuildEventTable();
+}
+function cosBuildEventTable(){
+  const wrap=document.getElementById('cos-event-list'); if(!wrap)return;
+  const list=COSMOS_EVENTS.filter(e=>COS_FILTER==='all'||e.t===COS_FILTER);
+  wrap.innerHTML=list.map(e=>
+    '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 8px;border-bottom:1px solid rgba(212,168,67,.10);font-size:.75rem;">'
+    +'<span style="color:var(--gold);white-space:nowrap">'+cosFmtDate(new Date(e.d+'T00:00:00Z'))+'</span>'
+    +'<span style="text-align:right">'+cosEventLabel(e)+'</span></div>'
+  ).join('');
+}
+
 // ─── JOURNAL — calendrier Omc (360/432) pour observations libres ────────
 let JOURNAL={base:360,selDay:null};
 function journalKey(base){return 'chawatch-journal-'+base;}
@@ -2368,6 +2691,7 @@ syncSimUI();
 sunRecompute();
 calBuildGrid();
 journalSetBase(360);
+cosRefreshNextPanel(); cosBuildYearList(); cosBuildEventTable(); // #188
 resize(); loop();
 </script>
 </body>
