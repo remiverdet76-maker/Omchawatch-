@@ -2501,12 +2501,12 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
        de réglages, uniforme sur les 4 cellules. -->
   <!-- Colonne gauche : ROUGE (haut) sur VERT (bas) -->
   <div class="dock-col" data-html-import-id="html-import-15">
-    <!-- ROUGE — Option Jeu aléatoire : tap=Options Aléatoire · long=Solo maître · sphères=raccourcis -->
+    <!-- ROUGE — #190 : tap=3D Vibe (nouveau tirage, ex-Options Aléatoire) · long=Solo maître · sphères=raccourcis -->
     <div class="dcell-wrap" data-html-import-id="html-import-16">
-      <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Afficher / masquer les oscillateurs">+</button>
-      <button class="dcell dcell-red canva-button" id="dcRed" title="Tap : Options Aléatoire · Appui long : Solo fréquence maître" data-html-import-id="html-import-17" data-template-id="button-8" style="background: rgba(255, 70, 70, 0.14); color: rgb(255, 142, 142);">
+      <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Ouvrir le tiroir Oscillateurs">+</button>
+      <button class="dcell dcell-red canva-button" id="dcRed" title="Tap : 3D Vibe (nouveau tirage) · Appui long : Solo fréquence maître" data-html-import-id="html-import-17" data-template-id="button-8" style="background: rgba(255, 70, 70, 0.14); color: rgb(255, 142, 142);">
         <span class="dcell-gear">⚙</span>
-        <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700;">Jeu Aléatoire</b></span>
+        <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700;">3D Vibe</b></span>
       </button>
     </div>
     <!-- VERT — Effet Audio : tap=ouvrir Effet · long=Effet Aléatoire (≤72%) · sphères=raccourcis -->
@@ -2562,7 +2562,11 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   <div class="pct canva-container" data-html-import-id="html-import-41" data-template-id="div-27" style="color: rgb(0, 204, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 8px;">⚙ Paramètres</div>
   <div class="params-menu" data-html-import-id="html-import-42">
     <button class="params-item canva-button" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panFX')" data-html-import-id="html-import-43" data-template-id="button-28"><canva-inline-text data-template-id="canva-inline-text-29" class="canva-text" style="color: #FFD700; font-size: 22px;">✦</canva-inline-text><span data-html-import-id="html-import-44" data-template-id="span-30" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Effet</span></button>
-    <button class="params-item canva-button" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panRand')" data-html-import-id="html-import-45" data-template-id="button-31"><canva-inline-text data-template-id="canva-inline-text-32" class="canva-text" style="color: #FFD700; font-size: 22px;">⚄</canva-inline-text><span data-html-import-id="html-import-46" data-template-id="span-33" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Options Aléatoire</span></button>
+    <!-- #190 : "Options Aléatoire" (panRand, retiré — son contenu vit
+         désormais dans Effet Audio) remplacé par "3D Vibe" : ferme le menu
+         et lance directement un nouveau tirage, un raccourci pratique
+         depuis le menu sans avoir à rejoindre la sphère Flux du dock. -->
+    <button class="params-item canva-button" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="closePanel();triggerMagicAuto();" data-html-import-id="html-import-45" data-template-id="button-31"><canva-inline-text data-template-id="canva-inline-text-32" class="canva-text" style="color: #FFD700; font-size: 22px;">❂</canva-inline-text><span data-html-import-id="html-import-46" data-template-id="span-33" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">3D Vibe</span></button>
     <button class="params-item canva-button" style="--ic: #60D8FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panGeo')" data-html-import-id="html-import-47" data-template-id="button-34"><canva-inline-text data-template-id="canva-inline-text-35" class="canva-text" style="color: #FFD700; font-size: 22px;">⊞</canva-inline-text><span data-html-import-id="html-import-48" data-template-id="span-36" class="canva-text" style="color: color(srgb 0.501176 0.877647 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">FX3D · Géométrie</span></button>
     <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panPresets')" data-html-import-id="html-import-49" data-template-id="button-37"><canva-inline-text data-template-id="canva-inline-text-38" class="canva-text" style="color: #FFD700; font-size: 22px;">⊙</canva-inline-text><span data-html-import-id="html-import-50" data-template-id="span-39" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Presets</span></button>
     <button class="params-item canva-button" style="--ic: #FF9A8B; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panSamples')" data-html-import-id="html-import-51" data-template-id="button-40"><canva-inline-text data-template-id="canva-inline-text-41" class="canva-text" style="color: #FFD700; font-size: 22px;">◎</canva-inline-text><span data-html-import-id="html-import-52" data-template-id="span-42" class="canva-text" style="color: color(srgb 1 0.683137 0.636078); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Samples</span></button>
@@ -2937,148 +2941,11 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
 </div>
 
 <!-- Panel : Jeu Aléatoire — droite -->
-<div class="pan-right canva-container" id="panRand" data-html-import-id="html-import-494" data-template-id="div-472">
-  <div class="pct canva-container" data-html-import-id="html-import-495" data-template-id="div-473">Options Aléatoire</div>
-  <!-- #145 : bouton "⚄ Omchaléatoire" retiré — redondant avec le tap sur
-       la sphère Flux du dock (triggerMagicAuto, cf. DOCK_MAP.flux.tap),
-       désormais la seule façon de déclencher un tirage. -->
-  <!-- #12 : retour arrière sur les 5 derniers tirages aléatoires -->
-  <button class="fbf-step canva-button" id="btn-undo-random" onclick="undoLastRandom()" disabled style="width:100%;margin-top:.35rem;">↩ Annuler le tirage</button>
-
-  <!-- Options aléatoire — réduites à l'essentiel : plage, ratio, caractère,
-       chacun des deux derniers avec sa propre case on/off persistante,
-       INDÉPENDANTE l'une de l'autre (les deux peuvent s'appliquer ensemble
-       au même tirage, ou séparément). Le reste des réglages est toujours
-       actif et rangé dans "Réglages aléatoires avancés" en fin de panneau. -->
-  <div style="margin:.6rem 0 .3rem;padding:.55rem .65rem;background:rgba(99,230,255,.05);border:1px solid rgba(99,230,255,.14);border-radius:10px;">
-    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin-bottom:.4rem;">PLAGE FRÉQUENCE — toujours active, répartition continue<button type="button" class="info-q" data-info="Bornes entre lesquelles le tirage aléatoire choisit les fréquences des oscillateurs — toujours actif, quel que soit le ratio ou le caractère choisis ci-dessous." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
-    <div class="sl-row">
-      <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Min <span id="rv-fmin" style="color:#63E6FF">54</span> Hz</label>
-      <input type="range" id="sl-fmin" min="54" max="474" value="54" style="flex:1;color:#63E6FF;" oninput="setRandFreqMin(this.value)">
-    </div>
-    <div class="sl-row">
-      <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Max <span id="rv-fmax" style="color:#63E6FF">475</span> Hz</label>
-      <input type="range" id="sl-fmax" min="55" max="475" value="475" style="flex:1;color:#63E6FF;" oninput="setRandFreqMax(this.value)">
-    </div>
-    <!-- #153 : plafond relevé 432→475 — au-dessus de 325Hz, LPF + volume -20%
-         + Sinus Duo obligatoire s'appliquent automatiquement (cf. triggerMagicAuto),
-         jamais un aigu simple tout seul. -->
-    <div style="font-size:.66rem;color:rgba(200,170,255,.4);font-style:italic;margin:.15rem 0 .3rem;">Plafond absolu 475 Hz — au-delà de 325 Hz, adouci automatiquement (LPF + Sinus Duo)</div>
-
-    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.5rem 0 .3rem;">RATIO<button type="button" class="info-q" data-info="Comment les fréquences des oscillateurs se répartissent par rapport à la racine — hétérogène (varié), homogène (régulier), ou harmonique (croissant/décroissant). Le bouton on/off à droite coupe l'application au tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
-    <div class="rand-mode-row">
-      <select id="rand-ratio-select" class="rand-select" onchange="setRandRatioMode(this.value)">
-        <option value="heterogene">Ratio hétérogène</option>
-        <option value="homogene">Ratio homogène</option>
-        <option value="harm-asc">Ratio harmonique croissant</option>
-        <option value="harm-desc">Ratio harmonique décroissant</option>
-      </select>
-      <label class="fx-toggle" title="Le ratio s'applique au tirage"><input type="checkbox" id="ck-ratio-on" checked onchange="setRatioOn(this.checked)"><span class="fx-tog-track"></span></label>
-    </div>
-    <div id="ratio-off-hint" style="display:none;font-size:.62rem;color:rgba(200,170,255,.5);font-style:italic;margin:.2rem 0 .1rem;">Désactivé : les ratios ne bougent plus au tirage — touche le ratio ou ×n de chaque ligne du tableau pour les régler à la main.</div>
-
-    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.5rem 0 .3rem;">CARACTÈRE DU BATTEMENT<button type="button" class="info-q" data-info="Ambiance générale du battement binaural (Δ) tiré au sort : apaisé, équilibré, ou immersif. Le bouton on/off à droite coupe l'application au tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
-    <div class="rand-mode-row">
-      <select id="rand-character-select" class="rand-select" onchange="setDeltaCharacter(this.value)">
-        <option value="apaise">☾ Apaisé</option>
-        <option value="equilibre" selected>⚖ Équilibré</option>
-        <option value="immersif">✺ Immersif</option>
-      </select>
-      <label class="fx-toggle" title="Le caractère du battement s'applique au tirage"><input type="checkbox" id="ck-character-on" checked onchange="setCharacterOn(this.checked)"><span class="fx-tog-track"></span></label>
-    </div>
-
-    <!-- #184 : Mode Sonothérapie — 4 bandes de fréquence maître (pas de
-         18Hz), toujours jouées en triplet harmonique (maître + 2
-         harmoniques réels, mis en avant) + 2 accompagnements discrets
-         (5/7 oscillateurs actifs). Même case option que Caractère du
-         battement juste au-dessus. -->
-    <div style="font-size:.68rem;color:rgba(99,230,255,.65);letter-spacing:.06em;font-style:italic;margin:.5rem 0 .3rem;">MODE SONOTHÉRAPIE<button type="button" class="info-q" data-info="4 bandes de fréquence maître (pas de 18Hz), toujours jouées en triplet harmonique (maître + 2 harmoniques réels, mis en avant) + 2 oscillateurs d'accompagnement plus discrets — 5 des 7 oscillateurs actifs, jamais oppressant. Le bouton on/off à droite coupe l'application au tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
-    <div class="rand-mode-row">
-      <select id="rand-sono-select" class="rand-select" onchange="setSonoMode(this.value)">
-        <option value="contraction_charmante">◐ Contraction charmante (54-144Hz)</option>
-        <option value="contraction_douce" selected>◑ Contraction douce (144-252Hz)</option>
-        <option value="expansion_douce">◒ Expansion douce (252-324Hz)</option>
-        <option value="expansion_charmante">◓ Expansion charmante (324-432Hz)</option>
-      </select>
-      <label class="fx-toggle" title="Le mode Sonothérapie s'applique au tirage"><input type="checkbox" id="ck-sono-on" onchange="setSonoModeOn(this.checked)"><span class="fx-tog-track"></span></label>
-    </div>
-  </div>
-
-  <!-- #183 : remonté juste après plage/ratio/caractère (au lieu d'être
-       tout en bas de l'onglet) et ouvert par défaut (attribut "open") —
-       ces réglages avancés pilotent l'essentiel du CARACTÈRE réel d'un
-       tirage, ils méritaient d'être vus sans avoir à chercher/déplier.
-       Repliable comme avant pour qui préfère un écran plus court. -->
-  <details class="rand-advanced" open>
-    <summary>Réglages aléatoires avancés</summary>
-    <div class="rand-advanced-body">
-      <div class="rand-cat">VARIÉTÉ DU TIRAGE</div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Δ varié par paire </span><button type="button" class="info-q" data-info="Chaque paire tire son propre battement (Δ) au lieu d'un battement identique partout — plus de nuance d'un oscillateur à l'autre." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-delta-variety" checked onchange="setDeltaVariety(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Polarité variée par paire </span><button type="button" class="info-q" data-info="L'oreille qui reçoit le Δ (au-dessus ou en dessous de la fréquence porteuse) change d'une paire à l'autre, pour un champ stéréo moins symétrique." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-polarity-variety" checked onchange="setPolarityVariety(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Timbre aléatoire </span><button type="button" class="info-q" data-info="La forme d'onde (Sinus, Sinus×2, Triangle…) de la paire mise en avant change à chaque tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-timbre" checked onchange="setRandTimbre(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Profondeur 3D </span><button type="button" class="info-q" data-info="Varie la position/l'espacement des sphères à l'écran — purement visuel, aucun effet sur le son." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-depth" checked onchange="setRandDepth(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Détune Sinus Duo aléatoire </span><button type="button" class="info-q" data-info="Quand une paire utilise le timbre Sinus Duo, l'écart en cents entre ses deux voix est lui aussi tiré au sort." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-dualsine" onchange="setRandDualSine(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Battement rapproché (1–7.2 Hz) </span><button type="button" class="info-q" data-info="Autorise, en plus du Δ habituel, un battement très resserré (bande Delta/Thêta) sur certaines paires pour plus de contraste." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-closebeat" checked onchange="setCloseBeatPair(this.checked)"></div>
-
-      <div class="fxq-sep"></div>
-      <div class="rand-cat">RESPIRATION &amp; ÉVOLUTION ORGANIQUE</div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Respiration par paire (aléatoire) </span><button type="button" class="info-q" data-info="Chaque paire respire (volume qui ondule doucement) à son propre rythme, indépendamment des autres." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-breath" checked onchange="setRandBreath(this.checked)"></div>
-      <div class="sl-row">
-        <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Profondeur <span id="sv-breath-depth" style="color:#63E6FF">12%</span><button type="button" class="info-q" data-info="Amplitude maximale de la respiration par paire ci-dessus — plus haut, l'ondulation de volume est plus marquée." onclick="event.stopPropagation();showInfoNote(this)">?</button></label>
-        <input type="range" min="0.01" max="0.3" step="0.01" value="0.12" style="flex:1;color:#63E6FF;" oninput="setPairBreathDepthMax(this.value)">
-      </div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Ancre respiratoire périodique </span><button type="button" class="info-q" data-info="Toutes les paires se resynchronisent brièvement sur un même souffle de temps en temps, pour éviter une dérive totalement chaotique." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-breath-anchor" checked onchange="setBreathAnchor(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Évolution harmonique douce </span><button type="button" class="info-q" data-info="Le jeu évolue tout seul, très lentement, vers d'autres harmonies au fil de la session — sans nouveau tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-organic-evo" checked onchange="setOrganicEvolution(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Main invisible (mute/octaves organiques) </span><button type="button" class="info-q" data-info="De temps à autre, une paire se coupe puis revient, parfois une octave plus haut ou plus bas — comme jouée par une présence discrète." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-invisible-hand" checked onchange="setInvisibleHand(this.checked)"></div>
-
-      <div class="fxq-sep"></div>
-      <div class="rand-cat">TRAITEMENT AUDIO</div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Pré-mastering (filtres LPF/HPF/BPF) </span><button type="button" class="info-q" data-info="Filtres automatiques appliqués selon la fréquence tirée, pour éviter les aigus stridents ou les graves boueux." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-premaster" checked onchange="setPreMasterFilter(this.checked)"></div>
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0;"><span class="fx-label">FX aléatoire </span><button type="button" class="info-q" data-info="Les effets (delay, ping-pong, espace…) sont eux aussi retouchés à chaque tirage, pas seulement les oscillateurs." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-fx" checked onchange="setRandUseFX(this.checked)"></div>
-
-      <div class="fxq-sep"></div>
-      <div class="rand-cat">NOUVEAUX MODES</div>
-      <!-- #149 : chaque paire "s'allume" à un instant différent après un
-           tirage (chorégraphie de gain, jamais la fréquence/le ratio déjà
-           posés par le tirage normal) — off par défaut, effet marqué. -->
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Feu d'artifice binaural (ignition étalée) </span><button type="button" class="info-q" data-info="Au lieu que toutes les paires démarrent ensemble, chacune s'allume à un instant différent après le tirage — mêmes fréquences, entrée échelonnée." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-fireworks" onchange="setFireworksIgnition(this.checked)"></div>
-      <!-- #150 : pulsation très lente (20-60s) en plus de la respiration
-           organique existante — off par défaut, se cumule à la respiration. -->
-      <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Signature bol tibétain (pulsation lente) </span><button type="button" class="info-q" data-info="Ajoute une pulsation de volume très lente (20 à 60s), en plus de la respiration organique déjà active." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-bowlpulse" onchange="setBowlPulse(this.checked)"></div>
-      <!-- #151 : progression volontaire sur la durée — resserre doucement Δ
-           (plus stimulant → plus apaisant) sur 10/20/30 min, indépendant du
-           tirage aléatoire (touche uniquement les paires non verrouillées). -->
-      <div class="sl-row" style="align-items:center;gap:.4rem;">
-        <label style="font-size:.7rem;color:rgba(200,170,255,.7);flex-shrink:0;">Arc de session</label>
-        <button type="button" class="info-q" data-info="Resserre doucement le battement (Δ) sur toute la durée choisie — plus stimulant au début, plus apaisant à la fin. Ne touche pas les oscillateurs verrouillés." onclick="event.stopPropagation();showInfoNote(this)">?</button>
-        <select id="session-arc-duration" style="flex:0 0 auto;background:rgba(20,10,40,.6);color:#F0E0FF;border:1px solid rgba(200,170,255,.35);border-radius:6px;font-size:.72rem;padding:.25rem .3rem;">
-          <option value="10">10 min</option>
-          <option value="20" selected>20 min</option>
-          <option value="30">30 min</option>
-        </select>
-        <button id="btn-session-arc" class="btn-magic-rand" style="width:auto;flex:1;padding:.4rem .5rem;font-size:.66rem;letter-spacing:.08em;" onclick="toggleSessionArc(parseInt(document.getElementById('session-arc-duration').value,10))">Arc de session : OFF</button>
-      </div>
-    </div>
-  </details>
-
-  <div class="rand-steps-grid canva-container" style="margin-top:.5rem" data-html-import-id="html-import-527" data-template-id="div-511">
-    <button class="fbf-step canva-button" onclick="masterStep(108)" data-html-import-id="html-import-528" data-template-id="button-512">+108</button>
-    <button class="fbf-step canva-button" onclick="masterStep(72)" data-html-import-id="html-import-529" data-template-id="button-513">+72</button>
-    <button class="fbf-step canva-button" onclick="masterStep(36)" data-html-import-id="html-import-530" data-template-id="button-514">+36</button>
-    <button class="fbf-step canva-button" onclick="masterStep(18)" data-html-import-id="html-import-531" data-template-id="button-515">+18</button>
-    <button class="fbf-step canva-button" onclick="masterStep(-18)" data-html-import-id="html-import-532" data-template-id="button-516">−18</button>
-    <button class="fbf-step canva-button" onclick="masterStep(-36)" data-html-import-id="html-import-533" data-template-id="button-517">−36</button>
-    <button class="fbf-step canva-button" onclick="masterStep(-72)" data-html-import-id="html-import-534" data-template-id="button-518">−72</button>
-    <button class="fbf-step canva-button" onclick="masterStep(-108)" data-html-import-id="html-import-535" data-template-id="button-519">−108</button>
-  </div>
-  <!-- #158 : tableau fréquence des 7 oscillateurs déménagé vers le menu
-       Effet Audio (panFX, cf. buildMasterFXHTML) — regroupé avec Gain
-       général + EQ 6 bandes pour une vue cohérente de la chaîne audio,
-       au lieu d'être dispersé ici dans Options Aléatoire. #random-table
-       reste le même id, juste un autre parent DOM ; buildRandomTable()/
-       patchRandomTable() n'ont pas besoin de changer. -->
-  <div style="font-size:.68rem;color:rgba(200,170,255,.45);font-style:italic;margin:.4rem 0;">Le détail des 7 oscillateurs (fréquence, ratio, volume…) est maintenant dans <b style="color:#86FFC0;">✦ Effet Audio</b>.</div>
-</div>
+<!-- #190 : ancien panneau "Options Aléatoire" (panRand) retiré — tout son
+     contenu vit désormais dans Effet Audio (buildMasterFXHTML, groupe
+     déroulant "Tirage Aléatoire (3D Vibe)"). Menu et dock renommés en
+     "3D Vibe" en conséquence (cf. le bouton menu plus bas dans ce fichier
+     et DOCK_ACTIONS.openRand dans le JS). -->
 
 <!-- Panel : Presets — banques illimitées, renommables (droite) -->
 <div class="pan-right canva-container" id="panPresets">
@@ -9209,6 +9076,117 @@ function buildMasterFXHTML() {
       <div id="random-table" class="random-table"></div>
     </div>
 
+    <!-- #190 : tout le contenu de l'ancien panneau "Options Aléatoire"
+         (panRand, retiré — menu/dock renommés "3D Vibe") regroupé ici, sous
+         Effet Audio, dans son propre menu déroulant — markup et fonctions
+         JS inchangés (setRandRatioMode, setDeltaCharacter, setSonoMode…),
+         seul l'emplacement change. Fermé par défaut comme les autres menus
+         déroulants de ce panneau (cf. #165 juste en dessous), pour rester
+         cohérent maintenant qu'il n'est plus seul dans son propre onglet. -->
+    <details class="fx-acc">
+      <summary>Tirage Aléatoire (3D Vibe)</summary>
+      <div class="fx-block fx-quick fx-acc-body">
+        <button class="fbf-step canva-button" id="btn-undo-random" onclick="undoLastRandom()" disabled style="width:100%;margin-bottom:.5rem;">↩ Annuler le tirage</button>
+
+        <div class="rand-cat">PLAGE FRÉQUENCE — toujours active, répartition continue<button type="button" class="info-q" data-info="Bornes entre lesquelles le tirage aléatoire choisit les fréquences des oscillateurs — toujours actif, quel que soit le ratio ou le caractère choisis ci-dessous." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
+        <div class="sl-row">
+          <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Min <span id="rv-fmin" style="color:#63E6FF">54</span> Hz</label>
+          <input type="range" id="sl-fmin" min="54" max="474" value="54" style="flex:1;color:#63E6FF;" oninput="setRandFreqMin(this.value)">
+        </div>
+        <div class="sl-row">
+          <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Max <span id="rv-fmax" style="color:#63E6FF">475</span> Hz</label>
+          <input type="range" id="sl-fmax" min="55" max="475" value="475" style="flex:1;color:#63E6FF;" oninput="setRandFreqMax(this.value)">
+        </div>
+        <div style="font-size:.66rem;color:rgba(200,170,255,.4);font-style:italic;margin:.15rem 0 .3rem;">Plafond absolu 475 Hz — au-delà de 325 Hz, adouci automatiquement (LPF + Sinus Duo)</div>
+
+        <div class="rand-cat">RATIO<button type="button" class="info-q" data-info="Comment les fréquences des oscillateurs se répartissent par rapport à la racine — hétérogène (varié), homogène (régulier), ou harmonique (croissant/décroissant). Le bouton on/off à droite coupe l'application au tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
+        <div class="rand-mode-row">
+          <select id="rand-ratio-select" class="rand-select" onchange="setRandRatioMode(this.value)">
+            <option value="heterogene">Ratio hétérogène</option>
+            <option value="homogene">Ratio homogène</option>
+            <option value="harm-asc">Ratio harmonique croissant</option>
+            <option value="harm-desc">Ratio harmonique décroissant</option>
+          </select>
+          <label class="fx-toggle" title="Le ratio s'applique au tirage"><input type="checkbox" id="ck-ratio-on" checked onchange="setRatioOn(this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
+        <div id="ratio-off-hint" style="display:none;font-size:.62rem;color:rgba(200,170,255,.5);font-style:italic;margin:.2rem 0 .1rem;">Désactivé : les ratios ne bougent plus au tirage — touche le ratio ou ×n de chaque ligne du tableau pour les régler à la main.</div>
+
+        <div class="rand-cat">CARACTÈRE DU BATTEMENT<button type="button" class="info-q" data-info="Ambiance générale du battement binaural (Δ) tiré au sort : apaisé, équilibré, ou immersif. Le bouton on/off à droite coupe l'application au tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
+        <div class="rand-mode-row">
+          <select id="rand-character-select" class="rand-select" onchange="setDeltaCharacter(this.value)">
+            <option value="apaise">☾ Apaisé</option>
+            <option value="equilibre" selected>⚖ Équilibré</option>
+            <option value="immersif">✺ Immersif</option>
+          </select>
+          <label class="fx-toggle" title="Le caractère du battement s'applique au tirage"><input type="checkbox" id="ck-character-on" checked onchange="setCharacterOn(this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
+
+        <div class="rand-cat">MODE SONOTHÉRAPIE<button type="button" class="info-q" data-info="4 bandes de fréquence maître (pas de 18Hz), toujours jouées en triplet harmonique (maître + 2 harmoniques réels, mis en avant) + 2 oscillateurs d'accompagnement plus discrets — 5 des 7 oscillateurs actifs, jamais oppressant. Le bouton on/off à droite coupe l'application au tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
+        <div class="rand-mode-row">
+          <select id="rand-sono-select" class="rand-select" onchange="setSonoMode(this.value)">
+            <option value="contraction_charmante">◐ Contraction charmante (54-144Hz)</option>
+            <option value="contraction_douce" selected>◑ Contraction douce (144-252Hz)</option>
+            <option value="expansion_douce">◒ Expansion douce (252-324Hz)</option>
+            <option value="expansion_charmante">◓ Expansion charmante (324-432Hz)</option>
+          </select>
+          <label class="fx-toggle" title="Le mode Sonothérapie s'applique au tirage"><input type="checkbox" id="ck-sono-on" onchange="setSonoModeOn(this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
+
+        <div class="fxq-sep"></div>
+        <div class="rand-cat">VARIÉTÉ DU TIRAGE</div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Δ varié par paire </span><button type="button" class="info-q" data-info="Chaque paire tire son propre battement (Δ) au lieu d'un battement identique partout — plus de nuance d'un oscillateur à l'autre." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-delta-variety" checked onchange="setDeltaVariety(this.checked)"></div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Polarité variée par paire </span><button type="button" class="info-q" data-info="L'oreille qui reçoit le Δ (au-dessus ou en dessous de la fréquence porteuse) change d'une paire à l'autre, pour un champ stéréo moins symétrique." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-polarity-variety" checked onchange="setPolarityVariety(this.checked)"></div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Timbre aléatoire </span><button type="button" class="info-q" data-info="La forme d'onde (Sinus, Sinus×2, Triangle…) de la paire mise en avant change à chaque tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-timbre" checked onchange="setRandTimbre(this.checked)"></div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Profondeur 3D </span><button type="button" class="info-q" data-info="Varie la position/l'espacement des sphères à l'écran — purement visuel, aucun effet sur le son." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-depth" checked onchange="setRandDepth(this.checked)"></div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Détune Sinus Duo aléatoire </span><button type="button" class="info-q" data-info="Quand une paire utilise le timbre Sinus Duo, l'écart en cents entre ses deux voix est lui aussi tiré au sort." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-dualsine" onchange="setRandDualSine(this.checked)"></div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Battement rapproché (1–7.2 Hz) </span><button type="button" class="info-q" data-info="Autorise, en plus du Δ habituel, un battement très resserré (bande Delta/Thêta) sur certaines paires pour plus de contraste." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-closebeat" checked onchange="setCloseBeatPair(this.checked)"></div>
+
+        <div class="fxq-sep"></div>
+        <div class="rand-cat">RESPIRATION &amp; ÉVOLUTION (tirage — distinct de la respiration organique du mix ci-dessous)</div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Respiration par paire (aléatoire) </span><button type="button" class="info-q" data-info="Chaque paire respire (volume qui ondule doucement) à son propre rythme, indépendamment des autres." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-breath" checked onchange="setRandBreath(this.checked)"></div>
+        <div class="sl-row">
+          <label style="font-size:.7rem;color:rgba(200,170,255,.7);min-width:76px;">Profondeur <span id="sv-breath-depth" style="color:#63E6FF">12%</span><button type="button" class="info-q" data-info="Amplitude maximale de la respiration par paire ci-dessus — plus haut, l'ondulation de volume est plus marquée." onclick="event.stopPropagation();showInfoNote(this)">?</button></label>
+          <input type="range" min="0.01" max="0.3" step="0.01" value="0.12" style="flex:1;color:#63E6FF;" oninput="setPairBreathDepthMax(this.value)">
+        </div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Ancre respiratoire périodique </span><button type="button" class="info-q" data-info="Toutes les paires se resynchronisent brièvement sur un même souffle de temps en temps, pour éviter une dérive totalement chaotique." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-breath-anchor" checked onchange="setBreathAnchor(this.checked)"></div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Évolution harmonique douce </span><button type="button" class="info-q" data-info="Le jeu évolue tout seul, très lentement, vers d'autres harmonies au fil de la session — sans nouveau tirage." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-organic-evo" checked onchange="setOrganicEvolution(this.checked)"></div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Main invisible (mute/octaves organiques) </span><button type="button" class="info-q" data-info="De temps à autre, une paire se coupe puis revient, parfois une octave plus haut ou plus bas — comme jouée par une présence discrète." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-invisible-hand" checked onchange="setInvisibleHand(this.checked)"></div>
+
+        <div class="fxq-sep"></div>
+        <div class="rand-cat">TRAITEMENT AUDIO (tirage)</div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Pré-mastering (filtres LPF/HPF/BPF) </span><button type="button" class="info-q" data-info="Filtres automatiques appliqués selon la fréquence tirée, pour éviter les aigus stridents ou les graves boueux." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-premaster" checked onchange="setPreMasterFilter(this.checked)"></div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0;"><span class="fx-label">FX aléatoire </span><button type="button" class="info-q" data-info="Les effets (delay, ping-pong, espace…) sont eux aussi retouchés à chaque tirage, pas seulement les oscillateurs." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-rand-fx" checked onchange="setRandUseFX(this.checked)"></div>
+
+        <div class="fxq-sep"></div>
+        <div class="rand-cat">NOUVEAUX MODES</div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Feu d'artifice binaural (ignition étalée) </span><button type="button" class="info-q" data-info="Au lieu que toutes les paires démarrent ensemble, chacune s'allume à un instant différent après le tirage — mêmes fréquences, entrée échelonnée." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-fireworks" onchange="setFireworksIgnition(this.checked)"></div>
+        <div class="sw-row" style="font-size:.7rem;padding:.1rem 0 .35rem;"><span class="fx-label">Signature bol tibétain (pulsation lente) </span><button type="button" class="info-q" data-info="Ajoute une pulsation de volume très lente (20 à 60s), en plus de la respiration organique déjà active." onclick="event.stopPropagation();showInfoNote(this)">?</button><input type="checkbox" class="sw" id="ck-bowlpulse" onchange="setBowlPulse(this.checked)"></div>
+        <div class="sl-row" style="align-items:center;gap:.4rem;">
+          <label style="font-size:.7rem;color:rgba(200,170,255,.7);flex-shrink:0;">Arc de session</label>
+          <button type="button" class="info-q" data-info="Resserre doucement le battement (Δ) sur toute la durée choisie — plus stimulant au début, plus apaisant à la fin. Ne touche pas les oscillateurs verrouillés." onclick="event.stopPropagation();showInfoNote(this)">?</button>
+          <select id="session-arc-duration" style="flex:0 0 auto;background:rgba(20,10,40,.6);color:#F0E0FF;border:1px solid rgba(200,170,255,.35);border-radius:6px;font-size:.72rem;padding:.25rem .3rem;">
+            <option value="10">10 min</option>
+            <option value="20" selected>20 min</option>
+            <option value="30">30 min</option>
+          </select>
+          <button id="btn-session-arc" class="btn-magic-rand" style="width:auto;flex:1;padding:.4rem .5rem;font-size:.66rem;letter-spacing:.08em;" onclick="toggleSessionArc(parseInt(document.getElementById('session-arc-duration').value,10))">Arc de session : OFF</button>
+        </div>
+
+        <div class="fxq-sep"></div>
+        <div class="rand-cat">GROS PAS — FRÉQUENCE MAÎTRE</div>
+        <div class="rand-steps-grid canva-container" style="margin-top:.3rem">
+          <button class="fbf-step canva-button" onclick="masterStep(108)">+108</button>
+          <button class="fbf-step canva-button" onclick="masterStep(72)">+72</button>
+          <button class="fbf-step canva-button" onclick="masterStep(36)">+36</button>
+          <button class="fbf-step canva-button" onclick="masterStep(18)">+18</button>
+          <button class="fbf-step canva-button" onclick="masterStep(-18)">−18</button>
+          <button class="fbf-step canva-button" onclick="masterStep(-36)">−36</button>
+          <button class="fbf-step canva-button" onclick="masterStep(-72)">−72</button>
+          <button class="fbf-step canva-button" onclick="masterStep(-108)">−108</button>
+        </div>
+      </div>
+    </details>
+
     <!-- ══ Reste des réglages : fréquence + binaural + effets ══ -->
     <!-- #165 : regroupés dans 2 menus déroulants fermés par défaut, sous Gain,
          pour désencombrer l'écran — accès toujours possible en 1 tap. Le
@@ -10983,7 +10961,10 @@ function resetExtraPos() {
 const DOCK_ACTIONS = {
   none:          { label: '— Aucune —',                    fn: () => {} },
   toggleAdvanced:{ label: 'Ouvrir le tiroir Oscillateurs', fn: () => { toggleAdvanced(); updateDockDisplays(); } },
-  openRand:      { label: 'Ouvrir Options Aléatoire',       fn: () => openTab('panRand') },
+  // #190 : clé interne "openRand" conservée (mappings dock déjà sauvegardés
+  // par des utilisateurs existants) — libellé et action deviennent "3D Vibe"
+  // (panRand retiré, son contenu vit dans Effet Audio).
+  openRand:      { label: '3D Vibe (nouveau tirage)',       fn: () => triggerMagicAuto() },
   soloMaster:    { label: 'Solo fréquence maître',          fn: () => _dockSoloMaster() },
   randomAll:     { label: 'Nouveau jeu aléatoire',          fn: () => triggerMagicAuto() },
   openSamples:   { label: 'Ouvrir Samples',                 fn: () => tPanel('panSamples', null) },
