@@ -398,6 +398,27 @@ function toggleSilence() {
 // (référence numérique, pas nécessairement un son entendu à ce point).
 const FREQ_MAX = 300000000;
 function fmtFreqDisplay(hz) { return hz.toFixed(1); }
+// #191 : le curseur allait bien jusqu'à 300 MHz, mais restait LINÉAIRE —
+// la zone utile/audible (54-864Hz) s'écrasait dans un pixel invisible en
+// tout début de course, revenant en pratique à "toujours bridé à 864Hz"
+// (retour terrain). Passe en échelle LOGARITHMIQUE (même raisonnement que
+// le fader Δ Binaural d'OmcVibe) : le curseur HTML lui-même reste un
+// entier normalisé 0-10000, converti en Hz aux deux bouts — ainsi la
+// zone 54-864Hz garde une vraie portion praticable du curseur (~14% de
+// sa course) au lieu d'un pixel, tout en atteignant réellement 300 MHz
+// à l'autre extrémité.
+const FREQ_SLIDER_LO = 54, FREQ_SLIDER_HI = FREQ_MAX, FREQ_SLIDER_STEPS = 10000;
+function freqToSliderPos(hz) {
+  const f = Math.max(FREQ_SLIDER_LO, Math.min(FREQ_SLIDER_HI, hz));
+  return Math.round(FREQ_SLIDER_STEPS * Math.log(f / FREQ_SLIDER_LO) / Math.log(FREQ_SLIDER_HI / FREQ_SLIDER_LO));
+}
+function sliderPosToFreq(pos) {
+  const t = Math.max(0, Math.min(FREQ_SLIDER_STEPS, parseFloat(pos))) / FREQ_SLIDER_STEPS;
+  return FREQ_SLIDER_LO * Math.pow(FREQ_SLIDER_HI / FREQ_SLIDER_LO, t);
+}
+function setOscFreqSlider(i, pos) {
+  setOscFreq(i, sliderPosToFreq(pos));
+}
 
 function setOscFreq(i, hz) {
   const o = OSC[i]; o.freq = Math.max(1, Math.min(FREQ_MAX, parseFloat(hz)));
@@ -551,12 +572,12 @@ function renderOsc(i) {
         </div>
         <button class="plus-btn" onclick="openPlusMenu()">+</button>
       </div>
-      <!-- Curseur borné à la plage utile/audible (54-864Hz) — un curseur
-           linéaire jusqu'à 300 MHz écraserait cette plage dans un minuscule
-           premier pixel. Pour aller plus loin (jusqu'à 300 MHz, cf.
-           FREQ_MAX), taper directement la valeur (tap sur le nombre). -->
-      <input type="range" min="54" max="864" step="0.5" value="${o.freq}" oninput="setOscFreq(${i},this.value)">
-      <div class="freq-range"><span>54Hz</span><span>864Hz</span></div>
+      <!-- #191 : curseur logarithmique 54Hz → 300 MHz (cf. freqToSliderPos/
+           sliderPosToFreq plus haut) — la position HTML est un entier
+           normalisé 0-10000, jamais le Hz brut, pour que la zone audible
+           garde une vraie portion praticable de la course. -->
+      <input type="range" min="0" max="${FREQ_SLIDER_STEPS}" step="1" value="${freqToSliderPos(o.freq)}" oninput="setOscFreqSlider(${i},this.value)">
+      <div class="freq-range"><span>54Hz</span><span>300 MHz</span></div>
       <div class="freq-presets">
         <button class="freq-preset-btn" onclick="setOscFreq(${i},432)">432 Hz</button>
         <button class="freq-preset-btn" onclick="setOscFreq(${i},396)">396 Hz</button>
