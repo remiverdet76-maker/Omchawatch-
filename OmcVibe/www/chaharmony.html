@@ -48,10 +48,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
   border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 8px rgba(232,160,32,.6);}
 input[type=range].pink::-webkit-slider-thumb{background:#FF6FA8;box-shadow:0 0 8px rgba(255,111,168,.6);}
 .freq-range{display:flex;justify-content:space-between;font-size:.6rem;opacity:.4;margin-top:2px;}
-.miaow-presets{display:flex;gap:.4rem;margin-top:.5rem;}
-.miaow-preset-btn{flex:1;padding:.35rem .2rem;border-radius:8px;border:1.5px solid var(--border);
+.freq-presets{display:flex;gap:.4rem;margin-top:.5rem;}
+.freq-preset-btn{flex:1;padding:.35rem .2rem;border-radius:8px;border:1.5px solid var(--border);
   background:rgba(20,12,4,.5);color:var(--goldBright);font-size:.72rem;cursor:pointer;text-align:center;line-height:1.3;}
-.miaow-preset-btn span{display:block;font-size:.58rem;opacity:.6;}
 .n-row{display:flex;align-items:center;justify-content:center;gap:.9rem;margin:.7rem 0;}
 .n-step{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--border);
   background:rgba(20,12,4,.5);color:var(--goldBright);font-size:1rem;cursor:pointer;
@@ -391,26 +390,17 @@ function toggleSilence() {
   b.textContent = silenced ? '◼ Coupé' : '◼ Silence';
 }
 
-// ─── Unité Miaow — 1 Miaow = 243/512 Hz, soit 512/243 Miaow par Hz
-// (= 32768/15552 réduit à sa forme la plus simple ; 32768 = crystal RTC
-// standard, 15552 = Miaow par Solônde). 432 Hz = 8192/9 Miaow exact.
-// Couche d'affichage/saisie uniquement — le moteur Web Audio reste en
-// Hz en interne (obligatoire, l'API ne connaît que le Hz).
-const MIAOW_PER_HZ = 512 / 243;
-let UNIT_MODE = 'hz';
-try { UNIT_MODE = localStorage.getItem('chaharmony-unit') || 'hz'; } catch(e) {}
-function hzToMiaow(hz) { return hz * MIAOW_PER_HZ; }
-function miaowToHz(m) { return m / MIAOW_PER_HZ; }
-function toggleUnitMode() {
-  UNIT_MODE = UNIT_MODE === 'hz' ? 'miaow' : 'hz';
-  try { localStorage.setItem('chaharmony-unit', UNIT_MODE); } catch(e) {}
-  renderOsc(curOsc);
-}
-function fmtFreqDisplay(hz) { return UNIT_MODE === 'miaow' ? hzToMiaow(hz).toFixed(2) : hz.toFixed(1); }
-function fmtUnitLabel() { return UNIT_MODE === 'miaow' ? '🐈 Miaow' : 'Hz'; }
+// ─── Fréquence — toujours en Hz (l'unité Miaow a été retirée à la
+// demande explicite : affichage/saisie repassés en Hertz partout). Plage
+// élargie à 300 MHz — très au-delà de l'audible (~20kHz) et du Nyquist du
+// moteur Web Audio, donc silencieux/aliasé au-delà de quelques dizaines
+// de kHz, mais la SAISIE/l'affichage vont bien jusque-là si besoin
+// (référence numérique, pas nécessairement un son entendu à ce point).
+const FREQ_MAX = 300000000;
+function fmtFreqDisplay(hz) { return hz.toFixed(1); }
 
 function setOscFreq(i, hz) {
-  const o = OSC[i]; o.freq = Math.max(1, Math.min(864, parseFloat(hz)));
+  const o = OSC[i]; o.freq = Math.max(1, Math.min(FREQ_MAX, parseFloat(hz)));
   if (o.nodes) {
     const now = AC.currentTime;
     if (o.nodes.oscL) o.nodes.oscL.frequency.setTargetAtTime(o.freq, now, 0.05);
@@ -421,10 +411,6 @@ function setOscFreq(i, hz) {
   }
   renderOsc(i);
 }
-// #102 : presets "rock star binaurale" — 432/396/360 pensés en Miaow.
-function setOscFreqMiaow(i, miaowVal) {
-  setOscFreq(i, miaowToHz(miaowVal));
-}
 // #66 : entrée manuelle de la fréquence (tap sur la valeur → clavier)
 function openOscFreqEdit(i) {
   const inp = document.getElementById('freqEdit' + i);
@@ -432,7 +418,7 @@ function openOscFreqEdit(i) {
   const disp = inp.previousElementSibling;
   if (disp) disp.style.display = 'none';
   inp.style.display = 'block';
-  inp.value = UNIT_MODE === 'miaow' ? hzToMiaow(OSC[i].freq).toFixed(2) : OSC[i].freq.toFixed(1);
+  inp.value = OSC[i].freq.toFixed(1);
   inp.focus(); inp.select();
 }
 function handleOscFreqKey(i, e) {
@@ -443,7 +429,7 @@ function exitOscFreqEdit(i, apply) {
   const inp = document.getElementById('freqEdit' + i);
   if (!inp) return;
   const v = parseFloat(inp.value);
-  if (apply && !isNaN(v)) setOscFreq(i, UNIT_MODE === 'miaow' ? miaowToHz(v) : v);
+  if (apply && !isNaN(v)) setOscFreq(i, v);
   else renderOsc(i);
 }
 function setOscDelta(i, hz) {
@@ -559,18 +545,22 @@ function renderOsc(i) {
         <button class="lr-btn${o.bin?' bin':''}" onclick="toggleOscBin(${i})">L·R<span style="font-size:.5rem;opacity:.7">${o.bin?'BIN':'MONO'}</span></button>
         <div class="freq-disp">
           <div class="freq-num" onclick="openOscFreqEdit(${i})">${fmtFreqDisplay(o.freq)}</div>
-          <input type="number" class="freq-input-manual" id="freqEdit${i}" step="${UNIT_MODE==='miaow'?'0.01':'0.1'}"
+          <input type="number" class="freq-input-manual" id="freqEdit${i}" step="0.1" min="1" max="${FREQ_MAX}"
             onkeydown="handleOscFreqKey(${i},event)">
-          <div class="freq-hz" onclick="toggleUnitMode()" style="cursor:pointer;" title="Tap pour changer d'unité">${fmtUnitLabel()}${UNIT_MODE==='miaow'?` · ${o.freq.toFixed(1)}Hz`:''}</div>
+          <div class="freq-hz">Hz</div>
         </div>
         <button class="plus-btn" onclick="openPlusMenu()">+</button>
       </div>
+      <!-- Curseur borné à la plage utile/audible (54-864Hz) — un curseur
+           linéaire jusqu'à 300 MHz écraserait cette plage dans un minuscule
+           premier pixel. Pour aller plus loin (jusqu'à 300 MHz, cf.
+           FREQ_MAX), taper directement la valeur (tap sur le nombre). -->
       <input type="range" min="54" max="864" step="0.5" value="${o.freq}" oninput="setOscFreq(${i},this.value)">
-      <div class="freq-range"><span>${UNIT_MODE==='miaow'?hzToMiaow(54).toFixed(2)+' 🐈':'54Hz'}</span><span>${UNIT_MODE==='miaow'?hzToMiaow(864).toFixed(2)+' 🐈':'864Hz'}</span></div>
-      <div class="miaow-presets">
-        <button class="miaow-preset-btn" onclick="setOscFreqMiaow(${i},432)">432🐈<span>${miaowToHz(432).toFixed(1)}Hz</span></button>
-        <button class="miaow-preset-btn" onclick="setOscFreqMiaow(${i},396)">396🐈<span>${miaowToHz(396).toFixed(1)}Hz</span></button>
-        <button class="miaow-preset-btn" onclick="setOscFreqMiaow(${i},360)">360🐈<span>${miaowToHz(360).toFixed(1)}Hz</span></button>
+      <div class="freq-range"><span>54Hz</span><span>864Hz</span></div>
+      <div class="freq-presets">
+        <button class="freq-preset-btn" onclick="setOscFreq(${i},432)">432 Hz</button>
+        <button class="freq-preset-btn" onclick="setOscFreq(${i},396)">396 Hz</button>
+        <button class="freq-preset-btn" onclick="setOscFreq(${i},360)">360 Hz</button>
       </div>
       <div class="n-row">
         <button class="n-step" onclick="stepOscN(${i},-0.1)">−</button>
