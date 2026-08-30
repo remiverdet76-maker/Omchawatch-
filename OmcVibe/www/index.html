@@ -534,51 +534,104 @@ body{
   background:linear-gradient(135deg,rgba(255,214,120,.32),rgba(30,20,45,.6));
   border:1px solid rgba(255,214,120,.4);border-left:none;
   box-shadow:2px 0 16px rgba(0,0,0,.4);
-  z-index:60;display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:left .32s cubic-bezier(.4,0,.2,1),opacity .2s;
+  z-index:61;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:box-shadow .2s;
   touch-action:none;
 }
+/* #189 : tiroir désormais plein écran (cf. #fxDrawer ci-dessous) — la
+   poignée reste fixe au bord gauche (elle n'a plus de bord de tiroir à
+   suivre) et son témoin bascule EXPLICITEMENT entre "‹" (fermé — tape
+   pour ouvrir) et "›" (ouvert — tape pour fermer), plutôt qu'une simple
+   rotation du même glyphe : plus lisible d'un coup d'œil sur un plein
+   écran, symétrique à l'ouverture comme à la fermeture (demande
+   explicite : fermé="<" / ouvert=">"). */
 #fxDrawerHandle::before{
-  content:'▸';font-size:16px;line-height:1;color:rgba(255,224,160,.85);
-  text-shadow:0 0 6px rgba(255,200,100,.6);transition:transform .32s;
+  content:'‹';font-size:18px;line-height:1;color:rgba(255,224,160,.85);
+  text-shadow:0 0 6px rgba(255,200,100,.6);
 }
-body.fx-drawer-open #fxDrawerHandle{ left:min(75vw,420px); }
-body.fx-drawer-open #fxDrawerHandle::before{ transform:rotate(180deg); }
+body.fx-drawer-open #fxDrawerHandle::before{ content:'›'; }
 #fxDrawer{
-  position:fixed;left:0;top:0;bottom:154px;width:min(75vw,420px);
-  min-width:220px;
-  background:linear-gradient(160deg,rgba(18,12,28,.92),rgba(30,18,40,.88));
-  border-right:1px solid rgba(255,214,120,.22);
+  position:fixed;inset:0;width:100vw;
+  background:linear-gradient(160deg,rgba(18,12,28,.97),rgba(30,18,40,.95));
   box-shadow:6px 0 26px rgba(0,0,0,.4);
   z-index:59;transform:translateX(-100%);
   transition:transform .32s cubic-bezier(.4,0,.2,1);
   display:flex;flex-direction:column;align-items:stretch;
-  gap:8px;overflow-y:auto;
-  padding:16px 14px;backdrop-filter:blur(6px);
+  overflow:hidden;
+  padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 10px);
+  backdrop-filter:blur(6px);
 }
 body.fx-drawer-open #fxDrawer{ transform:translateX(0); }
-/* #185 : un bloc "couleur" par oscillateur — repliable, ouvre Volume +
-   Δ Binaural. La couleur reprend pair.color (même teinte que partout
-   ailleurs : tableau Effet Audio, sphères…) pour qu'un oscillateur se
-   reconnaisse d'un coup d'œil, quel que soit l'écran. */
-.osc-drawer-item{
-  border-radius:10px;border-left:4px solid var(--odi-color,#F0C060);
-  background:linear-gradient(90deg,var(--odi-color-a,rgba(240,192,96,.14)),transparent 60%);
+/* #189 : bandeau d'onglets — un par oscillateur (couleur = pair.color,
+   même teinte que partout ailleurs dans l'app) + un onglet GLOBAL. Une
+   seule carte affichée à la fois (cf. buildOdCard), à la ChaHarmony —
+   remplace les 7 blocs repliables empilés de la version précédente
+   (#185), plus lisible en plein écran. */
+#odTabs{
+  display:flex;gap:6px;overflow-x:auto;flex-shrink:0;
+  padding:2px 2px 10px;scrollbar-width:none;
 }
-.osc-drawer-item summary{
-  cursor:pointer;list-style:none;padding:9px 10px;
-  display:flex;align-items:center;gap:8px;
-  font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.78rem;
-  color:var(--odi-color,#F0C060);font-weight:700;
+#odTabs::-webkit-scrollbar{ display:none; }
+.od-tab{
+  flex-shrink:0;padding:7px 12px;border-radius:9px;
+  font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.68rem;font-weight:700;
+  letter-spacing:.03em;cursor:pointer;white-space:nowrap;
+  border:1.5px solid var(--odt-color,rgba(255,214,120,.3));
+  background:rgba(20,12,28,.5);color:var(--odt-color,rgba(255,224,170,.7));
+  display:flex;align-items:center;gap:5px;
 }
-.osc-drawer-item summary::-webkit-details-marker{display:none;}
-.osc-drawer-item summary::before{content:'▸';font-size:.7rem;opacity:.7;transition:transform .2s;}
-.osc-drawer-item[open] summary::before{transform:rotate(90deg);}
-.odi-dot{width:10px;height:10px;border-radius:50%;background:var(--odi-color,#F0C060);flex-shrink:0;
-  box-shadow:0 0 6px var(--odi-color,#F0C060);}
-.odi-muted{opacity:.45;}
+.od-tab.on{ background:var(--odt-color-a,rgba(255,214,120,.2)); color:#FFF6E0;
+  box-shadow:0 0 10px var(--odt-color-a,rgba(255,214,120,.3)); }
+.od-tab .od-tab-dot{ width:7px;height:7px;border-radius:50%;background:var(--odt-color,#F0C060);flex-shrink:0; }
+.od-tab.od-tab-muted{ opacity:.5; }
+#odCardWrap{ flex:1;overflow-y:auto;padding-bottom:16px; }
+.od-card{
+  border-radius:14px;border:1.5px solid var(--odi-color-a,rgba(240,192,96,.3));
+  background:linear-gradient(165deg,var(--odi-color-a,rgba(240,192,96,.12)),rgba(20,12,28,.3) 70%);
+  padding:14px;
+}
+/* En-tête de carte : mini-sphère (visuel "qui joue quoi") + nom + bouton
+   réglages (⚙, ouvre openOscModal — le détail complet existant) + mute. */
+.od-top{ display:flex;align-items:center;gap:10px;margin-bottom:12px; }
+.od-sphere{
+  width:46px;height:46px;border-radius:50%;flex-shrink:0;
+  background:radial-gradient(circle at 32% 28%,#fff 0%,var(--odi-color,#F0C060) 45%,var(--odi-color2,#8a5a10) 100%);
+  box-shadow:0 0 14px var(--odi-color-a,rgba(240,192,96,.5)),inset 0 0 10px rgba(0,0,0,.35);
+  transition:opacity .25s,filter .25s;
+}
+.od-sphere.od-sphere-muted{ opacity:.3;filter:grayscale(.6); }
+.od-name{ font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.82rem;font-weight:700;
+  color:var(--odi-color,#F0C060); }
+.od-gear,.od-mute{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;margin-left:auto;
+  border:1.5px solid rgba(255,214,120,.35);background:rgba(20,12,28,.5);
+  color:rgba(255,224,170,.85);font-size:1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.od-mute{ margin-left:6px; }
+.od-mute.on{ border-color:#8CFFC0;color:#8CFFC0;background:rgba(140,255,192,.14); }
+/* Cellule fréquence/note — affiche la valeur, tape pour ouvrir la
+   recherche (36–1296Hz, cf. JS) — même principe pour le maître. */
+.od-freq-cell{
+  text-align:center;padding:8px 6px;margin-bottom:10px;border-radius:10px;
+  background:rgba(0,0,0,.22);border:1px solid rgba(255,214,120,.18);cursor:pointer;
+}
+.od-freq-val{ font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:1.5rem;font-weight:700;color:#F0E4FF; }
+.od-freq-unit{ font-size:.62rem;opacity:.55;letter-spacing:.1em;text-transform:uppercase;margin-left:4px; }
+.od-freq-range{ font-size:.6rem;opacity:.4;margin-top:2px; }
+.od-freq-input{
+  display:none;width:100%;text-align:center;font-family:var(--font-deco,'Cinzel Decorative'),serif;
+  font-size:1.25rem;font-weight:700;color:#FFE9B8;background:rgba(240,192,96,.14);
+  border:1.5px solid rgba(240,192,96,.6);border-radius:8px;padding:.2rem 0;
+}
 .odi-freq{margin-left:auto;font-size:.68rem;opacity:.75;font-weight:400;}
-.osc-drawer-body{padding:2px 10px 12px;display:flex;flex-direction:column;gap:6px;}
+.osc-drawer-body{padding:0;display:flex;flex-direction:column;gap:6px;}
+/* Onglet GLOBAL — Δ sinus/binaural globaux, Mode 0 Effet, touche Dual Sine. */
+.od-global-row{ display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:9px 0;border-bottom:1px solid rgba(255,214,120,.12); }
+.od-global-row:last-child{ border-bottom:none; }
+.od-global-label{ font-size:.76rem;color:rgba(255,224,170,.9); }
+.od-global-hint{ font-size:.62rem;opacity:.5;margin-top:2px; }
 .fx-fader{ display:flex;flex-direction:column;align-items:center;gap:6px; }
 .fx-fader-label{
   font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.62rem;
@@ -639,14 +692,14 @@ body.fx-drawer-open #fxDrawer{ transform:translateX(0); }
   box-shadow:0 2px 5px rgba(0,0,0,.55),0 0 20px rgba(255,225,120,1),0 0 36px rgba(255,205,80,.6),inset 0 1px 3px rgba(255,255,255,.85),inset 0 -2px 3px rgba(120,70,10,.45);
 }
 body.vis-lite .fx-fader-knob.fx-fader-active{ box-shadow:0 0 10px rgba(255,225,120,.8); } /* #23 : moins coûteux en mode léger */
-/* #185 : le Δ Binaural (2e fader de chaque bloc) reprend systématiquement
-   la couleur de l'oscillateur (var(--odi-color)), posée par JS sur
-   .osc-drawer-item — le Volume (1er fader) garde le doré par défaut, pour
-   les distinguer d'un coup d'œil dans un bloc replié comme ouvert. */
-.osc-drawer-item .fx-fader:nth-child(2) .fx-fader-fill{
+/* #189 : le Δ Binaural (2e fader de la carte) reprend systématiquement la
+   couleur de l'oscillateur (var(--odi-color), posée par JS sur .od-card) —
+   le Volume (1er fader) garde le doré par défaut, pour les distinguer d'un
+   coup d'œil. */
+.od-card .fx-fader:nth-child(2) .fx-fader-fill{
   background:linear-gradient(90deg,color-mix(in srgb,var(--odi-color,#F0C060) 40%,transparent),var(--odi-color,#F0C060));
 }
-.osc-drawer-item .fx-fader:nth-child(2) .fx-fader-knob{
+.od-card .fx-fader:nth-child(2) .fx-fader-knob{
   background:radial-gradient(circle at 32% 28%,#fff 0%,var(--odi-color,#F0C060) 55%,#000 130%);
 }
 
@@ -2419,20 +2472,23 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
       <span class="ms-state canva-text" id="ms-state" data-html-import-id="html-import-13" data-template-id="span-6" style="color: rgba(220, 180, 255, 0.7); font-weight: 700; font-style: italic; font-size: 14px;">BINAURAL</span>
     </div></div></div>
 
-<!-- #185 : tiroir latéral gauche — anciennement 2 faders Maître/Détune
-     (#176), retirés à la demande explicite (le maître se règle déjà
-     ailleurs : touche F, tap sur la sphère, menu Effet Audio). Devient la
-     vue rapide des 7 OSCILLATEURS, étendue à 3/4 d'écran : un bloc
-     couleur repliable par oscillateur (sa teinte pair.color), qui ouvre
-     2 faders horizontaux — Volume, puis Δ Binaural juste en dessous —
-     repliés par défaut pour que les 7 tiennent sans scroll excessif.
-     Contenu généré par buildOscDrawerHTML()/patchOscDrawer() (JS plus
-     bas), #oscDrawerList reste un simple conteneur ici. -->
+<!-- #189 : tiroir latéral — désormais plein écran, seul point d'accès aux
+     7 oscillateurs (plus aucune sphère satellite affichée sur l'écran
+     principal, cf. toggleAdvanced()/_loadAdvanced() neutralisés plus bas).
+     Un onglet par oscillateur (mini-sphère + nom, couleur pair.color) plus
+     un onglet GLOBAL (Δ sinus/binaural globaux, Mode 0 Effet, Dual Sine).
+     Une seule carte affichée à la fois, à la ChaHarmony (cf.
+     OmcVibe/www/chaharmony.html) — mini-sphère + bouton réglages (ouvre
+     openOscModal, le détail complet déjà existant) + mute + cellule
+     fréquence/note (tape pour rechercher, 36–1296Hz) + faders Volume/Δ
+     Binaural (mêmes pistes que #185, réutilisées telles quelles). Contenu
+     généré par buildOdTabs()/buildOdCard()/patchOscDrawer() (JS plus bas). -->
 <div id="fxDrawerHandle" aria-hidden="true"
   onclick="_fxToggleDrawer()"
   ontouchend="event.preventDefault();_fxToggleDrawer()"></div>
 <div id="fxDrawer" aria-hidden="true">
-  <div id="oscDrawerList"></div>
+  <div id="odTabs"></div>
+  <div id="odCardWrap"><div id="oscDrawerList"></div></div>
 </div>
 
 <!-- Dock bas : 5 cellules × 3 actions (tap / appui long / bouton extra) -->
@@ -2511,7 +2567,7 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panPresets')" data-html-import-id="html-import-49" data-template-id="button-37"><canva-inline-text data-template-id="canva-inline-text-38" class="canva-text" style="color: #FFD700; font-size: 22px;">⊙</canva-inline-text><span data-html-import-id="html-import-50" data-template-id="span-39" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Presets</span></button>
     <button class="params-item canva-button" style="--ic: #FF9A8B; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panSamples')" data-html-import-id="html-import-51" data-template-id="button-40"><canva-inline-text data-template-id="canva-inline-text-41" class="canva-text" style="color: #FFD700; font-size: 22px;">◎</canva-inline-text><span data-html-import-id="html-import-52" data-template-id="span-42" class="canva-text" style="color: color(srgb 1 0.683137 0.636078); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Samples</span></button>
     <button class="params-item canva-button" style="--ic: #FFB0FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panNotice')" data-html-import-id="html-import-53" data-template-id="button-43"><canva-inline-text data-template-id="canva-inline-text-44" class="canva-text" style="color: #FFD700; font-size: 22px;">≡</canva-inline-text><span data-html-import-id="html-import-54" data-template-id="span-45" class="canva-text" style="color: color(srgb 1 0.752157 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Notice &amp; Thème</span></button>
-    <button class="params-item canva-button" id="btn-advanced" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleAdvanced()" data-html-import-id="html-import-55" data-template-id="button-46"><canva-inline-text data-template-id="canva-inline-text-47" class="canva-text" style="color: #FFD700; font-size: 22px;">⊹</canva-inline-text><span data-html-import-id="html-import-56" data-template-id="span-48" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Mode avancé (6 sphères) : OFF</span></button>
+    <button class="params-item canva-button" id="btn-advanced" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleAdvanced()" data-html-import-id="html-import-55" data-template-id="button-46"><canva-inline-text data-template-id="canva-inline-text-47" class="canva-text" style="color: #FFD700; font-size: 22px;">⊹</canva-inline-text><span data-html-import-id="html-import-56" data-template-id="span-48" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Oscillateurs (tiroir)</span></button>
     <button class="params-item canva-button" id="btn-vislite" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="toggleVisLite()" data-html-import-id="html-import-57" data-template-id="button-49"><canva-inline-text data-template-id="canva-inline-text-50" class="canva-text" style="color: #FFD700; font-size: 22px;">◐</canva-inline-text><span data-html-import-id="html-import-58" data-template-id="span-51" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Visuel léger : OFF</span></button>
     <!-- #154 : retiré du menu à la demande explicite — le flux binaural
          reste actif écran éteint / app en arrière-plan (service natif
@@ -4710,6 +4766,64 @@ function applyFXState(s) {
   if (wavesChanged || bd2Changed) rebuildAllOscs();
 }
 
+/* ---------- 2.6e · MODE 0 EFFET — bascule globale binaural pur (#189) ---------- */
+// Au lieu de décocher un par un chaque effet/comportement d'ambiance pour
+// retomber sur un binaural pur, UNE case coupe tout d'un coup — et rend
+// tout tel quel à la réactivation ("on peut quand même ajouter des effets
+// sur ce mode", donc rien n'est verrouillé, juste basculé en bloc).
+// Portée : les BUS d'effet continus (retour delay/ping-pong, intensité FX
+// globale — coupés à 0, restaurés via getFXState()/applyFXState(), déjà
+// le mécanisme éprouvé des presets) + les comportements d'ambiance
+// on/off listés ci-dessous (main invisible, respiration, sub-drone,
+// Egocha Sage, bol tibétain, dérive Δ, anti-pompage, Mode Retour, mode
+// Sonothérapie, et les options du tirage aléatoire qui touchent au son
+// une fois joué). Le TIMBRE (OSC_WAVES), les FILTRES par oscillateur et
+// l'EQ restent inchangés : ce sont des choix de composition, pas des
+// effets superposés — la bascule ne les touche pas.
+const FX_BYPASS_TOGGLE_IDS = [
+  'ck-sono-on', 'ck-rand-premaster', 'ck-rand-fx', 'ck-rand-breath', 'ck-rand-closebeat',
+  'ck-breath-anchor', 'ck-organic-evo', 'ck-invisible-hand', 'ck-fireworks', 'ck-bowlpulse',
+  'ck-delta-drift', 'ck-retour-mode', 'ck-pair-comp', 'ck-subdrone', 'ck-egocha-sage'
+];
+function _fxBypassSetter(id) {
+  return {
+    'ck-sono-on': setSonoModeOn, 'ck-rand-premaster': setPreMasterFilter, 'ck-rand-fx': setRandUseFX,
+    'ck-rand-breath': setRandBreath, 'ck-rand-closebeat': setCloseBeatPair,
+    'ck-breath-anchor': setBreathAnchor, 'ck-organic-evo': setOrganicEvolution,
+    'ck-invisible-hand': setInvisibleHand, 'ck-fireworks': setFireworksIgnition,
+    'ck-bowlpulse': setBowlPulse, 'ck-delta-drift': setDeltaDrift, 'ck-retour-mode': toggleRetourMode,
+    'ck-pair-comp': setPairCompression, 'ck-subdrone': setSubDrone, 'ck-egocha-sage': setEgochaSage
+  }[id];
+}
+let FX_BYPASS_STATE = { on: false, savedFx: null, savedToggles: null };
+function setFxBypassMode(v) {
+  v = !!v;
+  if (v !== FX_BYPASS_STATE.on) {
+    if (v) {
+      // Snapshot AVANT coupure — état continu (delay/ping-pong/intensité,
+      // + tout le reste que getFXState() couvre déjà) et état coché de
+      // chaque bascule d'ambiance, pour un retour à l'identique exact.
+      FX_BYPASS_STATE.savedFx = (typeof getFXState === 'function') ? getFXState() : null;
+      FX_BYPASS_STATE.savedToggles = FX_BYPASS_TOGGLE_IDS.map(id => {
+        const el = document.getElementById(id);
+        return { id, on: !!(el && el.checked) };
+      });
+      if (typeof updateFX === 'function') updateFX('delayWet', 0);
+      if (typeof setPingPongWet === 'function') setPingPongWet(0);
+      if (typeof setFXIntensity === 'function') setFXIntensity(0);
+      FX_BYPASS_TOGGLE_IDS.forEach(id => { const fn = _fxBypassSetter(id); if (fn) fn(false); });
+    } else {
+      if (FX_BYPASS_STATE.savedFx && typeof applyFXState === 'function') applyFXState(FX_BYPASS_STATE.savedFx);
+      if (FX_BYPASS_STATE.savedToggles) FX_BYPASS_STATE.savedToggles.forEach(t => { const fn = _fxBypassSetter(t.id); if (fn) fn(t.on); });
+      FX_BYPASS_STATE.savedFx = null; FX_BYPASS_STATE.savedToggles = null;
+    }
+    FX_BYPASS_STATE.on = v;
+  }
+  const ck = document.getElementById('ck-fx-bypass'); if (ck) ck.checked = FX_BYPASS_STATE.on;
+  if (typeof patchOscDrawer === 'function') patchOscDrawer();
+  saveState();
+}
+
 function rebuildAllOscs() {
   if (!flowing) return;
   const old = { ...nodes };
@@ -4970,7 +5084,12 @@ let _glowFrame = 0, _lastTick = 0, _lastSampleTick = 0;
 // L'UI doit céder au thread audio : on suspend tous les dessins quand un
 // panneau/modal couvre l'écran (c'est ce qui affamait l'audio = craquement).
 function _uiBusy() {
-  return !!document.querySelector('.pan-left.open, .pan-right.open, #osc-modal.open');
+  // #189 : le tiroir Oscillateurs (#fxDrawer) est désormais plein écran —
+  // sans body.fx-drawer-open ici, #btn-back-menu (haut-gauche) restait
+  // visible et se superposait à son propre bandeau d'onglets. Rejoint la
+  // même logique que les panneaux/modals déjà couverts.
+  return !!document.querySelector('.pan-left.open, .pan-right.open, #osc-modal.open')
+    || document.body.classList.contains('fx-drawer-open');
 }
 // Bouton Retour (bas-droite) — visible seulement quand un menu est ouvert
 function _syncBackBtn() {
@@ -5555,10 +5674,15 @@ function _oscFaderSetFromClientX(clientX, which) {
   _oscFaderApply(p.type, p.idx, v);
   _oscFaderUpdateBallPosition(which);
   // setPairVol/setDelta rafraîchissent déjà leurs propres affichages
-  // (table Aléatoire, menu ☰…) mais pas le libellé fréquence du bloc
-  // tiroir lui-même (odi-freq) — mis à jour ici, léger (juste du texte).
-  const freqEl = document.getElementById('odi-freq' + p.idx);
-  if (freqEl) freqEl.textContent = fmtFreq(calcPFreq(p.idx));
+  // (table Aléatoire, menu ☰…) mais pas la cellule fréquence de la carte
+  // du tiroir (#189) — mise à jour ici, léger (juste du texte). Une seule
+  // carte affichée à la fois : n'a de sens que si l'oscillateur glissé
+  // est bien celui actuellement ouvert (toujours vrai en pratique, les
+  // faders d'un autre onglet ne sont pas dans le DOM pour être glissés).
+  if (p.idx === _odActiveTab) {
+    const freqEl = document.querySelector('#od-freq-disp .od-freq-val');
+    if (freqEl) freqEl.textContent = fmtFreq(calcPFreq(p.idx)).replace(/\s*Hz$/, '').replace(/\s*🐈$/, '');
+  }
 }
 function _oscFaderStart(e, which) {
   _oscFaderDragTarget = which;
@@ -5598,63 +5722,213 @@ window.addEventListener('mouseup',   (e) => { if (_oscFaderDragTarget) _oscFader
 window.addEventListener('touchend',    (e) => { if (_oscFaderDragTarget) _oscFaderEnd(e, _oscFaderDragTarget); });
 window.addEventListener('touchcancel', (e) => { if (_oscFaderDragTarget) _oscFaderEnd(e, _oscFaderDragTarget); });
 
-// Génère les 7 blocs couleur repliables (un par oscillateur, teinte
-// pair.color reprise partout ailleurs dans l'app) affichés dans
-// #oscDrawerList. Chaque bloc : en-tête (pastille + nom + fréquence
-// courante), puis 2 faders repliés dans le <details> — Volume, puis
-// Δ Binaural juste en dessous, comme demandé. Piste/bouton = EXACTEMENT
-// le même markup que l'ancien fader Maître/Détune (#178), juste les id
-// suivant la clé composée 'vol{i}'/'delta{i}' lue par _oscFaderTrackEl etc.
-function buildOscDrawerHTML() {
-  return PAIRS.map((pair, i) => {
-    const pF = calcPFreq(i);
-    const muted = !!mutedOscs[pair.pingala.id] && !!mutedOscs[pair.ida.id];
-    const isMaster = i === MASTER_IDX;
-    return `<details class="osc-drawer-item" style="--odi-color:${pair.color};--odi-color-a:${pair.color}26;">
-      <summary>
-        <span class="odi-dot${muted?' odi-muted':''}"></span>
-        <span${muted?' class="odi-muted"':''}>${pair.label}${isMaster?' · maître':''}</span>
-        <span class="odi-freq" id="odi-freq${i}">${fmtFreq(pF)}</span>
-      </summary>
-      <div class="osc-drawer-body">
-        <div class="fx-fader">
-          <span class="fx-fader-label">Volume</span>
-          <div class="fx-fader-track" id="fxFadervol${i}Track"
-            onmousedown="_oscFaderStart(event,'vol${i}')" ontouchstart="_oscFaderStart(event,'vol${i}')"
-            ontouchmove="_oscFaderMove(event,'vol${i}')">
-            <div class="fx-fader-line"></div>
-            <div class="fx-fader-fill" id="fxFadervol${i}Fill"></div>
-            <div class="fx-fader-knob" id="fxFadervol${i}Ball"></div>
-          </div>
-        </div>
-        <div class="fx-fader">
-          <span class="fx-fader-label">Δ Binaural</span>
-          <div class="fx-fader-track" id="fxFaderdelta${i}Track"
-            onmousedown="_oscFaderStart(event,'delta${i}')" ontouchstart="_oscFaderStart(event,'delta${i}')"
-            ontouchmove="_oscFaderMove(event,'delta${i}')">
-            <div class="fx-fader-line"></div>
-            <span class="fx-tick" style="left:0%"></span>
-            <span class="fx-tick" style="left:50%"></span>
-            <span class="fx-tick" style="left:100%"></span>
-            <div class="fx-fader-fill" id="fxFaderdelta${i}Fill"></div>
-            <div class="fx-fader-knob" id="fxFaderdelta${i}Ball"></div>
-          </div>
-        </div>
-      </div>
-    </details>`;
-  }).join('');
+// ═══ #189 : tiroir façon ChaHarmony — onglets par oscillateur ══════════
+// Un onglet actif à la fois (0-6 = oscillateur, 'global' = réglages
+// globaux) au lieu des 7 blocs repliés empilés (#185) — plus lisible en
+// plein écran, à la ChaHarmony (cf. OmcVibe/www/chaharmony.html, dont
+// cette section reprend l'agencement, restylé aux couleurs OmcVibe).
+let _odActiveTab = MASTER_IDX; // 0-6 ou 'global'
+function _odSelectTab(t) {
+  _odActiveTab = t;
+  patchOscDrawer();
 }
-// Reconstruit #oscDrawerList — appelé à l'ouverture du tiroir et depuis
-// patchRandomTable() (donc à chaque tirage aléatoire, mute, édition
+function buildOdTabs() {
+  const oscTabs = PAIRS.map((pair, i) => {
+    const muted = !!mutedOscs[pair.pingala.id] && !!mutedOscs[pair.ida.id];
+    const on = _odActiveTab === i;
+    return `<button class="od-tab${on?' on':''}${muted?' od-tab-muted':''}"
+      style="--odt-color:${pair.color};--odt-color-a:${pair.color}33;"
+      onclick="_odSelectTab(${i})"><span class="od-tab-dot"></span>${i===MASTER_IDX?'Maître':'Osc '+(i+1)}</button>`;
+  }).join('');
+  const globalOn = _odActiveTab === 'global';
+  return oscTabs + `<button class="od-tab${globalOn?' on':''}" style="--odt-color:#C080FF;--odt-color-a:rgba(192,128,255,.2);"
+    onclick="_odSelectTab('global')"><span class="od-tab-dot"></span>Global</button>`;
+}
+// Plage de recherche fréquence/note — volontairement plus large que
+// F_MIN/F_MAX (54-475, plafond du TIRAGE aléatoire, cf. #7) : ici on
+// règle À LA MAIN, même logique déjà suivie pour Δ (DELTA_MIN/MAX manuel
+// 0,5-72Hz plus large que RANDOM_DELTA_MIN/MAX 0,8-1,2Hz du tirage auto).
+// 36-1296 = 432/12 à 432×3, cohérent avec le système Omc du reste de
+// l'app. Le MAÎTRE atteint cette plage en entier (valeur directe) ; un
+// SATELLITE reste porté par le modèle maître×ratio×n (n borné 0,1-N_MAX)
+// — sa plage réellement atteignable (affichée sous la cellule) dépend
+// donc de son ratio courant et du maître, comme le reste de l'app.
+const NOTE_SEARCH_MIN = 36, NOTE_SEARCH_MAX = 1296;
+function _odFreqBounds(i) {
+  if (i === MASTER_IDX) return { lo: NOTE_SEARCH_MIN, hi: NOTE_SEARCH_MAX };
+  const pair = PAIRS[i];
+  const ratio = RATIO_OPTS[pair.pingala.ri].r;
+  const lo = Math.max(NOTE_SEARCH_MIN, masterFreq * ratio * 0.1);
+  const hi = Math.min(NOTE_SEARCH_MAX, masterFreq * ratio * N_MAX);
+  return { lo: Math.round(lo * 10) / 10, hi: Math.round(hi * 10) / 10 };
+}
+function _odSetFreqDirect(i, targetHz) {
+  if (isNaN(targetHz)) return;
+  if (typeof isLocked === 'function' && isLocked(i)) return;
+  if (i === MASTER_IDX) {
+    // #189 : setMasterFreq() re-clampe en interne à F_MIN/F_MAX (54-475,
+    // plafond du TIRAGE aléatoire) — reproduit ici son corps SANS ce
+    // clamp, pour que la recherche 36-1296Hz du maître aille vraiment
+    // jusqu'au bout (même logique déjà appliquée aux satellites ci-dessous).
+    masterFreq = Math.round(Math.max(NOTE_SEARCH_MIN, Math.min(NOTE_SEARCH_MAX, targetHz)));
+    updateDisplay();
+    if (flowing) PAIRS.forEach((_, k) => {
+      tuneOsc(PAIRS[k].pingala.id, calcPFreq(k));
+      tuneOsc(PAIRS[k].ida.id,     calcIFreq(k));
+    });
+    if (typeof _retuneSubDrone === 'function') _retuneSubDrone();
+    saveState();
+    return;
+  }
+  const pair = PAIRS[i];
+  const b = _odFreqBounds(i);
+  const clamped = Math.max(b.lo, Math.min(b.hi, targetHz));
+  const ratio = RATIO_OPTS[pair.pingala.ri].r;
+  pair.pingala.n = Math.max(0.1, Math.min(N_MAX, clamped / (masterFreq * ratio)));
+  if (flowing) { tuneOsc(pair.pingala.id, calcPFreq(i)); tuneOsc(pair.ida.id, calcIFreq(i)); }
+  if (typeof updatePairUI === 'function') updatePairUI(i);
+  if (typeof patchRandomTable === 'function') patchRandomTable();
+  saveState();
+}
+function _odOpenFreqEdit(i) {
+  if (typeof isLocked === 'function' && isLocked(i)) return;
+  const disp = document.getElementById('od-freq-disp');
+  const inp  = document.getElementById('od-freq-input');
+  if (!disp || !inp) return;
+  const b = _odFreqBounds(i);
+  disp.style.display = 'none';
+  inp.style.display = 'block';
+  inp.min = b.lo; inp.max = b.hi; inp.step = '0.1';
+  inp.value = (i === MASTER_IDX ? masterFreq : calcPFreq(i)).toFixed(1);
+  inp.focus(); inp.select();
+}
+function _odFreqKey(i, e) {
+  if (e.key === 'Enter')  { e.preventDefault(); _odExitFreqEdit(i, true); }
+  if (e.key === 'Escape') _odExitFreqEdit(i, false);
+}
+// #189 : garde anti-réentrance — _odSetFreqDirect() (branche apply) fait
+// tourner patchOscDrawer() (via setMasterFreq→patchRandomTable pour le
+// maître, ou directement pour un satellite), qui reconstruit #oscDrawerList
+// et retire donc du DOM l'input encore focus À CE MOMENT — un <input>
+// retiré du DOM alors qu'il a le focus déclenche son propre blur natif,
+// qui rappelle onblur="_odExitFreqEdit(...)" EN PLEINE reconstruction du
+// tiroir (l'ancien innerHTML est encore à moitié démonté) : sans garde,
+// ce second appel imbriqué fait planter le innerHTML= suivant ("node to
+// be removed is no longer a child of this node"). inp.blur() ci-dessous
+// déclenche ce même blur natif, mais TÔT et sous garde déjà levée — plus
+// jamais en pleine mutation du DOM.
+let _odFreqClosing = false;
+function _odExitFreqEdit(i, apply) {
+  if (_odFreqClosing) return;
+  _odFreqClosing = true;
+  const disp = document.getElementById('od-freq-disp');
+  const inp  = document.getElementById('od-freq-input');
+  if (disp && inp) {
+    inp.blur();
+    let applied = false;
+    if (apply && inp.value !== '') {
+      const v = parseFloat(inp.value);
+      if (!isNaN(v)) { _odSetFreqDirect(i, v); applied = true; } // reconstruit déjà le tiroir
+    }
+    if (!applied) { inp.style.display = 'none'; disp.style.display = ''; }
+  }
+  _odFreqClosing = false;
+}
+// Carte d'un oscillateur (mini-sphère + nom + ⚙ règlages + mute, cellule
+// fréquence/note, faders Volume/Δ Binaural — mêmes pistes que #185).
+function buildOdOscCard(i) {
+  const pair = PAIRS[i];
+  const pF = calcPFreq(i);
+  const muted = !!mutedOscs[pair.pingala.id] && !!mutedOscs[pair.ida.id];
+  const isMaster = i === MASTER_IDX;
+  const b = _odFreqBounds(i);
+  const col2 = pair.grad && pair.grad[1] ? pair.grad[1] : pair.color;
+  return `<div class="od-card" style="--odi-color:${pair.color};--odi-color2:${col2};--odi-color-a:${pair.color}33;">
+    <div class="od-top">
+      <div class="od-sphere${muted?' od-sphere-muted':''}"></div>
+      <div>
+        <div class="od-name">${pair.label}${isMaster?' · Maître':''}</div>
+      </div>
+      <button class="od-gear" title="Réglages détaillés" onclick="openOscModal(${i})">⚙</button>
+      <button class="od-mute${muted?'':' on'}" title="${muted?'Activer':'Couper'}" onclick="toggleMutePair(${i});patchOscDrawer()">${muted?'▶':'⏸'}</button>
+    </div>
+    <div class="od-freq-cell" onclick="_odOpenFreqEdit(${i})" title="Toucher pour rechercher une fréquence exacte">
+      <span class="od-freq-disp" id="od-freq-disp"><span class="od-freq-val">${fmtFreq(pF).replace(/\s*Hz$/,'').replace(/\s*🐈$/,'')}</span><span class="od-freq-unit">${UNIT_MODE==='miaow'?'🐈':'Hz'}</span></span>
+      <input type="number" class="od-freq-input" id="od-freq-input" onkeydown="_odFreqKey(${i},event)" onblur="_odExitFreqEdit(${i},true)">
+      <div class="od-freq-range">recherche ${b.lo}–${b.hi} Hz</div>
+    </div>
+    <div class="fx-fader">
+      <span class="fx-fader-label">Volume</span>
+      <div class="fx-fader-track" id="fxFadervol${i}Track"
+        onmousedown="_oscFaderStart(event,'vol${i}')" ontouchstart="_oscFaderStart(event,'vol${i}')"
+        ontouchmove="_oscFaderMove(event,'vol${i}')">
+        <div class="fx-fader-line"></div>
+        <div class="fx-fader-fill" id="fxFadervol${i}Fill"></div>
+        <div class="fx-fader-knob" id="fxFadervol${i}Ball"></div>
+      </div>
+    </div>
+    <div class="fx-fader">
+      <span class="fx-fader-label">Δ Binaural</span>
+      <div class="fx-fader-track" id="fxFaderdelta${i}Track"
+        onmousedown="_oscFaderStart(event,'delta${i}')" ontouchstart="_oscFaderStart(event,'delta${i}')"
+        ontouchmove="_oscFaderMove(event,'delta${i}')">
+        <div class="fx-fader-line"></div>
+        <span class="fx-tick" style="left:0%"></span>
+        <span class="fx-tick" style="left:50%"></span>
+        <span class="fx-tick" style="left:100%"></span>
+        <div class="fx-fader-fill" id="fxFaderdelta${i}Fill"></div>
+        <div class="fx-fader-knob" id="fxFaderdelta${i}Ball"></div>
+      </div>
+    </div>
+  </div>`;
+}
+// Carte GLOBAL — Δ sinus global (Détune Sinus Duo, cf. #54), Δ binaural
+// global (verrou binaural, cf. setGlobalDelta), Mode 0 Effet (bascule en
+// bloc, cf. setFxBypassMode plus bas) et touche Dual Sine (bascule rapide
+// du timbre "Sinus Duo" sur l'oscillateur actif).
+function buildOdGlobalCard() {
+  return `<div class="od-card" style="--odi-color:#C080FF;--odi-color-a:rgba(192,128,255,.2);">
+    <div class="od-global-row">
+      <div>
+        <div class="od-global-label">Mode 0 Effet — binaural pur</div>
+        <div class="od-global-hint">Coupe tous les effets d'un coup (on peut en rallumer certains ensuite) — ${FX_BYPASS_STATE.on?'actif':'inactif'}</div>
+      </div>
+      <label class="fx-toggle"><input type="checkbox" id="ck-fx-bypass" ${FX_BYPASS_STATE.on?'checked':''} onchange="setFxBypassMode(this.checked)"><span class="fx-tog-track"></span></label>
+    </div>
+    <div class="od-global-row">
+      <div>
+        <div class="od-global-label">Dual Sine — oscillateur actif</div>
+        <div class="od-global-hint">${_odActiveTab==='global'?'Choisis un onglet oscillateur pour agir ici':(PAIRS[_odActiveTab]?.label||'')}</div>
+      </div>
+      <label class="fx-toggle"><input type="checkbox" id="ck-dualsine-touch" ${_odActiveTab!=='global' && OSC_WAVES[PAIRS[_odActiveTab].pingala.id]==='dualSine'?'checked':''} ${_odActiveTab==='global'?'disabled':''} onchange="_odToggleDualSine(this.checked)"><span class="fx-tog-track"></span></label>
+    </div>
+    <div class="od-global-row" style="flex-direction:column;align-items:stretch;">
+      <div class="od-global-label">Δ Sinus global (Détune Sinus Duo)</div>
+      <input type="range" class="fx-slider" min="-72" max="72" step="1" value="${DUALSINE_DETUNE}" oninput="setDualSineDetune(this.value);patchOscDrawer()">
+      <div class="od-global-hint">${DUALSINE_DETUNE} cents</div>
+    </div>
+    <div class="od-global-row" style="flex-direction:column;align-items:stretch;">
+      <div class="od-global-label">Δ Binaural global</div>
+      <input type="number" min="${DELTA_MIN}" max="${DELTA_MAX}" step="0.5" value="${globalDelta.toFixed(1)}" class="fxq-num" oninput="setGlobalDelta(this.value);patchOscDrawer()" onchange="setGlobalDelta(this.value);patchOscDrawer()">
+      <div class="od-global-hint">Applique le même Δ à toutes les paires (0,5–72Hz)</div>
+    </div>
+  </div>`;
+}
+function _odToggleDualSine(v) {
+  if (_odActiveTab === 'global') return;
+  const pair = PAIRS[_odActiveTab];
+  setOscWave(pair.pingala.id, v ? 'dualSine' : 'sine');
+  patchOscDrawer();
+}
+// Reconstruit le tiroir (onglets + carte active) — appelé à l'ouverture
+// et depuis patchRandomTable() (tirage aléatoire, mute, édition
 // manuelle…) pour rester synchronisé sans multiplier les points d'appel.
-// Les blocs dépliés par l'utilisateur sont préservés (même ordre que
-// PAIRS avant/après régénération) plutôt que tous repliés à chaque coup.
 function patchOscDrawer() {
+  const tabs = document.getElementById('odTabs');
   const wrap = document.getElementById('oscDrawerList');
   if (!wrap) return;
-  const wasOpen = Array.from(wrap.children).map(d => d.hasAttribute && d.hasAttribute('open'));
-  wrap.innerHTML = buildOscDrawerHTML();
-  Array.from(wrap.children).forEach((d, idx) => { if (wasOpen[idx]) d.setAttribute('open', ''); });
+  if (tabs) tabs.innerHTML = buildOdTabs();
+  wrap.innerHTML = _odActiveTab === 'global' ? buildOdGlobalCard() : buildOdOscCard(_odActiveTab);
   _oscFaderRefreshAll();
 }
 
@@ -5663,6 +5937,7 @@ function _fxToggleDrawer() {
   document.body.classList.toggle('fx-drawer-open');
   saveState();
   if (document.body.classList.contains('fx-drawer-open') && typeof patchOscDrawer === 'function') patchOscDrawer();
+  if (typeof _syncBackBtn === 'function') _syncBackBtn(); // #189 : cache #btn-back-menu pendant que le tiroir (plein écran) est ouvert
   requestAnimationFrame(_oscFaderRefreshAll);
 }
 // #178 : retour terrain — la poignée fine (32px) était le SEUL moyen de
@@ -5679,6 +5954,7 @@ function _fxOutsideCloseCheck(e) {
   const t = e.target;
   if (t.closest && t.closest('#fxDrawer, #fxDrawerHandle')) return; // clic dedans → laisse faire (drag, poignée)
   document.body.classList.remove('fx-drawer-open');
+  if (typeof _syncBackBtn === 'function') _syncBackBtn(); // #189
   saveState();
 }
 document.addEventListener('mousedown', _fxOutsideCloseCheck, true);
@@ -10323,23 +10599,22 @@ function _loadTheme() {
 
 // Mode avancé : révèle les 6 sphères satellites (surface simple → profondeur)
 const ADV_KEY = 'fbf432-advanced';
+// #189 : les sphères satellites sur l'écran principal sont retirées —
+// leur gestion vit désormais entièrement dans le tiroir (7 onglets,
+// cf. buildOdTabs/buildOdOscCard). toggleAdvanced() gardait pourtant du
+// sens comme point d'entrée (raccourci dock remappable, cf.
+// DOCK_ACTIONS.toggleAdvanced) : plutôt qu'un no-op silencieux, il ouvre
+// maintenant le tiroir — l'ancien "afficher/masquer les oscillateurs"
+// devient "aller gérer les oscillateurs". mode-simple reste TOUJOURS actif
+// (jamais retiré du body) : plus aucun code de rendu des satellites
+// n'est supprimé (rollback possible), juste plus jamais atteint.
 function toggleAdvanced() {
-  const goAdvanced = document.body.classList.contains('mode-simple'); // simple → avancé
-  document.body.classList.toggle('mode-simple', !goAdvanced);
-  try { localStorage.setItem(ADV_KEY, goAdvanced ? '1' : '0'); } catch(e) {}
-  const b = document.getElementById('btn-advanced');
-  if (b) { b.classList.toggle('on', goAdvanced); const s=b.querySelector('span'); if(s) s.textContent = 'Mode avancé (6 sphères) : ' + (goAdvanced ? 'ON' : 'OFF'); }
-  buildVesicaPairs();
-  if (typeof _fxUpdateVisibility === 'function') _fxUpdateVisibility(); // #176
+  _fxToggleDrawer();
 }
 function _loadAdvanced() {
-  let adv = false;
-  try { adv = localStorage.getItem(ADV_KEY) === '1'; } catch(e) {}
-  if (adv) {
-    document.body.classList.remove('mode-simple');
-    const b = document.getElementById('btn-advanced');
-    if (b) { b.classList.add('on'); const s=b.querySelector('span'); if(s) s.textContent='Mode avancé (6 sphères) : ON'; }
-  }
+  // Ancienne préférence "Mode avancé" (ADV_KEY) volontairement ignorée —
+  // les satellites ne réapparaissent plus, même pour une session qui
+  // l'avait activée avant #189.
   if (typeof _fxUpdateVisibility === 'function') _fxUpdateVisibility(); // #176
 }
 
@@ -10707,7 +10982,7 @@ function resetExtraPos() {
 // Personnalisable depuis Paramètres → Personnaliser l'interface.
 const DOCK_ACTIONS = {
   none:          { label: '— Aucune —',                    fn: () => {} },
-  toggleAdvanced:{ label: 'Afficher / masquer les oscillateurs', fn: () => { toggleAdvanced(); updateDockDisplays(); } },
+  toggleAdvanced:{ label: 'Ouvrir le tiroir Oscillateurs', fn: () => { toggleAdvanced(); updateDockDisplays(); } },
   openRand:      { label: 'Ouvrir Options Aléatoire',       fn: () => openTab('panRand') },
   soloMaster:    { label: 'Solo fréquence maître',          fn: () => _dockSoloMaster() },
   randomAll:     { label: 'Nouveau jeu aléatoire',          fn: () => triggerMagicAuto() },
