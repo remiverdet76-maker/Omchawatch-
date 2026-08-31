@@ -590,26 +590,42 @@ body.fx-drawer-open #fxDrawer{ transform:translateX(0); }
   background:linear-gradient(165deg,var(--odi-color-a,rgba(240,192,96,.12)),rgba(20,12,28,.3) 70%);
   padding:14px;
 }
-/* En-tête de carte : mini-sphère (visuel "qui joue quoi") + nom + bouton
-   réglages (⚙, ouvre openOscModal — le détail complet existant) + mute. */
+/* #192 : en-tête de carte — la sphère EST le bouton play/pause (mute),
+   réutilise telle quelle la classe .vp-p (+ .vp-muted/.vp-live) de
+   l'ancienne sphère satellite d'écran principal, juste redimensionnée ici
+   (même look "quartz plat coupé" / pulse "vivant" que partout ailleurs
+   dans l'app — cf. .vp-p plus haut dans ce fichier). */
 .od-top{ display:flex;align-items:center;gap:10px;margin-bottom:12px; }
-.od-sphere{
-  width:46px;height:46px;border-radius:50%;flex-shrink:0;
-  background:radial-gradient(circle at 32% 28%,#fff 0%,var(--odi-color,#F0C060) 45%,var(--odi-color2,#8a5a10) 100%);
-  box-shadow:0 0 14px var(--odi-color-a,rgba(240,192,96,.5)),inset 0 0 10px rgba(0,0,0,.35);
-  transition:opacity .25s,filter .25s;
+.od-vp-sphere{
+  width:52px;height:52px;flex-shrink:0;margin:0; /* redéfinit juste la taille — le reste vient de .vp-p */
 }
-.od-sphere.od-sphere-muted{ opacity:.3;filter:grayscale(.6); }
+.od-vp-icon{
+  font-size:1.05rem;position:relative;z-index:1;
+  text-shadow:0 1px 4px rgba(0,0,0,.85),0 0 6px rgba(0,0,0,.6);
+}
 .od-name{ font-family:var(--font-deco,'Cinzel Decorative'),serif;font-size:.82rem;font-weight:700;
-  color:var(--odi-color,#F0C060); }
-.od-gear,.od-mute{
-  width:38px;height:38px;border-radius:50%;flex-shrink:0;margin-left:auto;
-  border:1.5px solid rgba(255,214,120,.35);background:rgba(20,12,28,.5);
-  color:rgba(255,224,170,.85);font-size:1rem;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
+  color:var(--odi-color,#F0C060);flex:1; }
+.od-top .od-lock{ /* #192 : sélecteur composé pour l'emporter sur .osc-lockbtn (défini plus loin dans la feuille) */
+  width:36px;height:36px;min-height:0;border-radius:50%;flex-shrink:0;margin-left:0;padding:0;
+  display:flex;align-items:center;justify-content:center;font-size:1rem;
 }
-.od-mute{ margin-left:6px; }
-.od-mute.on{ border-color:#8CFFC0;color:#8CFFC0;background:rgba(140,255,192,.14); }
+/* Guide de notes (36-1296Hz, pas 18Hz) — replié par défaut sous la
+   cellule fréquence, grille scrollable de puces tapables (#192). */
+.od-note-guide-toggle{
+  font-size:.66rem;color:rgba(255,224,170,.65);cursor:pointer;text-align:center;
+  margin:-4px 0 8px;letter-spacing:.04em;
+}
+.od-note-guide{
+  display:flex;flex-wrap:wrap;gap:4px;max-height:150px;overflow-y:auto;
+  margin-bottom:10px;padding:7px;background:rgba(0,0,0,.2);border-radius:9px;
+  border:1px solid rgba(255,214,120,.14);
+}
+.od-note-chip{
+  padding:4px 7px;border-radius:6px;font-size:.66rem;
+  border:1px solid rgba(255,214,120,.25);background:rgba(20,12,28,.5);
+  color:rgba(255,224,170,.8);cursor:pointer;
+}
+.od-note-chip.on{ background:var(--odi-color-a,rgba(255,214,120,.28));border-color:var(--odi-color,#F0C060);color:#FFF6E0; }
 /* Cellule fréquence/note — affiche la valeur, tape pour ouvrir la
    recherche (36–1296Hz, cf. JS) — même principe pour le maître. */
 .od-freq-cell{
@@ -5621,6 +5637,25 @@ function buildOdTabs() {
 // — sa plage réellement atteignable (affichée sous la cellule) dépend
 // donc de son ratio courant et du maître, comme le reste de l'app.
 const NOTE_SEARCH_MIN = 36, NOTE_SEARCH_MAX = 1296;
+// #192 : "guide" de fréquences/notes — gamme complète 36-1296Hz par pas de
+// 18Hz (même pas que le Mode Sonothérapie, cohérent avec le système Omc du
+// reste de l'app), affichée sous la cellule fréquence de chaque
+// oscillateur. Tap sur une note = joue directement (retune live si le
+// Flux tourne), même chemin que la recherche libre (_odSetFreqDirect).
+const NOTE_GUIDE_STEP = 18;
+const NOTE_GUIDE_LIST = (() => {
+  const list = [];
+  for (let hz = NOTE_SEARCH_MIN; hz <= NOTE_SEARCH_MAX; hz += NOTE_GUIDE_STEP) list.push(hz);
+  return list;
+})();
+let _odNoteGuideOpen = {}; // { [pairIdx]: bool } — replié par défaut, mémorisé par oscillateur
+function _odToggleNoteGuide(i) {
+  _odNoteGuideOpen[i] = !_odNoteGuideOpen[i];
+  patchOscDrawer();
+}
+function _odPlayNote(i, hz) {
+  _odSetFreqDirect(i, hz);
+}
 function _odFreqBounds(i) {
   if (i === MASTER_IDX) return { lo: NOTE_SEARCH_MIN, hi: NOTE_SEARCH_MAX };
   const pair = PAIRS[i];
@@ -5708,22 +5743,38 @@ function buildOdOscCard(i) {
   const pF = calcPFreq(i);
   const muted = !!mutedOscs[pair.pingala.id] && !!mutedOscs[pair.ida.id];
   const isMaster = i === MASTER_IDX;
+  const locked = typeof isLocked === 'function' && isLocked(i);
   const b = _odFreqBounds(i);
   const col2 = pair.grad && pair.grad[1] ? pair.grad[1] : pair.color;
+  const isLive = flowing && !muted;
+  // #192 : le guide de notes (36-1296Hz, pas 18Hz) — replié par défaut,
+  // mémorisé par oscillateur. Tap sur une note = la joue directement
+  // (_odPlayNote → _odSetFreqDirect, retune live si le Flux tourne).
+  const guideOpen = !!_odNoteGuideOpen[i];
+  const noteGuideHTML = guideOpen ? `<div class="od-note-guide">${NOTE_GUIDE_LIST.map(hz =>
+    `<button class="od-note-chip${Math.abs(pF-hz)<0.9?' on':''}" onclick="_odPlayNote(${i},${hz})">${hz}</button>`
+  ).join('')}</div>` : '';
+  // #192 : TOUS les réglages de l'oscillateur (5 sections, ex-modal
+  // osc-modal) directement dans la carte, en <details> repliables —
+  // remplace le bouton ⚙ qui ouvrait un modal séparé.
+  const s = buildOscSections(pair, i);
   return `<div class="od-card" style="--odi-color:${pair.color};--odi-color2:${col2};--odi-color-a:${pair.color}33;">
     <div class="od-top">
-      <div class="od-sphere${muted?' od-sphere-muted':''}"></div>
-      <div>
-        <div class="od-name">${pair.label}${isMaster?' · Maître':''}</div>
+      <div class="vp-p od-vp-sphere${muted?' vp-muted':''}${isLive?' vp-live':''}"
+        style="border-color:${pair.color};background:radial-gradient(circle at 32% 28%,#fff 0%,${pair.color} 45%,${col2} 100%);box-shadow:0 0 14px ${pair.color}99,0 0 24px ${pair.color}55;"
+        onclick="toggleMutePair(${i});patchOscDrawer()" title="${muted?'Activer':'Couper'} cet oscillateur">
+        <span class="od-vp-icon">${muted?'▶':'⏸'}</span>
       </div>
-      <button class="od-gear" title="Réglages détaillés" onclick="openOscModal(${i})">⚙</button>
-      <button class="od-mute${muted?'':' on'}" title="${muted?'Activer':'Couper'}" onclick="toggleMutePair(${i});patchOscDrawer()">${muted?'▶':'⏸'}</button>
+      <div class="od-name">${pair.label}${isMaster?' · Maître':''}</div>
+      <button class="osc-lockbtn od-lock${locked?' locked':''}" id="lockm-${i}" onclick="toggleLock(${i})" title="Verrouiller cet oscillateur">${locked?'◉':'◎'}</button>
     </div>
     <div class="od-freq-cell" onclick="_odOpenFreqEdit(${i})" title="Toucher pour rechercher une fréquence exacte">
       <span class="od-freq-disp" id="od-freq-disp"><span class="od-freq-val">${fmtFreq(pF).replace(/\s*Hz$/,'').replace(/\s*🐈$/,'')}</span><span class="od-freq-unit">${UNIT_MODE==='miaow'?'🐈':'Hz'}</span></span>
       <input type="number" class="od-freq-input" id="od-freq-input" onkeydown="_odFreqKey(${i},event)" onblur="_odExitFreqEdit(${i},true)">
       <div class="od-freq-range">recherche ${b.lo}–${b.hi} Hz</div>
     </div>
+    <div class="od-note-guide-toggle" onclick="_odToggleNoteGuide(${i})">🎵 Guide de notes (36–1296 Hz) ${guideOpen?'▲':'▼'}</div>
+    ${noteGuideHTML}
     <div class="fx-fader">
       <span class="fx-fader-label">Volume</span>
       <div class="fx-fader-track" id="fxFadervol${i}Track"
@@ -5747,6 +5798,26 @@ function buildOdOscCard(i) {
         <div class="fx-fader-knob" id="fxFaderdelta${i}Ball"></div>
       </div>
     </div>
+    <details class="fx-acc od-osc-acc" data-sec="1" open>
+      <summary>① Fréquence &amp; Binaural</summary>
+      <div class="fx-acc-body">${s.binauralHTML}</div>
+    </details>
+    <details class="fx-acc od-osc-acc" data-sec="2">
+      <summary>② Type Onde</summary>
+      <div class="fx-acc-body">${s.oscTabHTML}</div>
+    </details>
+    <details class="fx-acc od-osc-acc" data-sec="3" id="od-fx-details-${i}" ontoggle="if(this.open&&typeof initTPad==='function')requestAnimationFrame(()=>initTPad(${i}))">
+      <summary>③ Effet</summary>
+      <div class="fx-acc-body">${s.fxTabHTML}</div>
+    </details>
+    <details class="fx-acc od-osc-acc" data-sec="4">
+      <summary>④ Modulation</summary>
+      <div class="fx-acc-body">${s.patchTabHTML}</div>
+    </details>
+    <details class="fx-acc od-osc-acc" data-sec="5" id="od-matrix-details-${i}">
+      <summary>⑤ Ratios Fréq. 🌀</summary>
+      <div class="fx-acc-body" id="od-matrix-body-${i}">${s.matrixTabHTML}</div>
+    </details>
   </div>`;
 }
 // Carte GLOBAL — Δ sinus global (Détune Sinus Duo, cf. #54), Δ binaural
@@ -5794,8 +5865,16 @@ function patchOscDrawer() {
   const tabs = document.getElementById('odTabs');
   const wrap = document.getElementById('oscDrawerList');
   if (!wrap) return;
+  // #192 : préserve l'état ouvert/fermé des 5 sections de réglages (①-⑤)
+  // à travers un rafraîchissement — sans ça, verrouiller/muter/tirer un
+  // nouveau jeu (toggleLock/toggleMutePair/triggerMagicAuto → souvent
+  // patchRandomTable() → patchOscDrawer()) referme systématiquement la
+  // section qu'on est en train de consulter.
+  const openSecs = {};
+  wrap.querySelectorAll('.od-osc-acc[data-sec]').forEach(d => { if (d.open) openSecs[d.dataset.sec] = true; });
   if (tabs) tabs.innerHTML = buildOdTabs();
   wrap.innerHTML = _odActiveTab === 'global' ? buildOdGlobalCard() : buildOdOscCard(_odActiveTab);
+  wrap.querySelectorAll('.od-osc-acc[data-sec]').forEach(d => { if (openSecs[d.dataset.sec]) d.open = true; });
   _oscFaderRefreshAll();
 }
 
@@ -8664,7 +8743,11 @@ function initTPad(i) {
   drawTPad(cv, i);
   (function loop() {
     if (!document.body.contains(cv)) { cv._tpadInit = false; return; }
-    const visible = !document.getElementById('opane-'+i+'-3')?.classList.contains('hidden') && document.getElementById('osc-modal')?.classList.contains('open');
+    // #192 : le pad vit désormais dans le tiroir (section ③ Effet, en
+    // <details>) — visible seulement si le tiroir est ouvert, CET
+    // oscillateur est l'onglet actif, ET la section ③ est dépliée.
+    const visible = document.body.classList.contains('fx-drawer-open') && _odActiveTab === i
+      && !!document.getElementById('od-fx-details-'+i)?.open;
     if (visible) drawTPad(cv, i);
     setTimeout(() => requestAnimationFrame(loop), visible ? 60 : 400);
   })();
@@ -9609,7 +9692,12 @@ function updateOrbUI(i) {
 }
 
 // ── Pair HTML (modal oscillateur) ────────────────────────────────
-function buildPairHTML(pair, i) {
+// #192 : calcule les 5 sections de réglages d'un oscillateur (Binaural,
+// Type Onde, Effet, Modulation, Matrice) — extrait de buildPairHTML pour
+// être réutilisé À L'IDENTIQUE (mêmes id/classes/onclick, rien ne change
+// pour les fonctions qui les rafraîchissent aileurs) par le tiroir
+// (buildOdOscSettingsHTML, migration directe — plus de modal séparé).
+function buildOscSections(pair, i) {
   const c=pair.color;
   const pF=calcPFreq(i),iF=calcIFreq(i);
   const ws=waveState(pair.ida.delta);
@@ -9809,6 +9897,14 @@ function buildPairHTML(pair, i) {
   // ── ⑤ MATRICE 🌀 (36 assignations rapides ratio × n) ────────────
   const matrixTabHTML = _matrixHTML(i, c);
 
+  return { binauralHTML, oscTabHTML, fxTabHTML, patchTabHTML, matrixTabHTML };
+}
+// #192 : ancien modal plein écran (#osc-modal) — conservé pour rollback
+// mais plus jamais ouvert (openOscModal() redirige vers le tiroir, cf.
+// plus bas). Rien ne consomme plus opane-i-N/otab-i-N en pratique.
+function buildPairHTML(pair, i) {
+  const c = pair.color;
+  const s = buildOscSections(pair, i);
   return `<div class="pair-panel" style="border-left-color:${c};--ec:${c};">
     <div class="pair-head">
       <span class="pair-dot" style="background:${c}"></span>
@@ -9822,11 +9918,11 @@ function buildPairHTML(pair, i) {
       <button class="osc-tab"    id="otab-${i}-4" onclick="oscTab(${i},4)" style="--ec:${c};">④ Modulation</button>
       <button class="osc-tab"    id="otab-${i}-5" onclick="oscTab(${i},5)" style="--ec:${c};">⑤ Ratios Fréq. 🌀</button>
     </div>
-    <div class="osc-pane" id="opane-${i}-1">${binauralHTML}</div>
-    <div class="osc-pane hidden" id="opane-${i}-2">${oscTabHTML}</div>
-    <div class="osc-pane hidden" id="opane-${i}-3">${fxTabHTML}</div>
-    <div class="osc-pane hidden" id="opane-${i}-4">${patchTabHTML}</div>
-    <div class="osc-pane hidden" id="opane-${i}-5">${matrixTabHTML}</div>
+    <div class="osc-pane" id="opane-${i}-1">${s.binauralHTML}</div>
+    <div class="osc-pane hidden" id="opane-${i}-2">${s.oscTabHTML}</div>
+    <div class="osc-pane hidden" id="opane-${i}-3">${s.fxTabHTML}</div>
+    <div class="osc-pane hidden" id="opane-${i}-4">${s.patchTabHTML}</div>
+    <div class="osc-pane hidden" id="opane-${i}-5">${s.matrixTabHTML}</div>
   </div>`;
 }
 
@@ -9866,7 +9962,9 @@ function _matrixHTML(i, c) {
     <div class="osc-hint">Tap une cellule : assigne ratio + n à cette sphère, en direct</div>`;
 }
 function _matrixRefresh(i) {
-  const pane = document.getElementById('opane-'+i+'-5');
+  // #192 : cible le tiroir (nouvel emplacement) en priorité, retombe sur
+  // l'ancien modal (jamais peuplé en pratique, gardé pour rollback) sinon.
+  const pane = document.getElementById('od-matrix-body-'+i) || document.getElementById('opane-'+i+'-5');
   if (pane) pane.innerHTML = _matrixHTML(i, PAIRS[i].color);
 }
 function _matrixAssign(i, ri, n) {
@@ -9882,10 +9980,15 @@ function _matrixReshuffle(i) {
 }
 // #47 : bouton 🌀 du contrôle n — ouvre le modal complet (si besoin) puis
 // bascule directement sur l'onglet Matrice.
+// #192 : le bouton 🌀 (à côté du contrôle n) ouvre le tiroir sur cet
+// oscillateur ET déplie directement la section ⑤ Matrice — plus de modal
+// à faire apparaître avant de pouvoir y basculer.
 function openMatrixTab(i) {
-  const modal = document.getElementById('osc-modal');
-  if (!modal || !modal.classList.contains('open') || _oscModalIdx !== i) openOscModal(i);
-  oscTab(i, 5);
+  openOscModal(i); // ouvre le tiroir + sélectionne l'onglet i (redéfini plus haut)
+  requestAnimationFrame(() => {
+    const details = document.getElementById('od-matrix-details-' + i);
+    if (details) { details.open = true; details.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  });
 }
 
 // #157 : _ratioTableHTML (tableau ratio → Hz de sélection rapide) retiré —
@@ -10338,7 +10441,23 @@ function _darkenHex(hex, factor) {
   const b = Math.max(14, Math.round((p & 255) * factor));
   return `rgb(${r},${g},${b})`;
 }
+// #192 : TOUS les réglages oscillateur vivent désormais directement dans
+// le tiroir (plus de modal séparé à ouvrir) — openOscModal(i) est le point
+// d'entrée UNIQUE utilisé par : étoile ✦ sous une sphère, appui long sur
+// la sphère maître, bouton ☰ du tableau Oscillateurs (Effet Audio). Le
+// redéfinir ICI (plutôt que de retoucher chacun de ces appelants) ouvre le
+// tiroir sur l'oscillateur visé partout à la fois, en un seul endroit.
 function openOscModal(i) {
+  document.body.classList.add('fx-drawer-open');
+  _odActiveTab = i;
+  if (typeof patchOscDrawer === 'function') patchOscDrawer();
+  if (typeof _syncBackBtn === 'function') _syncBackBtn();
+  if (typeof _oscFaderRefreshAll === 'function') requestAnimationFrame(_oscFaderRefreshAll);
+}
+// Ancien modal plein écran (#osc-modal) — code conservé pour rollback,
+// mais plus jamais appelé (openOscModal ci-dessus ouvre le tiroir à la
+// place). Renommé pour ne plus masquer accidentellement la redéfinition.
+function _openOscModalLegacy(i) {
   _oscModalIdx = i;
   const modal    = document.getElementById('osc-modal');
   const backdrop = document.getElementById('backdrop');
