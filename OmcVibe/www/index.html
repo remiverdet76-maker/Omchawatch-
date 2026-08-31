@@ -5499,11 +5499,25 @@ function setOrganicEvolution(v) {
      en #178 : l'oreille perçoit la hauteur/le rythme d'un battement de
      façon logarithmique, un fader linéaire écraserait toute la bande
      Delta/Thêta — la plus utilisée — dans un minuscule premier segment). */
-const OSC_FADER_LO = { vol: 0, delta: DELTA_MIN };
-const OSC_FADER_HI = { vol: 1, delta: DELTA_MAX };
-let _oscFaderDragTarget = null; // 'volN' | 'deltaN' | null
+// #193 : "freqN" — pilote la fréquence de l'oscillateur via
+// _odSetFreqDirect (même chemin que la cellule fréquence/le guide de
+// notes) — échelle LOGARITHMIQUE 36-1296Hz, la même plage nominale pour
+// tous (maître ET satellites) : un satellite qui ne peut pas physiquement
+// atteindre le haut de la plage (modèle maître×ratio×n, cf.
+// _odFreqBounds) clampe simplement à ce qu'il peut réellement jouer —
+// exactement le même comportement déjà établi pour le guide de notes,
+// pas une règle nouvelle à retenir.
+// NOTE_SEARCH_MIN/MAX (36-1296Hz) déclarées juste avant ce bloc (déplacées
+// depuis plus bas, cf. #196) : le fader freqN en a besoin dès l'évaluation
+// de ce module, avant que buildOdTabs/_odActiveTab plus bas ne s'exécutent
+// — les déclarer après aurait laissé _odActiveTab en zone morte temporelle
+// (TDZ) au premier appel du tiroir, cassant tout le reste du fichier.
+const NOTE_SEARCH_MIN = 36, NOTE_SEARCH_MAX = 1296;
+const OSC_FADER_LO = { vol: 0, delta: DELTA_MIN, freq: NOTE_SEARCH_MIN };
+const OSC_FADER_HI = { vol: 1, delta: DELTA_MAX, freq: NOTE_SEARCH_MAX };
+let _oscFaderDragTarget = null; // 'volN' | 'deltaN' | 'freqN' | null
 function _oscFaderParse(which) {
-  const m = /^(vol|delta)(\d)$/.exec(which || '');
+  const m = /^(vol|delta|freq)(\d)$/.exec(which || '');
   return m ? { type: m[1], idx: +m[2] } : null;
 }
 function _oscFaderToT(type, v) {
@@ -5524,10 +5538,14 @@ function _oscFaderClientXToT(clientX, track) {
   return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
 }
 function _oscFaderGet(type, idx) {
-  return type === 'vol' ? (PAIRS[idx].pingala.vol / VOL_UI_SCALE) : PAIRS[idx].ida.delta;
+  if (type === 'vol') return PAIRS[idx].pingala.vol / VOL_UI_SCALE;
+  if (type === 'freq') return calcPFreq(idx);
+  return PAIRS[idx].ida.delta;
 }
 function _oscFaderApply(type, idx, v) {
-  if (type === 'vol') setPairVol(idx, v); else setDelta(idx, v);
+  if (type === 'vol') setPairVol(idx, v);
+  else if (type === 'freq') _odSetFreqDirect(idx, v);
+  else setDelta(idx, v);
 }
 function _oscFaderTrackEl(which) { return document.getElementById('fxFader' + which + 'Track'); }
 function _oscFaderBallEl(which)  { return document.getElementById('fxFader' + which + 'Ball'); }
@@ -5544,11 +5562,15 @@ function _oscFaderUpdateBallPosition(which) {
   ball.style.left = x + 'px';
   if (fill) fill.style.width = x + 'px'; // #178 : piste éclairée jusqu'au bouton, comme un vrai potentiomètre
 }
-// Rafraîchit les 14 faders (7 osc × Volume/Δ) — appelé à l'ouverture du
-// tiroir, au resize, et depuis patchOscDrawer() après toute reconstruction
+// Rafraîchit les 21 faders (7 osc × Fréquence/Volume/Δ) — appelé à l'ouverture
+// du tiroir, au resize, et depuis patchOscDrawer() après toute reconstruction
 // du contenu (tirage aléatoire, édition ailleurs dans l'app…).
 function _oscFaderRefreshAll() {
-  PAIRS.forEach((_, i) => { _oscFaderUpdateBallPosition('vol' + i); _oscFaderUpdateBallPosition('delta' + i); });
+  PAIRS.forEach((_, i) => {
+    _oscFaderUpdateBallPosition('freq' + i);
+    _oscFaderUpdateBallPosition('vol' + i);
+    _oscFaderUpdateBallPosition('delta' + i);
+  });
 }
 function _oscFaderSetFromClientX(clientX, which) {
   const p = _oscFaderParse(which); if (!p) return;
@@ -5636,7 +5658,6 @@ function buildOdTabs() {
 // SATELLITE reste porté par le modèle maître×ratio×n (n borné 0,1-N_MAX)
 // — sa plage réellement atteignable (affichée sous la cellule) dépend
 // donc de son ratio courant et du maître, comme le reste de l'app.
-const NOTE_SEARCH_MIN = 36, NOTE_SEARCH_MAX = 1296;
 // #192 : "guide" de fréquences/notes — gamme complète 36-1296Hz par pas de
 // 18Hz (même pas que le Mode Sonothérapie, cohérent avec le système Omc du
 // reste de l'app), affichée sous la cellule fréquence de chaque
@@ -5775,6 +5796,16 @@ function buildOdOscCard(i) {
     </div>
     <div class="od-note-guide-toggle" onclick="_odToggleNoteGuide(${i})">🎵 Guide de notes (36–1296 Hz) ${guideOpen?'▲':'▼'}</div>
     ${noteGuideHTML}
+    <div class="fx-fader">
+      <span class="fx-fader-label">Fréquence</span>
+      <div class="fx-fader-track" id="fxFaderfreq${i}Track"
+        onmousedown="_oscFaderStart(event,'freq${i}')" ontouchstart="_oscFaderStart(event,'freq${i}')"
+        ontouchmove="_oscFaderMove(event,'freq${i}')">
+        <div class="fx-fader-line"></div>
+        <div class="fx-fader-fill" id="fxFaderfreq${i}Fill"></div>
+        <div class="fx-fader-knob" id="fxFaderfreq${i}Ball"></div>
+      </div>
+    </div>
     <div class="fx-fader">
       <span class="fx-fader-label">Volume</span>
       <div class="fx-fader-track" id="fxFadervol${i}Track"
