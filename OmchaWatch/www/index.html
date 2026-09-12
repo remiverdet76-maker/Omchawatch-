@@ -70,7 +70,8 @@ canvas{display:block;}
   background:rgba(10,6,24,.62);border:1px solid rgba(255,255,255,.06);
   text-align:center;
 }
-.oct-num{font-family:'Cinzel',serif;font-weight:700;font-size:.70rem;}
+.oct-num{font-family:'Cinzel',serif;font-weight:700;font-size:.95rem;}
+.oct-theme{font-size:.42rem;letter-spacing:.06em;color:var(--textD,#907040);text-transform:uppercase;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .oct-name{font-size:.58rem;font-weight:700;margin-top:1px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .oct-sub{font-size:.48rem;color:var(--textD,#907040);margin-top:1px;line-height:1.25;}
 /* Mode switcher */
@@ -2378,9 +2379,18 @@ function otaRender(j0,ref){
 }
 // Version compacte directement sur l'horloge (pas besoin d'ouvrir le
 // panneau) — mêmes données que otaRender ci-dessus (une seule source de
-// vérité, otaCompute), juste reformatées en 3 petites cellules. Le
-// mouvement (la donnée la plus "actionnable" — anticiper une tension)
-// est mis en avant ici, au-dessus de l'énergie.
+// vérité, otaCompute), juste reformatées en 3 petites cellules.
+// #197 : la lecture immédiate ("grand chiffre") est désormais le jour
+// dans le cycle sur le total du cycle — c.dayInCycle+'/'+th.n, ex.
+// "174/360" — au lieu du numéro de thème seul (360/396/432), qui ne
+// disait rien du jour où l'on se trouve. C'est la MÊME donnée déjà
+// utilisée dans l'onglet OMCHAT'AIME (otaRender, "Jour X/th.n"), une
+// seule source de vérité (otaCompute → daysSince%themeN) : ce n'est
+// jamais aléatoire ni basé sur autre chose que le nombre de jours
+// écoulés depuis J0. Le dénominateur dit déjà à quel cycle on est
+// (360/396/432) : en dessous, son tag (corps/neutre/conscience) plutôt
+// que de répéter le même chiffre. Mouvement/énergie/jours restants
+// gardés en dessous, pour le détail.
 function otaRenderClockTable(){
   const el=document.getElementById('ota-clock-table'); if(!el)return;
   if(!J0_ARCH){el.innerHTML='';return;}
@@ -2390,10 +2400,11 @@ function otaRenderClockTable(){
     const ph=th.phases[c.phaseIdx-1];
     const mv=c.mvt.mv;
     return '<div class="oct-cell" style="border-color:'+th.color+'44">'+
-      '<div class="oct-num" style="color:'+th.color+'">'+th.n+'</div>'+
+      '<div class="oct-num" style="color:'+th.color+'">'+c.dayInCycle+'/'+th.n+'</div>'+
+      '<div class="oct-theme" style="color:'+th.color+'">'+th.tag+'</div>'+
       '<div class="oct-mvt" style="color:'+mv.color+'">'+mv.name+' · '+(c.mvt.idx+1)+'/4</div>'+
-      '<div class="oct-name">'+ph.name+' · '+c.phaseIdx+'/12</div>'+
-      '<div class="oct-sub">reste '+c.daysLeftPhase+'j phase · '+c.daysLeftCycle+'j cycle</div>'+
+      '<div class="oct-name">'+ph.name+' · énergie '+c.phaseIdx+'/12</div>'+
+      '<div class="oct-sub">reste '+c.daysLeftPhase+'j énergie · '+c.daysLeftCycle+'j cycle '+c.cycleIndex+'</div>'+
       '</div>';
   }).join('');
 }
