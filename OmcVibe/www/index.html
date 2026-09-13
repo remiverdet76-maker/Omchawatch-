@@ -6146,105 +6146,79 @@ function setSubDroneVol(v) {
   saveState();
 }
 
-// ── #181b/#182 : mode "Egocha Sage" ─────────────────────────────────
+// ── #181b/#182/#198 : mode "Egocha Sage" ────────────────────────────
 // #182 : demande explicite de retirer toute fréquence fixe (l'ancien
 // porteur d'ancrage 432Hz + la couche optionnelle 360Hz, -6dB) — on ne
 // garde QUE le pouls, c'est-à-dire le battement rythmique lui-même.
-// Remplacé le porteur tonal par une texture de souffle NEUTRE (bruit
-// blanc filtré passe-haut+passe-bas, sans hauteur perceptible — ni
-// 432Hz, ni 360Hz, ni aucune autre note) afin que le pouls reste
-// audible sans réintroduire de fréquence "de repère". Le mécanisme du
-// pouls lui-même est inchangé : LFO d'amplitude, sinus pur, qui
-// RALENTIT par paliers de 90s selon le ratio de contraction 5/6
-// (0.15→0.125→0.1042→0.0868Hz) tandis que sa profondeur MONTE sur la
-// même cadence (40%→50%→60%→70%, couplée au même palier). Couche
-// ADDITIVE, jamais branchée sur masterFreq/PAIRS, n'interfère avec
-// rien tant qu'elle n'est pas explicitement activée (même connexion
-// additive dans masterGain que le sub-drone ci-dessus, cf. #16).
-const EGOCHA_SAGE_STATE = { on: false };
-const EGOCHA_PULSE_STEPS = [0.15, 0.125, 0.1042, 0.0868]; // paliers ratio 5/6
-const EGOCHA_DEPTH_STEPS = [0.40, 0.50, 0.60, 0.70];       // montée progressive, même cadence
-const EGOCHA_STEP_MS  = 90000;
+// #198 : la texture de souffle (bruit blanc filtré) qui portait ce
+// pouls est à son tour retirée (demande explicite) — remplacée par un
+// PORTEUR TONAL BAS (sinus doux, EGOCHA_TONE_HZ, ressenti plus
+// qu'entendu — toujours SANS hauteur "de repère" : ni 360/396/432Hz ni
+// aucune autre note du reste de l'app). Le pouls lui-même n'est plus
+// un rythme de respiration qui ralentit tout seul par paliers : c'est
+// désormais un BPM explicite et réglable par l'utilisateur (comme un
+// vrai battement cardiaque, cf. EGOCHA_BPM_MIN/MAX), stable tant qu'on
+// ne le change pas soi-même — une respiration ralentit d'elle-même,
+// un cœur bat à un rythme qu'on lui donne. Le LFO sinus qui pilotait le
+// tremolo passe par un WaveShaper (courbe u^EGOCHA_PULSE_SHARPNESS,
+// u=0..1) pour donner un "thump" bref suivi d'un creux plus long —
+// plus proche d'un battement que le fondu symétrique d'un sinus brut.
+// Couche ADDITIVE, jamais branchée sur masterFreq/PAIRS, n'interfère
+// avec rien tant qu'elle n'est pas explicitement activée (même
+// connexion additive dans masterGain que le sub-drone ci-dessus, #16).
+const EGOCHA_SAGE_STATE = { on: false, bpm: 60 };
+const EGOCHA_BPM_MIN = 30, EGOCHA_BPM_MAX = 180;
+const EGOCHA_DEPTH = 0.70;            // profondeur du pouls (reprend le palier le plus marqué de l'ancien mécanisme)
+const EGOCHA_PULSE_SHARPNESS = 7;     // forme du "thump" — plus haut = pic plus bref et plus net
+const EGOCHA_TONE_HZ = 60;            // porteur bas, ressenti plus qu'entendu, sans hauteur "de repère"
 const EGOCHA_FADE_IN  = 20, EGOCHA_FADE_OUT = 15; // secondes
-const EGOCHA_LVL = 0.22; // niveau de la texture de souffle
-let _egocha = null; // { noiseSrc,noiseGain,noiseHpf,noiseLpf, lfo,lfoDepth,tremGain,envGain, stepTimer }
+const EGOCHA_LVL = 0.22; // niveau du porteur
+let _egocha = null; // { toneOsc,toneGain, lfo,shaper,lfoDepth,tremGain,envGain }
 
-// Bruit blanc en boucle (4s, assez long pour qu'aucun motif de
-// répétition ne s'entende), passé par un passe-haut + passe-bas doux :
-// une texture "souffle" chaude et neutre, jamais une note ni un
-// sifflement — c'est délibérément SANS hauteur, à l'inverse de l'ancien
-// porteur 432/360Hz que ce correctif retire.
-function _egochaBuildNoise(level) {
-  const c = audioCtx();
-  const len = c.sampleRate * 4;
-  const buf = c.createBuffer(1, len, c.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-  const src = c.createBufferSource(); src.buffer = buf; src.loop = true;
-  const hpf = c.createBiquadFilter(); hpf.type = 'highpass'; hpf.frequency.value = 120; hpf.Q.value = 0.707;
-  const lpf = c.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 900; lpf.Q.value = 0.707;
-  const g = c.createGain(); g.gain.value = level;
-  src.connect(hpf); hpf.connect(lpf); lpf.connect(g);
-  src.start();
-  return { src, hpf, lpf, gain: g };
+function _egochaBpmToHz(bpm) { return bpm / 60; }
+// Courbe WaveShaper u^sharpness (u = (x+1)/2 ∈ [0,1] pour x = sortie du
+// sinus ∈ [-1,1]) : un pic bref proche de 1 une fois par cycle, un
+// creux long proche de 0 le reste du temps — le "thump" du battement,
+// plutôt que le va-et-vient symétrique d'un sinus brut.
+function _egochaPulseCurve(sharpness) {
+  const n = 512;
+  const curve = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const u = i / (n - 1); // 0..1, x=(u*2-1) déjà appliqué par le sinus en amont
+    curve[i] = Math.pow(u, sharpness);
+  }
+  return curve;
 }
-// Tremolo doux : tremGain.gain = (1-profondeur/2) + (profondeur/2)·sin(2π f t)
-// — oscille toujours SOUS le niveau plein (jamais au-dessus), donc jamais
-// de clipping même à profondeur=70%. lfoDepth/tremGain recalculés en
-// AudioParam.linearRampToValueAtTime (demandé), ancrés sur la valeur
-// courante avant chaque rampe pour un enchaînement toujours continu.
-function _egochaApplyStep(idx) {
-  if (!_egocha) return;
-  const t = aNow(), freq = EGOCHA_PULSE_STEPS[idx], depth = EGOCHA_DEPTH_STEPS[idx];
-  const RAMP = 3; // s — jamais de saut abrupt de timbre
-  _egocha.lfo.frequency.setValueAtTime(_egocha.lfo.frequency.value, t);
-  _egocha.lfo.frequency.linearRampToValueAtTime(freq, t + RAMP);
-  _egocha.tremGain.gain.setValueAtTime(_egocha.tremGain.gain.value, t);
-  _egocha.tremGain.gain.linearRampToValueAtTime(1 - depth / 2, t + RAMP);
-  _egocha.lfoDepth.gain.setValueAtTime(_egocha.lfoDepth.gain.value, t);
-  _egocha.lfoDepth.gain.linearRampToValueAtTime(depth / 2, t + RAMP);
-}
-function _egochaScheduleSteps() {
-  if (!_egocha) return;
-  let idx = 0;
-  const tick = () => {
-    if (!_egocha) return;
-    idx++;
-    if (idx >= EGOCHA_PULSE_STEPS.length) return; // dernier palier : tient indéfiniment
-    _egochaApplyStep(idx);
-    _egocha.stepTimer = setTimeout(tick, EGOCHA_STEP_MS);
-  };
-  _egocha.stepTimer = setTimeout(tick, EGOCHA_STEP_MS);
-}
+// tremGain.gain = (1-profondeur) + profondeur·pulse(t) où pulse(t)∈[0,1]
+// (cf. _egochaPulseCurve) — oscille toujours SOUS le niveau plein (jamais
+// au-dessus), donc jamais de clipping même à profondeur=70%.
 function _startEgochaSage() {
   if (!EGOCHA_SAGE_STATE.on || !masterGain) return;
   _stopEgochaSage();
   const c = audioCtx(), t = aNow();
 
-  const noise = _egochaBuildNoise(EGOCHA_LVL);
+  const toneOsc = c.createOscillator(); toneOsc.type = 'sine'; toneOsc.frequency.value = EGOCHA_TONE_HZ;
+  const toneGain = c.createGain(); toneGain.gain.value = EGOCHA_LVL;
+  toneOsc.connect(toneGain); toneOsc.start();
 
-  const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = EGOCHA_PULSE_STEPS[0];
-  const lfoDepth = c.createGain(); lfoDepth.gain.value = EGOCHA_DEPTH_STEPS[0] / 2;
-  const tremGain = c.createGain(); tremGain.gain.value = 1 - EGOCHA_DEPTH_STEPS[0] / 2;
-  lfo.connect(lfoDepth); lfoDepth.connect(tremGain.gain); lfo.start();
+  const lfo = c.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = _egochaBpmToHz(EGOCHA_SAGE_STATE.bpm);
+  const shaper = c.createWaveShaper(); shaper.curve = _egochaPulseCurve(EGOCHA_PULSE_SHARPNESS); shaper.oversample = 'none';
+  const lfoDepth = c.createGain(); lfoDepth.gain.value = EGOCHA_DEPTH;
+  const tremGain = c.createGain(); tremGain.gain.value = 1 - EGOCHA_DEPTH;
+  lfo.connect(shaper); shaper.connect(lfoDepth); lfoDepth.connect(tremGain.gain); lfo.start();
 
-  noise.gain.connect(tremGain);
+  toneGain.connect(tremGain);
 
   const envGain = c.createGain();
   envGain.gain.setValueAtTime(0, t);
   envGain.gain.linearRampToValueAtTime(1, t + EGOCHA_FADE_IN); // fade-in 20s, puis plateau
   tremGain.connect(envGain); envGain.connect(masterGain);
 
-  _egocha = {
-    noiseSrc: noise.src, noiseGain: noise.gain, noiseHpf: noise.hpf, noiseLpf: noise.lpf,
-    lfo, lfoDepth, tremGain, envGain, stepTimer: null
-  };
-  _egochaScheduleSteps();
+  _egocha = { toneOsc, toneGain, lfo, shaper, lfoDepth, tremGain, envGain };
 }
 function _stopEgochaSage() {
   if (!_egocha) return;
   const e = _egocha;
-  clearTimeout(e.stepTimer);
   try {
     const t = aNow();
     e.envGain.gain.cancelScheduledValues(t);
@@ -6254,9 +6228,8 @@ function _stopEgochaSage() {
   _egocha = null;
   setTimeout(() => {
     try {
-      e.noiseSrc.stop(); e.noiseSrc.disconnect();
-      e.noiseHpf.disconnect(); e.noiseLpf.disconnect(); e.noiseGain.disconnect();
-      e.lfo.stop(); e.lfo.disconnect(); e.lfoDepth.disconnect();
+      e.toneOsc.stop(); e.toneOsc.disconnect(); e.toneGain.disconnect();
+      e.lfo.stop(); e.lfo.disconnect(); e.shaper.disconnect(); e.lfoDepth.disconnect();
       e.tremGain.disconnect(); e.envGain.disconnect();
     } catch(err) {}
   }, (EGOCHA_FADE_OUT + 0.5) * 1000);
@@ -6265,6 +6238,19 @@ function setEgochaSage(v) {
   EGOCHA_SAGE_STATE.on = !!v;
   const ck = document.getElementById('ck-egocha-sage'); if (ck) ck.checked = EGOCHA_SAGE_STATE.on;
   if (flowing) { if (EGOCHA_SAGE_STATE.on) _startEgochaSage(); else _stopEgochaSage(); }
+  saveState();
+}
+// #198 : BPM paramétrable — retune en douceur (1.5s) le LFO du pouls déjà
+// en cours, jamais un saut sec de rythme pendant l'écoute.
+function setEgochaBpm(v) {
+  EGOCHA_SAGE_STATE.bpm = Math.max(EGOCHA_BPM_MIN, Math.min(EGOCHA_BPM_MAX, parseFloat(v) || EGOCHA_SAGE_STATE.bpm));
+  const disp = document.getElementById('egocha-bpm-val'); if (disp) disp.textContent = EGOCHA_SAGE_STATE.bpm + ' BPM';
+  const sl = document.getElementById('egocha-bpm-slider'); if (sl) sl.value = EGOCHA_SAGE_STATE.bpm;
+  if (_egocha && _egocha.lfo) {
+    const t = aNow();
+    _egocha.lfo.frequency.setValueAtTime(_egocha.lfo.frequency.value, t);
+    _egocha.lfo.frequency.linearRampToValueAtTime(_egochaBpmToHz(EGOCHA_SAGE_STATE.bpm), t + 1.5);
+  }
   saveState();
 }
 
@@ -9410,17 +9396,21 @@ function buildMasterFXHTML() {
           ${iq("Volume du sub-drone d'ancrage ci-dessus.")}
           <input type="range" class="fx-slider" min="0" max="0.25" step="0.01" value="0.05" oninput="setSubDroneVol(this.value)">
           <span class="fx-val-disp" id="sv-subdrone-vol">5%</span></div>
-        <!-- #181b/#182 : mode "Egocha Sage" — plus aucune fréquence fixe
-             (l'ancrage 432Hz + couche 360Hz ont été retirés à la demande) :
-             ne reste que le POULS lui-même, un souffle neutre filtré (sans
-             hauteur perceptible) qui ralentit et s'approfondit par paliers
-             de 90s. Couche additive indépendante de la matrice, off par
-             défaut (même esprit que les autres modes spéciaux ci-dessus :
-             rien d'actif tant qu'on ne le demande pas explicitement). -->
+        <!-- #181b/#182/#198 : mode "Egocha Sage" — plus aucune fréquence
+             fixe (l'ancrage 432Hz + couche 360Hz ont été retirés), et plus
+             de souffle (texture de bruit filtré retirée à son tour) : ne
+             reste qu'un porteur bas sans hauteur "de repère", modulé par un
+             pouls cardiaque à un BPM réglable. Couche additive indépendante
+             de la matrice, off par défaut (rien d'actif tant qu'on ne le
+             demande pas explicitement). -->
         <div class="fx-row" style="justify-content:space-between;align-items:center;">
-          <span class="fx-label">Egocha Sage (souffle + pouls rythmique)${iq("Souffle neutre, sans hauteur perceptible, modulé par un pouls qui ralentit et s'approfondit par paliers de 90 secondes — une présence rythmique discrète, en plus du reste.")}</span>
+          <span class="fx-label">Egocha Sage (pouls cardiaque)${iq("Porteur bas sans hauteur perceptible, modulé par un battement cardiaque à un rythme réglable (BPM ci-dessous) — une présence rythmique discrète, en plus du reste.")}</span>
           <label class="fx-toggle"><input type="checkbox" id="ck-egocha-sage" onchange="setEgochaSage(this.checked)"><span class="fx-tog-track"></span></label>
         </div>
+        <div class="fxq-row"><span class="fxq-lbl">BPM du pouls</span>
+          ${iq("Vitesse du battement cardiaque d'Egocha Sage, en battements par minute — réglable en direct pendant l'écoute.")}
+          <input type="range" class="fx-slider" id="egocha-bpm-slider" min="${EGOCHA_BPM_MIN}" max="${EGOCHA_BPM_MAX}" step="1" value="${EGOCHA_SAGE_STATE.bpm}" oninput="setEgochaBpm(this.value)">
+          <span class="fx-val-disp" id="egocha-bpm-val">${EGOCHA_SAGE_STATE.bpm} BPM</span></div>
       </div>
     </details>
 
@@ -10208,8 +10198,9 @@ function loadState() {
       if (typeof s.subDrone.on==='boolean') SUBDRONE_STATE.on = s.subDrone.on;
       if (typeof s.subDrone.vol==='number' && s.subDrone.vol>=0 && s.subDrone.vol<=0.25) SUBDRONE_STATE.vol = s.subDrone.vol;
     }
-    if (s.egochaSage && typeof s.egochaSage==='object') { // #181b
+    if (s.egochaSage && typeof s.egochaSage==='object') { // #181b/#198
       if (typeof s.egochaSage.on==='boolean') EGOCHA_SAGE_STATE.on = s.egochaSage.on;
+      if (typeof s.egochaSage.bpm==='number') EGOCHA_SAGE_STATE.bpm = Math.max(EGOCHA_BPM_MIN, Math.min(EGOCHA_BPM_MAX, s.egochaSage.bpm));
       // layer360 (ancienne couche 360Hz) volontairement ignoré si présent
       // dans un état sauvegardé plus ancien — retiré en #182.
     }
@@ -10259,6 +10250,8 @@ function _syncRandOptsUI() {
   const sdv = document.getElementById('sv-subdrone-vol'); if (sdv) sdv.textContent = Math.round(SUBDRONE_STATE.vol * 100) + '%';
   const sdSlider = document.querySelector('input[oninput="setSubDroneVol(this.value)"]'); if (sdSlider) sdSlider.value = SUBDRONE_STATE.vol;
   setCk('ck-egocha-sage', EGOCHA_SAGE_STATE.on); // #181b
+  const egBpmSlider = document.getElementById('egocha-bpm-slider'); if (egBpmSlider) egBpmSlider.value = EGOCHA_SAGE_STATE.bpm; // #198
+  const egBpmVal = document.getElementById('egocha-bpm-val'); if (egBpmVal) egBpmVal.textContent = EGOCHA_SAGE_STATE.bpm + ' BPM'; // #198
   // Ratio (dropdown + case on/off) et Caractère du battement (dropdown +
   // case on/off) — indépendants l'un de l'autre, chacun persistant.
   const ratioSel = document.getElementById('rand-ratio-select'); if (ratioSel) ratioSel.value = RAND_OPTS.ratioMode;
