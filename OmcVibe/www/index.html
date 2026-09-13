@@ -5164,8 +5164,15 @@ function masterTick(ts) {
   // à dessiner : ça ne changeait rien pour document.visibilityState (toujours
   // 'visible', même onglet) sans cette vérification dédiée.
   if (document.getElementById('module-overlay')?.classList.contains('open')) return;
-  // Menu/modal ouvert → on ne dessine RIEN (priorité au son)
-  if (_uiBusy()) return;
+  // Menu/modal ouvert → on ne dessine RIEN (priorité au son), SAUF #panGeo
+  // (#199/#200) : seul panneau avec un aperçu vivant à surveiller (Torsion/
+  // Vitesse/Densité/etc.) — désormais un tiroir bas qui laisse la scène
+  // visible, mais ça ne sert à rien si le rendu s'arrête pendant qu'il est
+  // ouvert. _uiBusy() garde son sens partout ailleurs (bouton retour,
+  // dimming du menu/de la sphère Flux) : seul ce garde-fou de dessin fait
+  // exception, la priorité au son reste entière pour tous les autres panneaux.
+  const _panGeoOpen = document.getElementById('panGeo')?.classList.contains('open');
+  if (_uiBusy() && !_panGeoOpen) return;
   // Sample en lecture (surtout en streaming : décodage <audio> natif, plus
   // sensible aux à-coups du thread principal qu'un OscillatorNode/BufferSource
   // qui tournent sur le thread audio dédié) → on bride très fort le rendu
@@ -5902,6 +5909,13 @@ function buildOdGlobalCard() {
         <div class="od-global-hint">Coupe tous les effets d'un coup (on peut en rallumer certains ensuite) — ${FX_BYPASS_STATE.on?'actif':'inactif'}</div>
       </div>
       <label class="fx-toggle"><input type="checkbox" id="ck-fx-bypass" ${FX_BYPASS_STATE.on?'checked':''} onchange="setFxBypassMode(this.checked)"><span class="fx-tog-track"></span></label>
+    </div>
+    <div class="od-global-row">
+      <div>
+        <div class="od-global-label">Sphères des oscillateurs à l'écran</div>
+        <div class="od-global-hint">${MEDITATION_MODE?'Mode Méditation — écran épuré, seule la sphère maître reste':'Chaque oscillateur a sa propre sphère sur l\'écran principal'}</div>
+      </div>
+      <label class="fx-toggle"><input type="checkbox" id="ck-meditation-mode" ${MEDITATION_MODE?'':'checked'} onchange="setMeditationMode(!this.checked)"><span class="fx-tog-track"></span></label>
     </div>
     <div class="od-global-row">
       <div>
@@ -10769,17 +10783,48 @@ const ADV_KEY = 'fbf432-advanced';
 // sens comme point d'entrée (raccourci dock remappable, cf.
 // DOCK_ACTIONS.toggleAdvanced) : plutôt qu'un no-op silencieux, il ouvre
 // maintenant le tiroir — l'ancien "afficher/masquer les oscillateurs"
-// devient "aller gérer les oscillateurs". mode-simple reste TOUJOURS actif
-// (jamais retiré du body) : plus aucun code de rendu des satellites
-// n'est supprimé (rollback possible), juste plus jamais atteint.
+// devient "aller gérer les oscillateurs".
 function toggleAdvanced() {
   _fxToggleDrawer();
 }
 function _loadAdvanced() {
   // Ancienne préférence "Mode avancé" (ADV_KEY) volontairement ignorée —
-  // les satellites ne réapparaissent plus, même pour une session qui
-  // l'avait activée avant #189.
+  // remplacée par MEDITATION_MODE ci-dessous, qui pilote la même classe
+  // body.mode-simple mais via un contrôle explicite dédié (#200) plutôt
+  // qu'un ancien réglage devenu orphelin.
   if (typeof _fxUpdateVisibility === 'function') _fxUpdateVisibility(); // #176
+}
+
+// #200 : réintroduit un vrai contrôle sur body.mode-simple — jusqu'ici
+// forcée en dur (#189), la classe pilotait déjà tout le code de rendu des
+// 6 sphères satellites (buildVesicaPairs, jamais retiré, juste jamais
+// atteint : cf. "!simple" dans sa boucle) et de la boucle glow par-paire
+// de masterTick (mode-simple = un seul cercle mis à jour, cf. plus haut).
+// Deux modes nommés plutôt qu'un simple on/off technique :
+//  - Sphères visibles (mode-simple OFF) : chaque oscillateur a sa propre
+//    sphère sur l'écran principal, comme à l'origine — tap = mute/démute,
+//    appui long = réglages (openOscModal), identique au maître.
+//  - Mode Méditation (mode-simple ON, PAR DÉFAUT — comportement actuel
+//    inchangé pour qui ne touche pas au réglage) : écran épuré, seule la
+//    grande sphère maître reste, pour ne rien avoir à regarder de précis.
+// Les réglages eux-mêmes restent de toute façon dans le tiroir (#189) :
+// ce contrôle est PUREMENT visuel, jamais un second endroit pour régler
+// un oscillateur.
+const MEDITATION_KEY = 'fbf432-meditation';
+let MEDITATION_MODE = true;
+function setMeditationMode(v) {
+  MEDITATION_MODE = !!v;
+  document.body.classList.toggle('mode-simple', MEDITATION_MODE);
+  try { localStorage.setItem(MEDITATION_KEY, MEDITATION_MODE ? '1' : '0'); } catch(e) {}
+  if (typeof buildVesicaPairs === 'function') buildVesicaPairs();
+  const ck = document.getElementById('ck-meditation-mode'); if (ck) ck.checked = MEDITATION_MODE;
+  if (typeof updateDockDisplays === 'function') updateDockDisplays();
+}
+function _loadMeditationMode() {
+  let on = true; // défaut : comportement actuel (écran épuré) inchangé
+  try { const s = localStorage.getItem(MEDITATION_KEY); if (s !== null) on = s === '1'; } catch(e) {}
+  MEDITATION_MODE = on;
+  document.body.classList.toggle('mode-simple', on);
 }
 
 // #36 mode visuel "lite" : coupe le dessin du métatron (CPU) pour les appareils faibles
@@ -10895,6 +10940,7 @@ function init() {
   try { if (new URLSearchParams(location.search).get('retour') === '1') RETOUR_MODE = true; } catch(e) {}
   _loadTheme();
   _loadVisLite();
+  _loadMeditationMode(); // #200 : AVANT buildVesicaPairs() (appelé plus bas) pour un premier rendu correct
   _loadAdvanced();
   _loadAppearance();
   _loadDockMap();
@@ -11182,6 +11228,7 @@ const DOCK_ACTIONS = {
   breathAnchorToggle:    { label: 'Ancre respiratoire on/off',   fn: () => setBreathAnchor(!BREATH_ANCHOR_STATE.on) },
   breathRandomToggle:    { label: 'Respiration par paire on/off', fn: () => setRandBreath(!RAND_OPTS.breathRandom) },
   invisibleHandToggle:   { label: 'Main invisible on/off',       fn: () => setInvisibleHand(!INVISIBLE_HAND_STATE.on) },
+  meditationModeToggle:  { label: 'Sphères visibles / Mode Méditation', fn: () => setMeditationMode(!MEDITATION_MODE) }, // #200
   undoRandom:            { label: 'Annuler le dernier tirage',   fn: () => { if (typeof undoLastRandom === 'function') undoLastRandom(); } },
   // #125 : retour au lanceur 3 modules sans quitter index.html (le
   // binaural continue de jouer en dessous, cf. _launcherGo('vibe')).
