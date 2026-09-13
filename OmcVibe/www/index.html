@@ -1593,6 +1593,24 @@ body.flux-muted .vp-i{
 }
 .pan-left::-webkit-scrollbar,.pan-right::-webkit-scrollbar{display:none;}
 
+/* #199 : #panGeo dérape du plein-écran commun à .pan-left/.pan-right —
+   tiroir BAS (bottom sheet), collé juste au-dessus du dock, laissant le
+   haut de l'écran (scène 3D, #meta-canvas sous #sphere-layer) visible en
+   permanence pendant qu'on ajuste les curseurs. Demande explicite : "voir
+   les changements sur la géométrie en direct" — impossible tant que le
+   panneau couvrait tout l'écran (cf. .pan-left ci-dessus, opacité .97 +
+   blur). Sélecteur ID (spécificité) plutôt que modifier .pan-left, qui
+   reste inchangée pour panCustom/panTuto/panNotice/etc. (texte à lire,
+   pas de visuel à surveiller derrière). Contenu inchangé, juste
+   repositionné : scroll interne si besoin (cf. overflow-y hérité). */
+#panGeo{
+  top:auto; bottom:154px;
+  height:min(56vh,460px);
+  clip-path:inset(100% 0 0 0);
+  background:rgba(1,3,6,.90);
+}
+#panGeo.open{ clip-path:inset(0 0 0 0); }
+
 /* Section header dans les panels */
 .pct{
   font-family:var(--font-body,'IM Fell English'),serif;
@@ -2214,6 +2232,17 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   #btn-back { bottom: calc(161px + 38px) !important; }
   #btn-back.dock-up { bottom: 38px !important; }
 
+  /* #199 : #panGeo reste un tiroir BAS même sur smartphone (dock 161px
+     ici) — sans ce !important, la règle générique .pan-left.open/
+     .pan-right.open juste au-dessus (elle-même !important) l'emporterait
+     et repasserait le panneau en plein écran, masquant à nouveau la scène
+     3D pendant le réglage. */
+  #panGeo.open {
+    top: auto !important;
+    bottom: 161px !important;
+    height: min(56vh,460px) !important;
+  }
+
   /* Cacher non-essentiels sur smartphone */
   #hdr { display: none !important; }
   #freq-mini { display: none !important; }
@@ -2517,10 +2546,13 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
        de réglages, uniforme sur les 4 cellules. -->
   <!-- Colonne gauche : ROUGE (haut) sur VERT (bas) -->
   <div class="dock-col" data-html-import-id="html-import-15">
-    <!-- ROUGE — #190 : tap=3D Vibe (nouveau tirage, ex-Options Aléatoire) · long=Solo maître · sphères=raccourcis -->
+    <!-- ROUGE — #199 : tap=3D Vibe (paramètres 3D — sphère/flux/géométrie,
+         cf. panGeo) · long=Solo maître · sphères=raccourcis. Le tirage
+         aléatoire (ex-tap de cette cellule, #190) a déménagé sur la sphère
+         Flux centrale (dcFlux) et le bouton dédié dans Effet Audio. -->
     <div class="dcell-wrap" data-html-import-id="html-import-16">
       <button class="dcell-extra dcell-extra-red canva-button" id="dcRedExtra" title="Ouvrir le tiroir Oscillateurs">+</button>
-      <button class="dcell dcell-red canva-button" id="dcRed" title="Tap : 3D Vibe (nouveau tirage) · Appui long : Solo fréquence maître" data-html-import-id="html-import-17" data-template-id="button-8" style="background: rgba(255, 70, 70, 0.14); color: rgb(255, 142, 142);">
+      <button class="dcell dcell-red canva-button" id="dcRed" title="Tap : 3D Vibe (Sphère/Flux/Géométrie) · Appui long : Solo fréquence maître" data-html-import-id="html-import-17" data-template-id="button-8" style="background: rgba(255, 70, 70, 0.14); color: rgb(255, 142, 142);">
         <span class="dcell-gear">⚙</span>
         <span class="dcell-txt canva-text" data-html-import-id="html-import-19" data-template-id="span-10" style="color: rgb(255, 142, 142);"><b class="dcell-name canva-text" data-html-import-id="html-import-20" data-template-id="b-11" style="color: rgb(255, 142, 142); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-weight: 700;">3D Vibe</b></span>
       </button>
@@ -2578,12 +2610,13 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   <div class="pct canva-container" data-html-import-id="html-import-41" data-template-id="div-27" style="color: rgb(0, 204, 255); font-family: var(--font-body,&quot;IM Fell English&quot;); font-size: 8px;">⚙ Paramètres</div>
   <div class="params-menu" data-html-import-id="html-import-42">
     <button class="params-item canva-button" style="--ic: #86FFC0; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panFX')" data-html-import-id="html-import-43" data-template-id="button-28"><canva-inline-text data-template-id="canva-inline-text-29" class="canva-text" style="color: #FFD700; font-size: 22px;">✦</canva-inline-text><span data-html-import-id="html-import-44" data-template-id="span-30" class="canva-text" style="color: color(srgb 0.620392 1 0.802353); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Effet</span></button>
-    <!-- #190 : "Options Aléatoire" (panRand, retiré — son contenu vit
-         désormais dans Effet Audio) remplacé par "3D Vibe" : ferme le menu
-         et lance directement un nouveau tirage, un raccourci pratique
-         depuis le menu sans avoir à rejoindre la sphère Flux du dock. -->
-    <button class="params-item canva-button" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="closePanel();triggerMagicAuto();" data-html-import-id="html-import-45" data-template-id="button-31"><canva-inline-text data-template-id="canva-inline-text-32" class="canva-text" style="color: #FFD700; font-size: 22px;">❂</canva-inline-text><span data-html-import-id="html-import-46" data-template-id="span-33" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">3D Vibe</span></button>
-    <button class="params-item canva-button" style="--ic: #60D8FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panGeo')" data-html-import-id="html-import-47" data-template-id="button-34"><canva-inline-text data-template-id="canva-inline-text-35" class="canva-text" style="color: #FFD700; font-size: 22px;">⊞</canva-inline-text><span data-html-import-id="html-import-48" data-template-id="span-36" class="canva-text" style="color: color(srgb 0.501176 0.877647 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">FX3D · Géométrie</span></button>
+    <!-- #199 : "3D Vibe" appartient désormais exclusivement aux paramètres
+         3D (panGeo, cf. bouton juste en dessous) — cette entrée (ex-"3D
+         Vibe", #190) reprend son nom honnête : lance directement un
+         nouveau tirage, ferme le menu, un raccourci pratique depuis le
+         menu sans avoir à rejoindre la sphère Flux du dock. -->
+    <button class="params-item canva-button" style="--ic: #C080FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="closePanel();triggerMagicAuto();" data-html-import-id="html-import-45" data-template-id="button-31"><canva-inline-text data-template-id="canva-inline-text-32" class="canva-text" style="color: #FFD700; font-size: 22px;">❂</canva-inline-text><span data-html-import-id="html-import-46" data-template-id="span-33" class="canva-text" style="color: color(srgb 0.802353 0.601569 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Tirage Aléatoire</span></button>
+    <button class="params-item canva-button" style="--ic: #60D8FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panGeo')" data-html-import-id="html-import-47" data-template-id="button-34"><canva-inline-text data-template-id="canva-inline-text-35" class="canva-text" style="color: #FFD700; font-size: 22px;">⊞</canva-inline-text><span data-html-import-id="html-import-48" data-template-id="span-36" class="canva-text" style="color: color(srgb 0.501176 0.877647 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">3D Vibe</span></button>
     <button class="params-item canva-button" style="--ic: #FFD060; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panPresets')" data-html-import-id="html-import-49" data-template-id="button-37"><canva-inline-text data-template-id="canva-inline-text-38" class="canva-text" style="color: #FFD700; font-size: 22px;">⊙</canva-inline-text><span data-html-import-id="html-import-50" data-template-id="span-39" class="canva-text" style="color: color(srgb 1 0.852549 0.501176); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Presets</span></button>
     <button class="params-item canva-button" style="--ic: #FF9A8B; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panSamples')" data-html-import-id="html-import-51" data-template-id="button-40"><canva-inline-text data-template-id="canva-inline-text-41" class="canva-text" style="color: #FFD700; font-size: 22px;">◎</canva-inline-text><span data-html-import-id="html-import-52" data-template-id="span-42" class="canva-text" style="color: color(srgb 1 0.683137 0.636078); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Samples</span></button>
     <button class="params-item canva-button" style="--ic: #FFB0FF; background: rgba(255, 255, 255, 0.04); color: #FFD700; font-size: 22px;" onclick="openTab('panNotice')" data-html-import-id="html-import-53" data-template-id="button-43"><canva-inline-text data-template-id="canva-inline-text-44" class="canva-text" style="color: #FFD700; font-size: 22px;">≡</canva-inline-text><span data-html-import-id="html-import-54" data-template-id="span-45" class="canva-text" style="color: color(srgb 1 0.752157 1); font-family: var(--font-deco,&quot;Cinzel Decorative&quot;); font-size: 14px;">Notice &amp; Thème</span></button>
@@ -2888,9 +2921,14 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   </div>
 </div>
 
-<!-- Panel : FX3D — gauche -->
+<!-- Panel : 3D Vibe (Sphère/Flux/Géométrie) — gauche.
+     #199 : en tiroir bas plutôt qu'en écran plein (cf. CSS #panGeo
+     dédiée) — la scène 3D (#meta-canvas, sous #sphere-layer) reste
+     visible au-dessus pendant qu'on ajuste les curseurs ci-dessous : on
+     voit directement l'effet de chaque réglage sur la forme, au lieu de
+     régler à l'aveugle puis fermer le panneau pour constater. -->
 <div class="pan-left canva-container" id="panGeo" data-html-import-id="html-import-439" data-template-id="div-416">
-  <div class="pct canva-container" data-html-import-id="html-import-440" data-template-id="div-417">FX3D · Torus</div>
+  <div class="pct canva-container" data-html-import-id="html-import-440" data-template-id="div-417">3D Vibe · Sphère / Flux / Géométrie</div>
   <div class="geometry-grid" id="geo-grid" data-html-import-id="html-import-441"><div class="geometry-btn active" style="cursor:default;">Torus</div></div>
 
   <!-- #145 : accès direct aux 3 visualisations 3D dédiées (auparavant
@@ -2957,11 +2995,12 @@ Lignes lumineuses colorées par ratio fréquentiel sacré.
 </div>
 
 <!-- Panel : Jeu Aléatoire — droite -->
-<!-- #190 : ancien panneau "Options Aléatoire" (panRand) retiré — tout son
-     contenu vit désormais dans Effet Audio (buildMasterFXHTML, groupe
-     déroulant "Tirage Aléatoire (3D Vibe)"). Menu et dock renommés en
-     "3D Vibe" en conséquence (cf. le bouton menu plus bas dans ce fichier
-     et DOCK_ACTIONS.openRand dans le JS). -->
+<!-- #190/#199 : ancien panneau "Options Aléatoire" (panRand) retiré — tout
+     son contenu vit désormais dans Effet Audio (buildMasterFXHTML, groupe
+     déroulant "Tirage Aléatoire"). "3D Vibe" a depuis été réattribué aux
+     paramètres 3D (panGeo, #199) — le tirage aléatoire garde son propre
+     nom partout (menu, dock via DOCK_ACTIONS.openRand, accordéon Effet
+     Audio) plutôt que de partager celui de la géométrie. -->
 
 <!-- Panel : Presets — banques illimitées, renommables (droite) -->
 <div class="pan-right canva-container" id="panPresets">
@@ -9176,16 +9215,20 @@ function buildMasterFXHTML() {
       <div id="random-table" class="random-table"></div>
     </div>
 
-    <!-- #190 : tout le contenu de l'ancien panneau "Options Aléatoire"
-         (panRand, retiré — menu/dock renommés "3D Vibe") regroupé ici, sous
-         Effet Audio, dans son propre menu déroulant — markup et fonctions
-         JS inchangés (setRandRatioMode, setDeltaCharacter, setSonoMode…),
-         seul l'emplacement change. Fermé par défaut comme les autres menus
-         déroulants de ce panneau (cf. #165 juste en dessous), pour rester
-         cohérent maintenant qu'il n'est plus seul dans son propre onglet. -->
+    <!-- #190/#199 : tout le contenu de l'ancien panneau "Options Aléatoire"
+         (panRand, retiré) regroupé ici, sous Effet Audio, dans son propre
+         menu déroulant — markup et fonctions JS inchangés (setRandRatioMode,
+         setDeltaCharacter, setSonoMode…), seul l'emplacement change. Fermé
+         par défaut comme les autres menus déroulants de ce panneau (cf.
+         #165 juste en dessous). "3D Vibe" appartient désormais aux
+         paramètres 3D (panGeo) — ce menu reprend son nom honnête, et gagne
+         un bouton de déclenchement direct puisqu'il n'est plus signalé par
+         la cellule "3D Vibe" du dock (le tirage reste sinon accessible via
+         la sphère Flux centrale, tap = nouveau jeu aléatoire). -->
     <details class="fx-acc">
-      <summary>Tirage Aléatoire (3D Vibe)</summary>
+      <summary>Tirage Aléatoire</summary>
       <div class="fx-block fx-quick fx-acc-body">
+        <button class="btn-magic-rand" onclick="triggerMagicAuto()" style="margin-bottom:.5rem;">🔀 Nouveau tirage</button>
         <button class="fbf-step canva-button" id="btn-undo-random" onclick="undoLastRandom()" disabled style="width:100%;margin-bottom:.5rem;">↩ Annuler le tirage</button>
 
         <div class="rand-cat">PLAGE FRÉQUENCE — toujours active, répartition continue<button type="button" class="info-q" data-info="Bornes entre lesquelles le tirage aléatoire choisit les fréquences des oscillateurs — toujours actif, quel que soit le ratio ou le caractère choisis ci-dessous." onclick="event.stopPropagation();showInfoNote(this)">?</button></div>
@@ -11104,10 +11147,14 @@ function resetExtraPos() {
 const DOCK_ACTIONS = {
   none:          { label: '— Aucune —',                    fn: () => {} },
   toggleAdvanced:{ label: 'Ouvrir le tiroir Oscillateurs', fn: () => { toggleAdvanced(); updateDockDisplays(); } },
-  // #190 : clé interne "openRand" conservée (mappings dock déjà sauvegardés
-  // par des utilisateurs existants) — libellé et action deviennent "3D Vibe"
-  // (panRand retiré, son contenu vit dans Effet Audio).
-  openRand:      { label: '3D Vibe (nouveau tirage)',       fn: () => triggerMagicAuto() },
+  // #199 : clé interne "openRand" conservée (mappings dock déjà sauvegardés
+  // par des utilisateurs existants) — le libellé "3D Vibe" est retiré d'ici
+  // et réattribué à openGeo ci-dessous : "3D Vibe" doit ouvrir les
+  // paramètres 3D (sphère/flux/géométrie), pas relancer un tirage. Le
+  // tirage aléatoire reste accessible via la sphère Flux centrale (tap =
+  // nouveau jeu aléatoire, cf. dcFlux) et le bouton dédié dans Effet Audio
+  // → Tirage Aléatoire.
+  openRand:      { label: 'Tirage Aléatoire',               fn: () => triggerMagicAuto() },
   soloMaster:    { label: 'Solo fréquence maître',          fn: () => _dockSoloMaster() },
   randomAll:     { label: 'Nouveau jeu aléatoire',          fn: () => triggerMagicAuto() },
   openSamples:   { label: 'Ouvrir Samples',                 fn: () => tPanel('panSamples', null) },
@@ -11120,7 +11167,7 @@ const DOCK_ACTIONS = {
   openFX:        { label: 'Ouvrir Effet',                   fn: () => openTab('panFX') },
   randomFX:      { label: 'Random FX (panneau, sans limite)', fn: () => { if (typeof triggerRandomFX === 'function') triggerRandomFX(); } },
   randomFXQuick: { label: 'Effet Aléatoire (raccourci, ≤72%)', fn: () => { if (typeof triggerRandomFXQuick === 'function') triggerRandomFXQuick(); } },
-  openGeo:       { label: 'Ouvrir FX3D · Géométrie',        fn: () => openTab('panGeo') },
+  openGeo:       { label: '3D Vibe (Sphère/Flux/Géométrie)', fn: () => openTab('panGeo') },
   openParams:    { label: 'Ouvrir Paramètres',              fn: () => tPanel('panParams', null) },
   openCustom:    { label: "Ouvrir Personnaliser l'interface", fn: () => openTab('panCustom') },
   resetAll:      { label: 'Réinitialiser tout',             fn: () => { if (confirm('Réinitialiser tous les paramètres ?')) resetAll(); } },
@@ -11146,7 +11193,7 @@ const DOCK_ACTIONS = {
 // que la cellule reste lisible sur un écran de téléphone réel (2 grosses
 // sphères de chaque côté d'une cellule ne laissaient plus de place au texte).
 const DOCK_MAP_DEFAULT = {
-  red:    { tap: 'openRand',    hold: 'soloMaster',    extra: 'toggleAdvanced' },
+  red:    { tap: 'openGeo',     hold: 'soloMaster',    extra: 'toggleAdvanced' },
   orange: { tap: 'openSamples', hold: 'sampleAnchor',  extra: 'sampleSoloMaster' },
   flux:   { tap: 'randomAll',   hold: 'fluxToggle',    extra: 'backToMenu' },
   green:  { tap: 'openFX',      hold: 'randomFXQuick', extra: 'openGeo' },
