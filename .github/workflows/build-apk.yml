@@ -12,6 +12,9 @@ on:
       - 'OmcVibe/capacitor.config.json'
       - '.github/workflows/build-apk.yml'
 
+permissions:
+  contents: write   # requis pour publier/mettre à jour la Release ci-dessous
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -71,3 +74,27 @@ jobs:
           name: OmcVibe432-debug-apk
           path: OmcVibe/android/app/build/outputs/apk/debug/*.apk
           retention-days: 30
+
+      # #201 : même correctif que build-omchawatch-apk.yml — un artefact
+      # GitHub Actions exige d'être connecté à GitHub ET télécharge un
+      # .zip (le navigateur mobile ne le décompresse jamais tout seul,
+      # Android ne peut pas installer directement ce qu'il contient) ; il
+      # expire aussi au bout de 30 jours. Une Release GitHub sert le .apk
+      # BRUT (installable dès le téléchargement terminé) et ne périme
+      # jamais. Tag toujours réécrit ("omcvibe-latest") : UN SEUL lien
+      # stable à garder en favori, qui pointe toujours vers le dernier build.
+      - name: Publish/update the "latest" Release with the raw APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: omcvibe-latest
+          name: "OmcVibe — dernière version (build ${{ github.run_number }})"
+          body: |
+            Build automatique le plus récent, depuis le commit ${{ github.sha }}.
+            Télécharge directement le fichier `.apk` ci-dessous et installe-le
+            (Android demandera peut-être d'autoriser "Sources inconnues" pour ce
+            navigateur — normal pour un .apk qui ne vient pas du Play Store).
+          files: OmcVibe/android/app/build/outputs/apk/debug/*.apk
+          prerelease: true
+          make_latest: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

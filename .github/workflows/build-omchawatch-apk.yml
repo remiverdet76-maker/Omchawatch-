@@ -11,6 +11,9 @@ on:
       - 'OmchaWatch/capacitor.config.json'
       - '.github/workflows/build-omchawatch-apk.yml'
 
+permissions:
+  contents: write   # requis pour publier/mettre à jour la Release ci-dessous
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -72,3 +75,29 @@ jobs:
           name: OmchaWatch-debug-apk
           path: OmchaWatch/android/app/build/outputs/apk/debug/*.apk
           retention-days: 30
+
+      # #201 : lien de téléchargement fiable sur mobile — un artefact
+      # GitHub Actions (ci-dessus) exige d'être connecté à GitHub ET
+      # télécharge un .zip (le navigateur mobile ne le décompresse jamais
+      # tout seul, l'utilisateur se retrouve avec un fichier qu'Android ne
+      # sait pas installer directement) ; il expire aussi au bout de 30
+      # jours. Une Release GitHub, elle, sert le .apk BRUT (pas de zip,
+      # installable dès le téléchargement terminé) et ne périme jamais.
+      # Tag toujours réécrit ("omchawatch-latest") : UN SEUL lien stable à
+      # garder en favori, qui pointe toujours vers le dernier build — pas
+      # besoin de rechercher un nouveau lien de run à chaque fois.
+      - name: Publish/update the "latest" Release with the raw APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: omchawatch-latest
+          name: "OmchaWatch — dernière version (build ${{ github.run_number }})"
+          body: |
+            Build automatique le plus récent, depuis le commit ${{ github.sha }}.
+            Télécharge directement le fichier `.apk` ci-dessous et installe-le
+            (Android demandera peut-être d'autoriser "Sources inconnues" pour ce
+            navigateur — normal pour un .apk qui ne vient pas du Play Store).
+          files: OmchaWatch/android/app/build/outputs/apk/debug/*.apk
+          prerelease: true
+          make_latest: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
