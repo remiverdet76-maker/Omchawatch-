@@ -119,6 +119,21 @@ body{
   pointer-events:all;
 }
 
+/* #202 : affichage "Plein écran 3D" — masque toute l'UI (sphères, dock,
+   retour au menu, poignée du tiroir), ne laisse que la scène 3D
+   (#meta-canvas, déjà en dessous de #sphere-layer). Pas de bouton
+   "sortir" dédié — casserait l'idée même d'un plein écran sans rien
+   d'autre à regarder — un simple tap sur la scène ramène l'UI (cf.
+   _fx3dExitOnTap, écouteur posé sur #meta-canvas). */
+body.fx3d-only #sphere-layer,
+body.fx3d-only #bottom-dock,
+body.fx3d-only #dock-toggle-row,
+body.fx3d-only #dcFluxFloat,
+body.fx3d-only #btn-back-menu,
+body.fx3d-only #fxDrawerHandle{
+  display:none !important;
+}
+
 /* Dock bas — Flux + Nav horizontaux */
 #bottom-dock{
   position:fixed;
@@ -5919,6 +5934,13 @@ function buildOdGlobalCard() {
     </div>
     <div class="od-global-row">
       <div>
+        <div class="od-global-label">Plein écran 3D</div>
+        <div class="od-global-hint">${DISPLAY_MODE==='fx3d'?'Uniquement la scène 3D — tap dessus pour ramener l\'interface':'Sphère centrale — interface complète autour de la scène 3D'}</div>
+      </div>
+      <label class="fx-toggle"><input type="checkbox" id="ck-display-fx3d" ${DISPLAY_MODE==='fx3d'?'checked':''} onchange="setDisplayMode(this.checked?'fx3d':'sphere')"><span class="fx-tog-track"></span></label>
+    </div>
+    <div class="od-global-row">
+      <div>
         <div class="od-global-label">Dual Sine — oscillateur actif</div>
         <div class="od-global-hint">${_odActiveTab==='global'?'Choisis un onglet oscillateur pour agir ici':(PAIRS[_odActiveTab]?.label||'')}</div>
       </div>
@@ -6818,6 +6840,11 @@ function g3dInitDrag(){
     else if(e.touches.length===1&&V.drag){V.try_+=(e.touches[0].clientX-V.lmx)*.008;V.trx+=(e.touches[0].clientY-V.lmy)*.008;V.lmx=e.touches[0].clientX;V.lmy=e.touches[0].clientY;}
   },{passive:false});
   cv.addEventListener('touchend',()=>{V.drag=false;_lastPinch=0;});
+  // #202 : tap (pas un drag) sur la scène = ramène l'UI en Plein écran 3D —
+  // 'click' ne se déclenche naturellement qu'après un mousedown/touchend
+  // SANS déplacement significatif, donc n'interfère jamais avec la
+  // rotation manuelle ci-dessus.
+  cv.addEventListener('click',()=>{ if (typeof _fx3dExitOnTap === 'function') _fx3dExitOnTap(); });
   cv.style.cursor='grab';cv.style.pointerEvents='auto';
 }
 
@@ -10827,6 +10854,35 @@ function _loadMeditationMode() {
   document.body.classList.toggle('mode-simple', on);
 }
 
+// #202 : "Plein écran 3D" — 2e mode d'affichage demandé, distinct de
+// toggleFullscreen() (API plein écran du NAVIGATEUR/OS, inchangée) : ici
+// on masque l'UI de l'app elle-même (sphères, dock, retour) pour ne
+// laisser que la scène 3D — la simplification "sphère centrale OU plein
+// écran 3D" vient s'ajouter au choix Mode Méditation ci-dessus (orthogonal :
+// Méditation joue sur les sphères satellites, Plein écran 3D sur TOUTE
+// l'UI autour de la scène).
+let DISPLAY_MODE = 'sphere'; // 'sphere' | 'fx3d'
+const DISPLAY_MODE_KEY = 'fbf432-displaymode';
+function setDisplayMode(mode) {
+  DISPLAY_MODE = (mode === 'fx3d') ? 'fx3d' : 'sphere';
+  document.body.classList.toggle('fx3d-only', DISPLAY_MODE === 'fx3d');
+  try { localStorage.setItem(DISPLAY_MODE_KEY, DISPLAY_MODE); } catch(e) {}
+  const sel = document.getElementById('ck-display-fx3d'); if (sel) sel.checked = DISPLAY_MODE === 'fx3d';
+}
+function _loadDisplayMode() {
+  let m = 'sphere';
+  try { const s = localStorage.getItem(DISPLAY_MODE_KEY); if (s === 'fx3d' || s === 'sphere') m = s; } catch(e) {}
+  DISPLAY_MODE = m;
+  document.body.classList.toggle('fx3d-only', m === 'fx3d');
+}
+// Tap (pas un drag — g3dInitDrag() gère déjà mousedown/touchstart pour la
+// rotation manuelle, un simple "click" ne se déclenche naturellement que
+// sans déplacement significatif) sur la scène = seule façon de ramener
+// l'UI en Plein écran 3D, volontairement pas de bouton dédié.
+function _fx3dExitOnTap() {
+  if (DISPLAY_MODE === 'fx3d') setDisplayMode('sphere');
+}
+
 // #36 mode visuel "lite" : coupe le dessin du métatron (CPU) pour les appareils faibles
 const VISLITE_KEY = 'fbf432-vislite';
 // #23 (roadmap) : dès que l'utilisateur touche lui-même l'interrupteur (ici
@@ -10941,6 +10997,7 @@ function init() {
   _loadTheme();
   _loadVisLite();
   _loadMeditationMode(); // #200 : AVANT buildVesicaPairs() (appelé plus bas) pour un premier rendu correct
+  _loadDisplayMode(); // #202
   _loadAdvanced();
   _loadAppearance();
   _loadDockMap();
@@ -11229,6 +11286,7 @@ const DOCK_ACTIONS = {
   breathRandomToggle:    { label: 'Respiration par paire on/off', fn: () => setRandBreath(!RAND_OPTS.breathRandom) },
   invisibleHandToggle:   { label: 'Main invisible on/off',       fn: () => setInvisibleHand(!INVISIBLE_HAND_STATE.on) },
   meditationModeToggle:  { label: 'Sphères visibles / Mode Méditation', fn: () => setMeditationMode(!MEDITATION_MODE) }, // #200
+  displayModeToggle:     { label: 'Sphère centrale / Plein écran 3D',   fn: () => setDisplayMode(DISPLAY_MODE === 'fx3d' ? 'sphere' : 'fx3d') }, // #202
   undoRandom:            { label: 'Annuler le dernier tirage',   fn: () => { if (typeof undoLastRandom === 'function') undoLastRandom(); } },
   // #125 : retour au lanceur 3 modules sans quitter index.html (le
   // binaural continue de jouer en dessous, cf. _launcherGo('vibe')).
