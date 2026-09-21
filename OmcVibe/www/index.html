@@ -1995,8 +1995,11 @@ input.param-input{
 .lch-card.sphereflux:hover{border-color:rgba(140,255,180,.7);}
 .lch-card.sphereflux .lch-name{color:#9CFFC0;}
 
-/* #87 : overlay iframe pour OmchaSphere/Flux/Géométrie — évite la navigation
-   complète (location.href) qui coupait le binaural en cours (nouveau
+/* #87/#203 : overlay iframe — utilisé désormais pour OmchaWatch (Mode
+   Retour, #166) seulement, les 3 visualisations Sphère/Flux/Géométrie
+   qu'il servait à l'origine vivent maintenant directement sur l'écran
+   principal (#meta-canvas, cf. panGeo). Évite la navigation complète
+   (location.href) qui coupait le binaural en cours (nouveau
    AudioContext à chaque page). Le module visuel s'affiche PAR-DESSUS
    index.html au lieu de le remplacer : le moteur audio d'OmchaVibe 432
    continue de tourner en dessous, inchangé, pendant que le module visuel
@@ -2433,11 +2436,11 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
 
 <!-- #146 : bouton Jeu Aléatoire — sorti du dock (position fixe indépendante)
      pour rester utilisable même dock replié, par-dessus les panneaux (en
-     transparence, jamais masqué) et par-dessus l'overlay Flux/Sphère/3D
-     (module-overlay vit dans le même document qu'index.html : le clic
-     appelle directement triggerMagicAuto()/toggleFluxMuted(), pas besoin
-     de dupliquer quoi que ce soit dans sphere432.html/torsion432.html/
-     geometrie.html). Déborde volontairement au-dessus du dock/chevron. -->
+     transparence, jamais masqué) et par-dessus l'overlay OmchaWatch
+     (module-overlay, #166 Mode Retour — vit dans le même document
+     qu'index.html : le clic appelle directement triggerMagicAuto()/
+     toggleFluxMuted(), pas besoin de dupliquer quoi que ce soit dans
+     omchawatch.html). Déborde volontairement au-dessus du dock/chevron. -->
 <!-- #169 : cellule violette (+/-9Hz) retirée définitivement — redondante
      avec le tap direct sur la sphère maître (openFreqEdit) et le champ
      "Maître" du panneau Effet Audio → Réglages avancés (master-input).
@@ -2944,19 +2947,12 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
      régler à l'aveugle puis fermer le panneau pour constater. -->
 <div class="pan-left canva-container" id="panGeo" data-html-import-id="html-import-439" data-template-id="div-416">
   <div class="pct canva-container" data-html-import-id="html-import-440" data-template-id="div-417">3D Vibe · Sphère / Flux / Géométrie</div>
-  <div class="geometry-grid" id="geo-grid" data-html-import-id="html-import-441"><div class="geometry-btn active" style="cursor:default;">Torus</div></div>
-
-  <!-- #145 : accès direct aux 3 visualisations 3D dédiées (auparavant
-       seulement via le lanceur → carte "OmchaSphere/Flux" → écran
-       intermédiaire de choix). Le lanceur ne montre plus que Chaharmony
-       et OmchaWatch (#145) ; ces 3 visualisations vivent maintenant ici,
-       dans le mode geometry 3D, un tap = accès direct. -->
-  <div class="pct canva-container" style="margin-top:.65rem">Visualisations 3D dédiées</div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;margin-bottom:.5rem;">
-    <button class="geometry-btn canva-button" onclick="_openModuleOverlay('sphere432.html')">◉ Sphère 432</button>
-    <button class="geometry-btn canva-button" onclick="_openModuleOverlay('torsion432.html')">∿ Torsion 432</button>
-    <button class="geometry-btn canva-button" onclick="_openModuleOverlay('geometrie.html')">◈ Géométrie</button>
-  </div>
+  <!-- #203 : les 3 modes (Sphère/Torus/Métatron) sont désormais TOUS
+       rendus ici, sur l'écran principal (#meta-canvas) — plus de pages
+       séparées ouvertes en overlay (sphere432.html/torsion432.html/
+       geometrie.html, supprimées) : un tap sur la grille ci-dessous
+       change directement l'affichage, cf. buildGeoGrid()/setGeometry(). -->
+  <div class="geometry-grid" id="geo-grid" data-html-import-id="html-import-441"></div>
 
   <div class="pct canva-container" style="margin-top:.65rem" data-html-import-id="html-import-446" data-template-id="div-422">Ratio fréquentiel</div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.2rem;margin-bottom:.45rem;" data-html-import-id="html-import-447">
@@ -6468,12 +6464,17 @@ function ui(state, text) {
    ═══════════════════════════════════════════ */
 'use strict';
 
-// Une seule forme conservée (Torus) — compat stubs pour 07-app.js / updateInfobar.
-// Sphère / Métatron / Merkaba retirées de la sélection ; leur code de rendu
-// reste en place (inutilisé) plutôt que d'être excisé du moteur 3D partagé.
-const GEO_NAMES=['Torus'];
-const GEO_IDS  =['torus'];
-let activeGeometry=0;   // Torus 3D — seule forme disponible (rotation auto via V.autoRot)
+// #203 : les 3 modules 3D séparés (Sphère 432/Torsion 432/Géométrie,
+// jusqu'ici 3 pages autonomes ouvertes en overlay) sont fusionnés en 1
+// SEUL affichage sur l'écran principal — le moteur partagé FX3D_build()
+// avait déjà, dormant, le rendu Sphère/Métatron (Merkaba aussi, gardé en
+// réserve) : on les rebranche ici plutôt que de porter 3000+ lignes
+// depuis sphere432.html/torsion432.html (esthétique propre à chacun —
+// hiérarchie fractale, double hélice — perdue, mais même mécanique
+// caméra/couleur/glow partagée, donc zéro risque de collision de code).
+const GEO_NAMES=['Sphère','Torus','Métatron'];
+const GEO_IDS  =['sphere','torus','metatron'];
+let activeGeometry=1;   // Torus par défaut (comportement identique à avant #203)
 
 const V={rx:.28,ry:0,trx:.28,try_:0,zoom:2.2,tzoom:2.2,drag:false,lmx:0,lmy:0,t:0,spd:.8,autoRot:true};
 const HP={wi:6.0,ex:.18,tM:7,ns:200,br:true,pa:true,ma:true,la:true,gl:.65,f:1,breathe:1};
@@ -6760,6 +6761,7 @@ function drawParts(ctx){
 function setGeometry(g){
   activeGeometry=Math.max(0,Math.min(GEO_NAMES.length-1,g));
   fx3dSetForm(GEO_IDS[activeGeometry]);
+  if (typeof _geoRefreshUI === 'function') _geoRefreshUI(); // #203 : note descriptive + état actif de la grille
 }
 
 // ── Callbacks sliders panGeo → FX3D ──────────────────────────────
@@ -8935,10 +8937,25 @@ function patchFreqMini() {
 }
 
 // ── Geometry grid (Paramètres 3D panel) — Torus seul, plus de sélecteur ──
+// #203 : 3 formes cliquables (au lieu du badge figé "Torus" unique) —
+// la note descriptive sous la grille suit la sélection (cf. _geoNoteText).
+const GEO_NOTES = {
+  sphere:   'Sphère\nExpansion fractale en spirale dorée, hiérarchie de points harmoniques.',
+  torus:    'Torus\nLignes lumineuses colorées par ratio fréquentiel sacré.',
+  metatron: 'Métatron\nCube de Métatron — les 12 sommets de l\'icosaèdre, symétrie sacrée.',
+};
+function _geoRefreshUI() {
+  document.querySelectorAll('#geo-grid .geometry-btn').forEach((b, i) => b.classList.toggle('active', i === activeGeometry));
+  const note = document.querySelector('.geo-med-note');
+  if (note) note.textContent = GEO_NOTES[GEO_IDS[activeGeometry]] || '';
+}
 function buildGeoGrid() {
   const grid = document.getElementById('geo-grid');
   if (!grid) return;
-  grid.innerHTML = `<div class="geometry-btn active" style="cursor:default;">${GEO_NAMES[0]}</div>`;
+  grid.innerHTML = GEO_NAMES.map((name, i) =>
+    `<button class="geometry-btn${i===activeGeometry?' active':''} canva-button" onclick="setGeometry(${i})">${name}</button>`
+  ).join('');
+  _geoRefreshUI();
 }
 
 // ── Random table (Jeu Aléatoire panel) ───────────────────────────
@@ -10923,17 +10940,18 @@ function hideSplash() {
   setTimeout(() => { if (s) s.style.display = 'none'; }, 900);
 }
 
-// #64 : Lanceur 3 modules — 'vibe' démasque simplement l'app déjà chargée en
+// #64 : Lanceur — 'vibe' démasque simplement l'app déjà chargée en
 // dessous (aucun rechargement, aucune perte d'état) ; Chaharmony vit dans
 // une page séparée (changement complet de moteur audio, pas de son à
-// conserver) donc navigation classique ; OmchaSphere/Flux (#87) s'ouvre
-// dans l'overlay iframe pour garder le binaural d'OmchaVibe 432 en fond.
+// conserver) donc navigation classique. #203 : la branche 'sphereflux'
+// (overlay OmchaSphere/Flux, #87) a été retirée — les 3 visualisations
+// qu'elle proposait vivent désormais directement sur l'écran principal
+// (cf. panGeo), plus de hub séparé à ouvrir.
 function _launcherGo(mod) {
   const l = document.getElementById('omc-launcher');
   const hideLauncher = () => { if (l) { l.classList.add('hide'); setTimeout(() => { if (l) l.style.display = 'none'; }, 650); } };
   if (mod === 'vibe') { hideLauncher(); return; }
   if (mod === 'chaharmony') { location.href = 'chaharmony.html'; return; }
-  if (mod === 'sphereflux') { hideLauncher(); _openModuleOverlay('sphere-flux.html'); return; }
   if (mod === 'omchawatch') { location.href = 'omchawatch.html'; return; }
 }
 // #125 : raccourci dock "Retour au menu principal" — ré-affiche le lanceur
