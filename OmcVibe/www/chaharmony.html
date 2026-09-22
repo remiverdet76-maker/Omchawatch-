@@ -193,7 +193,7 @@ for (let i = 0; i < N_OSC; i++) {
   OSC.push({
     freq: 144 + i * 36, bin: false, delta: 4.0, n: 1, muted: i !== 0,
     vol: VOL_DEFAULT, pan: 0, lfoDepth: 0,
-    filtMode: 'off', cutoff: 2000, res: 0,
+    filtMode: 'off', cutoff: 1296, res: 0,
     revWet: 0, delWet: 0,
     nodes: null
   });
@@ -491,8 +491,12 @@ function setOscFilterMode(i, mode) {
   if (o.nodes) o.nodes.filt.type = FILTER_TYPES[mode] || 'allpass';
   renderOsc(i);
 }
+// #204 : plage du Cutoff (HPF/BPF/LPF) resserrée de 20-8000Hz à 0-1296Hz —
+// cohérent avec le reste de l'app (36-1296Hz déjà utilisé pour la
+// recherche de fréquence/note ailleurs dans OmcVibe) plutôt qu'une plage
+// audio générique sans rapport avec l'échelle Omc.
 function setOscCutoff(i, hz) {
-  const o = OSC[i]; o.cutoff = Math.max(20, Math.min(8000, parseFloat(hz)));
+  const o = OSC[i]; o.cutoff = Math.max(0, Math.min(1296, parseFloat(hz)));
   if (o.nodes) o.nodes.filt.frequency.setTargetAtTime(o.cutoff, AC.currentTime, 0.05);
   renderOsc(i);
 }
@@ -527,7 +531,7 @@ function setOscDelWet(i, v) {
 function oscReset(i) {
   const o = OSC[i];
   Object.assign(o, { freq:144, bin:false, delta:4.0, n:1, muted:false, vol:VOL_DEFAULT, pan:0,
-    lfoDepth:0, filtMode:'off', cutoff:2000, res:0, revWet:0, delWet:0 });
+    lfoDepth:0, filtMode:'off', cutoff:1296, res:0, revWet:0, delWet:0 });
   rebuildOsc(i); renderOsc(i);
 }
 function oscRandom(i) {
@@ -609,7 +613,7 @@ function renderOsc(i) {
         ${['off','hpf','bpf','lpf'].map(m=>`<button class="filt-btn${o.filtMode===m?' active':''}" onclick="setOscFilterMode(${i},'${m}')">${m.toUpperCase()}</button>`).join('')}
       </div>
       <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Cutoff</span><span class="ctl-v">${Math.round(o.cutoff)} Hz</span></div>
-        <input type="range" min="20" max="8000" step="10" value="${o.cutoff}" oninput="setOscCutoff(${i},this.value)"></div>
+        <input type="range" min="0" max="1296" step="10" value="${o.cutoff}" oninput="setOscCutoff(${i},this.value)"></div>
       <div class="ctl-row"><div class="ctl-lv"><span class="ctl-l">Résonance</span><span class="ctl-v">${o.res.toFixed(1)}</span></div>
         <input type="range" min="0" max="20" step="0.1" value="${o.res}" oninput="setOscRes(${i},this.value)"></div>
     </div>
