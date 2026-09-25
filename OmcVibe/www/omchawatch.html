@@ -73,6 +73,43 @@ canvas{display:block;}
 .oct-num{font-family:'Cinzel',serif;font-weight:700;font-size:.70rem;}
 .oct-name{font-size:.58rem;font-weight:700;margin-top:1px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .oct-sub{font-size:.48rem;color:var(--textD,#907040);margin-top:1px;line-height:1.25;}
+
+/* ── #206 : VUE SIMPLE — écran principal par défaut, 4 cartes lisibles
+   (Heure/Cycle/Phase/Énergie) à la place de l'horloge à anneaux. Celle-ci
+   (#c) et le tableau OmchaT'aime compact (#ota-clock-table) sont juste
+   masqués — rien n'est supprimé, #sv-toggle permet de revenir. ── */
+#simple-view{
+  position:fixed;inset:0;display:none;flex-direction:column;align-items:center;
+  justify-content:center;gap:12px;padding:56px 16px 96px;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+body.view-simple #simple-view{display:flex;}
+body.view-simple #c,
+body.view-simple #ota-clock-table{display:none;}
+.sv-card{
+  width:100%;max-width:360px;border-radius:16px;padding:16px 18px;
+  background:rgba(10,6,24,.58);backdrop-filter:blur(16px);
+  border:1px solid var(--sv-c,rgba(255,255,255,.12));
+  box-shadow:0 0 26px -10px var(--sv-c,transparent);
+}
+.sv-label{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--sv-c,var(--textS));margin-bottom:6px;}
+.sv-main{font-family:'Comfortaa',sans-serif;font-weight:700;font-size:1.45rem;
+  color:#f5eedc;line-height:1.2;}
+.sv-sub{font-size:.78rem;color:var(--textS);margin-top:4px;}
+.sv-hint{font-size:.68rem;color:var(--textD);margin-top:8px;line-height:1.4;}
+.sv-cta{margin-top:10px;display:inline-block;padding:5px 12px;border-radius:10px;
+  font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  border:1px solid var(--sv-c,rgba(255,255,255,.2));color:var(--sv-c,var(--textS));}
+#sv-toggle{
+  position:fixed;bottom:5px;right:90px;width:30px;height:30px;
+  background:rgba(100,60,200,.22);border:1px solid rgba(160,96,240,.40);
+  border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:var(--textS);transition:all .25s;z-index:200;
+}
+#sv-toggle:hover{background:rgba(140,80,240,.35);color:var(--gold);}
+
 /* Mode switcher */
 #mode-sw{display:flex;gap:2px;background:rgba(100,60,200,.12);border-radius:12px;padding:2px;border:1px solid rgba(140,80,220,.22);}
 .ms{padding:3px 9px;border-radius:10px;font-size:8px;letter-spacing:.18em;cursor:pointer;color:var(--textD);transition:all .22s;}
@@ -400,6 +437,10 @@ input[type=color]{
      ouvrir le panneau (cf. otaRenderClockTable()). -->
 <div id="ota-clock-table"></div>
 
+<!-- #206 : Vue simple — 4 cartes Heure/Cycle/Phase/Énergie, écran
+     principal par défaut (cf. renderSimpleView()). -->
+<div id="simple-view"></div>
+
 <!-- BARRE BAS : uniquement le choix d'échelle de lecture -->
 <div id="bar">
   <div id="mode-sw">
@@ -413,6 +454,7 @@ input[type=color]{
 <!-- BOUTON MENU -->
 <button id="menu-btn" onclick="togglePanel()">≡</button>
 <button id="fs-btn" onclick="toggleFullscreen()" title="Plein écran">⤢</button>
+<button id="sv-toggle" onclick="setViewMode(VIEW_MODE==='simple'?'classic':'simple')" title="Vue simple / Horloge classique">◐</button>
 
 <!-- #166 : Mode Retour OmcVibe — accessible directement depuis l'horloge.
      Embarqué (cas normal : ouvert depuis le dock OmcVibe, cf. chaWatchOpen)
@@ -1477,6 +1519,10 @@ function triggerPulse(){
 
 // ─── BOUCLE ──────────────────────────────────────────
 function loop(){
+  // #206 : canvas masqué en Vue simple (body.view-simple) — dessiner sur un
+  // canvas invisible à chaque frame ne servirait qu'à vider la batterie,
+  // renderSimpleView() (setInterval 1s) couvre déjà l'affichage à jour.
+  if(VIEW_MODE==='simple'){requestAnimationFrame(loop);return;}
   const t=(performance.now()-t0)/1000;
   const fd=nowOrSim();
   const ut36=calcDensity(fd);
@@ -2398,6 +2444,85 @@ function otaRenderClockTable(){
       '</div>';
   }).join('');
 }
+
+// ─── #206 : VUE SIMPLE — Heure / Cycle / Phase / Énergie ───────────────
+// Écran principal par défaut : remplace l'horloge à anneaux (canvas #c,
+// masqué en CSS via body.view-simple) par 4 cartes lisibles. Aucun
+// nouveau calcul — même source de vérité que le reste de l'app, pour ne
+// jamais afficher un chiffre différent d'ailleurs :
+//   Heure   — lecture du jour en cours (calcDensity/getReadings, déjà
+//             affichée au centre de l'horloge classique).
+//   Cycle   — thème 432 (le nombre central de l'app) : quel cycle de
+//             432 jours depuis J0, quel jour dedans (otaCompute).
+//   Phase   — la grande division nommée du thème 432 (12 par cycle,
+//             ~36 jours chacune — "ÉNERGIE" dans le vocabulaire du code,
+//             cf. OTA_THEMES, mais c'est bien une PHASE du cycle).
+//   Énergie — le mouvement en cours (4 par phase, ~9 jours, mêmes
+//             ratios que le moteur de respiration, cf. MOVEMENTS) — la
+//             lecture la plus fine/actionnable : tension ou harmonie.
+// Cycle/Phase/Énergie ont besoin de J0 (onglet OmchaT'aime) ; sans J0,
+// Heure fonctionne quand même seule, avec une invite claire pour le reste.
+const VIEW_MODE_KEY='chawatch-viewmode';
+let VIEW_MODE='simple';
+function setViewMode(m){
+  VIEW_MODE=(m==='classic')?'classic':'simple';
+  document.body.classList.toggle('view-simple', VIEW_MODE==='simple');
+  document.body.classList.toggle('view-classic', VIEW_MODE==='classic');
+  try{localStorage.setItem(VIEW_MODE_KEY,VIEW_MODE);}catch(e){}
+  const btn=document.getElementById('sv-toggle');
+  if(btn)btn.textContent=VIEW_MODE==='simple'?'◐':'◎';
+  if(VIEW_MODE==='simple')renderSimpleView();
+}
+function _loadViewMode(){
+  let m='simple';
+  try{const s=localStorage.getItem(VIEW_MODE_KEY); if(s==='classic'||s==='simple')m=s;}catch(e){}
+  setViewMode(m);
+}
+function renderSimpleView(){
+  const el=document.getElementById('simple-view'); if(!el||VIEW_MODE!=='simple')return;
+  const now=nowOrSim();
+  const ut36=calcDensity(now), cfg=getModeConfig(), r=getReadings(ut36,cfg);
+  const densityStr = DESIGN.deepMode
+    ? Math.round(r.density).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ')
+    : r.density.toFixed(1);
+  const clockStr = now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  let html = '<div class="sv-card" style="--sv-c:var(--gold)">'
+    +'<div class="sv-label">Heure · mode '+cfg.label.replace('OmcV·','')+'</div>'
+    +'<div class="sv-main">'+densityStr+' <span style="font-size:.9rem;opacity:.6">/ '+cfg.daily+'</span></div>'
+    +'<div class="sv-sub">'+clockStr+(SIM.active?' · 🔒 simulation figée':'')+'</div>'
+    +'</div>';
+  if(!J0_ARCH){
+    html += '<div class="sv-card" style="--sv-c:var(--cycle)">'
+      +'<div class="sv-label">Cycle · Phase · Énergie</div>'
+      +'<div class="sv-main" style="font-size:1rem;font-weight:400;color:var(--textS)">Renseigne ta date de départ (J0) pour activer ces 3 lectures.</div>'
+      +'<div class="sv-cta" onclick="togglePanel();setTab(\'arch\')">Ouvrir OmchaT\'aime</div>'
+      +'</div>';
+  } else {
+    const th=OTA_THEMES.find(t=>t.n===432);
+    const c=otaCompute(J0_ARCH,now,432);
+    const ph=th.phases[c.phaseIdx-1];
+    const mv=c.mvt.mv;
+    html += '<div class="sv-card" style="--sv-c:var(--cycle)">'
+      +'<div class="sv-label">Cycle 432</div>'
+      +'<div class="sv-main">Cycle '+c.cycleIndex+' <span style="font-size:.9rem;opacity:.6">· jour '+c.dayInCycle+'/432</span></div>'
+      +'<div class="sv-sub">reste '+c.daysLeftCycle+' j avant le prochain cycle</div>'
+      +'</div>';
+    html += '<div class="sv-card" style="--sv-c:'+th.color+'">'
+      +'<div class="sv-label">Phase '+c.phaseIdx+'/12</div>'
+      +'<div class="sv-main">'+ph.name+'</div>'
+      +'<div class="sv-sub">'+ph.kw+'</div>'
+      +'<div class="sv-hint">reste '+c.daysLeftPhase+' j sur cette phase</div>'
+      +'</div>';
+    html += '<div class="sv-card" style="--sv-c:'+mv.color+'">'
+      +'<div class="sv-label">Énergie · '+mv.key+' · '+(c.mvt.idx+1)+'/4</div>'
+      +'<div class="sv-main">'+mv.name+'</div>'
+      +'<div class="sv-hint">'+mv.invitation+' — reste '+c.mvt.daysLeftMv+' j</div>'
+      +'</div>';
+  }
+  el.innerHTML = html;
+}
+setInterval(renderSimpleView, 1000);
+
 // ─── SYNCHRONICITÉ — nœuds énergétiques 360/396/432 ────────────────────
 // Demande explicite : "analyse UNIQUEMENT avec les jours depuis J0" — pas
 // de calendrier civil, pas d'astro, juste de l'arithmétique exacte sur
@@ -2692,6 +2817,7 @@ sunRecompute();
 calBuildGrid();
 journalSetBase(360);
 cosRefreshNextPanel(); cosBuildYearList(); cosBuildEventTable(); // #188
+_loadViewMode(); // #206 : après loadArch() (J0_ARCH doit déjà être relu)
 resize(); loop();
 </script>
 </body>
