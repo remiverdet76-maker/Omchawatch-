@@ -398,10 +398,12 @@ body.fx3d-only #fxDrawerHandle{
   --dock-text-scale:1;
   --sphere-digit-scale:1;
   --sphere-hue:0deg;
-  /* #156 : sphère Flux (jeu aléatoire) — taille/position réglables. */
-  --flux-scale:1;
-  --flux-dx:0px;
-  --flux-dy:0px;
+  /* #156 : sphère Flux (jeu aléatoire) — taille/position réglables.
+     #207 : design verrouillé — valeurs par défaut alignées sur l'arrangement
+     validé (110% / -10px / -112px, ras du dock) au lieu du neutre 100/0/0. */
+  --flux-scale:1.1;
+  --flux-dx:-10px;
+  --flux-dy:-112px;
 }
 .vp-wrap{
   position:absolute;transform:translate(-50%,-50%) scale(var(--bubble-scale,1));
@@ -2816,18 +2818,18 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
     <div class="cust-hint">Taille et position de la grande sphère dorée, réglables et mémorisées d'une session à l'autre. Les sphères "+" (raccourcis) restent collées aux bords gauche/droite, et ChaWatch + fréquence maître restent groupés en bas — ça, ça ne bouge pas.</div>
     <div class="creator-row">
       <span class="creator-lbl">Taille</span>
-      <input type="range" id="cr-flux-scale" min="50" max="150" step="5" value="100" oninput="setFluxScale(this.value)">
-      <span class="creator-val" id="cr-flux-scale-v">100%</span>
+      <input type="range" id="cr-flux-scale" min="50" max="150" step="5" value="110" oninput="setFluxScale(this.value)">
+      <span class="creator-val" id="cr-flux-scale-v">110%</span>
     </div>
     <div class="creator-row">
       <span class="creator-lbl">Position horizontale</span>
-      <input type="range" id="cr-flux-dx" min="-150" max="150" step="5" value="0" oninput="setFluxOffsetX(this.value)">
-      <span class="creator-val" id="cr-flux-dx-v">0px</span>
+      <input type="range" id="cr-flux-dx" min="-150" max="150" step="5" value="-10" oninput="setFluxOffsetX(this.value)">
+      <span class="creator-val" id="cr-flux-dx-v">-10px</span>
     </div>
     <div class="creator-row">
       <span class="creator-lbl">Position verticale</span>
-      <input type="range" id="cr-flux-dy" min="-112" max="150" step="5" value="0" oninput="setFluxOffsetY(this.value)">
-      <span class="creator-val" id="cr-flux-dy-v">0px</span>
+      <input type="range" id="cr-flux-dy" min="-112" max="150" step="5" value="-112" oninput="setFluxOffsetY(this.value)">
+      <span class="creator-val" id="cr-flux-dy-v">-112px</span>
     </div>
     <button class="cr-mini-btn" onclick="resetFluxLayout()" style="align-self:flex-start;">↺ Réinitialiser la sphère Flux</button>
   </div>
@@ -11774,9 +11776,11 @@ function _fluxLayoutPersist() {
   }), 300);
 }
 function resetFluxLayout() {
-  setFluxScale(100);
-  setFluxOffsetX(0);
-  setFluxOffsetY(0);
+  // #207 : "réinitialiser" ramène au design verrouillé (110% / -10px /
+  // -112px), plus au neutre 100/0/0 — ce dernier n'est plus le défaut.
+  setFluxScale(110);
+  setFluxOffsetX(-10);
+  setFluxOffsetY(-112);
 }
 function _loadFluxLayout() {
   let s = null;
