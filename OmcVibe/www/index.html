@@ -4941,6 +4941,7 @@ async function startFlow() {
     _armInvisibleHand(); // main invisible
     if (SUBDRONE_STATE.on) _startSubDrone(); // #16 (roadmap)
     if (EGOCHA_SAGE_STATE.on) _startEgochaSage(); // #181b
+    _startVoiceEngine(); // #208 : no-op si aucune des 2 voix n'est activée
     if (typeof _fxUpdateVisibility === 'function') _fxUpdateVisibility(); // #176
     ui('live', 'En expansion…');
   } catch(err) {
@@ -4953,7 +4954,11 @@ async function stopFlow() {
   ui('idle', 'Dissolution…');
   // #176 : plus de voix dédiée à couper — les faders retunent directement
   // les vrais oscillateurs, que stopFlow() relâche normalement ci-dessous.
-  if (_fxDragTarget) { _fxBallEl(_fxDragTarget)?.classList.remove('fx-fader-active'); _fxDragTarget = null; _fxPendingX = null; }
+  // (la ligne de nettoyage correspondante, qui référençait encore
+  // _fxDragTarget/_fxBallEl/_fxPendingX — retirés avec l'ancien tiroir à
+  // faders lors de la refonte du 27/08 — faisait planter stopFlow() à
+  // chaque appel avec un ReferenceError ; supprimée, elle n'avait plus
+  // rien à faire depuis que ce mécanisme n'existe plus.)
   if (startFlow._heartbeat) { clearInterval(startFlow._heartbeat); startFlow._heartbeat = null; }
   if (startFlow._headroomTimer) { clearInterval(startFlow._headroomTimer); startFlow._headroomTimer = null; }
   if (startFlow._wakeLock)  { try { startFlow._wakeLock.release(); } catch(e) {} startFlow._wakeLock = null; }
@@ -5043,6 +5048,7 @@ async function stopFlow() {
     Object.keys(_ihHeldBy).forEach(k => { clearTimeout(_ihHeldBy[k]); delete _ihHeldBy[k]; });
     _stopSubDrone(); // #16 (roadmap)
     _stopEgochaSage(); // #181b
+    _stopVoiceEngine(); // #208
     _lfoGain=_breathLFO=_breathGain=_breathDepthGain=_driftLFO=_driftDepth=masterGain=analyser=null;
     PAIRS.forEach((_, i) => updateOrbUI(i));
     const mc = document.getElementById('vpc-p' + MASTER_IDX);
@@ -5796,6 +5802,7 @@ function _odSetFreqDirect(i, targetHz) {
       tuneOsc(PAIRS[k].ida.id,     calcIFreq(k));
     });
     if (typeof _retuneSubDrone === 'function') _retuneSubDrone();
+    if (typeof _retuneVoice === 'function') _retuneVoice(); // #208
     saveState();
     return;
   }
@@ -6253,6 +6260,129 @@ function setSubDroneVol(v) {
   SUBDRONE_STATE.vol = Math.max(0, Math.min(0.25, parseFloat(v)));
   if (_subDroneGain) _subDroneGain.gain.setTargetAtTime(SUBDRONE_STATE.vol, aNow(), 0.3);
   const el = document.getElementById('sv-subdrone-vol'); if (el) el.textContent = Math.round(SUBDRONE_STATE.vol * 100) + '%';
+  saveState();
+}
+
+// ── #208 : VOIX — chœur synthétisé par formants, calé sur masterFreq ──
+// Pas d'échantillon vocal (poids APK, licence, impossible à accorder
+// proprement sur la fréquence maître) : un oscillateur à masterFreq
+// traverse 3 filtres passe-bande calés sur les formants moyens d'une
+// voyelle ouverte "Ah/Om" (valeurs Peterson & Barney), Homme et Femme ne
+// différant que par cette table de formants — la hauteur, elle, reste
+// strictement verrouillée sur masterFreq dans les deux cas (demande
+// explicite), jamais transposée. Duo possible (les 2 cases indépendantes).
+// Même patron que SUBDRONE_STATE juste au-dessus : bus parallèle vers
+// masterGain (traverse donc la même chaîne FX/compression que le reste),
+// démarré/arrêté avec le flux, retiné en même temps que _retuneSubDrone().
+const VOICE_FORMANTS = {
+  male:   { f: [730, 1090, 2440], a: [1, 0.35, 0.18], q: [10, 12, 14] },
+  female: { f: [850, 1220, 2810], a: [1, 0.35, 0.18], q: [10, 12, 14] },
+};
+const VOICE_STATE = { male: false, female: false, vol: 0.14, swell: 14 };
+let _voiceBus = null, _voiceVolGain = null, _voiceSwellLFO = null, _voiceSwellDepth = null;
+let _voiceM = null, _voiceF = null;
+
+function _ensureVoiceBus() {
+  if (_voiceBus || !masterGain) return;
+  const c = audioCtx();
+  _voiceBus = c.createGain(); _voiceBus.gain.value = 1;
+  _voiceVolGain = c.createGain(); _voiceVolGain.gain.value = VOICE_STATE.vol;
+  _voiceBus.connect(_voiceVolGain); _voiceVolGain.connect(masterGain);
+  // Évolution : respiration lente du volume (swell), jamais un palier fixe.
+  _voiceSwellLFO = c.createOscillator(); _voiceSwellLFO.type = 'sine';
+  _voiceSwellLFO.frequency.value = 1 / Math.max(4, VOICE_STATE.swell);
+  _voiceSwellDepth = c.createGain(); _voiceSwellDepth.gain.value = VOICE_STATE.vol * 0.5;
+  _voiceSwellLFO.connect(_voiceSwellDepth); _voiceSwellDepth.connect(_voiceVolGain.gain);
+  _voiceSwellLFO.start();
+}
+function _buildVoiceChain(type) {
+  const c = audioCtx(), ff = VOICE_FORMANTS[type];
+  const osc = c.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = masterFreq;
+  // léger vibrato (fréquence légèrement différente Homme/Femme : jamais
+  // en phase, pour que le duo ne batte pas de façon mécanique).
+  const vibLFO = c.createOscillator(); vibLFO.type = 'sine';
+  vibLFO.frequency.value = type === 'male' ? 5.1 : 5.7;
+  const vibDepth = c.createGain(); vibDepth.gain.value = masterFreq * 0.004;
+  vibLFO.connect(vibDepth); vibDepth.connect(osc.frequency);
+  const sum = c.createGain(); sum.gain.value = 1;
+  const formants = ff.f.map((freq, i) => {
+    const filt = c.createBiquadFilter(); filt.type = 'bandpass'; filt.frequency.value = freq; filt.Q.value = ff.q[i];
+    const g = c.createGain(); g.gain.value = ff.a[i] * 0.33;
+    osc.connect(filt); filt.connect(g); g.connect(sum);
+    return { filt, g };
+  });
+  const gain = c.createGain(); gain.gain.value = 0; // monte en douceur, cf. appelant
+  sum.connect(gain); gain.connect(_voiceBus);
+  osc.start(); vibLFO.start();
+  return { osc, vibLFO, vibDepth, formants, sum, gain };
+}
+function _stopVoiceChain(v) {
+  if (!v) return;
+  try { v.gain.gain.setTargetAtTime(0, aNow(), 0.6); } catch(e) {}
+  const { osc, vibLFO, gain, sum, formants } = v;
+  setTimeout(() => {
+    try {
+      osc.stop(); vibLFO.stop();
+      osc.disconnect(); vibLFO.disconnect(); gain.disconnect(); sum.disconnect();
+      formants.forEach(f => { f.filt.disconnect(); f.g.disconnect(); });
+    } catch(e) {}
+  }, 900);
+}
+function _stopVoiceEngine() {
+  _stopVoiceChain(_voiceM); _voiceM = null;
+  _stopVoiceChain(_voiceF); _voiceF = null;
+  if (_voiceSwellLFO) { try { _voiceSwellLFO.stop(); _voiceSwellLFO.disconnect(); } catch(e) {} }
+  try { _voiceSwellDepth && _voiceSwellDepth.disconnect(); } catch(e) {}
+  try { _voiceVolGain && _voiceVolGain.disconnect(); } catch(e) {}
+  try { _voiceBus && _voiceBus.disconnect(); } catch(e) {}
+  _voiceSwellLFO = _voiceSwellDepth = _voiceVolGain = _voiceBus = null;
+}
+function _startVoiceEngine() {
+  if (!masterGain || (!VOICE_STATE.male && !VOICE_STATE.female)) return;
+  _ensureVoiceBus();
+  if (VOICE_STATE.male && !_voiceM) _voiceM = _buildVoiceChain('male');
+  if (VOICE_STATE.female && !_voiceF) _voiceF = _buildVoiceChain('female');
+  if (_voiceM) _voiceM.gain.gain.setTargetAtTime(1, aNow(), 1.8);
+  if (_voiceF) _voiceF.gain.gain.setTargetAtTime(1, aNow(), 1.8);
+}
+function _retuneVoice() {
+  if (_voiceM) _voiceM.osc.frequency.setTargetAtTime(masterFreq, aNow(), 0.3);
+  if (_voiceF) _voiceF.osc.frequency.setTargetAtTime(masterFreq, aNow(), 0.3);
+}
+function setVoice(which, v) {
+  v = !!v;
+  VOICE_STATE[which] = v;
+  const ck = document.getElementById(which === 'male' ? 'ck-voice-male' : 'ck-voice-female');
+  if (ck) ck.checked = v;
+  if (flowing) {
+    if (v) {
+      _ensureVoiceBus();
+      if (which === 'male' && !_voiceM) _voiceM = _buildVoiceChain('male');
+      if (which === 'female' && !_voiceF) _voiceF = _buildVoiceChain('female');
+      const chain = which === 'male' ? _voiceM : _voiceF;
+      if (chain) chain.gain.gain.setTargetAtTime(1, aNow(), 1.8);
+    } else {
+      const chain = which === 'male' ? _voiceM : _voiceF;
+      _stopVoiceChain(chain);
+      if (which === 'male') _voiceM = null; else _voiceF = null;
+      if (!VOICE_STATE.male && !VOICE_STATE.female) {
+        setTimeout(() => { if (!VOICE_STATE.male && !VOICE_STATE.female) _stopVoiceEngine(); }, 950);
+      }
+    }
+  }
+  saveState();
+}
+function setVoiceVol(v) {
+  VOICE_STATE.vol = Math.max(0, Math.min(0.4, parseFloat(v)));
+  if (_voiceVolGain) _voiceVolGain.gain.setTargetAtTime(VOICE_STATE.vol, aNow(), 0.3);
+  if (_voiceSwellDepth) _voiceSwellDepth.gain.setTargetAtTime(VOICE_STATE.vol * 0.5, aNow(), 0.3);
+  const el = document.getElementById('sv-voice-vol'); if (el) el.textContent = Math.round(VOICE_STATE.vol * 100) + '%';
+  saveState();
+}
+function setVoiceSwell(v) {
+  VOICE_STATE.swell = Math.max(6, Math.min(30, parseFloat(v)));
+  if (_voiceSwellLFO) _voiceSwellLFO.frequency.setTargetAtTime(1 / VOICE_STATE.swell, aNow(), 0.5);
+  const el = document.getElementById('sv-voice-swell'); if (el) el.textContent = VOICE_STATE.swell + 's';
   saveState();
 }
 
@@ -7853,6 +7983,7 @@ function setMasterFreq(f) {
     tuneOsc(PAIRS[i].ida.id,     calcIFreq(i));
   });
   _retuneSubDrone(); // #16 (roadmap)
+  if (typeof _retuneVoice === 'function') _retuneVoice(); // #208
   saveState();
 }
 // #169 : cellule violette (_purpleFreqStep/_purpleFreqKey/_purpleFreqValidate)
@@ -9576,6 +9707,26 @@ function buildMasterFXHTML() {
           ${iq("Volume du sub-drone d'ancrage ci-dessus.")}
           <input type="range" class="fx-slider" min="0" max="0.25" step="0.01" value="0.05" oninput="setSubDroneVol(this.value)">
           <span class="fx-val-disp" id="sv-subdrone-vol">5%</span></div>
+        <!-- #208 : Voix — chœur synthétisé par formants (pas d'échantillon
+             audio), calé en continu sur la fréquence maître, jamais
+             transposé. Homme/Femme indépendants (duo possible), volume
+             évolutif (respiration lente, durée réglable). Off par défaut. -->
+        <div class="fx-row" style="justify-content:space-between;align-items:center;">
+          <span class="fx-label">Voix — Homme${iq("Chœur synthétisé par formants (aucun fichier audio), calé en continu sur la fréquence maître. Peut se combiner avec la voix Femme.")}</span>
+          <label class="fx-toggle"><input type="checkbox" id="ck-voice-male" onchange="setVoice('male', this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
+        <div class="fx-row" style="justify-content:space-between;align-items:center;">
+          <span class="fx-label">Voix — Femme</span>
+          <label class="fx-toggle"><input type="checkbox" id="ck-voice-female" onchange="setVoice('female', this.checked)"><span class="fx-tog-track"></span></label>
+        </div>
+        <div class="fxq-row"><span class="fxq-lbl">Volume voix</span>
+          ${iq("Volume du chœur ci-dessus — partagé entre Homme et Femme si les deux sont actives.")}
+          <input type="range" class="fx-slider" min="0" max="0.4" step="0.01" value="0.14" oninput="setVoiceVol(this.value)">
+          <span class="fx-val-disp" id="sv-voice-vol">14%</span></div>
+        <div class="fxq-row"><span class="fxq-lbl">Évolution voix</span>
+          ${iq("Durée d'un cycle de respiration du volume de la voix (gonfle/dégonfle doucement, sans jamais couper le son) — plus la valeur est grande, plus le souffle est lent.")}
+          <input type="range" class="fx-slider" min="6" max="30" step="1" value="14" oninput="setVoiceSwell(this.value)">
+          <span class="fx-val-disp" id="sv-voice-swell">14s</span></div>
         <!-- #181b/#182/#198 : mode "Egocha Sage" — plus aucune fréquence
              fixe (l'ancrage 432Hz + couche 360Hz ont été retirés), et plus
              de souffle (texture de bruit filtré retirée à son tour) : ne
@@ -10302,6 +10453,7 @@ function _doSave() {
       strictHeadphone: STRICT_HEADPHONE_MODE,
       pairComp: PAIR_COMP_STATE.on,
       subDrone: { ...SUBDRONE_STATE },
+      voice: { ...VOICE_STATE }, // #208
       egochaSage: { ...EGOCHA_SAGE_STATE }, // #181b
       deltaCharacter: DELTA_CHARACTER_MODE,
       sonoMode: SONO_MODE, // #184
@@ -10378,6 +10530,12 @@ function loadState() {
       if (typeof s.subDrone.on==='boolean') SUBDRONE_STATE.on = s.subDrone.on;
       if (typeof s.subDrone.vol==='number' && s.subDrone.vol>=0 && s.subDrone.vol<=0.25) SUBDRONE_STATE.vol = s.subDrone.vol;
     }
+    if (s.voice && typeof s.voice==='object') { // #208
+      if (typeof s.voice.male==='boolean') VOICE_STATE.male = s.voice.male;
+      if (typeof s.voice.female==='boolean') VOICE_STATE.female = s.voice.female;
+      if (typeof s.voice.vol==='number' && s.voice.vol>=0 && s.voice.vol<=0.4) VOICE_STATE.vol = s.voice.vol;
+      if (typeof s.voice.swell==='number' && s.voice.swell>=6 && s.voice.swell<=30) VOICE_STATE.swell = s.voice.swell;
+    }
     if (s.egochaSage && typeof s.egochaSage==='object') { // #181b/#198
       if (typeof s.egochaSage.on==='boolean') EGOCHA_SAGE_STATE.on = s.egochaSage.on;
       if (typeof s.egochaSage.bpm==='number') EGOCHA_SAGE_STATE.bpm = Math.max(EGOCHA_BPM_MIN, Math.min(EGOCHA_BPM_MAX, s.egochaSage.bpm));
@@ -10429,6 +10587,12 @@ function _syncRandOptsUI() {
   setCk('ck-invisible-hand', INVISIBLE_HAND_STATE.on);
   const sdv = document.getElementById('sv-subdrone-vol'); if (sdv) sdv.textContent = Math.round(SUBDRONE_STATE.vol * 100) + '%';
   const sdSlider = document.querySelector('input[oninput="setSubDroneVol(this.value)"]'); if (sdSlider) sdSlider.value = SUBDRONE_STATE.vol;
+  setCk('ck-voice-male', VOICE_STATE.male); // #208
+  setCk('ck-voice-female', VOICE_STATE.female);
+  const vv = document.getElementById('sv-voice-vol'); if (vv) vv.textContent = Math.round(VOICE_STATE.vol * 100) + '%';
+  const vvSlider = document.querySelector('input[oninput="setVoiceVol(this.value)"]'); if (vvSlider) vvSlider.value = VOICE_STATE.vol;
+  const vsw = document.getElementById('sv-voice-swell'); if (vsw) vsw.textContent = VOICE_STATE.swell + 's';
+  const vswSlider = document.querySelector('input[oninput="setVoiceSwell(this.value)"]'); if (vswSlider) vswSlider.value = VOICE_STATE.swell;
   setCk('ck-egocha-sage', EGOCHA_SAGE_STATE.on); // #181b
   const egBpmSlider = document.getElementById('egocha-bpm-slider'); if (egBpmSlider) egBpmSlider.value = EGOCHA_SAGE_STATE.bpm; // #198
   const egBpmVal = document.getElementById('egocha-bpm-val'); if (egBpmVal) egBpmVal.textContent = EGOCHA_SAGE_STATE.bpm + ' BPM'; // #198
@@ -10491,6 +10655,7 @@ function exportState() {
     deltaDrift: { ...DELTA_DRIFT_STATE }, deltaCharacter: DELTA_CHARACTER_MODE, sonoMode: SONO_MODE,
     strictHeadphone: STRICT_HEADPHONE_MODE, pairComp: PAIR_COMP_STATE.on,
     subDrone: { ...SUBDRONE_STATE },
+    voice: { ...VOICE_STATE }, // #208
     egochaSage: { ...EGOCHA_SAGE_STATE }, // #181b
     invisibleHand: INVISIBLE_HAND_STATE.on,
     randOpts: { ...RAND_OPTS },
