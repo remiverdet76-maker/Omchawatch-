@@ -163,6 +163,7 @@
   <button class="pilule" id="b-j0">❄ Solstice</button>
   <button class="pilule" id="b-phases">◔ Phases quartz</button>
   <button class="pilule" id="b-vitesse">⏩ ×1</button>
+  <button class="pilule" id="b-cadran">☀ Cadran solaire</button>
 </div>
 
 <aside id="menu">
@@ -721,6 +722,7 @@ function onglet(t){document.querySelectorAll('.ong').forEach(o=>o.classList.togg
   document.querySelectorAll('.pan').forEach(p=>p.classList.toggle('actif',p.dataset.p===t));}
 document.querySelectorAll('.ong').forEach(o=>o.onclick=()=>onglet(o.dataset.t));
 $('b-densites').onclick=()=>ouvrir('dens');
+$('b-cadran').onclick=()=>{location.href='cadran.html';};
 $('b-j0').onclick=()=>ouvrir('j0');
 $('b-phases').onclick=()=>{phasesVisible=!phasesVisible;$('b-phases').classList.toggle('actif',phasesVisible);};
 $('b-vitesse').onclick=()=>{warpIdx=(warpIdx+1)%WARPS.length;const w=WARPS[warpIdx];const lbl='×'+(w>=1000?fmt(w):w);$('b-vitesse').textContent='⏩ '+lbl;$('warp').value=warpIdx;$('warp-val').textContent=lbl;};

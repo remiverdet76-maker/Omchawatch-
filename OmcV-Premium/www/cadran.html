@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="fr" data-ambiance="cosmos">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cadran solaire OmcV</title>
+<meta name="theme-color" content="#140f2e">
+<style>
+  :root{
+    --d1:#f2b25c; --d2:#e2799b; --d3:#8fb4de; --d4:#7cc4ae;
+    --or:#f6d68c; --fond1:#140f2e; --fond2:#221a49; --fond3:#301f57;
+    --texte:#f3e6d2; --texte-doux:#c9b8e8; --accent:#f6d68c;
+    --verre:rgba(84,62,140,.34); --verre-bord:rgba(246,214,140,.36);
+  }
+  [data-ambiance="nuit"]{ --fond1:#04030a;--fond2:#070613;--fond3:#0a0819;
+    --texte:#e8e6f6;--texte-doux:#9a94c4;--verre:rgba(20,18,44,.5);--verre-bord:rgba(230,225,255,.24);}
+  [data-ambiance="aurore"]{ --fond1:#fdf6ea;--fond2:#f6e6d4;--fond3:#ece0f4;
+    --texte:#5a4330;--texte-doux:#8a6f52;--accent:#c58a2e;--verre:rgba(255,250,238,.6);--verre-bord:rgba(217,164,65,.4);}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;}
+  html{background:radial-gradient(120% 120% at 50% 12%,var(--fond3),var(--fond2) 45%,var(--fond1) 100%);}
+  body{font-family:"Nunito","Segoe UI",system-ui,sans-serif;color:var(--texte);background:transparent;
+    display:flex;flex-direction:column;height:100dvh;position:relative;}
+  header{padding:10px 14px 4px;text-align:center;pointer-events:none;}
+  header h1{font-size:clamp(15px,4.4vw,22px);letter-spacing:.32em;font-weight:700;
+    background:linear-gradient(90deg,var(--d1),var(--accent),var(--d2));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  header p{font-size:10.5px;color:var(--texte-doux);letter-spacing:.04em;margin-top:2px;opacity:.85;}
+  #scene{flex:1;position:relative;min-height:0;touch-action:none;cursor:grab;}
+  #cadran{display:block;width:100%;height:100%;}
+  #hud{position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:5px;pointer-events:none;z-index:4;}
+  .carte{background:var(--verre);border:1px solid var(--verre-bord);border-radius:12px;
+    padding:6px 10px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);min-width:104px;}
+  .carte b{display:block;font-size:16px;line-height:1.05;font-variant-numeric:tabular-nums;}
+  .carte small{display:block;font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--texte-doux);opacity:.85;}
+  #hud .vrai b{color:var(--accent);font-size:20px;}
+  #obs{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:6px;z-index:5;}
+  .rond{width:38px;height:38px;border-radius:50%;background:var(--verre);border:1px solid var(--verre-bord);
+    color:var(--texte);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);}
+  .rond.actif{background:rgba(246,214,140,.28);border-color:var(--accent);}
+  #barre{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
+    padding:10px 10px calc(10px + env(safe-area-inset-bottom));z-index:5;}
+  .pilule{background:var(--verre);border:1px solid var(--verre-bord);border-radius:20px;color:var(--texte);
+    font-size:12.5px;padding:8px 15px;cursor:pointer;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);letter-spacing:.04em;}
+  .pilule.actif{background:rgba(246,214,140,.26);border-color:var(--accent);}
+  #etat{position:absolute;left:0;right:0;bottom:104px;text-align:center;font-size:11px;color:var(--texte-doux);
+    pointer-events:none;padding:0 12px;opacity:.85;}
+  #menu{position:absolute;top:0;right:0;height:100%;width:min(92vw,380px);z-index:20;
+    background:linear-gradient(160deg,rgba(30,22,60,.97),rgba(18,13,40,.98));border-left:1px solid var(--verre-bord);
+    transform:translateX(101%);transition:transform .4s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:16px 16px 40px;}
+  #menu.ouvert{transform:translateX(0);}
+  #menu h2{font-size:13px;letter-spacing:.28em;color:var(--accent);margin:2px 0 12px;}
+  #menu h3{font-size:12.5px;letter-spacing:.14em;margin:16px 0 7px;border-bottom:1px solid var(--verre-bord);padding-bottom:5px;}
+  #fermer{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--texte);font-size:22px;cursor:pointer;}
+  .petit{font-size:11.5px;line-height:1.5;color:var(--texte-doux);margin:6px 0;}
+  .bmenu{width:100%;text-align:left;background:var(--verre);border:1px solid var(--verre-bord);color:var(--texte);
+    font-size:12px;padding:9px 11px;border-radius:10px;cursor:pointer;margin:4px 0;}
+  .bmenu.actif{background:rgba(246,214,140,.26);border-color:var(--accent);}
+  label{display:block;font-size:11.5px;margin:9px 0 3px;color:var(--texte-doux);}
+  input[type=range]{width:100%;accent-color:var(--accent);}
+  label output{color:var(--accent);font-weight:700;}
+  .coord{display:flex;gap:8px;} .coord label{flex:1;margin-top:4px;}
+  input.num,input[type=date]{width:100%;padding:7px;border-radius:8px;background:var(--fond2);color:var(--texte);
+    border:1px solid var(--verre-bord);font-size:12px;}
+  .veri{font-size:11.5px;margin-top:8px;padding:8px 10px;border-radius:9px;background:rgba(124,196,174,.12);
+    border:1px solid rgba(124,196,174,.3);line-height:1.55;}
+  .veri b{color:var(--d4);}
+</style>
+</head>
+<body>
+<header>
+  <h1>CADRAN SOLAIRE</h1>
+  <p>ancien temps · nouvelle génération · <span id="lieu">—</span></p>
+</header>
+
+<div id="scene">
+  <canvas id="cadran"></canvas>
+  <div id="hud">
+    <div class="carte vrai"><b id="h-vrai">—</b><small>heure solaire vraie</small></div>
+    <div class="carte"><b id="h-civil">—</b><small>heure civile</small></div>
+    <div class="carte"><b id="h-omc">—</b><small>Omc solaire / 432</small></div>
+    <div class="carte"><b id="h-soleil">—</b><small>hauteur · azimut</small></div>
+    <div class="carte"><b id="h-eot">—</b><small>équation du temps</small></div>
+  </div>
+  <div id="obs">
+    <button class="rond" id="o-retour" title="Retour à l'horloge OmcV">⟵</button>
+    <button class="rond" id="o-3d" title="Vue 3D / vue du dessus">⌖</button>
+    <button class="rond actif" id="o-rot" title="Rotation lente">↻</button>
+    <button class="rond" id="o-menu" title="Réglages">☰</button>
+  </div>
+  <div id="etat"></div>
+</div>
+
+<div id="barre">
+  <button class="pilule" id="b-boussole">🧭 Boussole</button>
+  <button class="pilule" id="b-maintenant">☀ Maintenant</button>
+  <button class="pilule" id="b-vitesse">⏩ ×1</button>
+</div>
+
+<aside id="menu">
+  <button id="fermer">✕</button>
+  <h2>CADRAN SOLAIRE</h2>
+  <h3>☀ Lire le cadran</h3>
+  <p class="petit"><b>Ancien temps :</b> un cadran horizontal gravé comme au XVIIe siècle. Le
+  <b>style</b> (l'arête du gnomon) pointe vers le pôle céleste, incliné exactement de ta latitude.
+  Son ombre indique l'<b>heure solaire vraie</b> sur les lignes gravées en chiffres romains.</p>
+  <p class="petit"><b>Nouvelle génération :</b> les lignes horaires sont recalculées pour ta position GPS.
+  La couronne extérieure divise le jour solaire en <b>432 Omc</b> (18 par heure) : la graduation n'est pas
+  régulière, elle suit la géométrie vraie du cadran. L'ombre reste visible même par temps couvert.</p>
+  <p class="petit"><b>Les courbes de date :</b> l'ombre de la pointe du gnomon (le <b>nœud</b>) suit chaque jour
+  une courbe. On a gravé ❄ le solstice d'hiver, ⚖ les équinoxes (une droite) et ☀ le solstice d'été.
+  Le <b>8</b> au midi, c'est l'analemme : la pointe y passe à 12:00 de temps moyen au fil de l'année.</p>
+  <p class="petit"><b>Heure civile :</b> pour la retrouver, on ajoute à l'heure vraie la correction de
+  longitude et l'équation du temps (±16 min). Le fuseau et l'heure d'été viennent par-dessus.</p>
+
+  <h3>📍 Position</h3>
+  <p class="petit">C'est la même position que l'horloge OmcV (onglet ⏱ Heure · J0).</p>
+  <button class="bmenu" id="gps">📡 Me localiser par GPS</button>
+  <div class="petit" id="gps-etat"></div>
+  <div class="coord">
+    <label>Latitude (°N +) <input class="num" type="number" id="p-lat" step="0.0001" min="-89" max="89"></label>
+    <label>Longitude (°E +) <input class="num" type="number" id="p-lon" step="0.0001" min="-180" max="180"></label>
+  </div>
+
+  <h3>⏳ Voyager dans le temps</h3>
+  <label>Date <input type="date" id="t-date"></label>
+  <label>Heure du jour <output id="t-heure-val">—</output>
+    <input type="range" id="t-heure" min="0" max="1439" step="1"></label>
+  <button class="bmenu" id="t-maintenant">☀ Revenir à maintenant</button>
+
+  <h3>🎨 Matière</h3>
+  <button class="bmenu" id="mat-bronze">🟤 Bronze patiné</button>
+  <button class="bmenu" id="mat-pierre">⚪ Pierre de taille</button>
+  <button class="bmenu" id="mat-ardoise">⚫ Ardoise & or</button>
+  <div class="veri" id="infos"></div>
+</aside>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const D2R=Math.PI/180, R2D=180/Math.PI;
+const fmt=(n,d=0)=>n.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pad=n=>String(n).padStart(2,'0');
+const ROMAINS=['XII','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
+
+/* ═══════════ MÉMOIRE — partagée avec l'horloge OmcV ═══════════ */
+const lis=k=>localStorage.getItem('omcvp.'+k), note=(k,v)=>{try{localStorage.setItem('omcvp.'+k,v)}catch(e){}};
+let LAT=lis('lat')==null?48.8566:+lis('lat'), LON=lis('lon')==null?2.3522:+lis('lon');
+let MAT=lis('matiere')||'bronze';
+if(lis('amb'))document.documentElement.dataset.ambiance=lis('amb');
+
+/* ═══════════ SOLEIL (NOAA basse précision, ~0,01°) ═══════════ */
+function soleil(t){
+  const n=t/86400000+2440587.5-2451545.0;
+  const L=((280.460+0.9856474*n)%360+360)%360, g=((357.528+0.9856003*n)%360+360)%360*D2R;
+  const lam=(L+1.915*Math.sin(g)+0.020*Math.sin(2*g))*D2R, eps=(23.439-0.0000004*n)*D2R;
+  const dec=Math.asin(Math.sin(eps)*Math.sin(lam));
+  let ra=Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam))*R2D; ra=(ra%360+360)%360;
+  let eq=L-ra; if(eq>180)eq-=360; if(eq<-180)eq+=360;
+  return {dec, eotMin:eq*4};
+}
+/* heure solaire vraie (minutes 0..1440) et angle horaire H (rad, + l'après-midi) */
+function tempsVrai(t,lon){
+  const s=soleil(t), utcMin=((t/60000)%1440+1440)%1440;
+  const tsv=((utcMin+4*lon+s.eotMin)%1440+1440)%1440;
+  return {tsv, H:(tsv/4-180)*D2R, dec:s.dec, eotMin:s.eotMin};
+}
+/* direction du soleil dans le repère local (x = est, y = nord, z = zénith) */
+function versSoleil(H,dec,lat){
+  const la=lat*D2R;
+  return [-Math.cos(dec)*Math.sin(H),
+          Math.sin(dec)*Math.cos(la)-Math.cos(dec)*Math.cos(H)*Math.sin(la),
+          Math.sin(dec)*Math.sin(la)+Math.cos(dec)*Math.cos(H)*Math.cos(la)];
+}
+
+/* ═══════════ GÉOMÉTRIE DU CADRAN (horizontal) ═══════════
+   Le style part du centre O et pointe vers le pôle élevé, incliné de |latitude|.
+   Le nœud N est la pointe du style : son ombre trace les courbes de date. */
+const R_PLAQUE=1, L_STYLE=0.5;
+let pole=1, NOEUD=[0,0,0], OY=0;      // OY : le pied du style, décalé vers l'équateur comme sur les cadrans anciens
+function majGeometrie(){
+  pole=LAT>=0?1:-1; OY=-pole*0.42;
+  const a=Math.abs(LAT)*D2R;
+  NOEUD=[0,pole*L_STYLE*Math.cos(a),L_STYLE*Math.sin(a)];
+}
+/* ombre d'un point 3D sur la plaque (z = 0), le soleil en s ; null si le soleil est couché */
+function ombre(P,s){ if(s[2]<=0.002) return null; const k=P[2]/s[2]; return [P[0]-k*s[0],P[1]-k*s[1]]; }
+/* direction (unitaire) de la ligne horaire H : elle ne dépend pas de la date */
+function ligneHoraire(H){
+  const dEte=pole*23.44*D2R, s=versSoleil(H,dEte,LAT);
+  if(s[2]<=0.002) return null;                         // jamais de soleil à cette heure-là
+  const o=ombre(NOEUD,s), n=Math.hypot(o[0],o[1]);
+  return n<1e-9?null:[o[0]/n,o[1]/n];
+}
+/* point où le rayon O + t·d atteint le cercle de rayon r centré sur la plaque */
+function surCercle(d,r){const b=OY*d[1], c=OY*OY-r*r, t=-b+Math.sqrt(b*b-c);return [d[0]*t,d[1]*t];}
+const dansPlaque=(o,r)=>Math.hypot(o[0],o[1]+OY)<r;
+
+/* ═══════════ PROJECTION 3D (observateur orbital) ═══════════ */
+const cv=$('cadran'), ctx=cv.getContext('2d');
+let W=0,H_=0,DPR=Math.min(devicePixelRatio||1,2),U=1;
+let yaw=0, pitch=0.95, ZOOM=1, autoRot=true, vueDessus=false, cap=0;   // cap = rotation boussole
+function taille(){const r=cv.parentElement.getBoundingClientRect();W=r.width;H_=r.height;
+  cv.width=W*DPR;cv.height=H_*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);U=Math.min(W,H_*1.15)*0.40*ZOOM;}
+const CAMD=3.4;
+function proj(x,y,z){
+  const c0=Math.cos(cap),s0=Math.sin(cap);               // le cadran tourne avec le nord réel
+  let X=x*c0-y*s0, Y=x*s0+y*c0;
+  const cy=Math.cos(yaw),sy=Math.sin(yaw);
+  const X1=X*cy-Y*sy, Y1=X*sy+Y*cy;                      // azimut de l'observateur
+  const p=vueDessus?Math.PI/2:pitch, cp=Math.cos(p), sp=Math.sin(p);
+  const Yv=Y1*sp+z*cp, Zd=-Y1*cp+z*sp;                   // inclinaison : la plaque se couche
+  const k=CAMD/(CAMD-Zd*0.9+0.0001);
+  return {x:W/2+X1*U*k, y:H_*0.54-Yv*U*k, k};
+}
+const P2=(x,y)=>proj(x,y,0);
+const PO=(x,y,z=0)=>proj(x,y+OY,z);      // repère du gnomon (origine au pied du style)
+function trace(pts,ferme){ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));if(ferme)ctx.closePath();}
+function cercle(R,z=0,n=120){const a=[];for(let i=0;i<=n;i++){const t=i/n*Math.PI*2;a.push(proj(R*Math.cos(t),R*Math.sin(t),z));}return a;}
+
+/* ═══════════ MATIÈRES ═══════════ */
+const MATIERES={
+  bronze:{fond:['#8a6a3a','#5e4520','#3a2a12'],tranche:'#2a1c0a',grav:'rgba(40,24,6,.85)',lum:'rgba(255,226,160,.55)',
+    texte:'#2b1a06',or:'#f6d68c',patine:'rgba(90,150,120,.20)',gnomon:['#f3d48a','#b9822e','#6d4614']},
+  pierre:{fond:['#d8d0c0','#b9ae98','#8f846e'],tranche:'#6b6250',grav:'rgba(60,50,35,.8)',lum:'rgba(255,255,255,.45)',
+    texte:'#3e3424',or:'#a8741e',patine:'rgba(120,130,90,.12)',gnomon:['#e6c780','#a6782a','#5a3c10']},
+  ardoise:{fond:['#3c4150','#2a2e3a','#191b24'],tranche:'#0d0e13',grav:'rgba(246,214,140,.55)',lum:'rgba(200,210,255,.25)',
+    texte:'#f6d68c',or:'#f6d68c',patine:'rgba(140,120,200,.10)',gnomon:['#fff1c4','#e2a94f','#7a5216']},
+};
+
+/* ═══════════ HORLOGE VIRTUELLE ═══════════ */
+const WARPS=[1,60,600,3600];
+let warpIdx=0, decalage=0, vClock=Date.now(), last=performance.now();
+function avancer(){const n=performance.now();decalage+=(n-last)*(WARPS[warpIdx]-1);last=n;vClock=Date.now()+decalage;}
+
+/* ═══════════ RENDU ═══════════ */
+function dessiner(t){
+  const M=MATIERES[MAT];
+  const T=tempsVrai(t,LON), s=versSoleil(T.H,T.dec,LAT), jour=s[2]>0.002;
+  ctx.clearRect(0,0,W,H_);
+  ctx.lineCap='round';ctx.lineJoin='round';
+
+  /* — socle : tranche de la plaque (épaisseur) — */
+  const ep=-0.07;
+  const bas=cercle(R_PLAQUE*1.04,ep), haut=cercle(R_PLAQUE*1.04,0);
+  trace(bas,true);ctx.fillStyle=M.tranche;ctx.fill();
+  for(let i=0;i<haut.length-1;i+=1){const a=haut[i],b=haut[i+1],c=bas[i+1],d=bas[i];
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.lineTo(c.x,c.y);ctx.lineTo(d.x,d.y);ctx.closePath();
+    ctx.fillStyle=M.tranche;ctx.fill();}
+
+  /* — plaque : dégradé de matière + patine — */
+  const c0=P2(0,0), rp=Math.abs(P2(R_PLAQUE,0).x-c0.x)||U;
+  trace(haut,true);
+  const g=ctx.createRadialGradient(c0.x-rp*.3,c0.y-rp*.35,rp*.05,c0.x,c0.y,rp*1.25);
+  g.addColorStop(0,M.fond[0]);g.addColorStop(.55,M.fond[1]);g.addColorStop(1,M.fond[2]);
+  ctx.fillStyle=g;ctx.fill();
+  ctx.save();trace(haut,true);ctx.clip();
+  for(let i=0;i<9;i++){const a=i*2.39,r=.25+((i*37)%10)/14;const p=P2(r*Math.cos(a)*.8,r*Math.sin(a)*.8);
+    const pg=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,rp*.35);pg.addColorStop(0,M.patine);pg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=pg;ctx.fillRect(p.x-rp*.4,p.y-rp*.4,rp*.8,rp*.8);}
+  if(!jour){ctx.fillStyle='rgba(8,6,24,.42)';ctx.fillRect(0,0,W,H_);}
+  ctx.restore();
+
+  /* — filets gravés : bords et couronnes — */
+  ctx.strokeStyle=M.grav;
+  [[1.0,2],[0.97,1],[0.86,1.2],[0.83,.8]].forEach(([r,l])=>{trace(cercle(r),false);ctx.lineWidth=l;ctx.stroke();});
+  trace(haut,false);ctx.strokeStyle=M.lum;ctx.lineWidth=1.2;ctx.stroke();
+
+  /* — couronne des 432 Omc solaires (graduation vraie, non régulière) — */
+  for(let k=0;k<432;k++){
+    const d=ligneHoraire((k/432*1440/4-180)*D2R); if(!d) continue;
+    const maj=k%18===0, mi=k%9===0;
+    const r1=maj?0.86:mi?0.89:0.92;
+    const u=surCercle(d,r1), w=surCercle(d,0.97), a=PO(u[0],u[1]), b=PO(w[0],w[1]);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+    ctx.strokeStyle=M.grav;ctx.lineWidth=maj?1.6:mi?1:.55;ctx.stroke();
+  }
+
+  /* — lignes horaires + demi-heures + chiffres romains — */
+  const rIn=0.06;
+  for(let h=0;h<48;h++){
+    const H=(h*7.5-180)*D2R, d=ligneHoraire(H); if(!d) continue;
+    const pleine=h%2===0, rOut=pleine?0.83:0.78;
+    const w=surCercle(d,rOut), a=PO(d[0]*rIn,d[1]*rIn), b=PO(w[0],w[1]);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+    ctx.strokeStyle=M.grav;ctx.lineWidth=pleine?(h===24?2.4:1.6):.7;ctx.setLineDash(pleine?[]:[3,4]);ctx.stroke();ctx.setLineDash([]);
+    if(pleine){
+      const u=surCercle(d,0.745), p=PO(u[0],u[1]);
+      ctx.fillStyle=M.texte;ctx.font='700 '+Math.max(9,Math.round(rp*0.085*p.k))+'px Georgia,"Times New Roman",serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ROMAINS[h/2],p.x,p.y);
+    }
+  }
+
+  /* — courbes de date : solstices + équinoxe, et analemme du midi — */
+  const courbe=(dec)=>{const pts=[];
+    for(let m=0;m<=1440;m+=6){const s2=versSoleil((m/4-180)*D2R,dec,LAT);const o=ombre(NOEUD,s2);
+      if(o&&dansPlaque(o,0.82)) pts.push(PO(o[0],o[1])); else if(pts.length&&pts[pts.length-1]!==null) pts.push(null);}
+    ctx.beginPath();let f=true;pts.forEach(p=>{if(!p){f=true;return;}f?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);f=false;});};
+  [[-23.44,'❄',M.grav],[0,'⚖',M.grav],[23.44,'☀',M.grav]].forEach(([dd,sym])=>{
+    courbe(dd*D2R);ctx.strokeStyle=M.grav;ctx.lineWidth=1;ctx.setLineDash(dd===0?[]:[1,3]);ctx.stroke();ctx.setLineDash([]);});
+  /* analemme : la pointe à 12:00 de temps moyen local, chaque jour de l'année */
+  ctx.beginPath();let f8=true;
+  const an0=Date.UTC(new Date(t).getUTCFullYear(),0,1);
+  for(let j=0;j<=366;j+=3){const sj=soleil(an0+j*86400000+43200000-LON/15*3600000);
+    const Hj=(sj.eotMin/4)*D2R, o=ombre(NOEUD,versSoleil(Hj,sj.dec,LAT));
+    if(!o||!dansPlaque(o,0.82)){f8=true;continue;}
+    const p=PO(o[0],o[1]);f8?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);f8=false;}
+  ctx.strokeStyle=M.or;ctx.globalAlpha=.55;ctx.lineWidth=1.1;ctx.stroke();ctx.globalAlpha=1;
+
+  /* — rose des vents : N S E O gravés — */
+  [['N',0,1],['S',0,-1],['E',1,0],['O',-1,0]].forEach(([l,x,y])=>{const p=P2(x*0.915,y*0.915);
+    ctx.fillStyle=l==='N'?M.or:M.texte;ctx.font='700 '+Math.max(8,Math.round(rp*0.06*p.k))+'px Georgia,serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(l,p.x,p.y);});
+
+  /* — ombre du gnomon (triangle O, nœud, pied) — */
+  const PIED=[0,NOEUD[1],0];
+  if(jour){
+    const oN=ombre(NOEUD,s);
+    const pts=[PO(0,0),PO(oN[0],oN[1]),PO(PIED[0],PIED[1])];
+    ctx.save();trace(haut,true);ctx.clip();
+    trace(pts,true);ctx.fillStyle='rgba(10,6,2,'+(0.30+0.25*Math.min(1,s[2]*3))+')';ctx.filter='blur(1.5px)';ctx.fill();ctx.filter='none';
+    ctx.restore();
+    /* le nœud : l'ombre de la pointe, marquée d'une perle de lumière */
+    if(dansPlaque(oN,1.0)){const q=PO(oN[0],oN[1]);
+      const hg=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,10);hg.addColorStop(0,'rgba(246,214,140,.9)');hg.addColorStop(1,'rgba(246,214,140,0)');
+      ctx.fillStyle=hg;ctx.beginPath();ctx.arc(q.x,q.y,10,0,7);ctx.fill();}
+  }
+
+  /* — gnomon : plaque triangulaire en relief (deux faces) — */
+  const e=0.012, A=[0,0,0], Nn=NOEUD, Pd=PIED;
+  const face=(dx,col)=>{const pts=[PO(A[0]+dx,A[1],A[2]),PO(Nn[0]+dx,Nn[1],Nn[2]),PO(Pd[0]+dx,Pd[1],Pd[2])];
+    trace(pts,true);ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='rgba(40,25,5,.6)';ctx.lineWidth=.8;ctx.stroke();};
+  const vu=proj(1,0,0).x>proj(-1,0,0).x;                 // quel flanc fait face à l'observateur
+  const est=s[0]>0;
+  face(vu?-e:e,M.gnomon[2]);
+  face(vu?e:-e,jour&&(est===vu)?M.gnomon[0]:M.gnomon[1]);
+  /* arête du style : un fil d'or */
+  const a1=PO(0,0,0),a2=PO(Nn[0],Nn[1],Nn[2]);
+  ctx.beginPath();ctx.moveTo(a1.x,a1.y);ctx.lineTo(a2.x,a2.y);ctx.strokeStyle=M.or;ctx.lineWidth=1.6;ctx.stroke();
+  const pn=PO(Nn[0],Nn[1],Nn[2]);ctx.fillStyle=M.or;ctx.beginPath();ctx.arc(pn.x,pn.y,2.6,0,7);ctx.fill();
+
+  /* — le soleil, posé dans le ciel au-dessus du cadran — */
+  if(jour){const S=proj(s[0]*1.75,s[1]*1.75,s[2]*1.75);
+    const sg=ctx.createRadialGradient(S.x,S.y,0,S.x,S.y,26);sg.addColorStop(0,'rgba(255,244,208,1)');sg.addColorStop(.3,'rgba(246,214,140,.8)');sg.addColorStop(1,'rgba(246,214,140,0)');
+    ctx.fillStyle=sg;ctx.beginPath();ctx.arc(S.x,S.y,26,0,7);ctx.fill();}
+  return {T,s,jour};
+}
+
+/* ═══════════ LECTURES ═══════════ */
+function majHud(t,R){
+  const v=R.T.tsv, hv=Math.floor(v/60), mv=Math.floor(v%60);
+  $('h-vrai').textContent=pad(hv)+':'+pad(mv);
+  const d=new Date(t);$('h-civil').textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  $('h-omc').textContent=Math.floor(v/1440*432);
+  const alt=Math.asin(Math.max(-1,Math.min(1,R.s[2])))*R2D;
+  let az=Math.atan2(R.s[0],R.s[1])*R2D; az=(az+360)%360;
+  $('h-soleil').textContent=fmt(alt,1)+'° · '+fmt(az,0)+'°';
+  const e=R.T.eotMin, es=Math.round(Math.abs(e)*60);
+  $('h-eot').textContent=(e>=0?'+':'−')+Math.floor(es/60)+' min '+pad(es%60);
+  $('etat').textContent=R.jour?(decalage?'⏳ '+d.toLocaleString('fr-FR',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):'')
+    :'🌙 Le soleil est sous l\'horizon ('+fmt(alt,1)+'°) — le cadran se repose.';
+}
+function majInfos(){
+  const corr=4*LON;
+  $('infos').innerHTML='Style incliné de <b>'+fmt(Math.abs(LAT),2)+'°</b>, pointé vers le pôle <b>'+(pole>0?'nord':'sud')+'</b>.<br>'+
+    'Correction de longitude : <b>'+(corr>=0?'+':'−')+fmt(Math.abs(corr),1)+' min</b> par rapport au temps universel.<br>'+
+    'Lignes horaires : tan θ = sin φ · tan H.';
+  $('lieu').textContent=fmt(LAT,4)+'°, '+fmt(LON,4)+'°';
+  $('p-lat').value=(+LAT).toFixed(4);$('p-lon').value=(+LON).toFixed(4);
+}
+
+/* ═══════════ BOUCLE ═══════════ */
+function boucle(){
+  avancer();
+  if(autoRot&&!vueDessus) yaw+=0.0016;
+  const R=dessiner(vClock); majHud(vClock,R);
+  requestAnimationFrame(boucle);
+}
+
+/* ═══════════ INTERACTIONS ═══════════ */
+const scene=$('scene'); let drag=false,px=0,py=0,pd=0;
+scene.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;drag=true;px=e.clientX;py=e.clientY;
+  autoRot=false;$('o-rot').classList.remove('actif');scene.setPointerCapture(e.pointerId);});
+scene.addEventListener('pointermove',e=>{if(!drag)return;yaw+=(e.clientX-px)*0.008;
+  pitch=Math.max(0.15,Math.min(1.5,pitch+(e.clientY-py)*0.006));px=e.clientX;py=e.clientY;});
+scene.addEventListener('pointerup',()=>drag=false);
+scene.addEventListener('wheel',e=>{e.preventDefault();ZOOM=Math.max(.6,Math.min(2.2,ZOOM-e.deltaY*0.0011));taille();},{passive:false});
+scene.addEventListener('touchmove',e=>{if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+  if(pd)ZOOM=Math.max(.6,Math.min(2.2,ZOOM*d/pd));pd=d;taille();e.preventDefault();}},{passive:false});
+scene.addEventListener('touchend',()=>pd=0);
+
+$('o-retour').onclick=()=>{location.href='index.html';};
+$('o-3d').onclick=()=>{vueDessus=!vueDessus;$('o-3d').classList.toggle('actif',vueDessus);if(vueDessus)yaw=0;};
+$('o-rot').onclick=()=>{autoRot=!autoRot;$('o-rot').classList.toggle('actif',autoRot);};
+$('o-menu').onclick=()=>$('menu').classList.add('ouvert');
+$('fermer').onclick=()=>$('menu').classList.remove('ouvert');
+
+function lblVitesse(){const w=WARPS[warpIdx];$('b-vitesse').textContent='⏩ ×'+fmt(w);$('b-vitesse').classList.toggle('actif',w>1);}
+$('b-vitesse').onclick=()=>{warpIdx=(warpIdx+1)%WARPS.length;lblVitesse();};
+function maintenant(){decalage=0;warpIdx=0;lblVitesse();majVoyage();}
+$('b-maintenant').onclick=$('t-maintenant').onclick=maintenant;
+
+/* voyage dans le temps : date + minute du jour (heure civile de l'appareil) */
+function majVoyage(){const d=new Date(Date.now()+decalage);
+  $('t-date').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const m=d.getHours()*60+d.getMinutes();$('t-heure').value=m;$('t-heure-val').textContent=pad(d.getHours())+':'+pad(d.getMinutes());}
+function voyager(){const v=$('t-date').value;if(!v)return;const [Y,M,J]=v.split('-').map(Number), m=+$('t-heure').value;
+  decalage=new Date(Y,M-1,J,Math.floor(m/60),m%60).getTime()-Date.now();
+  $('t-heure-val').textContent=pad(Math.floor(m/60))+':'+pad(m%60);}
+$('t-date').onchange=voyager;$('t-heure').oninput=voyager;
+
+/* boussole : le cadran s'oriente vers le nord réel (capteur d'orientation) */
+let boussoleOn=false;
+function surOrientation(e){
+  let h=null;
+  if(typeof e.webkitCompassHeading==='number') h=e.webkitCompassHeading;
+  else if(e.absolute&&typeof e.alpha==='number') h=360-e.alpha;
+  if(h==null) return;
+  const cible=h*D2R; let dlt=cible-cap; dlt=Math.atan2(Math.sin(dlt),Math.cos(dlt)); cap+=dlt*0.15;   // lissage
+}
+$('b-boussole').onclick=async()=>{
+  boussoleOn=!boussoleOn;$('b-boussole').classList.toggle('actif',boussoleOn);
+  if(boussoleOn){
+    try{if(typeof DeviceOrientationEvent!=='undefined'&&DeviceOrientationEvent.requestPermission)await DeviceOrientationEvent.requestPermission();}catch(e){}
+    addEventListener('deviceorientationabsolute',surOrientation);addEventListener('deviceorientation',surOrientation);
+    vueDessus=true;$('o-3d').classList.add('actif');yaw=0;autoRot=false;$('o-rot').classList.remove('actif');
+    $('etat').textContent='🧭 Pose le téléphone à plat : le cadran s\'aligne sur le nord.';
+  }else{
+    removeEventListener('deviceorientationabsolute',surOrientation);removeEventListener('deviceorientation',surOrientation);cap=0;
+  }
+};
+
+/* position */
+function nouvellePosition(la,lo,info){LAT=Math.max(-89,Math.min(89,la));LON=Math.abs(lo)<=180?lo:((lo+180)%360+360)%360-180;
+  note('lat',LAT);note('lon',LON);note('gps',info||'');majGeometrie();majInfos();majGps();}
+function majGps(){const g=lis('gps');$('gps-etat').innerHTML=g?'✅ '+g:'Position saisie à la main (ou par défaut : Paris).';}
+$('gps').onclick=()=>{
+  if(!navigator.geolocation){$('gps-etat').textContent='⚠ GPS indisponible — saisis tes coordonnées.';return;}
+  $('gps-etat').textContent='📡 Recherche du signal GPS…';
+  navigator.geolocation.getCurrentPosition(p=>nouvellePosition(p.coords.latitude,p.coords.longitude,
+    'GPS ±'+Math.round(p.coords.accuracy)+' m · relevé le '+new Date(p.timestamp||Date.now()).toLocaleString('fr-FR',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})),
+    err=>{$('gps-etat').textContent='⚠ '+(err.code===1?'Accès à la position refusé — autorise-le dans les réglages Android.':'Position introuvable pour le moment.');},
+    {enableHighAccuracy:true,timeout:25000,maximumAge:60000});
+};
+const saisie=()=>{const la=parseFloat($('p-lat').value),lo=parseFloat($('p-lon').value);
+  if(isFinite(la)&&isFinite(lo)&&Math.abs(la)<=90&&Math.abs(lo)<=180)nouvellePosition(la,lo,'');};
+$('p-lat').onchange=saisie;$('p-lon').onchange=saisie;
+
+/* matière */
+function matiere(m){MAT=m;note('matiere',m);['bronze','pierre','ardoise'].forEach(x=>$('mat-'+x).classList.toggle('actif',x===m));}
+['bronze','pierre','ardoise'].forEach(x=>$('mat-'+x).onclick=()=>matiere(x));
+
+/* ═══════════ INIT ═══════════ */
+addEventListener('resize',taille);
+majGeometrie();majInfos();majGps();matiere(MAT);majVoyage();taille();boucle();
+</script>
+</body>
+</html>
