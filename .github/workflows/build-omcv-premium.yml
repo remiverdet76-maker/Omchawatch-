@@ -1,0 +1,54 @@
+name: Build OmcV Premium APK
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - 'OmcV-Premium/www/**'
+      - 'OmcV-Premium/android/**'
+      - 'OmcV-Premium/package.json'
+      - 'OmcV-Premium/package-lock.json'
+      - 'OmcV-Premium/capacitor.config.json'
+      - '.github/workflows/build-omcv-premium.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: OmcV-Premium/package-lock.json
+
+      - name: Install dependencies
+        working-directory: OmcV-Premium
+        run: npm ci
+
+      - name: Sync Capacitor Android project
+        working-directory: OmcV-Premium
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: OmcV-Premium/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmcV-Premium-debug-apk
+          path: OmcV-Premium/android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30

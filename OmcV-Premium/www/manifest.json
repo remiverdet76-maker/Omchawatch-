@@ -1,0 +1,9 @@
+{
+  "name": "OmcV Premium",
+  "short_name": "OmcV Premium",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#140f2e",
+  "theme_color": "#140f2e",
+  "orientation": "any"
+}

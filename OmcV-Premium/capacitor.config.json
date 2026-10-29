@@ -1,0 +1,8 @@
+{
+	"appId": "org.watcha.omcvpremium",
+	"appName": "OmcV Premium",
+	"webDir": "www",
+	"android": {
+		"allowMixedContent": false
+	}
+}
