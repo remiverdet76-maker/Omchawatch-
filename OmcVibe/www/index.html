@@ -6318,14 +6318,20 @@ function setSubDroneVol(v) {
   saveState();
 }
 
-// ── #208 : VOIX — chœur synthétisé par formants, calé sur masterFreq ──
+// ── #208/#210 : VOIX — chœur synthétisé par formants, calé sur masterFreq ──
 // Pas d'échantillon vocal (poids APK, licence, impossible à accorder
-// proprement sur la fréquence maître) : un oscillateur à masterFreq
-// traverse 3 filtres passe-bande calés sur les formants moyens d'une
-// voyelle ouverte "Ah/Om" (valeurs Peterson & Barney), Homme et Femme ne
-// différant que par cette table de formants — la hauteur, elle, reste
-// strictement verrouillée sur masterFreq dans les deux cas (demande
-// explicite), jamais transposée. Duo possible (les 2 cases indépendantes).
+// proprement sur la fréquence maître) : un pupitre de 3 oscillateurs
+// légèrement désaccordés par voix (chorus/unisson, #210 — au lieu d'un
+// seul auparavant, trop "fin") traverse 3 filtres passe-bande calés sur
+// les formants moyens d'une voyelle ouverte "Ah/Om" (valeurs Peterson &
+// Barney), Homme et Femme ne différant que par cette table de formants
+// — la hauteur, elle, reste strictement verrouillée sur masterFreq dans
+// les deux cas (demande explicite), jamais transposée. Duo possible
+// (les 2 cases indépendantes). #210 : + une réverbe dédiée (espace
+// "cathédrale") via un IR synthétique (bruit filtré à décroissance
+// exponentielle généré en mémoire, PAS un fichier audio — même esprit
+// que le reste de l'app) envoyé dans un ConvolverNode, plus stable et
+// plus naturel qu'un réseau de comb filters fait main.
 // Même patron que SUBDRONE_STATE juste au-dessus : bus parallèle vers
 // masterGain (traverse donc la même chaîne FX/compression que le reste),
 // démarré/arrêté avec le flux, retiné en même temps que _retuneSubDrone().
@@ -6333,16 +6339,57 @@ const VOICE_FORMANTS = {
   male:   { f: [730, 1090, 2440], a: [1, 0.35, 0.18], q: [10, 12, 14] },
   female: { f: [850, 1220, 2810], a: [1, 0.35, 0.18], q: [10, 12, 14] },
 };
+// #210 : pupitre de 3 voix par genre (détune en cents + léger écartement
+// stéréo) — le "chorus" qui donne un vrai effet de chœur plutôt qu'un
+// soliste unique, même mécanisme que le "supersaw" classique.
+const VOICE_UNISON_CENTS = [-9, 0, 9];
+const VOICE_UNISON_PAN = [-0.35, 0, 0.35];
 const VOICE_STATE = { male: false, female: false, vol: 0.14, swell: 14 };
 let _voiceBus = null, _voiceVolGain = null, _voiceSwellLFO = null, _voiceSwellDepth = null;
 let _voiceM = null, _voiceF = null;
+let _voiceConvolver = null, _voiceDry = null, _voiceRevSend = null, _voiceRevWet = null;
 
+// #210 : IR synthétique (bruit filtré à décroissance exponentielle,
+// généré en mémoire) pour une réverbe "cathédrale" sans AUCUN fichier
+// audio — un ConvolverNode est aussi intrinsèquement stable (pas de
+// boucle de feedback à régler à la main comme un réseau de comb filters).
+function _makeSyntheticVoiceIR(c, durationSec, decayPower) {
+  const sr = c.sampleRate, len = Math.max(1, Math.floor(sr * durationSec));
+  const buf = c.createBuffer(2, len, sr);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buf.getChannelData(ch);
+    let prev = 0;
+    for (let i = 0; i < len; i++) {
+      const t = i / len;
+      const white = Math.random() * 2 - 1;
+      prev = prev * 0.72 + white * 0.28; // lissage doux : évite un bruit blanc trop dur
+      data[i] = prev * Math.pow(1 - t, decayPower);
+    }
+  }
+  return buf;
+}
+function _ensureVoiceReverb() {
+  if (_voiceConvolver) return;
+  const c = audioCtx();
+  _voiceConvolver = c.createConvolver();
+  _voiceConvolver.normalize = true;
+  _voiceConvolver.buffer = _makeSyntheticVoiceIR(c, 3.4, 2.2);
+  _voiceDry = c.createGain(); _voiceDry.gain.value = 0.62;
+  _voiceRevSend = c.createGain(); _voiceRevSend.gain.value = 0.55;
+  _voiceRevWet = c.createGain(); _voiceRevWet.gain.value = 0.9;
+  _voiceRevSend.connect(_voiceConvolver); _voiceConvolver.connect(_voiceRevWet);
+}
 function _ensureVoiceBus() {
   if (_voiceBus || !masterGain) return;
   const c = audioCtx();
+  _ensureVoiceReverb();
   _voiceBus = c.createGain(); _voiceBus.gain.value = 1;
   _voiceVolGain = c.createGain(); _voiceVolGain.gain.value = VOICE_STATE.vol;
-  _voiceBus.connect(_voiceVolGain); _voiceVolGain.connect(masterGain);
+  // Voix sèche + envoi réverbe, mélangés avant le volume/l'évolution —
+  // le chœur "respire" dans son ensemble, pas chaque chemin séparément.
+  _voiceBus.connect(_voiceDry); _voiceDry.connect(_voiceVolGain);
+  _voiceBus.connect(_voiceRevSend); _voiceRevWet.connect(_voiceVolGain);
+  _voiceVolGain.connect(masterGain);
   // Évolution : respiration lente du volume (swell), jamais un palier fixe.
   _voiceSwellLFO = c.createOscillator(); _voiceSwellLFO.type = 'sine';
   _voiceSwellLFO.frequency.value = 1 / Math.max(4, VOICE_STATE.swell);
@@ -6352,33 +6399,46 @@ function _ensureVoiceBus() {
 }
 function _buildVoiceChain(type) {
   const c = audioCtx(), ff = VOICE_FORMANTS[type];
-  const osc = c.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = masterFreq;
-  // léger vibrato (fréquence légèrement différente Homme/Femme : jamais
-  // en phase, pour que le duo ne batte pas de façon mécanique).
+  const oscSum = c.createGain(); oscSum.gain.value = 1 / VOICE_UNISON_CENTS.length;
+  const pans = [];
+  const oscs = VOICE_UNISON_CENTS.map((cents, i) => {
+    const osc = c.createOscillator(); osc.type = 'sawtooth';
+    osc.frequency.value = masterFreq; osc.detune.value = cents;
+    const pan = c.createStereoPanner(); pan.pan.value = VOICE_UNISON_PAN[i];
+    osc.connect(pan); pan.connect(oscSum);
+    pans.push(pan);
+    osc.start();
+    return osc;
+  });
+  // vibrato partagé par tout le pupitre (fréquence légèrement différente
+  // Homme/Femme : jamais en phase, pour que le duo ne batte pas de façon
+  // mécanique).
   const vibLFO = c.createOscillator(); vibLFO.type = 'sine';
   vibLFO.frequency.value = type === 'male' ? 5.1 : 5.7;
   const vibDepth = c.createGain(); vibDepth.gain.value = masterFreq * 0.004;
-  vibLFO.connect(vibDepth); vibDepth.connect(osc.frequency);
+  vibLFO.connect(vibDepth); oscs.forEach(o => vibDepth.connect(o.frequency));
+  vibLFO.start();
   const sum = c.createGain(); sum.gain.value = 1;
   const formants = ff.f.map((freq, i) => {
     const filt = c.createBiquadFilter(); filt.type = 'bandpass'; filt.frequency.value = freq; filt.Q.value = ff.q[i];
     const g = c.createGain(); g.gain.value = ff.a[i] * 0.33;
-    osc.connect(filt); filt.connect(g); g.connect(sum);
+    oscSum.connect(filt); filt.connect(g); g.connect(sum);
     return { filt, g };
   });
   const gain = c.createGain(); gain.gain.value = 0; // monte en douceur, cf. appelant
   sum.connect(gain); gain.connect(_voiceBus);
-  osc.start(); vibLFO.start();
-  return { osc, vibLFO, vibDepth, formants, sum, gain };
+  return { oscs, pans, oscSum, vibLFO, vibDepth, formants, sum, gain };
 }
 function _stopVoiceChain(v) {
   if (!v) return;
   try { v.gain.gain.setTargetAtTime(0, aNow(), 0.6); } catch(e) {}
-  const { osc, vibLFO, gain, sum, formants } = v;
+  const { oscs, pans, oscSum, vibLFO, gain, sum, formants } = v;
   setTimeout(() => {
     try {
-      osc.stop(); vibLFO.stop();
-      osc.disconnect(); vibLFO.disconnect(); gain.disconnect(); sum.disconnect();
+      oscs.forEach(o => { o.stop(); o.disconnect(); });
+      pans.forEach(p => p.disconnect());
+      vibLFO.stop(); vibLFO.disconnect();
+      oscSum.disconnect(); gain.disconnect(); sum.disconnect();
       formants.forEach(f => { f.filt.disconnect(); f.g.disconnect(); });
     } catch(e) {}
   }, 900);
@@ -6389,8 +6449,13 @@ function _stopVoiceEngine() {
   if (_voiceSwellLFO) { try { _voiceSwellLFO.stop(); _voiceSwellLFO.disconnect(); } catch(e) {} }
   try { _voiceSwellDepth && _voiceSwellDepth.disconnect(); } catch(e) {}
   try { _voiceVolGain && _voiceVolGain.disconnect(); } catch(e) {}
+  try { _voiceDry && _voiceDry.disconnect(); } catch(e) {}
+  try { _voiceRevSend && _voiceRevSend.disconnect(); } catch(e) {}
+  try { _voiceRevWet && _voiceRevWet.disconnect(); } catch(e) {}
+  try { _voiceConvolver && _voiceConvolver.disconnect(); } catch(e) {}
   try { _voiceBus && _voiceBus.disconnect(); } catch(e) {}
   _voiceSwellLFO = _voiceSwellDepth = _voiceVolGain = _voiceBus = null;
+  _voiceConvolver = _voiceDry = _voiceRevSend = _voiceRevWet = null;
 }
 function _startVoiceEngine() {
   if (!masterGain || (!VOICE_STATE.male && !VOICE_STATE.female)) return;
@@ -6401,8 +6466,8 @@ function _startVoiceEngine() {
   if (_voiceF) _voiceF.gain.gain.setTargetAtTime(1, aNow(), 1.8);
 }
 function _retuneVoice() {
-  if (_voiceM) _voiceM.osc.frequency.setTargetAtTime(masterFreq, aNow(), 0.3);
-  if (_voiceF) _voiceF.osc.frequency.setTargetAtTime(masterFreq, aNow(), 0.3);
+  if (_voiceM) _voiceM.oscs.forEach(o => o.frequency.setTargetAtTime(masterFreq, aNow(), 0.3));
+  if (_voiceF) _voiceF.oscs.forEach(o => o.frequency.setTargetAtTime(masterFreq, aNow(), 0.3));
 }
 function setVoice(which, v) {
   v = !!v;
