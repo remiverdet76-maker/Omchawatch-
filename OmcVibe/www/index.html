@@ -2704,6 +2704,12 @@ body.theme-flux #cosmic-bg{filter:hue-rotate(150deg) saturate(1.3) brightness(.8
   <div class="fxq-row"><span class="fxq-lbl">Rythme</span>
     <input type="range" class="fx-slider" id="coh-bpm" min="4" max="7" step="0.5" value="6" oninput="setCoherenceBpm(this.value)">
     <span class="fx-val-disp" id="coh-bpm-v">6/min</span></div>
+  <div class="fxq-row"><span class="fxq-lbl">Volume</span>
+    <input type="range" class="fx-slider" id="coh-vol" min="0" max="1" step="0.05" value="0.55" oninput="setCoherenceVol(this.value)">
+    <span class="fx-val-disp" id="coh-vol-v">55%</span></div>
+  <div class="fxq-row"><span class="fxq-lbl">Cutoff filtre</span>
+    <input type="range" class="fx-slider" id="coh-cutoff" min="200" max="8000" step="50" value="6000" oninput="setCoherenceCutoff(this.value)">
+    <span class="fx-val-disp" id="coh-cutoff-v">6000 Hz</span></div>
   <div class="cust-hint" style="margin:.5rem 0 .3rem;">Son aux transitions</div>
   <div class="coh-sound-grid" id="coh-sound-grid"></div>
   <div class="fx-row" style="justify-content:space-between;align-items:center;margin-top:.5rem;">
@@ -6630,14 +6636,20 @@ const COHERENCE_SOUNDS = {
   gong:   { name: 'Gong',   baseFreq: 220, carrierRatio: 0.6,  modRatio: 1.0, modIndex: 5.0, decay: 4.5 },
   ding:   { name: 'Ding',   baseFreq: 880, carrierRatio: 1,    modRatio: 2.0, modIndex: 1.5, decay: 1.1 },
 };
-const COHERENCE_STATE = { durationMin: 5, bpm: 6, sound: 'cloche', soundOn: true };
-let _cohBus = null;
+const COHERENCE_STATE = { durationMin: 5, bpm: 6, sound: 'cloche', soundOn: true, vol: 0.55, cutoff: 6000 };
+let _cohBus = null, _cohFilter = null;
 let _coh = { running: false, phase: 'inhale', phaseLen: 5, phaseElapsed: 0, totalSec: 300, elapsedSec: 0, timer: null };
 
 function _ensureCoherenceBus() {
   if (_cohBus) return;
   const c = audioCtx();
-  _cohBus = c.createGain(); _cohBus.gain.value = 0.55;
+  // #211 : filtre passe-bas partagé avant le bus — un seul nœud, réglable
+  // en direct (même pendant la traîne d'une cloche en cours), pas besoin
+  // de reconstruire quoi que ce soit à chaque changement de curseur.
+  _cohFilter = c.createBiquadFilter(); _cohFilter.type = 'lowpass';
+  _cohFilter.frequency.value = COHERENCE_STATE.cutoff; _cohFilter.Q.value = 0.707;
+  _cohBus = c.createGain(); _cohBus.gain.value = COHERENCE_STATE.vol;
+  _cohFilter.connect(_cohBus);
   if (typeof safetyClip !== 'undefined' && safetyClip) _cohBus.connect(safetyClip);
   else if (typeof limiter !== 'undefined' && limiter) _cohBus.connect(limiter);
   else _cohBus.connect(c.destination);
@@ -6662,7 +6674,7 @@ function _playCoherenceChime(type, pitchMul) {
   amp.gain.setValueAtTime(0, t0);
   amp.gain.linearRampToValueAtTime(0.9, t0 + 0.012);
   amp.gain.exponentialRampToValueAtTime(0.001, t0 + preset.decay);
-  carrier.connect(amp); amp.connect(_cohBus);
+  carrier.connect(amp); amp.connect(_cohFilter);
   modOsc.start(t0); carrier.start(t0);
   const stopAt = t0 + preset.decay + 0.1;
   modOsc.stop(stopAt); carrier.stop(stopAt);
@@ -6730,6 +6742,18 @@ function setCoherenceBpm(v) {
   const el = document.getElementById('coh-bpm-v'); if (el) el.textContent = COHERENCE_STATE.bpm + '/min';
   saveState();
 }
+function setCoherenceVol(v) {
+  COHERENCE_STATE.vol = Math.max(0, Math.min(1, parseFloat(v)));
+  if (_cohBus) _cohBus.gain.setTargetAtTime(COHERENCE_STATE.vol, aNow(), 0.05);
+  const el = document.getElementById('coh-vol-v'); if (el) el.textContent = Math.round(COHERENCE_STATE.vol * 100) + '%';
+  saveState();
+}
+function setCoherenceCutoff(v) {
+  COHERENCE_STATE.cutoff = Math.max(200, Math.min(8000, parseFloat(v)));
+  if (_cohFilter) _cohFilter.frequency.setTargetAtTime(COHERENCE_STATE.cutoff, aNow(), 0.05);
+  const el = document.getElementById('coh-cutoff-v'); if (el) el.textContent = Math.round(COHERENCE_STATE.cutoff) + ' Hz';
+  saveState();
+}
 function setCoherenceSound(type) {
   if (!COHERENCE_SOUNDS[type]) return;
   COHERENCE_STATE.sound = type;
@@ -6753,6 +6777,10 @@ function _syncCoherenceUI() {
   const dv = document.getElementById('coh-duration-v'); if (dv) dv.textContent = COHERENCE_STATE.durationMin + ' min';
   const b = document.getElementById('coh-bpm'); if (b) b.value = COHERENCE_STATE.bpm;
   const bv = document.getElementById('coh-bpm-v'); if (bv) bv.textContent = COHERENCE_STATE.bpm + '/min';
+  const v = document.getElementById('coh-vol'); if (v) v.value = COHERENCE_STATE.vol;
+  const vv = document.getElementById('coh-vol-v'); if (vv) vv.textContent = Math.round(COHERENCE_STATE.vol * 100) + '%';
+  const co = document.getElementById('coh-cutoff'); if (co) co.value = COHERENCE_STATE.cutoff;
+  const cov = document.getElementById('coh-cutoff-v'); if (cov) cov.textContent = Math.round(COHERENCE_STATE.cutoff) + ' Hz';
   const ck = document.getElementById('ck-coh-sound'); if (ck) ck.checked = COHERENCE_STATE.soundOn;
   buildCoherenceSoundGrid();
   _cohUpdateVisual();
@@ -10806,6 +10834,8 @@ function loadState() {
       if (typeof s.coherence.bpm==='number' && s.coherence.bpm>=4 && s.coherence.bpm<=7) COHERENCE_STATE.bpm = s.coherence.bpm;
       if (typeof s.coherence.sound==='string' && COHERENCE_SOUNDS[s.coherence.sound]) COHERENCE_STATE.sound = s.coherence.sound;
       if (typeof s.coherence.soundOn==='boolean') COHERENCE_STATE.soundOn = s.coherence.soundOn;
+      if (typeof s.coherence.vol==='number' && s.coherence.vol>=0 && s.coherence.vol<=1) COHERENCE_STATE.vol = s.coherence.vol; // #211
+      if (typeof s.coherence.cutoff==='number' && s.coherence.cutoff>=200 && s.coherence.cutoff<=8000) COHERENCE_STATE.cutoff = s.coherence.cutoff; // #211
     }
     if (s.egochaSage && typeof s.egochaSage==='object') { // #181b/#198
       if (typeof s.egochaSage.on==='boolean') EGOCHA_SAGE_STATE.on = s.egochaSage.on;
